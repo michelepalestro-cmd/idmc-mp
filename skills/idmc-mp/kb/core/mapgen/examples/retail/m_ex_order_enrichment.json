@@ -1,0 +1,566 @@
+{
+ "name": "m_ex_order_enrichment",
+ "description": "[mapgen-suite S02] Order lines enriched through a chain of three master-outer Joiners (orders, products, customers), money maths on NUMERIC, and a 3-group Router (sales / refunds / high-value sales, overlapping the sales group) plus a reason-coded DEFAULT1 reject sink (orphans, unknown products, cancelled, pending, zero quantity).",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_LINES",
+   "conn": "BQ",
+   "query": "SELECT order_id AS ln_order_id, line_no AS ln_line_no, product_id AS ln_product_id, qty AS ln_qty, unit_price AS ln_unit_price, discount_pct AS ln_discount_pct, tax_rate AS ln_tax_rate FROM `${BQ_PROJECT}.${DATASET}.order_lines`",
+   "fields": [
+    [
+     "ln_order_id",
+     "STRING",
+     256
+    ],
+    [
+     "ln_line_no",
+     "INTEGER"
+    ],
+    [
+     "ln_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "ln_qty",
+     "INTEGER"
+    ],
+    [
+     "ln_unit_price",
+     "NUMERIC"
+    ],
+    [
+     "ln_discount_pct",
+     "NUMERIC"
+    ],
+    [
+     "ln_tax_rate",
+     "NUMERIC"
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_ORDERS",
+   "conn": "BQ",
+   "query": "SELECT order_id AS o_order_id, customer_id AS o_customer_id, store_id AS o_store_id, channel AS o_channel, order_ts AS o_order_ts, status AS o_status FROM `${BQ_PROJECT}.${DATASET}.orders`",
+   "fields": [
+    [
+     "o_order_id",
+     "STRING",
+     256
+    ],
+    [
+     "o_customer_id",
+     "STRING",
+     256
+    ],
+    [
+     "o_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "o_channel",
+     "STRING",
+     256
+    ],
+    [
+     "o_order_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "o_status",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_PRODUCTS",
+   "conn": "BQ",
+   "query": "SELECT product_id AS p_product_id, category AS p_category, cost AS p_cost FROM `${BQ_PROJECT}.${DATASET}.products`",
+   "fields": [
+    [
+     "p_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "p_category",
+     "STRING",
+     256
+    ],
+    [
+     "p_cost",
+     "NUMERIC"
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_CUSTOMERS",
+   "conn": "BQ",
+   "query": "SELECT customer_id AS c_customer_id, tier AS c_tier FROM `${BQ_PROJECT}.${DATASET}.customers`",
+   "fields": [
+    [
+     "c_customer_id",
+     "STRING",
+     256
+    ],
+    [
+     "c_tier",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_ORDER",
+   "master": "SRC_ORDERS",
+   "detail": "SRC_LINES",
+   "cond": [
+    [
+     "o_order_id",
+     "ln_order_id"
+    ]
+   ],
+   "join": "MASTER_OUTER"
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_PRODUCT",
+   "master": "SRC_PRODUCTS",
+   "detail": "JNR_ORDER",
+   "cond": [
+    [
+     "p_product_id",
+     "ln_product_id"
+    ]
+   ],
+   "join": "MASTER_OUTER"
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_CUSTOMER",
+   "master": "SRC_CUSTOMERS",
+   "detail": "JNR_PRODUCT",
+   "cond": [
+    [
+     "c_customer_id",
+     "o_customer_id"
+    ]
+   ],
+   "join": "MASTER_OUTER"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_CALC",
+   "fields": [
+    {
+     "name": "v_net",
+     "type": "NUMERIC",
+     "expr": "ROUND(ln_qty * ln_unit_price * (1 - ln_discount_pct) * (1 + ln_tax_rate), 2)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_margin",
+     "type": "NUMERIC",
+     "expr": "ln_qty * ln_unit_price * (1 - ln_discount_pct) - ln_qty * p_cost",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_kind",
+     "type": "STRING",
+     "expr": "IIF(ln_qty < 0 OR o_status = 'REFUNDED', 'REFUND', 'SALE')",
+     "kind": "VARIABLE",
+     "prec": 8
+    },
+    {
+     "name": "v_reject",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, ISNULL(o_order_id), 'E01_ORPHAN_LINE', ISNULL(p_product_id), 'E02_UNKNOWN_PRODUCT', o_status = 'CANCELLED', 'E03_CANCELLED', o_status = 'PENDING', 'E05_PENDING', ln_qty = 0, 'E04_ZERO_QTY', 'OK')",
+     "kind": "VARIABLE",
+     "prec": 24
+    },
+    {
+     "name": "line_key",
+     "type": "STRING",
+     "expr": "ln_order_id || '-' || LPAD(TO_CHAR(ln_line_no), 3, '0')",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "order_id",
+     "type": "STRING",
+     "expr": "ln_order_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "line_no",
+     "type": "INTEGER",
+     "expr": "ln_line_no",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "customer_id",
+     "type": "STRING",
+     "expr": "o_customer_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "store_id",
+     "type": "STRING",
+     "expr": "o_store_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "product_id",
+     "type": "STRING",
+     "expr": "ln_product_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "category",
+     "type": "STRING",
+     "expr": "p_category",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "channel",
+     "type": "STRING",
+     "expr": "o_channel",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "tier",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(o_customer_id), 'Guest', IIF(ISNULL(c_customer_id), 'Unknown', DECODE(UPPER(LTRIM(RTRIM(c_tier))), 'GOLD', 'Gold', 'SILVER', 'Silver', 'BRONZE', 'Bronze', 'Unknown')))",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "qty",
+     "type": "INTEGER",
+     "expr": "ln_qty",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "net_amount",
+     "type": "NUMERIC",
+     "expr": "v_net",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "margin",
+     "type": "NUMERIC",
+     "expr": "v_margin",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "order_date",
+     "type": "STRING",
+     "expr": "TO_CHAR(TRUNC(o_order_ts, 'DD'), 'YYYY-MM-DD HH24:MI:SS')",
+     "kind": "OUTPUT",
+     "prec": 19
+    },
+    {
+     "name": "order_ts",
+     "type": "TIMESTAMP",
+     "expr": "o_order_ts",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "line_kind",
+     "type": "STRING",
+     "expr": "v_kind",
+     "kind": "OUTPUT",
+     "prec": 8
+    },
+    {
+     "name": "reject_code",
+     "type": "STRING",
+     "expr": "v_reject",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "refund_reason",
+     "type": "STRING",
+     "expr": "IIF(o_status = 'REFUNDED', 'ORDER_REFUNDED', 'LINE_RETURN')",
+     "kind": "OUTPUT",
+     "prec": 24
+    }
+   ]
+  },
+  {
+   "type": "router",
+   "name": "RTR_LINES",
+   "groups": [
+    [
+     "SALE",
+     "reject_code = 'OK' AND line_kind = 'SALE'"
+    ],
+    [
+     "REFUND",
+     "reject_code = 'OK' AND line_kind = 'REFUND'"
+    ],
+    [
+     "HIGH_VALUE",
+     "reject_code = 'OK' AND line_kind = 'SALE' AND net_amount >= 500"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_SALES_LINES",
+   "conn": "BQ",
+   "object": "${DATASET}/out_sales_lines",
+   "truncate": true,
+   "fields": [
+    [
+     "line_key",
+     "STRING"
+    ],
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "line_no",
+     "INTEGER"
+    ],
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "category",
+     "STRING"
+    ],
+    [
+     "channel",
+     "STRING"
+    ],
+    [
+     "tier",
+     "STRING"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "net_amount",
+     "NUMERIC"
+    ],
+    [
+     "margin",
+     "NUMERIC"
+    ],
+    [
+     "order_date",
+     "STRING"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_REFUND_LINES",
+   "conn": "BQ",
+   "object": "${DATASET}/out_refund_lines",
+   "truncate": true,
+   "fields": [
+    [
+     "line_key",
+     "STRING"
+    ],
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "net_amount",
+     "NUMERIC"
+    ],
+    [
+     "refund_reason",
+     "STRING"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_LINE_REJECTS",
+   "conn": "BQ",
+   "object": "${DATASET}/out_line_rejects",
+   "truncate": true,
+   "fields": [
+    [
+     "line_key",
+     "STRING"
+    ],
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "reject_code",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_HIGH_VALUE_LINES",
+   "conn": "BQ",
+   "object": "${DATASET}/out_high_value_lines",
+   "truncate": true,
+   "fields": [
+    [
+     "line_key",
+     "STRING"
+    ],
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "tier",
+     "STRING"
+    ],
+    [
+     "net_amount",
+     "NUMERIC"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_ORDERS",
+   "JNR_ORDER.Master"
+  ],
+  [
+   "SRC_LINES",
+   "JNR_ORDER.Detail"
+  ],
+  [
+   "SRC_PRODUCTS",
+   "JNR_PRODUCT.Master"
+  ],
+  [
+   "JNR_ORDER",
+   "JNR_PRODUCT.Detail"
+  ],
+  [
+   "SRC_CUSTOMERS",
+   "JNR_CUSTOMER.Master"
+  ],
+  [
+   "JNR_PRODUCT",
+   "JNR_CUSTOMER.Detail"
+  ],
+  [
+   "JNR_CUSTOMER",
+   "EXP_CALC"
+  ],
+  [
+   "EXP_CALC",
+   "RTR_LINES"
+  ],
+  [
+   "RTR_LINES.SALE",
+   "TGT_SALES_LINES"
+  ],
+  [
+   "RTR_LINES.REFUND",
+   "TGT_REFUND_LINES"
+  ],
+  [
+   "RTR_LINES.HIGH_VALUE",
+   "TGT_HIGH_VALUE_LINES"
+  ],
+  [
+   "RTR_LINES.DEFAULT1",
+   "TGT_LINE_REJECTS"
+  ]
+ ]
+}

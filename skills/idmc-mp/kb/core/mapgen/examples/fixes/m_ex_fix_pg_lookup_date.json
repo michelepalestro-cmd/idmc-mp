@@ -1,0 +1,69 @@
+{
+ "name": "m_ex_fix_pg_lookup_date",
+ "description": "[mapgen fix types_nodes#2/#1] Unconnected PostgreSQL lookups on '<schema>/<table>' objects (the generator adds /TABLE/), PostgreSQL DATE columns read by the source and by a lookup and written to a DATE target column. Seed in ${PG_SCRATCH}: ex_fix_visits (k, store_code, visit_date date), ex_fix_stores (code, vname, opened date), empty ex_fix_pg_out (k, store_code, vname, opened date, visit_date date).",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_VISITS",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/ex_fix_visits",
+   "fields": [
+    ["k", "STRING", 16, "character_varying", 0],
+    ["store_code", "STRING", 16, "character_varying", 0],
+    ["visit_date", "DATE", null, "date"]
+   ]
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_STORE_NAME",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/ex_fix_stores",
+   "fields": [
+    ["code", "STRING", 16, "character_varying", 0],
+    ["vname", "STRING", 64, "character_varying", 0]
+   ],
+   "cond": [["code", "IN_code"]],
+   "ret": "vname",
+   "policy": "Use First Value"
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_STORE_OPENED",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/ex_fix_stores",
+   "fields": [
+    ["code", "STRING", 16, "character_varying", 0],
+    ["opened", "DATE", null, "date"]
+   ],
+   "cond": [["code", "IN_code"]],
+   "ret": "opened",
+   "policy": "Use First Value"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_ENRICH",
+   "fields": [
+    {"name": "vname", "type": "STRING", "expr": ":LKP.LKP_STORE_NAME(store_code)", "kind": "OUTPUT", "prec": 64},
+    {"name": "opened", "type": "DATE", "expr": ":LKP.LKP_STORE_OPENED(store_code)", "kind": "OUTPUT"}
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_VISITS",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/ex_fix_pg_out",
+   "truncate": true,
+   "fields": [
+    ["k", "STRING", 16, "character_varying", 0],
+    ["store_code", "STRING", 16, "character_varying", 0],
+    ["vname", "STRING", 64, "character_varying", 0],
+    ["opened", "DATE", null, "date"],
+    ["visit_date", "DATE", null, "date"]
+   ]
+  }
+ ],
+ "links": [
+  ["SRC_VISITS", "EXP_ENRICH"],
+  ["EXP_ENRICH", "TGT_PG_VISITS"]
+ ]
+}

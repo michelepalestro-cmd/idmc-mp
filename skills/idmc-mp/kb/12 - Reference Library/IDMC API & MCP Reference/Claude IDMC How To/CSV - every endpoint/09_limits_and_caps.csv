@@ -1,0 +1,28 @@
+﻿Service,What is capped,The limit,Source
+CAI,Bulk publish / unpublish,199 assets per call,Invoke ch.3-4
+CAI,Process list default page size,20 (use listStart + maxReturn to page),Monitor p.101
+CAI,Rate limit,HTTP 429 when requests exceed the window,Invoke p.12
+CAI,Activity execution circuit breaker,"10,000 activities -> 429, no new instances for 15 min (tech preview, node-local)",Invoke p.25
+CAI,Message payload,5 MB on Cloud Server; 500 MB multi-byte ceiling,Monitor p.11
+CAI,Process timeout / retention,"3,600 s timeout; completed 24 h, faulted 72 h, logs 30 days",Invoke p.25
+CDQ,Dictionary shape,Name 125 chars; 42 columns max; column names 64 chars,CDQ API Ref p.7
+CDQ,Rows per call,"10,000 (POST and PUT) -> 413 if exceeded",CDQ API Ref p.11
+Address Verification,Batch size,"1,000 addresses per call; 100 suggestions interactive",IAV ch.2
+Address Verification,Job token,Expires in 5 min; free resubmit 2x interactive / 9x QuickCapture,IAV p.11
+Operational Insights,History + concurrency,"13 months (processJobReport), 1 month others; ONE active request per org",OI p.70
+Operational Insights,Data retention / refresh,13 months retained; metrics refresh only once a week,"OI p.70, p.110"
+MDM SaaS,Job concurrency,Queues ingress/egress past 25 per pod or 5 per org,C360 p.247
+MDM SaaS,Step queueing,"Load >1,000 rows; transform >100,000; index >10,000; match keys >5,000",C360 p.247
+MDM SaaS,File and result caps,"CSV 100 MB / 100,000 rows; search page 10,000; export 10,000","C360 pp.65,168"
+MDM SaaS,Session,Session ID expires after 30 min of inactivity,vendor deck p.8
+Data Profiling,Rule occurrences,Keep at 200 or fewer per profile,CDP p.160
+Platform,Token lifetime,JW access token expires 30 min after grant,IAV p.9
+MCP,OAuth token timeout,Default 5 min; configurable 5-1440 min,MCP guide
+CAI,Bulk publish / unpublish,"199 assets per call, processed in payload order","Invoke pp.30, 32"
+CAI,Unpublish dependency order,"Service connector, THEN app connection, THEN process. Wrong order returns per-item ERROR inside a 200 envelope.",Invoke p.35
+CAI,REST / SOAP rate limit,HTTP 429 once the rate limit is exceeded in the window,Invoke p.12
+CAI,Invocable verbs,"GET, POST, PATCH, PUT, DELETE on a published process",Invoke p.15
+Data Profiling,Rule occurrences per profile,"200 or fewer, else the scorecard job times out",CDP p.160
+MCP,OAuth access-token timeout,Default 5 min; range 5-1440 min,MCP guide p.17
+MCP,Server scope per OAuth client,Set at creation on the Resources page; editable afterwards,MCP guide p.18
+Operational Insights,Concurrency,ONE active GraphQL request per org,OI p.70

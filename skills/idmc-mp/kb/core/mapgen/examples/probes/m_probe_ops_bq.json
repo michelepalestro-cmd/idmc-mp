@@ -1,0 +1,188 @@
+{
+ "name": "m_probe_ops_bq",
+ "description": "[mapgen probe] BigQuery target operations: Upsert, Data Driven (DD_INSERT/DD_UPDATE/DD_DELETE/DD_REJECT), Delete",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_UP",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n UNION ALL SELECT 'K3', 'new', 30",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_UPSERT",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_upsert",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "op": "Upsert",
+   "updateColumns": [
+    "k"
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_DD",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n, 'U' AS op_flag UNION ALL SELECT 'K2', 'gone', 0, 'D' UNION ALL SELECT 'K4', 'new', 40, 'I' UNION ALL SELECT 'K5', 'bad', 0, 'R'",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ],
+    [
+     "op_flag",
+     "STRING",
+     4
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_DD",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_dd",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "op": "Data Driven",
+   "updateColumns": [
+    "k"
+   ],
+   "updateStrategy": "DECODE(op_flag, 'I', DD_INSERT, 'U', DD_UPDATE, 'D', DD_DELETE, DD_REJECT)"
+  },
+  {
+   "type": "source",
+   "name": "SRC_DEL",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, '' AS v, 0 AS n",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_DELETE",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_del",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "op": "Delete",
+   "updateColumns": [
+    "k"
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_UP",
+   "TGT_UPSERT"
+  ],
+  [
+   "SRC_DD",
+   "TGT_DD"
+  ],
+  [
+   "SRC_DEL",
+   "TGT_DELETE"
+  ]
+ ]
+}

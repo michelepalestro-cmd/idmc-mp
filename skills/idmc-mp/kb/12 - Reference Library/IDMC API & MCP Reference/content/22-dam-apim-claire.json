@@ -1,0 +1,81 @@
+{
+ "id": "22-dam-apim-claire",
+ "title": "Data Access Management, API Manager & CLAIRE",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/data360/dam/v1/policies (~40 variants)",
+     "none proven",
+     "Access / masking policy CRUD",
+     "404 on all; engine RUNNING, no REST plane  —  rejected: GET 404, POST 404, PUT 404, PATCH 404, DELETE 404"
+    ],
+    [
+     "objects?q=type==DATA_ACCESS_POLICY",
+     "none proven",
+     "Policy census; Managed-API census; Agent and MCP-server assets",
+     "200 — count 0; count 0 — CONTESTED vs licence console"
+    ],
+    [
+     "/public/apim/v1/apis (+5 variants)",
+     "none proven",
+     "Managed-API + policy authoring",
+     "404; DataServiceApiMgmt engine RUNNING  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/api/v1/apiPortal",
+     "none proven",
+     "Developer portal",
+     "404 — the one likely true entitlement gap  —  rejected: GET 404; untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/catalog-source-management/v1/*",
+     "none proven",
+     "MCC's real backing REST",
+     "200"
+    ],
+    [
+     "/data360/clairegpt/* (32-path sweep)",
+     "none proven",
+     "Chat / copilot / agent APIs",
+     "404 on all; no engine deployed  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/dataprep/projects, /prep/v1/projects",
+     "none proven",
+     "Data-preparation projects",
+     "404  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/task?type=DVT",
+     "none proven",
+     "Data-validation task",
+     "403 DVT is not a valid task type  —  rejected: GET 403; untested: POST, PUT, PATCH, DELETE"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No MCP server covers this service. Everything here is REST-only."
+  }
+ ],
+ "notes": [],
+ "open_questions": [
+  "CLAIRE GPT and AI Agent Engineering entitlement: no agentic engine appears in either agent's deployed stack and every path 404s, but the licence console reportedly shows both entitled with five MCP servers. Engine evidence and console evidence genuinely conflict - resolve before telling anyone 'not entitled'.",
+  "API Developer Portal: the gap is inferred from an ABSENT privilege rather than a positive finding, which is weak evidence. Confirm whether a distinct portal SKU exists."
+ ]
+}

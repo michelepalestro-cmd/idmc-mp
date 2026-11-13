@@ -1,0 +1,550 @@
+{
+ "name": "m_ex_store_ops_multiflow",
+ "description": "[mapgen-suite S08] Two independent flows in one mapping: (A) inventory movements signed with DECODE, aggregated with conditional sums and detail-outer-joined to snapshots on a two-column key; (B) loyalty events de-duplicated by a distinct Sorter, filtered and aggregated into point balances.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_MOVES",
+   "conn": "BQ",
+   "query": "SELECT store_id AS m_store_id, product_id AS m_product_id, movement_type AS m_type, qty AS m_qty, movement_ts AS m_ts FROM `${BQ_PROJECT}.${DATASET}.inventory_movements`",
+   "fields": [
+    [
+     "m_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "m_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "m_type",
+     "STRING",
+     256
+    ],
+    [
+     "m_qty",
+     "INTEGER"
+    ],
+    [
+     "m_ts",
+     "TIMESTAMP"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SIGN",
+   "fields": [
+    {
+     "name": "signed_qty",
+     "type": "INTEGER",
+     "expr": "DECODE(m_type, 'RECEIPT', m_qty, 'TRANSFER_IN', m_qty, 'ADJUST', m_qty, 'SALE', 0 - m_qty, 'TRANSFER_OUT', 0 - m_qty, 0)",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_MOVES",
+   "groupBy": [
+    "m_store_id",
+    "m_product_id"
+   ],
+   "fields": [
+    {
+     "name": "agg_net",
+     "type": "INTEGER",
+     "expr": "SUM(signed_qty)"
+    },
+    {
+     "name": "agg_receipts",
+     "type": "INTEGER",
+     "expr": "SUM(m_qty, m_type = 'RECEIPT')"
+    },
+    {
+     "name": "agg_sales",
+     "type": "INTEGER",
+     "expr": "SUM(m_qty, m_type = 'SALE')"
+    },
+    {
+     "name": "agg_moves",
+     "type": "INTEGER",
+     "expr": "COUNT(m_qty)"
+    },
+    {
+     "name": "agg_last_ts",
+     "type": "TIMESTAMP",
+     "expr": "MAX(m_ts)"
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_SNAPSHOT",
+   "conn": "BQ",
+   "query": "SELECT store_id AS s_store_id, product_id AS s_product_id, FORMAT_DATE('%Y-%m-%d', snapshot_date) AS s_day, on_hand AS s_on_hand FROM `${BQ_PROJECT}.${DATASET}.inventory_snapshots`",
+   "fields": [
+    [
+     "s_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "s_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "s_day",
+     "STRING",
+     256
+    ],
+    [
+     "s_on_hand",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_POSITION",
+   "master": "SRC_SNAPSHOT",
+   "detail": "AGG_MOVES",
+   "cond": [
+    [
+     "s_store_id",
+     "m_store_id"
+    ],
+    [
+     "s_product_id",
+     "m_product_id"
+    ]
+   ],
+   "join": "DETAIL_OUTER"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_POSITION",
+   "fields": [
+    {
+     "name": "v_net",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(agg_net), 0, agg_net)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_sales",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(agg_sales), 0, agg_sales)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_close",
+     "type": "INTEGER",
+     "expr": "s_on_hand + v_net",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "store_id",
+     "type": "STRING",
+     "expr": "s_store_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "product_id",
+     "type": "STRING",
+     "expr": "s_product_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "snapshot_date",
+     "type": "STRING",
+     "expr": "s_day || ' 00:00:00'",
+     "kind": "OUTPUT",
+     "prec": 19
+    },
+    {
+     "name": "on_hand",
+     "type": "INTEGER",
+     "expr": "s_on_hand",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "net_movement",
+     "type": "INTEGER",
+     "expr": "v_net",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "receipts",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(agg_receipts), 0, agg_receipts)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "sales_units",
+     "type": "INTEGER",
+     "expr": "v_sales",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "move_count",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(agg_moves), 0, agg_moves)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "closing_on_hand",
+     "type": "INTEGER",
+     "expr": "v_close",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "stockout",
+     "type": "STRING",
+     "expr": "IIF(v_close <= 0, 'Y', 'N')",
+     "kind": "OUTPUT",
+     "prec": 1
+    },
+    {
+     "name": "reorder",
+     "type": "STRING",
+     "expr": "IIF(v_close < 10 AND v_sales > 20, 'Y', 'N')",
+     "kind": "OUTPUT",
+     "prec": 1
+    },
+    {
+     "name": "last_move_ts",
+     "type": "TIMESTAMP",
+     "expr": "agg_last_ts",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_LOYALTY",
+   "conn": "BQ",
+   "query": "SELECT event_id, customer_id AS e_customer_id, event_ts, event_type, points, channel FROM `${BQ_PROJECT}.${DATASET}.loyalty_events`",
+   "fields": [
+    [
+     "event_id",
+     "STRING",
+     256
+    ],
+    [
+     "e_customer_id",
+     "STRING",
+     256
+    ],
+    [
+     "event_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "event_type",
+     "STRING",
+     256
+    ],
+    [
+     "points",
+     "INTEGER"
+    ],
+    [
+     "channel",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_DISTINCT_EVENTS",
+   "keys": [
+    "event_id"
+   ],
+   "distinct": true
+  },
+  {
+   "type": "filter",
+   "name": "FIL_SCORABLE",
+   "cond": "NOT ISNULL(e_customer_id) AND points != 0"
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_POINTS",
+   "groupBy": [
+    "e_customer_id"
+   ],
+   "fields": [
+    {
+     "name": "l_earned",
+     "type": "INTEGER",
+     "expr": "SUM(points, event_type = 'EARN' OR event_type = 'BONUS')"
+    },
+    {
+     "name": "l_redeemed",
+     "type": "INTEGER",
+     "expr": "SUM(points, event_type = 'REDEEM')"
+    },
+    {
+     "name": "l_expired",
+     "type": "INTEGER",
+     "expr": "SUM(points, event_type = 'EXPIRE')"
+    },
+    {
+     "name": "l_events",
+     "type": "INTEGER",
+     "expr": "COUNT(event_id)"
+    },
+    {
+     "name": "l_last_ts",
+     "type": "TIMESTAMP",
+     "expr": "MAX(event_ts)"
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_BALANCE",
+   "fields": [
+    {
+     "name": "v_e",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(l_earned), 0, l_earned)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_r",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(l_redeemed), 0, l_redeemed)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_x",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(l_expired), 0, l_expired)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_bal",
+     "type": "INTEGER",
+     "expr": "v_e - v_r - v_x",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "customer_id",
+     "type": "STRING",
+     "expr": "e_customer_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "earned",
+     "type": "INTEGER",
+     "expr": "v_e",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "redeemed",
+     "type": "INTEGER",
+     "expr": "v_r",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "expired",
+     "type": "INTEGER",
+     "expr": "v_x",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "balance",
+     "type": "INTEGER",
+     "expr": "v_bal",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "events",
+     "type": "INTEGER",
+     "expr": "l_events",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "last_event_ts",
+     "type": "TIMESTAMP",
+     "expr": "l_last_ts",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "points_band",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, v_bal >= 2000, 'PLATINUM', v_bal >= 1000, 'GOLD', v_bal >= 0, 'STANDARD', 'NEGATIVE')",
+     "kind": "OUTPUT",
+     "prec": 16
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_INVENTORY_POSITION",
+   "conn": "BQ",
+   "object": "${DATASET}/out_inventory_position",
+   "truncate": true,
+   "fields": [
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "snapshot_date",
+     "STRING"
+    ],
+    [
+     "on_hand",
+     "INTEGER"
+    ],
+    [
+     "net_movement",
+     "INTEGER"
+    ],
+    [
+     "receipts",
+     "INTEGER"
+    ],
+    [
+     "sales_units",
+     "INTEGER"
+    ],
+    [
+     "move_count",
+     "INTEGER"
+    ],
+    [
+     "closing_on_hand",
+     "INTEGER"
+    ],
+    [
+     "stockout",
+     "STRING"
+    ],
+    [
+     "reorder",
+     "STRING"
+    ],
+    [
+     "last_move_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_LOYALTY_BALANCE",
+   "conn": "BQ",
+   "object": "${DATASET}/out_loyalty_balance",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "earned",
+     "INTEGER"
+    ],
+    [
+     "redeemed",
+     "INTEGER"
+    ],
+    [
+     "expired",
+     "INTEGER"
+    ],
+    [
+     "balance",
+     "INTEGER"
+    ],
+    [
+     "events",
+     "INTEGER"
+    ],
+    [
+     "last_event_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "points_band",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_MOVES",
+   "EXP_SIGN"
+  ],
+  [
+   "EXP_SIGN",
+   "AGG_MOVES"
+  ],
+  [
+   "SRC_SNAPSHOT",
+   "JNR_POSITION.Master"
+  ],
+  [
+   "AGG_MOVES",
+   "JNR_POSITION.Detail"
+  ],
+  [
+   "JNR_POSITION",
+   "EXP_POSITION"
+  ],
+  [
+   "EXP_POSITION",
+   "TGT_INVENTORY_POSITION"
+  ],
+  [
+   "SRC_LOYALTY",
+   "SRT_DISTINCT_EVENTS"
+  ],
+  [
+   "SRT_DISTINCT_EVENTS",
+   "FIL_SCORABLE"
+  ],
+  [
+   "FIL_SCORABLE",
+   "AGG_POINTS"
+  ],
+  [
+   "AGG_POINTS",
+   "EXP_BALANCE"
+  ],
+  [
+   "EXP_BALANCE",
+   "TGT_LOYALTY_BALANCE"
+  ]
+ ]
+}

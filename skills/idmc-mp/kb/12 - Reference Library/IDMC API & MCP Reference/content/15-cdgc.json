@@ -1,0 +1,169 @@
+{
+ "id": "15-cdgc",
+ "title": "CDGC - Cloud Data Governance & Catalog",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/data360/executable/v1/catalogsource/{id}",
+     "POST",
+     "TRIGGER A SCAN — body capabilityNames[]",
+     "201 + jobId; 406 if already running  —  rejected: GET 405, DELETE 405; untested: PUT, PATCH"
+    ],
+    [
+     "/data360/executable/v1/executables?type=",
+     "GET, POST",
+     "Executable list",
+     "200  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/executable/v1/catalogsource/{id}/cancel",
+     "none proven",
+     "Cancel a running scan",
+     "404 — cancel only in the MCC UI  —  rejected: POST 404; untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/observable/api/v1/jobs?limit=N",
+     "GET",
+     "Job list — the /api/ segment is REQUIRED",
+     "200 — 463 jobs  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/observable/v1/jobs/{jobId}",
+     "GET",
+     "Poll one job + its task hierarchy",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/catalog-source-management/v1/catalogsources",
+     "GET, POST, DELETE",
+     "Catalog sources + their capabilities; Register a catalog source",
+     "200 — 4–9 sources  —  untested: PUT, PATCH; 201  —  untested: PUT, PATCH"
+    ],
+    [
+     "/data360/catalog-source-management/v1/catalogsources/{id}",
+     "GET, DELETE",
+     "Delete a catalog source",
+     "200  —  untested: POST, PUT, PATCH"
+    ],
+    [
+     "/data360/catalog-source-management/v1/catalogsourcetypes",
+     "none proven",
+     "Enumerate available source types",
+     "404 — MCC wizard picker only  —  rejected: GET 404; untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/search/api/v1/search",
+     "POST",
+     "ENTERPRISE SEARCH — raw Elasticsearch DSL",
+     "200 — needs X-INFA-SEARCH-LANGUAGE  —  rejected: GET 405; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/ccgf-contentv2/api/v1/publish",
+     "POST",
+     "THE CDGC WRITE PLANE — certify, relate, assign",
+     "207 Multi-Status + jobId  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/search/v1/assets",
+     "POST",
+     "Documented search path",
+     "400 — dead end; use search/api/v1"
+    ],
+    [
+     "/data360/content/v1/*",
+     "GET",
+     "Content service (15 sub-paths)",
+     "500 — present but misrouted"
+    ],
+    [
+     "/data360/classification/api/v1/accept",
+     "none proven",
+     "ACCEPT a CLAIRE classification",
+     "404 on 37+ paths; UI offers only Dismiss  —  rejected: POST 404, PUT 404, PATCH 404; untested: GET, DELETE"
+    ],
+    [
+     "/data360/classification/api/v1/classifications",
+     "GET",
+     "Read classifications directly",
+     "404 — read via search facets instead"
+    ],
+    [
+     "/data360/glossary/v1/terms",
+     "none proven",
+     "Business-glossary CRUD (~20 variants)",
+     "404 empty body = no route mounted  —  rejected: GET 404, POST 404, PUT 404, PATCH 404, DELETE 404"
+    ],
+    [
+     "/data360/lineage/v1/*",
+     "none proven",
+     "Lineage graph API (25+ variants)",
+     "404 — read lineage via catalog objects  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/asset/v1/*/stakeholders",
+     "none proven",
+     "Assign a steward or data owner",
+     "404/405 across 100+ variants  —  rejected: GET 404, POST 404, PUT 405, PATCH 404; untested: DELETE"
+    ],
+    [
+     "Profiling coverage read",
+     "none proven",
+     "core.profiled facet via search",
+     "200 — 671–1,755 profiled"
+    ],
+    [
+     "CLAIRE auto-classification",
+     "none proven",
+     "Generated automatically inside a scan",
+     "2,572 columns classified"
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "MCP coverage for this service",
+   "intro": "The CDGC Metadata Search MCP server covers this service. Two actions. One of them is the single most important thing MCP has that REST does not: get_asset_details returns LINEAGE, which no REST endpoint on this platform will give you.",
+   "header": [
+    "MCP action",
+    "Verb",
+    "Server",
+    "What it does",
+    "REST equivalent"
+   ],
+   "rows": [
+    [
+     "search_metadata",
+     "POST",
+     "CDGC Metadata Search",
+     "Natural-language catalog query returning matching asset IDs and core attributes.",
+     "Wraps POST /data360/search/api/v1/search. REST is richer: raw Elasticsearch DSL."
+    ],
+    [
+     "get_asset_details",
+     "POST",
+     "CDGC Metadata Search",
+     "Full metadata for one asset, INCLUDING lineage, profile and descriptions.",
+     "MCP ONLY for lineage. Every REST lineage path returns 404."
+    ]
+   ]
+  }
+ ],
+ "notes": [],
+ "open_questions": [
+  "Every data360 path in this document is probe-derived and has never been vendor-confirmed, because no CDGC API guide is held locally. Treat the whole CDGC section as lower-confidence than the CAI or CDQ sections until that guide is obtained."
+ ]
+}

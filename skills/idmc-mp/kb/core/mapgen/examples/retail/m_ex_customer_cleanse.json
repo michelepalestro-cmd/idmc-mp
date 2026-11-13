@@ -1,0 +1,624 @@
+{
+ "name": "m_ex_customer_cleanse",
+ "description": "[mapgen-suite S01] Customer standardisation (names, e-mail, phone, tier), previous-row duplicate detection over a Sorter, 3-way Router with a reason-coded reject sink, and a masked share of the valid rows.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_CUSTOMERS",
+   "conn": "BQ",
+   "query": "SELECT customer_id AS r_customer_id, full_name AS r_full_name, email AS r_email, phone AS r_phone, tier AS r_tier, city AS r_city, state AS r_state, zip AS r_zip, home_store_id AS r_home_store_id, created_at AS r_created_at FROM `${BQ_PROJECT}.${DATASET}.customers`",
+   "fields": [
+    [
+     "r_customer_id",
+     "STRING",
+     256
+    ],
+    [
+     "r_full_name",
+     "STRING",
+     256
+    ],
+    [
+     "r_email",
+     "STRING",
+     256
+    ],
+    [
+     "r_phone",
+     "STRING",
+     256
+    ],
+    [
+     "r_tier",
+     "STRING",
+     256
+    ],
+    [
+     "r_city",
+     "STRING",
+     256
+    ],
+    [
+     "r_state",
+     "STRING",
+     256
+    ],
+    [
+     "r_zip",
+     "STRING",
+     256
+    ],
+    [
+     "r_home_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "r_created_at",
+     "TIMESTAMP"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_STANDARDIZE",
+   "fields": [
+    {
+     "name": "v_sp",
+     "type": "STRING",
+     "expr": "LTRIM(RTRIM(REG_REPLACE(IIF(ISNULL(r_full_name), '', r_full_name), '\\s+', ' ')))",
+     "kind": "VARIABLE",
+     "prec": 256
+    },
+    {
+     "name": "v_comma",
+     "type": "INTEGER",
+     "expr": "INSTR(v_sp, ',')",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_name",
+     "type": "STRING",
+     "expr": "LTRIM(RTRIM(IIF(v_comma > 0, LTRIM(RTRIM(SUBSTR(v_sp, v_comma + 1))) || ' ' || LTRIM(RTRIM(SUBSTR(v_sp, 1, v_comma - 1))), v_sp)))",
+     "kind": "VARIABLE",
+     "prec": 256
+    },
+    {
+     "name": "v_email",
+     "type": "STRING",
+     "expr": "LOWER(LTRIM(RTRIM(IIF(ISNULL(r_email), '', r_email))))",
+     "kind": "VARIABLE",
+     "prec": 256
+    },
+    {
+     "name": "v_email_ok",
+     "type": "INTEGER",
+     "expr": "IIF(REG_MATCH(v_email, '^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$'), 1, 0)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_digits",
+     "type": "STRING",
+     "expr": "REG_REPLACE(IIF(ISNULL(r_phone), '', r_phone), '[^0-9]', '')",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_d10",
+     "type": "STRING",
+     "expr": "IIF(LENGTH(v_digits) = 11 AND SUBSTR(v_digits, 1, 1) = '1', SUBSTR(v_digits, 2), v_digits)",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_phone_ok",
+     "type": "INTEGER",
+     "expr": "IIF(LENGTH(v_d10) = 10, 1, 0)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_name_ok",
+     "type": "INTEGER",
+     "expr": "IIF(LENGTH(v_name) >= 3 AND INSTR(v_name, ' ') > 0, 1, 0)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "customer_id",
+     "type": "STRING",
+     "expr": "r_customer_id",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "std_name",
+     "type": "STRING",
+     "expr": "IIF(v_name = '', NULL, INITCAP(v_name))",
+     "kind": "OUTPUT",
+     "prec": 128
+    },
+    {
+     "name": "std_email",
+     "type": "STRING",
+     "expr": "IIF(v_email_ok = 1, v_email, NULL)",
+     "kind": "OUTPUT",
+     "prec": 128
+    },
+    {
+     "name": "email_key",
+     "type": "STRING",
+     "expr": "IIF(v_email_ok = 1, v_email, NULL)",
+     "kind": "OUTPUT",
+     "prec": 128
+    },
+    {
+     "name": "std_phone",
+     "type": "STRING",
+     "expr": "IIF(v_phone_ok = 1, '(' || SUBSTR(v_d10, 1, 3) || ') ' || SUBSTR(v_d10, 4, 3) || '-' || SUBSTR(v_d10, 7, 4), NULL)",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "email_ok",
+     "type": "INTEGER",
+     "expr": "v_email_ok",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "phone_ok",
+     "type": "INTEGER",
+     "expr": "v_phone_ok",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "name_ok",
+     "type": "INTEGER",
+     "expr": "v_name_ok",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "tier",
+     "type": "STRING",
+     "expr": "DECODE(UPPER(LTRIM(RTRIM(r_tier))), 'GOLD', 'Gold', 'SILVER', 'Silver', 'BRONZE', 'Bronze', 'Unknown')",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "city",
+     "type": "STRING",
+     "expr": "r_city",
+     "kind": "OUTPUT",
+     "prec": 64
+    },
+    {
+     "name": "state",
+     "type": "STRING",
+     "expr": "r_state",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "zip",
+     "type": "STRING",
+     "expr": "r_zip",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "home_store_id",
+     "type": "STRING",
+     "expr": "r_home_store_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "created_at",
+     "type": "TIMESTAMP",
+     "expr": "r_created_at",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_BY_EMAIL",
+   "keys": [
+    "email_key",
+    "created_at",
+    "customer_id"
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_PREV_ROW",
+   "fields": [
+    {
+     "name": "v_is_dup",
+     "type": "INTEGER",
+     "expr": "IIF(NOT ISNULL(email_key) AND email_key = v_prev_key, 1, 0)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_seq",
+     "type": "INTEGER",
+     "expr": "IIF(v_is_dup = 1, v_seq + 1, 1)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_prev_key",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(email_key), '', email_key)",
+     "kind": "VARIABLE",
+     "prec": 128
+    },
+    {
+     "name": "is_dup",
+     "type": "INTEGER",
+     "expr": "v_is_dup",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "dup_seq",
+     "type": "INTEGER",
+     "expr": "v_seq",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "router",
+   "name": "RTR_QUALITY",
+   "groups": [
+    [
+     "VALID",
+     "email_ok = 1 AND phone_ok = 1 AND name_ok = 1 AND is_dup = 0"
+    ],
+    [
+     "REVIEW",
+     "NOT (email_ok = 1 AND phone_ok = 1 AND name_ok = 1 AND is_dup = 0) AND (is_dup = 1 OR (email_ok = 1 AND name_ok = 1))"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_REVIEW",
+   "fields": [
+    {
+     "name": "review_reason",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, is_dup = 1, 'V01_POSSIBLE_DUPLICATE', phone_ok = 0, 'V02_PHONE_UNUSABLE', 'V99_OTHER')",
+     "kind": "OUTPUT",
+     "prec": 32
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_REJECT",
+   "fields": [
+    {
+     "name": "raw_name",
+     "type": "STRING",
+     "expr": "r_full_name",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "raw_email",
+     "type": "STRING",
+     "expr": "r_email",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "raw_phone",
+     "type": "STRING",
+     "expr": "r_phone",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "reject_code",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, name_ok = 0 AND email_ok = 0, 'R03_NAME_AND_EMAIL', name_ok = 0, 'R01_NAME_UNUSABLE', email_ok = 0, 'R02_EMAIL_INVALID', 'R99_OTHER')",
+     "kind": "OUTPUT",
+     "prec": 32
+    }
+   ]
+  },
+  {
+   "type": "masking",
+   "name": "DM_SHARE",
+   "entries": [
+    {
+     "field": "std_email",
+     "type": "Email address",
+     "prec": 128
+    },
+    {
+     "field": "std_phone",
+     "type": "Phone",
+     "prec": 32
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SHARE",
+   "fields": [
+    {
+     "name": "customer_id",
+     "type": "STRING",
+     "expr": "out_customer_id",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "masked_email",
+     "type": "STRING",
+     "expr": "out_std_email",
+     "kind": "OUTPUT",
+     "prec": 128
+    },
+    {
+     "name": "masked_phone",
+     "type": "STRING",
+     "expr": "out_std_phone",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "tier",
+     "type": "STRING",
+     "expr": "out_tier",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "state",
+     "type": "STRING",
+     "expr": "out_state",
+     "kind": "OUTPUT",
+     "prec": 16
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_CUSTOMER_CLEAN",
+   "conn": "BQ",
+   "object": "${DATASET}/out_customer_clean",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "std_name",
+     "STRING"
+    ],
+    [
+     "std_email",
+     "STRING"
+    ],
+    [
+     "std_phone",
+     "STRING"
+    ],
+    [
+     "tier",
+     "STRING"
+    ],
+    [
+     "city",
+     "STRING"
+    ],
+    [
+     "state",
+     "STRING"
+    ],
+    [
+     "zip",
+     "STRING"
+    ],
+    [
+     "home_store_id",
+     "STRING"
+    ],
+    [
+     "created_at",
+     "TIMESTAMP"
+    ],
+    [
+     "email_key",
+     "STRING"
+    ],
+    [
+     "dup_seq",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_CUSTOMER_REVIEW",
+   "conn": "BQ",
+   "object": "${DATASET}/out_customer_review",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "std_name",
+     "STRING"
+    ],
+    [
+     "std_email",
+     "STRING"
+    ],
+    [
+     "std_phone",
+     "STRING"
+    ],
+    [
+     "tier",
+     "STRING"
+    ],
+    [
+     "is_dup",
+     "INTEGER"
+    ],
+    [
+     "dup_seq",
+     "INTEGER"
+    ],
+    [
+     "review_reason",
+     "STRING"
+    ],
+    [
+     "created_at",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_CUSTOMER_REJECTS",
+   "conn": "BQ",
+   "object": "${DATASET}/out_customer_rejects",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "raw_name",
+     "STRING"
+    ],
+    [
+     "raw_email",
+     "STRING"
+    ],
+    [
+     "raw_phone",
+     "STRING"
+    ],
+    [
+     "reject_code",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_CUSTOMER_SHARE",
+   "conn": "BQ",
+   "object": "${DATASET}/out_customer_share_masked",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "masked_email",
+     "STRING"
+    ],
+    [
+     "masked_phone",
+     "STRING"
+    ],
+    [
+     "tier",
+     "STRING"
+    ],
+    [
+     "state",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_CUSTOMERS",
+   "EXP_STANDARDIZE"
+  ],
+  [
+   "EXP_STANDARDIZE",
+   "SRT_BY_EMAIL"
+  ],
+  [
+   "SRT_BY_EMAIL",
+   "EXP_PREV_ROW"
+  ],
+  [
+   "EXP_PREV_ROW",
+   "RTR_QUALITY"
+  ],
+  [
+   "RTR_QUALITY.VALID",
+   "TGT_CUSTOMER_CLEAN"
+  ],
+  [
+   "RTR_QUALITY.VALID",
+   "DM_SHARE"
+  ],
+  [
+   "DM_SHARE",
+   "EXP_SHARE"
+  ],
+  [
+   "EXP_SHARE",
+   "TGT_CUSTOMER_SHARE"
+  ],
+  [
+   "RTR_QUALITY.REVIEW",
+   "EXP_REVIEW"
+  ],
+  [
+   "EXP_REVIEW",
+   "TGT_CUSTOMER_REVIEW"
+  ],
+  [
+   "RTR_QUALITY.DEFAULT1",
+   "EXP_REJECT"
+  ],
+  [
+   "EXP_REJECT",
+   "TGT_CUSTOMER_REJECTS"
+  ]
+ ]
+}

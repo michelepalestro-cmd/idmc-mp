@@ -1,0 +1,251 @@
+{
+ "name": "m_ex_order_share_selfjoin",
+ "description": "[mapgen-suite S06] Same-source self-join: one pipeline is sorted, one branch is aggregated with sorted input, and a sorted-input Joiner puts each order next to its customer's total (share of wallet, above-average flag).",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_ORDERS",
+   "conn": "BQ",
+   "query": "SELECT order_id, customer_id, order_total, order_ts, status FROM `${BQ_PROJECT}.${DATASET}.orders`",
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     256
+    ],
+    [
+     "customer_id",
+     "STRING",
+     256
+    ],
+    [
+     "order_total",
+     "NUMERIC"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "status",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_COMPLETED",
+   "cond": "NOT ISNULL(customer_id) AND status = 'COMPLETED'"
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_CUSTOMER",
+   "keys": [
+    "customer_id",
+    "order_id"
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_CUSTOMER",
+   "groupBy": [
+    "customer_id"
+   ],
+   "fields": [
+    {
+     "name": "cust_total",
+     "type": "NUMERIC",
+     "expr": "SUM(order_total)"
+    },
+    {
+     "name": "cust_orders",
+     "type": "INTEGER",
+     "expr": "COUNT(order_id)"
+    }
+   ],
+   "set": {
+    "inputSorted": "true"
+   },
+   "advanced": [
+    [
+     "Sorted Input",
+     "true"
+    ]
+   ]
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_SELF",
+   "master": "AGG_CUSTOMER",
+   "detail": "SRT_CUSTOMER",
+   "cond": [
+    [
+     "m_customer_id",
+     "customer_id"
+    ]
+   ],
+   "join": "NORMAL",
+   "sorted": true
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SHARE",
+   "fields": [
+    {
+     "name": "share_of_customer",
+     "type": "NUMERIC",
+     "expr": "IIF(cust_total = 0, NULL, ROUND(order_total / cust_total, 6))",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "above_avg",
+     "type": "STRING",
+     "expr": "IIF(order_total * cust_orders > cust_total, 'Y', 'N')",
+     "kind": "OUTPUT",
+     "prec": 1
+    }
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_ABOVE_AVG",
+   "cond": "above_avg = 'Y'"
+  },
+  {
+   "type": "target",
+   "name": "TGT_ORDER_SHARE",
+   "conn": "BQ",
+   "object": "${DATASET}/out_order_share",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "order_total",
+     "NUMERIC"
+    ],
+    [
+     "cust_total",
+     "NUMERIC"
+    ],
+    [
+     "cust_orders",
+     "INTEGER"
+    ],
+    [
+     "share_of_customer",
+     "NUMERIC"
+    ],
+    [
+     "above_avg",
+     "STRING"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_ABOVE_AVG",
+   "conn": "BQ",
+   "object": "${DATASET}/out_above_avg_orders",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "order_total",
+     "NUMERIC"
+    ],
+    [
+     "cust_total",
+     "NUMERIC"
+    ],
+    [
+     "cust_orders",
+     "INTEGER"
+    ],
+    [
+     "share_of_customer",
+     "NUMERIC"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_ORDERS",
+   "FIL_COMPLETED"
+  ],
+  [
+   "FIL_COMPLETED",
+   "SRT_CUSTOMER"
+  ],
+  [
+   "SRT_CUSTOMER",
+   "AGG_CUSTOMER"
+  ],
+  [
+   "AGG_CUSTOMER",
+   "JNR_SELF.Master",
+   {
+    "customer_id": "m_customer_id",
+    "cust_total": "cust_total",
+    "cust_orders": "cust_orders"
+   }
+  ],
+  [
+   "SRT_CUSTOMER",
+   "JNR_SELF.Detail"
+  ],
+  [
+   "JNR_SELF",
+   "EXP_SHARE"
+  ],
+  [
+   "EXP_SHARE",
+   "TGT_ORDER_SHARE"
+  ],
+  [
+   "EXP_SHARE",
+   "FIL_ABOVE_AVG"
+  ],
+  [
+   "FIL_ABOVE_AVG",
+   "TGT_ABOVE_AVG"
+  ]
+ ]
+}

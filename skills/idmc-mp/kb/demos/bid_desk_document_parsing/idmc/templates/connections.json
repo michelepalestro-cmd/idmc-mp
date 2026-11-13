@@ -1,0 +1,50 @@
+{
+ "_readme": "v2 connection bodies (POST /api/v2/connection; update = POST /api/v2/connection/<id> with id). Placeholders: dollar-brace config keys, 'state:' = ids the build created, 'env:KEY' = filled from the .env at --execute only (masked otherwise). PROVEN shapes (2026-10).",
+ "crm": {
+  "@type": "connection",
+  "name": "${connections.crm}",
+  "type": "Salesforce",
+  "description": "Bid Desk: read the agencies (Account) and the bid documents attached to them (ContentVersion). Runs on the agent group whose egress IP the CRM org trusts (then the security token may stay empty).",
+  "username": "${env:SF_USERNAME}",
+  "password": "${env:SF_PASSWORD}",
+  "securityToken": "${env:SF_SECURITY_TOKEN}",
+  "serviceUrl": "${salesforce.login_url}/services/Soap/u/${salesforce.soap_api_version}",
+  "runtimeEnvironmentId": "${state:runtime.crm}"
+ },
+ "warehouse": {
+  "@type": "connection",
+  "name": "${connections.warehouse}",
+  "type": "TOOLKIT_CCI",
+  "instanceName": "Snowflake Cloud Data Warehouse V2",
+  "description": "Bid Desk: Snowflake ${snowflake.database}.${snowflake.schema} (BID_* objects). Key pair: the private key file sits at the same path on every agent of the group.",
+  "runtimeEnvironmentId": "${state:runtime.main}",
+  "connParams": {
+   "authentication": "KeyPair",
+   "user": "${env:SNOWFLAKE_USER}",
+   "account": "${snowflake.account}",
+   "warehouse": "${snowflake.warehouse}",
+   "role": "${snowflake.role}",
+   "privateKeyFile": "${snowflake.private_key_file_on_agent}",
+   "additionalparam": "db=${snowflake.database}&schema=${snowflake.schema}"
+  }
+ },
+ "sharepoint": {
+  "@type": "connection",
+  "name": "${connections.sharepoint}",
+  "type": "TOOLKIT",
+  "instanceName": "Sharepoint Online",
+  "description": "Bid Desk: SharePoint Online site, library ${sharepoint.library}/${sharepoint.root_folder}/<agency> - <solicitation>/. Delegated OAuth (Entra app). Uploads read the bytes from Attachment_File_Path on the agent.",
+  "runtimeEnvironmentId": "${state:runtime.main}",
+  "connParams": {
+   "Authentication": "Microsoft Entra ID",
+   "Account Types": "Single Tenant",
+   "Single Tenant Id": "${env:ENTRA_TENANT_ID}",
+   "Client_Id": "${env:ENTRA_CLIENT_ID}",
+   "Client_Secret": "${env:ENTRA_CLIENT_SECRET}",
+   "Refresh_Token": "${env:SHAREPOINT_REFRESH_TOKEN}",
+   "Redirect_URL": "${sharepoint.redirect_url}",
+   "URL": "${sharepoint.site_url}",
+   "Attachment_File_Path": "${sharepoint.download_dir_on_agent}"
+  }
+ }
+}

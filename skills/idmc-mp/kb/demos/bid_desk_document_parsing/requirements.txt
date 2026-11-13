@@ -1,0 +1,1 @@
+# Bid Desk blueprint: standard library only (Python 3.10+). Nothing to install.

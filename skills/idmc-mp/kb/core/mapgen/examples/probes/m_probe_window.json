@@ -1,0 +1,91 @@
+{
+ "name": "m_probe_window",
+ "description": "[mapgen probe] Expression window functions (LAG over customer_id ordered by seq)",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_TXN",
+   "conn": "BQ",
+   "query": "SELECT 'C1' AS customer_id, 1 AS seq, 10 AS amount UNION ALL SELECT 'C1', 2, 5 UNION ALL SELECT 'C2', 1, 7",
+   "fields": [
+    [
+     "customer_id",
+     "STRING",
+     64
+    ],
+    [
+     "seq",
+     "INTEGER"
+    ],
+    [
+     "amount",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_WIN",
+   "window": {
+    "partitionBy": [
+     "customer_id"
+    ],
+    "orderBy": [
+     "seq"
+    ],
+    "startOffset": -1,
+    "endOffset": 0,
+    "allowUnsupported": true
+   },
+   "fields": [
+    {
+     "name": "prev_amount",
+     "type": "INTEGER",
+     "expr": "LAG(amount, 1, 0)"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_WIN",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_window",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "seq",
+     "INTEGER"
+    ],
+    [
+     "amount",
+     "INTEGER"
+    ],
+    [
+     "prev_amount",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_TXN",
+   "EXP_WIN"
+  ],
+  [
+   "EXP_WIN",
+   "TGT_WIN"
+  ]
+ ]
+}

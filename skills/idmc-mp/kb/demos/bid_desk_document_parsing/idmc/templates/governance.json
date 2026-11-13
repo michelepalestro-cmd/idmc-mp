@@ -1,0 +1,170 @@
+{
+ "_readme": "Catalog (CDGC) sources, glossary and lineage of the Bid Desk. Sources are CLONED from an existing source of the same type in your org (config idmc.catalog_templates): GET it, strip read-only fields, new name + description + scope, multipart POST with one part 'dataSource' (KB CDGC 02). A link target is '<SCHEMA>.<TABLE>[.<COLUMN>]' in the Snowflake catalog source.",
+ "sources": {
+  "${idmc.project} - Snowflake": {
+   "type": "Snowflake",
+   "description": "Bid Desk: the Snowflake tables and views (Bronze / Silver / Gold BID_*: the bid documents, what CLAIRE read, the Data Quality results, the decisions), with data profiling of Silver and Gold.",
+   "connection": "${state:conn.warehouse}",
+   "metadata_filter": [
+    "${snowflake.database}.${snowflake.schema}.BID_*"
+   ],
+   "profiling_filter": [
+    "${snowflake.database}.${snowflake.schema}.BID_SLV_*",
+    "${snowflake.database}.${snowflake.schema}.BID_GLD_*"
+   ]
+  },
+  "${idmc.project} - Salesforce": {
+   "type": "Salesforce",
+   "description": "Bid Desk: the CRM objects the pipeline starts from: Account (the agencies) and ContentVersion (the bid documents attached to them).",
+   "connection": "${state:conn.crm}",
+   "runtime": "${state:runtime.crm}",
+   "objects": [
+    "Account",
+    "ContentVersion"
+   ]
+  },
+  "${idmc.project} - Data Lineage": {
+   "type": "IICS",
+   "description": "Bid Desk lineage: ONLY the IDMC project '${idmc.project}', stitched to the Snowflake and Salesforce sources above.",
+   "project_filter": [
+    "${idmc.project}"
+   ],
+   "stitch": [
+    "${idmc.project} - Snowflake",
+    "${idmc.project} - Salesforce"
+   ],
+   "login_env": [
+    "IDMC_USER",
+    "IDMC_PASS",
+    "IDMC_LOGIN_HOST"
+   ],
+   "_login_note": "the IICS source's three login options (user, its pass option, URL) are filled from these .env keys at --execute, in that order"
+  }
+ },
+ "scan_order": [
+  "${idmc.project} - Salesforce",
+  "${idmc.project} - Snowflake",
+  "${idmc.project} - Data Lineage"
+ ],
+ "glossary": {
+  "domain": {
+   "name": "${idmc.project}",
+   "description": "The words of the public-sector bid desk, as the solicitations use them, linked to the Snowflake columns that hold them."
+  },
+  "terms": [
+   {
+    "name": "Agency",
+    "definition": "The public-sector buyer that issues a solicitation (a county cooperative, a school district).",
+    "links": [
+     "${snowflake.schema}.BID_GLD_READINESS.AGENCY",
+     "${snowflake.schema}.BID_BRZ_SF_AGENCY.NAME"
+    ]
+   },
+   {
+    "name": "Solicitation",
+    "definition": "An agency's formal request for bids, identified by its solicitation number.",
+    "links": [
+     "${snowflake.schema}.BID_GLD_READINESS.SOLICITATION_NO",
+     "${snowflake.schema}.BID_V_SOLICITATIONS"
+    ]
+   },
+   {
+    "name": "Bid packet",
+    "definition": "The solicitation document with the invitation, terms, the Bid Proposal Page and the bid form.",
+    "links": [
+     "${snowflake.schema}.BID_BRZ_BID_PACKET"
+    ]
+   },
+   {
+    "name": "Signature page",
+    "definition": "A required form (Exhibit A) the vendor fills in and signs; an unsigned form is rejected.",
+    "links": [
+     "${snowflake.schema}.BID_BRZ_SIGNATURE_PAGE"
+    ]
+   },
+   {
+    "name": "Bid form line",
+    "definition": "One item the agency buys: item number, description, unit, yearly quantity; the vendor adds price and brand.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_BID_LINES"
+    ]
+   },
+   {
+    "name": "Item number",
+    "definition": "The agency's own five-digit number for an item on the bid form.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_BID_LINES.ITEM_NO"
+    ]
+   },
+   {
+    "name": "Unit of measure",
+    "definition": "The unit the agency bids and buys in: EACH, CASE, 5-PK, 2-PK.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_BID_LINES.UNIT"
+    ]
+   },
+   {
+    "name": "Quantity needed",
+    "definition": "The quantity the agency expects to buy over the contract term.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_BID_LINES.QTY_NEEDED"
+    ]
+   },
+   {
+    "name": "Unit price",
+    "definition": "The vendor's price per unit; the agency counts two decimals only.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_BID_LINES.UNIT_PRICE",
+     "${snowflake.schema}.BID_SLV_BID_LINES.UNIT_PRICE_TEXT"
+    ]
+   },
+   {
+    "name": "Brand bid",
+    "definition": "The brand and product number the vendor offers for a line.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_BID_LINES.BRAND_BID"
+    ]
+   },
+   {
+    "name": "Required field",
+    "definition": "A response field the solicitation requires before the bid can be submitted.",
+    "links": [
+     "${snowflake.schema}.BID_SLV_REQUIRED_FIELDS.FIELD_NAME"
+    ]
+   },
+   {
+    "name": "Bid readiness decision",
+    "definition": "What the sales desk must do next for a solicitation: price the bid, fix items, sign or submit the form.",
+    "links": [
+     "${snowflake.schema}.BID_GLD_READINESS.DECISION"
+    ]
+   },
+   {
+    "name": "Data quality score",
+    "definition": "The share of rule checks that passed for a solicitation (lines and required fields).",
+    "links": [
+     "${snowflake.schema}.BID_GLD_READINESS.DQ_SCORE",
+     "${snowflake.schema}.BID_DQ_SCORECARD.SCORE_PCT"
+    ]
+   }
+  ]
+ },
+ "lineage": {
+  "tableau_views": [
+   "BID_V_BI_DECISIONS",
+   "BID_V_BI_BID_LINES",
+   "BID_V_BI_FIELDS",
+   "BID_V_BI_DQ",
+   "BID_V_BI_PARSING"
+  ],
+  "start_object": "BID_V_BI_DECISIONS",
+  "tables": [
+   "BID_GLD_READINESS",
+   "BID_SLV_BID_LINES",
+   "BID_SLV_REQUIRED_FIELDS",
+   "BID_BRZ_BID_PACKET",
+   "BID_BRZ_SIGNATURE_PAGE",
+   "BID_BRZ_SF_DOCUMENT"
+  ]
+ }
+}

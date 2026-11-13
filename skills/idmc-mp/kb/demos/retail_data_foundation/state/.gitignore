@@ -1,0 +1,4 @@
+# Local, org-specific output of the build. Never share or commit it.
+*
+!README.md
+!.gitignore

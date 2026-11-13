@@ -1,0 +1,94 @@
+{
+ "name": "m_probe_params",
+ "description": "[mapgen probe] in-out parameters: $$p_min_qty in a filter, $$p_max_seq as a SETMAXVARIABLE high-water mark",
+ "inOutParameters": [
+  {
+   "name": "p_min_qty",
+   "type": "INTEGER",
+   "default": "2"
+  },
+  {
+   "name": "p_max_seq",
+   "type": "INTEGER",
+   "default": "0",
+   "aggregation": "MAX",
+   "description": "high-water mark"
+  }
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_SEQ",
+   "conn": "BQ",
+   "query": "SELECT 1 AS seq, 1 AS qty UNION ALL SELECT 2, 2 UNION ALL SELECT 3, 3 UNION ALL SELECT 4, 1 UNION ALL SELECT 5, 4",
+   "fields": [
+    [
+     "seq",
+     "INTEGER"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_NEW",
+   "cond": "qty >= $$p_min_qty AND seq > $$p_max_seq"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_MARK",
+   "fields": [
+    {
+     "name": "o_set",
+     "type": "INTEGER",
+     "expr": "SETMAXVARIABLE($$p_max_seq, seq)"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_PARAMS",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_params",
+   "truncate": true,
+   "fields": [
+    [
+     "seq",
+     "INTEGER"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "o_set",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_SEQ",
+   "FIL_NEW"
+  ],
+  [
+   "FIL_NEW",
+   "EXP_MARK"
+  ],
+  [
+   "EXP_MARK",
+   "TGT_PARAMS"
+  ]
+ ]
+}

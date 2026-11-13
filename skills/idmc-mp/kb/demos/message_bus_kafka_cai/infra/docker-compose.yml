@@ -1,0 +1,175 @@
+# Message Bus Replacement (mbr): stand-in systems for the Kafka + CAI demo.
+# Run on the SAME Linux host as the Secure Agent (the agent reaches every port below on 127.0.0.1).
+#   docker compose --env-file "<path to your toolkit .env>" -f infra/docker-compose.yml up -d
+# Every value comes from the toolkit .env (keys in ../ENV_KEYS.md); nothing secret is written here.
+# No Python runs in this stack: Kafka, Artemis, Postgres, PostgREST (SQL functions), Oracle Free, curl (optional timer).
+name: mbr
+
+x-logging: &logging
+  driver: json-file
+  options: { max-size: "10m", max-file: "3" }
+
+networks:
+  mbr: {}
+
+volumes:
+  kafka_data: {}
+  artemis_data: {}
+  pg_data: {}
+  oracle_data: {}
+
+services:
+  # ---------------------------------------------------------------- the new bus: Apache Kafka 4.3 in KRaft mode
+  mbr-kafka:
+    image: apache/kafka:4.3.1          # the JVM image: it carries /opt/kafka/bin (topics, console producer, groups)
+    container_name: mbr-kafka
+    restart: unless-stopped
+    mem_limit: 1g
+    logging: *logging
+    networks: [mbr]
+    ports:
+      - "127.0.0.1:9092:9092"          # HOST listener: the Secure Agent's CAI Kafka listeners and producers
+    environment:
+      CLUSTER_ID: "${MBR_KAFKA_CLUSTER_ID:?set MBR_KAFKA_CLUSTER_ID in the toolkit .env}"
+      KAFKA_NODE_ID: "1"
+      KAFKA_PROCESS_ROLES: "broker,controller"        # 1 node = broker + controller (production: 3+ nodes)
+      KAFKA_LISTENERS: "INTERNAL://:29092,HOST://:9092,CONTROLLER://:29093"
+      KAFKA_ADVERTISED_LISTENERS: "INTERNAL://mbr-kafka:29092,HOST://127.0.0.1:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: "INTERNAL:PLAINTEXT,HOST:PLAINTEXT,CONTROLLER:PLAINTEXT"
+      KAFKA_INTER_BROKER_LISTENER_NAME: "INTERNAL"
+      KAFKA_CONTROLLER_LISTENER_NAMES: "CONTROLLER"
+      KAFKA_CONTROLLER_QUORUM_VOTERS: "1@mbr-kafka:29093"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: "1"
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: "1"
+      KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS: "0"
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "false"        # topics are created by mbr-kafka-init with explicit partitions
+      KAFKA_LOG_DIRS: "/var/lib/kafka/data"
+      KAFKA_LOG_RETENTION_HOURS: "168"                # 7 days: a reader can replay after it has read
+      KAFKA_MESSAGE_MAX_BYTES: "5242880"              # 5 MB: a 19,500-line PO is about 4.1 MB
+      KAFKA_REPLICA_FETCH_MAX_BYTES: "5242880"
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/kafka/bin/kafka-broker-api-versions.sh --bootstrap-server localhost:9092 >/dev/null 2>&1"]
+      interval: 10s
+      timeout: 10s
+      retries: 12
+
+  mbr-kafka-init:
+    image: apache/kafka:4.3.1
+    container_name: mbr-kafka-init
+    networks: [mbr]
+    depends_on:
+      mbr-kafka: { condition: service_healthy }
+    entrypoint: ["/bin/sh", "/init/create_topics.sh"]
+    environment:
+      BOOTSTRAP: "mbr-kafka:29092"
+    volumes:
+      - ./kafka/create_topics.sh:/init/create_topics.sh:ro
+    restart: "no"
+
+  # ---------------------------------------------------------------- the legacy bus: JMS stand-in (AMQP 1.0 + STOMP)
+  mbr-artemis:
+    image: apache/activemq-artemis:2.42.0-alpine
+    container_name: mbr-artemis
+    restart: unless-stopped
+    mem_limit: 640m
+    logging: *logging
+    networks: [mbr]
+    ports:
+      - "127.0.0.1:5672:5672"          # AMQP 1.0: the CAI AMQP connector (Qpid JMS) reads the legacy queues here
+      - "127.0.0.1:61616:61616"        # all-protocol acceptor: the legacy publisher stand-in (verify/ sends STOMP here)
+      - "127.0.0.1:18161:8161"         # web console (local only)
+    environment:
+      ARTEMIS_USER: "${MBR_ARTEMIS_USER:?set MBR_ARTEMIS_USER}"
+      ARTEMIS_PASSWORD: "${MBR_ARTEMIS_PASSWORD:?set MBR_ARTEMIS_PASSWORD}"
+      ANONYMOUS_LOGIN: "false"
+      EXTRA_ARGS: "--http-host 0.0.0.0 --relax-jolokia --java-memory 384M"
+    volumes:
+      - artemis_data:/var/lib/artemis-instance
+
+  # ---------------------------------------------------------------- ops ledger + hospital (error queue) + stand-in targets
+  mbr-pg:
+    image: postgres:16-alpine
+    container_name: mbr-pg
+    restart: unless-stopped
+    mem_limit: 512m
+    logging: *logging
+    networks: [mbr]
+    ports:
+      - "127.0.0.1:15432:5432"         # the IDMC PostgreSQL connection (nightly batch, optional CDC) reads here
+    environment:
+      POSTGRES_USER: "${MBR_PG_USER:?set MBR_PG_USER}"
+      POSTGRES_PASSWORD: "${MBR_PG_PASSWORD:?set MBR_PG_PASSWORD}"
+      POSTGRES_DB: "mbr"
+      MBR_PGRST_AUTH_PASSWORD: "${MBR_PGRST_AUTH_PASSWORD:?set MBR_PGRST_AUTH_PASSWORD}"
+      MBR_CDI_PG_PASSWORD: "${MBR_CDI_PG_PASSWORD:?set MBR_CDI_PG_PASSWORD}"
+    command: ["postgres", "-c", "wal_level=logical", "-c", "max_replication_slots=4", "-c", "max_wal_senders=4"]
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+      - ./postgres:/docker-entrypoint-initdb.d:ro    # 00_roles.sh, 10_schema.sql, 20_api.sql, 30_seed.sql (first start only)
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U \"$$POSTGRES_USER\" -d mbr"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  # PostgREST turns the SQL functions of schema mbr_api into the REST API that CAI calls (ledger, error queue and the
+  # simulated merchandising / warehouse / store POS systems). The logic is SQL, not a program of ours.
+  mbr-api:
+    image: postgrest/postgrest:v12.2.3
+    container_name: mbr-api
+    restart: unless-stopped
+    mem_limit: 128m
+    logging: *logging
+    networks: [mbr]
+    depends_on:
+      mbr-pg: { condition: service_healthy }
+    ports:
+      - "127.0.0.1:18080:3000"         # CAI REST connections: http://127.0.0.1:18080/rpc/<function>
+    environment:
+      PGRST_DB_URI: "postgres://mbr_api_login:${MBR_PGRST_AUTH_PASSWORD}@mbr-pg:5432/mbr"
+      PGRST_DB_SCHEMAS: "mbr_api"
+      PGRST_DB_ANON_ROLE: "mbr_api_anon"
+      PGRST_DB_POOL: "20"
+      PGRST_SERVER_PORT: "3000"
+
+  # ---------------------------------------------------------------- the nightly batch target
+  mbr-oracle:
+    image: gvenzl/oracle-free:23-slim
+    container_name: mbr-oracle
+    restart: unless-stopped
+    mem_limit: 2g
+    logging: *logging
+    networks: [mbr]
+    ports:
+      - "127.0.0.1:1521:1521"          # the IDMC Oracle connection (service FREEPDB1, schema MBR_BATCH)
+    environment:
+      ORACLE_PASSWORD: "${MBR_ORACLE_PASSWORD:?set MBR_ORACLE_PASSWORD}"
+      APP_USER: "MBR_BATCH"
+      APP_USER_PASSWORD: "${MBR_ORACLE_BATCH_PASSWORD:?set MBR_ORACLE_BATCH_PASSWORD}"
+    volumes:
+      - oracle_data:/opt/oracle/oradata
+      - ./oracle:/container-entrypoint-initdb.d:ro
+    healthcheck:
+      test: ["CMD", "healthcheck.sh"]
+      interval: 20s
+      timeout: 10s
+      retries: 30
+
+  # ---------------------------------------------------------------- optional: the hospital sweep timer
+  # The CAI scheduler does not start agent-run processes (KB L-CAI-142), so a 1-minute timer posts to the agent's
+  # anonymous endpoint of mbr_hospital_retry. Start with: docker compose ... --profile timer up -d mbr-timer
+  mbr-timer:
+    image: curlimages/curl:8.10.1
+    container_name: mbr-timer
+    profiles: ["timer"]
+    restart: unless-stopped
+    network_mode: host                 # reaches the agent's process engine on 127.0.0.1:7080
+    environment:
+      MBR_SWEEP_URL: "${MBR_SWEEP_URL:-http://127.0.0.1:7080/process-engine/public/rt/mbr_hospital_retry}"
+      MBR_SWEEP_EVERY_S: "${MBR_SWEEP_EVERY_S:-60}"
+    entrypoint: ["/bin/sh", "/timer/hospital_timer.sh"]
+    volumes:
+      - ./timer/hospital_timer.sh:/timer/hospital_timer.sh:ro

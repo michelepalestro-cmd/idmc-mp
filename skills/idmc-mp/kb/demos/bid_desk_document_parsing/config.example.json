@@ -1,0 +1,95 @@
+{
+  "_readme": "Copy to config.json and replace every <...>. No secrets here: credentials come from the toolkit .env (ENV_KEYS.md). Ids the build creates go to state/ids.json.",
+  "prefix": "bid_",
+  "idmc": {
+    "project": "Bid Desk",
+    "project_fallback_name": "Bid Desk",
+    "folders": {
+      "f1": "1 - CRM to SharePoint",
+      "f2": "2 - Read with CLAIRE",
+      "f3": "3 - Data Quality",
+      "f4": "4 - Bid Readiness",
+      "f5": "5 - Run and Reset"
+    },
+    "runtime_environment": "<Secure Agent group that runs the Snowflake, CLAIRE and DQ steps>",
+    "runtime_environment_crm": "<Secure Agent group whose egress IP your Salesforce org trusts (can be the same)>",
+    "agent_root": "/opt/bid_desk",
+    "agent_python": "/usr/bin/python3",
+    "template_rule_spec": "<path of ANY existing rule specification with ONE string input, e.g. MyProject/MyFolder/my_rule>",
+    "catalog_templates": {
+      "Snowflake": "<id of any existing Snowflake catalog source in your org>",
+      "Salesforce": "<id of any existing Salesforce catalog source>",
+      "IICS": "<id of any existing IDMC (IICS) lineage catalog source>"
+    }
+  },
+  "connections": {
+    "crm": "Bid Desk - Salesforce",
+    "warehouse": "Bid Desk - Snowflake",
+    "sharepoint": "Bid Desk - SharePoint"
+  },
+  "salesforce": {
+    "login_url": "https://login.salesforce.com",
+    "soap_api_version": "64.0",
+    "rest_api_version": "61.0",
+    "account_type": "Prospect",
+    "file_description": "Bid Desk demo - public-sector solicitation (synthetic sample)",
+    "agencies": [
+      {"name": "Example County Purchasing Cooperative", "solicitation": "ECPC-2031-07", "doc_type": "Bid packet",
+       "original": "infra/sample_docs/ECPC-2031-07 Janitorial Bid Packet.pdf",
+       "whatif": "infra/sample_docs/whatif/ECPC-2031-07 Janitorial Bid Packet (completed).pdf"},
+      {"name": "Example Unified School District", "solicitation": "EUSD-31-RFQ-04", "doc_type": "Signature page",
+       "original": "infra/sample_docs/EUSD-31-RFQ-04 - EXHIBIT A - SIGNATURE PAGE.pdf",
+       "whatif": "infra/sample_docs/whatif/EUSD-31-RFQ-04 - EXHIBIT A - SIGNATURE PAGE (completed).pdf"}
+    ]
+  },
+  "snowflake": {
+    "account": "<orgname-accountname>",
+    "database": "BID_DEMO",
+    "schema": "BID_DESK",
+    "warehouse": "BID_WH",
+    "role": "BID_ROLE",
+    "monitor": "BID_GUARD",
+    "monthly_credit_quota": 20,
+    "private_key_file_on_agent": "/opt/bid_desk/keys/bid_rsa_key.p8"
+  },
+  "sharepoint": {
+    "site_url": "https://<tenant>.sharepoint.com/sites/<site>",
+    "site_relative": "/sites/<site>",
+    "library": "Shared Documents",
+    "library_object": "Documents",
+    "root_folder": "Bid Desk",
+    "download_dir_on_agent": "/opt/bid_desk/sp_download",
+    "redirect_url": "https://login.microsoftonline.com/common/oauth2/nativeclient"
+  },
+  "claire": {
+    "bid": {"model": "Bid Desk - Bid packet model", "train_on": "whatif"},
+    "sig": {"model": "Bid Desk - Signature page model", "train_on": "whatif"}
+  },
+  "schedule": {
+    "name": "Bid Desk - Nightly 6 pm",
+    "interval": "Daily",
+    "frequency": 1,
+    "start_utc": "2031-01-01T23:00",
+    "time_zone": "America/New_York"
+  },
+  "tableau": {
+    "server": "https://<your-tableau-server>",
+    "site": "",
+    "api_version": "3.14",
+    "project": "Bid Desk",
+    "workbook": "Bid Desk - Document to Decision"
+  },
+  "access": {
+    "enabled": false,
+    "viewer_user": "<IDMC user name of the person who should see only this project>",
+    "role": "Bid Desk Viewer",
+    "group": "Bid Desk - Viewers",
+    "keep_users": ["<your own IDMC user name>"],
+    "keep_groups": ["<every group that must keep seeing the rest of the org>"],
+    "cai_anonymous_user_prefix": "<prefix of the org's CAI anonymous user, if CAI is used>"
+  },
+  "expected": {
+    "start": {"ECPC-2031-07": "PRICE THE BID", "EUSD-31-RFQ-04": "SIGN THE FORM"},
+    "whatif": {"ECPC-2031-07": "FIX 2 ITEMS", "EUSD-31-RFQ-04": "SUBMIT THE FORM"}
+  }
+}

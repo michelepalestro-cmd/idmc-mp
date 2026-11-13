@@ -1,0 +1,16 @@
+﻿Auth plane,Host pattern,Header(s) to send,Endpoints on this plane
+v3 platform,<pod>.dm-us.informaticacloud.com/saas,INFA-SESSION-ID,36
+Identity / CDGC,idmc-api.dm-us.informaticacloud.com,Bearer + IDS-SESSION-ID + X-INFA-ORG-ID,35
+v2 platform,<pod>.dm-us.informaticacloud.com/saas,icSessionId,28
+CAI runtime,<pod>-cai.dm-us.informaticacloud.com,INFA-SESSION-ID (+ vnd.api+json to publish),24
+Data Profiling,<pod>-dqprofile.dm-us.informaticacloud.com,IDS-SESSION-ID (SPA-injected),10
+MDM runtime,<pod>-mdm.dm-us.informaticacloud.com,Bearer + IDS-SESSION-ID + X-INFA-ORG-ID,8
+CDQ dictionaries,<pod>-dqcloud-api.dm-us.informaticacloud.com,Bearer JWT or IDS-SESSION-ID,6
+Identity,<pod>.dm-us.informaticacloud.com,"body auth, then IDS-SESSION-ID",4
+CDGC write plane,cdgc-api.dm-us.informaticacloud.com,Bearer + IDS-SESSION-ID + X-INFA-ORG-ID,4
+Ingestion (DBMI),<pod>-ing.dm-us.informaticacloud.com,Bearer + IDS-SESSION-ID,4
+Anonymous CAI,<pod>-cai.dm-us.informaticacloud.com,no header at all,2
+Secure Agent,<agent-host>:<httpPort>,agent-local,2
+CAI runtime,<pod>-cai.dm-us.informaticacloud.com,INFA-SESSION-ID,2
+v2 platform,<pod>.dm-us.informaticacloud.com,issues icSessionId,1
+v3 platform (probed),<pod>.dm-us.informaticacloud.com/saas,INFA-SESSION-ID,1

@@ -1,0 +1,139 @@
+{
+  "id": "54-runtime-and-deployment",
+  "title": "Runtime environments, engines and connector deployment",
+  "owner": null,
+  "last_verified": "2026-07-26",
+  "status": "migrated",
+  "intro": "Everything about getting IDMC to actually RUN something: which runtime type to pick, what an engine is versus a licence, where third-party drivers go, and how to size the host. This is the layer that decides whether a perfectly-formed API call does any work, and it is where a whole deployment session was spent learning things no endpoint table would tell you.\n\nThe governing idea: **a runtime environment is a NETWORK POSITION, not a setting.** Whatever runs your task must be able to reach your data. Every runtime decision below follows from that one fact.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "The three runtime types — pick by where your data lives",
+      "header": ["Runtime type", "Runs where", "Use it when", "Cannot"],
+      "rows": [
+        [
+          "Informatica Cloud Hosted Agent",
+          "Inside the IDMC hosting facility. Nothing to install.",
+          "Source and target are both SaaS and the connector supports it (check the connector's own guide — support is per-connector).",
+          "Reach anything on a private network. It is multi-tenant. A connection bound to it CREATES fine and then cannot see a private host — a 200 that means nothing."
+        ],
+        [
+          "Secure Agent group",
+          "A host you own and run.",
+          "Data is on-premises or on a private network — or SaaS data you do not want going through the Hosted Agent. **The only option that reaches a private database.**",
+          "Be avoided if your data is private. You own patching, disk, RAM and uptime."
+        ],
+        [
+          "Serverless runtime environment",
+          "Informatica-managed compute **inside YOUR OWN AWS or Azure account** — you supply the VPC/VNet, subnets and an IAM role. Vendor wording: auto-scales with the workload 'while your data remains in your cloud environment'. Single-tenant, dedicated VM resources.",
+          "Your data is already in AWS or Azure and you want no agent to maintain.",
+          "Reach data in any OTHER cloud or datacentre. It is not a general replacement for a Secure Agent — it is an AWS/Azure-native runtime. Also bills IPUs per runtime-hour where an agent is free."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Licence, assignment, deployment, running — four states people collapse into one",
+      "header": ["State", "How you read it", "What a failure looks like"],
+      "rows": [
+        [
+          "1. LICENSED",
+          "Administrator → Licenses in the UI. There is no licence-inventory API. Privileges are the REST proxy.",
+          "Absent from the Licenses page. NOT a 404 from REST — every licence path 404s even when fully licensed."
+        ],
+        [
+          "2. ASSIGNED to an agent",
+          "UI: Administrator → Runtime Environments → agent → enable components. **UI-only, no REST verb.** Confirmation string in 53-ui-receipts.",
+          "agentEngines[] simply does not contain the engine. A connection test names it exactly: 'No running service found of type <Engine> <ver>.* service for AgentGroup: {reId}'."
+        ],
+        [
+          "3. DEPLOYED / DEPLOYING",
+          "GET /api/v2/agent/details/{agentId} -> agentEngines[].agentEngineStatus.status",
+          "Status sits at DEPLOYING for many minutes while packages download. Calls keep failing meanwhile, and the engine NAMED in the error changes as each one lands. A moving error is progress, not a new wall."
+        ],
+        [
+          "4. RUNNING and resolvable",
+          "Only a PASSING connection test proves this. Nothing else does.",
+          "status can read RUNNING in the API while the agent's own log says UNKNOWN and the router still refuses. Under host pressure engines flap RUNNING -> STOPPED. Treat status as a deployment signal, never a completion signal."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Third-party JDBC drivers — where they actually go",
+      "header": ["Thing", "Answer", "Evidence"],
+      "rows": [
+        [
+          "Canonical directory for a CCI/JDBC_V2 third-party driver",
+          "<agent>/ext/connectors/thirdparty/informatica.jdbc_v2/common/ — Informatica auto-creates it and drops its OWN drivers there (DB2, MSSQL, Oracle), which is how you confirm it is right.",
+          "Live 2026-07-26. Two earlier guesses were wrong: ext/jdbc/ and apps/Data_Integration_Server/ext/drivers/ were both ignored by the connector."
+        ],
+        [
+          "CAI / process-engine JDBC driver",
+          "<agent>/apps/process-engine/ext — the Secure Agent picks jars up from here if you leave 'JDBC Jar Directory' blank. Otherwise set that field to any directory.",
+          "Vendor: IC_July2025_(JDBC)ConnectorGuide, ch.2. You must supply EITHER the jar directory OR the driver class name."
+        ],
+        [
+          "The directory only exists after the engine deploys",
+          "Do not pre-stage a driver before the engine lands — the path is created by deployment. Stage it, then restart the connector engine so it scans again.",
+          "Live: the driver was invisible until Connector_Service restarted."
+        ],
+        [
+          "Shaded-jar trap (ClickHouse, and any driver with a client split)",
+          "The `-all` classifier is NOT necessarily shaded. clickhouse-jdbc 0.6.5 `-all` omits com.clickhouse.client.* and throws NoClassDefFoundError ClickHouseClient. The correct artifact is **-shaded**. Verify with `unzip -l <jar> | grep -c client/` before trusting it.",
+          "Live. A wrong download also returned a 554-byte HTML 404 page named .jar — always check the size."
+        ],
+        [
+          "JDBC_V2 sends NO password",
+          "The plugin XML declares HASUSERNAME=\"NO\" HASUSERPASSWORD=\"NO\" — there are no credential fields. Credentials in the URL, in userinfo form, or in additionalSecurityProperties were all stripped or ignored; the server saw the username but never a password. Read the plugin XML in downloads/package-JDBC_V2*/package/rdtm/plugins/*.xml — it is the authoritative field list.",
+          "Live, proven from both ends: the same URL forms all worked from a plain java -cp test, and ClickHouse's own log showed no-password auth."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Sizing the Secure Agent host — enable only what you need",
+      "header": ["Signal", "Observed", "Rule"],
+      "rows": [
+        [
+          "Engine JVM heap reservations",
+          "Enabling ALL services put 23 engines on one host whose -Xmx values summed to ~9.2 GB — more RAM than the 7.8 GiB machine had.",
+          "Sum the -Xmx of what you enable BEFORE clicking. Budget >=16 GB once Data Integration is on."
+        ],
+        [
+          "What over-subscription looks like",
+          "27 OOM-kill events; the Linux OOM killer killed the co-located analytics database server twice plus the document database; load average 54 on 4 cores; engines flapping RUNNING->STOPPED; root disk 79% -> 95%.",
+          "Never co-locate a full engine set with production databases on a small host. Add swap — with none, every spike goes straight to the OOM killer."
+        ],
+        [
+          "Disk appetite",
+          "~/infaagent grew to 25 GB, 19 GB of it installer packages under downloads/.",
+          "Keep ~20 GB free. Installer dirs under downloads/ do NOT map onto apps/ names, so they cannot be safely bulk-deleted by name match mid-deployment."
+        ],
+        [
+          "A governance-only engine set",
+          "Data_Integration_Server + Connector_Service + Metadata_Foundation_Agent + Metadata_Platform_Service ran fine (8 engines, 6 RUNNING) after trimming; load fell 65 -> 14.",
+          "Untick the rest: At_Scale_Server, B2BProcessor, CIHProcessor, DVProcessor, Database_Ingestion, MassIngestionRuntime, PC2CDI_Modernization_App, Streaming_Ingestion_Agent, ApiMicrogatewayService, AIAgentRuntime, DAM x2."
+        ]
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "label": "Read the plugin XML, not the guesswork",
+      "text": "Every CCI connector ships a plugin XML under downloads/package-<CONNECTOR>*/package/rdtm/plugins/. It declares the exact connection attributes, including HASUSERNAME / HASUSERPASSWORD. When a connection keeps failing on credentials, that file settles in seconds what hours of body-shape guessing cannot."
+    },
+    {
+      "label": "Diagnose from BOTH ends",
+      "text": "The JDBC_V2 credential finding only became provable by testing the same URL from a plain `java -cp <driver> ...` on the agent host (all three credential forms worked) and then reading the database's own auth error (no password presented). When an API error is ambiguous, reproduce the operation outside IDMC — that separates 'the platform will not do it' from 'my body is wrong'."
+    },
+    {
+      "label": "Serverless is not an agent replacement",
+      "text": "It is compute in YOUR cloud account, so it inherits your cloud's network reachability. If the data is not in that same AWS/Azure network, serverless cannot see it, and a connection bound to it will create with 200 and then fail every test. Also: no REST plane — /public/core/v3/serverlessRuntimeEnvironments and /api/v2/serverlessRuntimeEnvironment both 404 while the control path proves the plane is real, so creation is UI-only."
+    }
+  ],
+  "open_questions": [
+    "Does any documented mechanism let JDBC_V2 pass a password, or is server-side auth configuration always required for a driver whose plugin declares HASUSERPASSWORD=NO?",
+    "Vendor hardware sizing for a Secure Agent by engine set is not in the doc set held here — the >=16 GB figure is inferred from observed -Xmx totals, not published guidance."
+  ]
+}

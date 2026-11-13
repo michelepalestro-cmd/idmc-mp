@@ -1,0 +1,117 @@
+{
+  "id": "58-headless-verdicts",
+  "title": "Headless or not — the decision guide, by operation",
+  "owner": null,
+  "last_verified": "2026-07-26",
+  "status": "migrated",
+  "intro": "**The question this section answers: \"can Claude do this without me clicking?\"** Look up the operation, get a verdict and the reason.\n\nThe one-line model: **IDMC lets you READ almost everything, RUN almost everything, and DESIGN almost nothing.** Reads and runs are REST. Design-time authoring — building a mapping, publishing a taskflow, deploying an MDM model, authoring a DQ rule — has no REST verb and stays a human click. Everything below follows from that split.\n\n**Six verdicts, not two.** Collapsing them is what produced every wrong call in this corpus:\n\n| Verdict | Means |\n|---|---|\n| **HEADLESS** | A live status code proved it over REST |\n| **HEADLESS-DOC** | Informatica documents it; nobody here exercised it. Plausible, unproven — never report as working |\n| **NEEDS SHELL** | Possible without a browser, but needs a shell on a host (agent install, driver staging) |\n| **UI-ONLY** | Yours, licensed, working — and a human must click. No HTTP verb exists |\n| **UNTESTED** | Nobody probed it. **Unknown, not unsupported** — 2 of every 3 verb/endpoint combinations. Never quote one as a limitation |\n| **WRONG-HOST RISK** | Recorded as absent, but the host family was never swept. Re-probe before believing it |\n\nThat last verdict exists because of a live 2026-07-26 finding: our entire \"Mass Ingestion is UI-only\" conclusion turned out to be a **wrong-host error**. Read the host rule below before trusting any 404.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "Before you trust ANY 'not possible' verdict — four checks",
+      "header": ["#", "Check", "Why"],
+      "rows": [
+        ["1", "**Sweep the host family by DNS first — it is free and needs no auth.** Try `<pod>-ing`, `-mdm`, `-cai`, `-dqcloud-api`, `-dqprofile`, `-apigw`, `-apim`, `idmc-api`, `cdgc-api`, and a deliberately bogus `<pod>-bogusZZZ` as the control.", "A name that resolves may serve a plane you assumed absent. A name with no DNS is a genuine absence. **This single check overturned a whole-product verdict.** Live on one pod: `-ing`, `-apigw`, `-apim`, `-mdm`, `-dqcloud-api`, `-dqprofile`, `-cai`; no DNS: `-dam`, `-prep`, `-clairegpt`, `-ai`."],
+        ["2", "**Probe a bogus twin of whatever you are testing** — path, object name, and error code. If the bogus twin returns the SAME response, the response is an artifact and proves nothing.", "Applies to far more than 200s: a zero-byte `200` (gateway prefix routing), a `403 APP_13401` / `500 CMN_001` under `/api/v2/agent/*` (router artifact), an nginx `503` on `-apim` (no backend), and an MDM `403` (ACL check runs BEFORE the metadata lookup, so a nonsense entity 403s identically)."],
+        ["3", "**Read what kind of 404 it is.** `404` + a typed error body from that product (e.g. `DBMI_TASK_WAS_NOT_FOUND`, `CMN00005`) = live handler, domain miss. `404 \"No static resource <path>\"` or an empty body = route genuinely absent.", "This distinction is the difference between 'my id was wrong' and 'the capability does not exist'."],
+        ["4", "**Probe the verb with an empty POST** — there is no `HEAD` and no `OPTIONS`. `400`/`415`/`422` = the verb EXISTS and your body is wrong (keep going). `405` = the verb does not exist. A `500` naming a null field also means the handler ran.", "An empty body cannot create anything, so this is safe. It is how `dbmi/task/create` was proven to have a live POST after a year of being called absent."]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Platform, agents and connections",
+      "header": ["Operation", "Verdict", "How / why"],
+      "rows": [
+        ["Log in, read org identity, users, groups, roles, privileges, audit log", "HEADLESS", "v3 platform + identity planes. Use `products[].baseApiUrl` from the login as your base — never hand-assemble a pod host."],
+        ["List / create / update / delete a connection", "HEADLESS", "`POST /api/v2/connection`; update is `POST /api/v2/connection/{id}` — **there is no PUT anywhere in IDMC**. `type` is always `TOOLKIT_CCI`, connector name in `instanceName`."],
+        ["Test a connection", "HEADLESS", "`GET /api/v2/connection/test/{id}` — a metadata handshake, 0 IPU. **The only proof an engine is actually resolvable.**"],
+        ["Get the Secure Agent installer + org-scoped token", "HEADLESS", "`GET /api/v2/agent/installerInfo/linux64` returns a downloadUrl and a 122-char install token. No click needed."],
+        ["Install the Secure Agent", "NEEDS SHELL", "Runs on the host that can reach your data. Installer refuses to run as root; `startup` before `configureToken`."],
+        ["Read agent health and engine list", "HEADLESS", "`GET /api/v2/agent/{id}` for `readyToRun` (**per-agent is authoritative — the runtimeEnvironment LIST endpoint returns a stale false-negative**) and `/agent/details/{id}` for `agentEngines[].agentEngineStatus.status`."],
+        ["Enable an engine / service on an agent", "UI-ONLY", "Administrator → Runtime Environments → agent → enable components. No REST verb; the 403/500 you get are router artifacts, not evidence. Receipt string is recorded in the UI-receipts table."],
+        ["Register a connector type in the org", "UI-ONLY", "One UI Save in Administrator, then REST works for that type."],
+        ["Stage a third-party JDBC driver", "UI-ONLY (+ NEEDS SHELL)", "A file copy to the canonical `ext/connectors/thirdparty/...` directory was NOT sufficient — driver registration behaved as a UI step. Budget for it."],
+        ["Read licensing inventory", "UI-ONLY", "There is no licence-inventory API — every `/license*` path 404s **even when fully licensed**. Read Administrator → Licenses."],
+        ["Read IPU consumption", "HEADLESS", "`POST /public/core/v3/license/metering/ExportMeteringData` → 201 + jobId → poll → download a ZIP. Dates must be full ISO-8601 with a zone."],
+        ["Allocate licences to a sub-org", "UI-ONLY", "Parent org → Sub-Organizations → Licenses. **Check the parent's engines before pricing a purchase — allocation is often free.**"]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Build it vs run it — the core split",
+      "header": ["Operation", "Verdict", "How / why"],
+      "rows": [
+        ["Design a CDI mapping", "UI-ONLY", "`POST /api/v2/mapping` → 400; `POST /public/core/v3/objects` → 405. Vendor mapping-design API: preview ~late 2026, GA ~2027."],
+        ["Wrap an existing mapping as a task", "HEADLESS", "`POST /api/v2/mttask` wraps a mappingId. It cannot author one (`APP_13533` if you try)."],
+        ["Run a job", "HEADLESS", "`POST /api/v2/job {taskId, taskType}` → runId. **Works even when `readyToRun` reads false.**"],
+        ["Monitor / stop a job", "HEADLESS", "`/api/v2/activity/activityLog` (history, state 1=success 3=failed) and `/activityMonitor` (running)."],
+        ["Create a schedule", "HEADLESS", "`POST /api/v2/schedule` → 200, a real schedule. Native scheduling is NOT UI-only. Body field names uncaptured — run the validator loop."],
+        ["Publish a taskflow", "UI-ONLY", "`POST /api/v2/taskflow/publish` → 404. **Substitute:** fire the mapping tasks yourself with `POST /api/v2/job` in dependency waves with barrier waits — functionally equivalent for a daily batch, and it removes the click."],
+        ["Promote assets between environments", "HEADLESS (clone pattern)", "Export a same-type template → retarget GUID/name → **recompute the SHA256** → `POST /public/core/v3/import/package`. Hand-built zips are rejected (`MigrationSvc_030`). **Import does NOT deploy.**"],
+        ["Deploy anything a migration import created", "UI-ONLY", "Import creates the object; deployment stays a click."],
+        ["Author a mapping by cloning", "HEADLESS-DOC", "Proven for BUSINESS_ENTITY, MDM_SRC_SYSTEM, reference entities and RULE_SPECIFICATION; **fails for DTEMPLATE mappings**. A clone inherits the template's logic — making it do the right thing still needs the canvas."]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Governance, quality, MDM and ingestion",
+      "header": ["Operation", "Verdict", "How / why"],
+      "rows": [
+        ["Search the catalog / read assets, lineage, DQ scores", "HEADLESS", "CDGC on the `idmc-api` host with all three identity headers. Enterprise search takes raw Elasticsearch DSL; `GET` on the search path is 405 — it is a POST."],
+        ["Register a catalog source and trigger a scan", "HEADLESS", "`POST /data360/executable/v1/catalogsource/{id}` → 201 + jobId. Needs a non-empty `capabilityNames[]`. `406` = a scan is already running (positive evidence)."],
+        ["Certify / relate / assign via CDGC publish", "HEADLESS", "`POST /ccgf-contentv2/api/v1/publish` → 207 Multi-Status + jobId. This is the real CDGC write plane."],
+        ["Bind a glossary term to a column · assign a steward", "UI-ONLY", "~20 glossary paths and the stewardship writes 404/405. A partial workaround exists on the publish resource."],
+        ["Accept a CLAIRE classification", "UI-ONLY", "37+ accept paths 404; the UI itself only offers Dismiss. Use an auto-accept threshold + re-scan."],
+        ["Author a CDQ rule or scorecard", "UI-ONLY", "`/data360/dq/v1/ruleSpecifications` 404 on every verb; `businessDataset` (the scoring object) 404. rulebuilder + DQO wizard."],
+        ["Manage CDQ reference dictionaries", "HEADLESS (write-only)", "Dedicated `<pod>-dqcloud-api` host. **No GET exists at all** — get the id from the UI URL. 42 cols / 10k rows per call; `finishUpload` mandatory (424 if skipped); a human must click **Convert to API** first, which then locks it out of UI editing."],
+        ["Read profiling results", "HEADLESS", "`<pod>-dqprofile` / `profiling-service`. Keep ≤200 rule occurrences per profile or the scorecard job times out."],
+        ["Create / run a profile", "HEADLESS-DOC", "Documented profile+query CRUD; **we do not hold the paths**. The honest answer is 'documented, paths not held' — not 'no API'."],
+        ["Ingest an MDM source record", "HEADLESS", "`POST /business-entity/public/api/v1/entity/{be}?sourceSystem=X` → 201. Host: add `-mdm` to the pod and **strip `/saas`**."],
+        ["Update a record from a source system", "HEADLESS-DOC", "🚨 Send it to **`entity-xref`, NEVER the golden-record `entity`** — writing source data onto `entity` corrupts the golden record."],
+        ["Search / list golden records", "UI-ONLY (or MCP)", "No public REST search (`/entity/{be}/search` → 403 on an existing entity, and identically on a bogus one — an ACL artifact). Fuzzy lookup is MCP-only via `search_master_record`."],
+        ["Deploy an MDM business-entity model", "UI-ONLY", "**THE hard wall for mastering.** ~20 deploy paths and 12 host+path shapes all fail. Business 360 Modeler → Publish."],
+        ["Run MDM match/merge (ingress job)", "UI-ONLY", "All ingress and job paths 404. B360 Console click. Your record lands as a source record; the golden record does not re-survive until this runs."],
+        ["Author a Mass Ingestion / DBMI task", "WRONG-HOST RISK — re-probe", "⭐ **Previously recorded UI-ONLY. That was a wrong-host error.** DBMI is served on `<pod>-ing.<domain>`, where `task/details` returns a typed `DBMI_TASK_WAS_NOT_FOUND`, `job/status` returns 415 (content negotiation = live), and `task/create` returns 405 on GET but a 500 null-deref on an empty POST — **the handler parsed and ran**. Body shapes still unmapped. A second live prefix `/mi/public/api/v2/*` exists on the same host."],
+        ["Author a DAM masking policy", "WRONG-HOST RISK — re-probe", "~40 `/data360/dam/v1/policies` variants 404 while the DAM engine ran. `<pod>-dam` has **no DNS**, so it is not a missing host — but a colleague's fleet ships 5 working policy tools, so ask which path they call before repeating 'no REST plane'."],
+        ["Manage APIs in API Manager", "ARTIFACT — verdict void", "`<pod>-apigw` AND a newly-found `<pod>-apim` both return an nginx **503 for every path including a bogus one** — a load-balancer with no backend. That is an artifact, not a capability verdict."]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "CAI and Operational Insights",
+      "header": ["Operation", "Verdict", "How / why"],
+      "rows": [
+        ["Publish CAI processes in bulk", "HEADLESS", "`POST /active-bpel/asset/v1/publish` on the **`-cai` host**, `Content-Type: application/vnd.api+json`, **max 199 assets**. Dependency order: service-connector → app-connection → process. Items fail **inside a 200 envelope** — poll `/publish/{id}/Status` and read each `itemState`."],
+        ["Activate / deactivate a published CAI process", "UI-ONLY", "No verb at any path. **Republishing does NOT activate.**"],
+        ["Suspend / resume / terminate a running process", "HEADLESS-DOC", "`PUT /active-bpel/restadmin/processes/{id}/terminate` → 204 documented. **Zero PUTs are live-proven anywhere in IDMC**, so try it and be ready for 405 → retry as POST."],
+        ["List processes, manage schedules and listeners", "HEADLESS-DOC", "`active-bpel/restadmin` — 18 documented endpoints, the strongest runtime-control plane. **Default page size 20** — page with `listStart` + `maxReturn`."],
+        ["Invoke a deployed process", "HEADLESS", "Authenticated and anonymous runtime both work."],
+        ["Read Operational Insights", "HEADLESS", "**GraphQL, not REST** — that is why REST probes found nothing. `GET /active-bpel/opsanalytics-das/metrics?query={...}` on the `-cai` host. 13-month history, **ONE active request per org**, no pagination, metrics refresh weekly. A 400 on a malformed query is positive evidence."]
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "label": "Say the right kind of 'no'",
+      "text": "The distinction that matters commercially is **UI-ONLY (yours, licensed, working — a human clicks) vs GAP (not there)**. Telling a customer 'not supported' when the answer is 'one click in Administrator' invites them to buy something they already own; the reverse over-promises. And never present UNTESTED as a limitation — 2 of every 3 verb/endpoint combinations in this corpus are untested, which is ignorance, not absence."
+    },
+    {
+      "label": "The pattern behind almost every headless win",
+      "text": "**POST to start → GET to poll.** Scans, CAI publish, migration import, metering export and MDM jobs all work this way. A 201/202 with a job id is success of SUBMISSION, not of the work — always poll, and read per-item status because items can fail inside a 200 envelope. `GET` on a starter path returns 405; that is correct behaviour, not a gap."
+    },
+    {
+      "label": "Design in the canvas, operate by API",
+      "text": "The durable scoping rule for any automation plan: connections → wrap task → run → monitor → export/promote is all yours headlessly. Mapping design, taskflow publish, DQ rule authoring and MDM model deploy are a one-time human build. Plan the human clicks explicitly instead of discovering them in week two — and write the mapping spec down, because there is no REST API to read back or diff a mapping and no version control over the canvas."
+    },
+    {
+      "label": "Two-thirds of this map is unwritten",
+      "text": "Live verdicts in this corpus flipped on a 3-5 day cadence, availability is per-pod AND per-org, and the newest probes here are 2026-07-26. Two 'walls' in this very table were downgraded to WRONG-HOST RISK by a single free DNS sweep. Re-probe before promising anything to a customer, and prefer 'let me verify on your org' over quoting this table as settled."
+    }
+  ],
+  "open_questions": [
+    "DBMI on <pod>-ing: what body does task/create want, and which Content-Type does job/status accept? The 415 persisted with headers stripped.",
+    "What does the /mi/public/api/v2/* prefix on the -ing host expose, beyond task/details? Unswept.",
+    "Do the DAM policy and CDGC asset-CRUD tools in the colleague's fleet call paths we never probed, or a differently-provisioned org?",
+    "Is the APIM 503 a deprovisioned service on this org, or does that host never carry a backend anywhere?"
+  ]
+}

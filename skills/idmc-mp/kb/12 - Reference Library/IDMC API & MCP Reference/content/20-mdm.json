@@ -1,0 +1,177 @@
+{
+ "id": "20-mdm",
+ "title": "MDM, Customer 360, Business 360 & Reference 360",
+ "owner": null,
+ "last_verified": "2026-07-26",
+ "status": "verified",
+ "intro": "Mastering splits cleanly: the MDM RUNTIME plane (ingest, read, xref) is real and headless, while the MDM DESIGN plane (business entity, match/merge, deploy) has no REST route at all. Verified live 2026-07-26 with a bogus twin on every probe. Note that P360 (Product 360) is a DIFFERENT product with no REST API - do not conflate it with MDM SaaS.",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/business-entity/public/api/v1/entity/{be}?sourceSystem=X",
+     "POST",
+     "INGEST a source record",
+     "201 — bare field map; trustScore is a STRING  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/business-entity/public/api/v1/entity/c360.person/{MDMid}",
+     "GET",
+     "Read a master record by runtime id",
+     "200 / 404 — CONTESTED, verify live"
+    ],
+    [
+     "/business-entity/public/api/v1/entity/{be}/search",
+     "none proven",
+     "Search or list golden records",
+     "405 / 404 — no public search  —  rejected: GET 404, POST 405; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/business-entity/public/api/v1/deploy",
+     "UI only",
+     "DEPLOY a business entity to the runtime",
+     "UI ONLY - THE hard wall for mastering. 6 route shapes all 404 CMN00005 (/deploy, /deployment, /model/deploy, /publish, /mdm-config/api/v1/deploy, /data360/mdm/api/v1/deploy) and NO 405 anywhere => the route does not exist, which is different from a verb limit. Business 360 Modeler Publish is a click. CORRECTED 2026-07-26: an earlier pass claimed the clone-through-migration backdoor was CLOSED on this pod, off a 404 MigrationSvc_025. That was WRONG - the probe sent Content-Type application/json. With multipart/form-data the same route accepts an upload (see the migration section). The backdoor is OPEN; what this org lacks is a BUSINESS_ENTITY template to clone from."
+    ],
+    [
+     "/data360/mdm/v1/businessEntities",
+     "none proven",
+     "Business-entity list (7+ base variants)",
+     "FAKE-200 GATEWAY ARTIFACT on the idmc-api host: 200 with a 2646-byte body AND the bogus twin returns a BYTE-IDENTICAL 200 (Law 2), so it is prefix routing, not a handler. Never cite as capability. On the bare domain it is 503; on the pod host 404. untested: POST, PUT, PATCH, DELETE."
+    ],
+    [
+     "/data360/ingress/api/v1/jobs",
+     "none proven",
+     "Trigger / read ingress + match-merge jobs",
+     "404 — B360 Console click  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/objects?q=type==MDM_*",
+     "GET",
+     "97 MDM_* design objects; Deployed business-entity census",
+     "200, count 0 - but the type filter is NOT validated so count 0 is WEAK evidence. The strong read is unfiltered GET /public/core/v3/objects?limit=5: on Org B it returned count=1 (a single Project named Default), proving the org holds essentially no design objects."
+    ],
+    [
+     "Business entity / source system / ref entity authoring",
+     "none proven",
+     "Author MDM design objects",
+     "v3 migration clone — design layer only"
+    ],
+    [
+     "Match, merge and survivorship configuration",
+     "UI only",
+     "Configure matching + survivorship",
+     "B360 Modeler"
+    ],
+    [
+     "/rdm-service/external/v1/search",
+     "POST (GET -> 405)",
+     "Reference 360 search",
+     "VERB EXISTS on Org B: empty POST -> 400 RDM.0040044 \"No input given to required...\" = validator reached (Law 5), NOT a rejection. GET -> 405, bogus twin -> 404 => real handler. Do not read the 400 as \"rejected\". Sibling /rdm-service/api/v1/referenceDataSets 404s, which alone is NOT evidence that Reference 360 is unavailable."
+    ],
+    [
+     "/rdm-service/api/v1/referenceDataSets",
+     "none proven",
+     "Reference 360 dataset list",
+     "404  —  rejected: GET 404; untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/business-entity/public/api/v1/entity/{be}/{id}",
+     "GET, PUT [doc], PATCH [doc]",
+     "GET disputed 200 vs 404. PUT and PATCH documented",
+     "GET -> 403 means the ACL layer was reached, i.e. the plane is real. It is NOT proof the entity exists: the same 403 fires identically for ZZFAKEENTITY, so the ACL check runs BEFORE metadata lookup. To test existence use POST .../entity/{be}?sourceSystem=X - a 404 'metadata with GUID cannot be found during load' means no such business entity. untested: POST, DELETE."
+    ],
+    [
+     "/business-entity/public/api/v1/entity-xref/{...}",
+     "GET [doc], PUT [doc], PATCH [doc]",
+     "Source records. USE THIS for source-system updates",
+     "untested: POST, DELETE"
+    ],
+    [
+     "search  (documented resource)",
+     "POST [doc]",
+     "Search across or within business entities",
+     "untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "searchmatch  (documented resource)",
+     "POST [doc]",
+     "Match against the published match model",
+     "untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "Business-entity MODEL authoring (plane sweep)",
+     "UI only",
+     "Create / alter a business entity definition",
+     "12 candidate host+path shapes swept live 2026-07-26, ALL 404 or DNS-dead, every one matching its bogus twin: .../model/businessEntity, /mdm-model/, /model/public/, /cs/public/, /business-entity/{private,internal}/api/v1/businessEntities, /data360/mdm-model/, /data360/businessentity/, /saas/public/mdm/v1/, plus hosts <pod>-mdm-model, <pod>-b360 and <pod>-cs (all NXDOMAIN). No 405 anywhere => no route, not a verb limit. Whatever B360 Modeler calls is not on a public plane."
+    ],
+    [
+     "Business-entity EXISTENCE test (idiom)",
+     "POST",
+     "Determine whether a business entity is deployed",
+     "THE reliable probe. POST .../entity/{be}?sourceSystem=X returns 404 'The requested metadata with GUID {be} cannot be found during load' when the entity is not deployed, and that fired IDENTICALLY for Person, person, c360.person AND ZZFAKEENTITY - i.e. the org has nothing modeled. Do NOT use GET entity/{be}/{id} for this (its 403 precedes metadata lookup). Corroborate with unfiltered GET /public/core/v3/objects?limit=5, which returned count=1 (one Project named Default). When a model IS deployed this POST flips 404 -> 201, making it a clean automated gate check."
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "MCP coverage for this service",
+   "intro": "The Customer Identification MCP server covers MDM. Its fuzzy-match action is the second thing MCP can do that REST cannot, because REST exposes no public search resource here.",
+   "header": [
+    "MCP action",
+    "Verb",
+    "Server",
+    "What it does",
+    "REST equivalent"
+   ],
+   "rows": [
+    [
+     "search_master_record",
+     "POST",
+     "Customer Identification",
+     "Fuzzy identity match returning the business ID of the best-matching master record.",
+     "MCP ONLY. REST has no public MDM search or list resource."
+    ],
+    [
+     "get_master_record_details",
+     "POST",
+     "Customer Identification",
+     "The consolidated golden record, merged across source systems.",
+     "REST equivalent is the disputed GET on entity/{be}/{id}. MCP is the safer path."
+    ]
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "label": "Mastering is entitled long before it is reachable.",
+   "text": "This org holds 83 MDM privileges - full CRUD on mdm.asset.be, .srcsystem, .hierarchy, .relationship, .jobdef and .appmodel, plus execute.mdm.flows, manage.mdm.jobs and manage.mdm.schedules - and the login user holds MDM Designer and Customer 360 Data Steward/Manager/Analyst. None of that yields a deploy verb. Entitlement and reachability are separate questions: read privileges for the first, probe routes for the second."
+  },
+  {
+   "label": "P360 is not MDM SaaS. Do not answer a P360 question from this section.",
+   "text": "Informatica MDM - Product 360 (P360) Cloud Edition is a separate AWS-hosted PIM with NO REST API. Deployment is triggered by uploading an empty do_deploy.txt marker file into an S3 customization folder; workflows deploy through the ActiveVOS console UI; DEV->QA->PROD promotion is a support ticket with a 4-hour window. Source: MDM Product 360 Cloud Edition Configuration and Customization Guide v10.0. A 'headless P360' answer means scripting S3 file drops, not calling an API."
+  },
+  {
+   "label": "The runtime plane is real even when every path 404s.",
+   "text": "On a pod where data360/* returns fake-200s, the <pod>-mdm host still discriminates: GET entity/{be}/{id} -> 403 against a bogus twin's 404, and GET /rdm-service/external/v1/search -> 405 against 404. A 404 on that host is therefore 'wrong path', not 'no service'."
+  },
+  {
+   "label": "MDM job / flow / x360 planes: privileges without routes.",
+   "text": "execute.mdm.flows, manage.mdm.jobs and view.mdm.x360 are all granted, yet 11 job/flow host+path shapes and 5 x360/config shapes all 404 on this pod. Holding a privilege does not imply the route is mounted - and mounting is per-pod, so this is UNTESTED elsewhere, not absent."
+  }
+ ],
+ "open_questions": [
+  "MDM read-by-id: GET /business-entity/public/api/v1/entity/c360.person/{id} returned 200 in early-July testing but a later review concluded every MDM runtime path 404s under correct auth and the earlier 200s were identity-service login HTML. Re-probe and check the CONTENT TYPE, not just the status code.",
+  "Is there any public search or list resource for golden records? Both reviews agree there is not, but the vendor deck documents a 'search' resource - confirm against the Business 360 REST API Reference.",
+  "The B360 Modeler UI must call something to author a business entity. 12 public shapes are now excluded; the remaining hypothesis is a non-public/internal plane or a session-cookie-only endpoint. Capturing the browser network trace during one Publish would settle the biggest UNTESTED gap in this section.",
+  "Whether a BUSINESS_ENTITY exported from another org imports cleanly into a pod holding zero MDM design objects. The import route is open (multipart) and export is proven elsewhere, but the cross-org retarget was never attempted end to end."
+ ]
+}

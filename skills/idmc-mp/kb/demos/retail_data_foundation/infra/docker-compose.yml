@@ -1,0 +1,37 @@
+# Stand-in operational source for the Retail Data Foundation blueprint: one PostgreSQL 16 with logical decoding on,
+# so IDMC Database Ingestion (CDC) can read it. Web / mobile / store front ends are OUT OF SCOPE: infra/traffic.py
+# stands in for them by writing sign-ups, orders, payments and visits straight into the database.
+#
+#   export PG_USER=rdf_app PG_PASS=... PG_DB=rdf_retail      (or put them in a local .env next to this file; never share it)
+#   docker compose -p rdf up -d
+#   docker compose -p rdf exec -T postgres psql -U "$PG_USER" -d "$PG_DB" < sql/01_schema.sql
+#
+# The Secure Agent must reach this port (PG_HOST:PG_PORT in the toolkit .env). If the agent runs in another network,
+# publish the port on an address the agent can route to and allow it in pg_hba (see BUILD.md step 1).
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${PG_DB:-rdf_retail}
+      POSTGRES_USER: ${PG_USER:-rdf_app}
+      POSTGRES_PASSWORD: ${PG_PASS:?set PG_PASS before docker compose up}
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_replication_slots=6
+      - -c
+      - max_wal_senders=6
+      - -c
+      - max_slot_wal_keep_size=4GB
+    ports:
+      - "${PG_PORT:-5432}:5432"
+    volumes:
+      - rdf_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-rdf_app} -d ${PG_DB:-rdf_retail}"]
+      interval: 5s
+      retries: 20
+volumes:
+  rdf_pg_data:

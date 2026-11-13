@@ -1,0 +1,261 @@
+{
+  "id": "52-corrections",
+  "title": "Corrections - documentation versus testing",
+  "owner": null,
+  "last_verified": "2026-07-25",
+  "status": "migrated",
+  "intro": "",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "Corrections — where the documentation and the testing disagree",
+      "header": [
+        "Topic",
+        "What we believed",
+        "What is actually true",
+        "Why the mistake happened"
+      ],
+      "rows": [
+        [
+          "CAI publish",
+          "No REST verb; a human must click Publish.",
+          "POST /active-bpel/asset/v1/publish is a documented bulk resource (max 199 assets) and returned 202 with a job ID in testing. Four real processes were published headlessly.",
+          "The probed path was asset/publish, not asset/v1/publish — and on the wrong host."
+        ],
+        [
+          "CDQ authoring",
+          "CDQ has no REST write path at all.",
+          "Dictionaries have a complete documented CRUD API on the dedicated -dqcloud-api host. Rules and scoring remain UI-only.",
+          "The claim was generalised from rules to the whole service."
+        ],
+        [
+          "Data Profiling",
+          "Profiling only rides a catalog scan; no API.",
+          "Informatica documents create, delete and update for profiles and queries. The paths are in a separate guide not held locally.",
+          "Absence of a local document was read as absence of an API."
+        ],
+        [
+          "Operational Insights",
+          "No REST plane; a gap.",
+          "Two documented GraphQL resources at /active-bpel/opsanalytics-das/metrics for CAI job reporting. Not REST, which is why REST-shaped probes found nothing.",
+          "Probed as REST on the wrong host family."
+        ],
+        [
+          "Scheduling",
+          "Native scheduling is UI-only.",
+          "POST /api/v2/schedule returns 200 and creates a real schedule. CAI additionally has full schedule CRUD on the restadmin plane.",
+          "Never probed before being written off."
+        ],
+        [
+          "Data Marketplace",
+          "UI-only publish.",
+          "Collections, categories, orders, terms of use and delivery targets all create over REST; a full provisioning chain ran end to end. Only the delivery template is UI-only.",
+          "Early snapshot never revisited."
+        ],
+        [
+          "Mass Ingestion / DBMI",
+          "Not provisioned — an entitlement purchase.",
+          "Engines RUNNING on both agents with privileges present. Authoring is a UI wizard. Informatica also documents a create endpoint worth re-probing.",
+          "404 responses were read as missing entitlement."
+        ],
+        [
+          "MDM / C360",
+          "Not licensed on this org.",
+          "Fully entitled — 97 MDM design objects, 83 MDM privileges, Customer 360 roles present. The real constraint is the business-entity deploy click.",
+          "Inferred from the login products[] list, which is only a licensing label."
+        ],
+        [
+          "CAI provisioning",
+          "Not provisioned; zero CAI assets.",
+          "54 to 68 processes deployed and invocable, process engine running.",
+          "Same products[] misread, plus an early probe before assets existed."
+        ],
+        [
+          "CDGC scan trigger",
+          "Blocked by a platform auth bug; UI Run only.",
+          "Returns 201 with a real job ID once you send all three identity headers and a non-empty capabilityNames array.",
+          "A missing header and an empty body produced a 500 that was read as an outage."
+        ],
+        [
+          "Agent readyToRun",
+          "readyToRun: false on the runtime environment means IDMC never marked the agent runnable, so no engine packages were sent.",
+          "The LIST endpoint GET /api/v2/runtimeEnvironment returns a STALE false-negative. GET /api/v2/agent/{agentId} reported readyToRun: true for the same agent, reproducible 3 reads of 3, and the host agreed (consoleAgentManager.sh getstatus -> READY, exactly one agentcore.impls.MainApp JVM). Layer 2 passed; the only real gap was Layer 3, no service assigned.",
+          "Health was read from the convenient list endpoint instead of the authoritative per-agent one. The KB already said to trust the per-agent endpoint; the list value was believed because it agreed with a plausible story."
+        ],
+        [
+          "Agent service enablement error codes",
+          "403 APP_13401 and 500 CMN_001 on /api/v2/agent/service* prove the enablement plane does not exist.",
+          "Both codes are ROUTER ARTIFACTS under /api/v2/agent/*, not handler responses. Bogus twins return them byte-identically: GET /api/v2/agent/bogusZZZnope -> 403 APP_13401 and GET /api/v2/agent/bogusZZZ/{id} -> 500 CMN_001. They prove neither presence nor absence. Enablement IS UI-only, but the evidence for that is different: POST /api/v2/agent/{id} with agentEngines[] returns 500 and read-back shows agentEngines: [] (a silent no-op), and the same probes as a PARENT-ORG admin return identical results (a parent cannot even read a sub-org agent: 403 APP_13407).",
+          "Law 2 was applied only to 200s. An error status was treated as informative without running the bogus-twin control that the same law demands."
+        ],
+        [
+          "Licensing reads",
+          "There is no licensing API at all; Layer 1 can only be read in the Administrator UI.",
+          "Consumption and entitlement ARE readable headlessly via POST /public/core/v3/license/metering/ExportMeteringData -> 201 + jobId, poll to SUCCESS (about 3 min), then GET /{jobId}/download returns a ZIP of one CSV per org. Dates must be full ISO-8601 with a zone: 2026-06-01 returns 400 V3API_007 while 2026-06-01T00:00:00Z returns 201; a bare {jobType} returns 400 LS_147. Reads accrue 0 IPU. Zero metered integration usage is itself proof no job has ever run in the org.",
+          "Every obvious license path (/api/v2/license, /public/core/v3/licenses, /api/v2/org/{id}/license[s]) 404s from both the sub-org and the parent, so the whole capability was written off without trying the metering export."
+        ],
+        [
+          "Sub-org engine entitlement",
+          "If a sub-org shows one engine, the engines may not be owned at all and buying them could be required.",
+          "Check the PARENT org before pricing a purchase. The parent org enumerated 22 sub-orgs and its shared Secure Agent ran 22 engines including Data_Integration_Server, Metadata_Foundation_Agent and Metadata_Platform_Service, so allocating down was an ASSIGNMENT, not a purchase. Enabling services on the sub-org agent then moved all 22 engines to DEPLOYING with no reinstall. Caveat: you cannot shortcut by binding a sub-org connection to the parent's shared runtime - the test error changes to 'error [error [null]]' but an unroutable bogus host returns the IDENTICAL error, so it is host-independent and proves no reachability.",
+          "The sub-org was probed in isolation. Parent-org credentials were assumed unavailable when in fact the same password worked."
+        ],
+        [
+          "Secure Agent host sizing",
+          "Enabling services is free and safe - the agent just pulls whatever engine packages it is offered.",
+          "Enabling ALL services delivered 23 engines onto a 7.8 GiB / 4 vCPU host whose engine -Xmx reservations alone sum to ~9.2 GB, i.e. more RAM than the machine has. Result: 27 OOM-kill events, the Linux OOM killer killed the co-located analytics database server TWICE plus the document database and systemd, load average hit 54 on 4 cores, engines flapped between RUNNING and STOPPED, and ~/infaagent grew to 25 GB taking the root disk from 79% to 95%. Connection tests then fail in a MOVING way (the named engine rotates, or times out) because whichever engine the handshake needs gets killed mid-flight. Data survived only because the DBs were on Docker volumes and restarted themselves; row counts verified identical to baseline.",
+          "Entitlement was treated as the only gate. Nobody costed the HOST: engines were enabled wholesale on the same box that runs the production databases, with no swap and 8 GB of RAM. Enable only the engines the use case needs (DI + Connector_Service + Metadata_* for governance), size for >=16 GB once DI is on, add swap, and check free disk BEFORE enabling - the payload is ~20 GB."
+        ],
+        [
+          "Connector adapter deployment",
+          "If a connector appears in GET /api/v2/connector (342 types), the org can use it.",
+          "That list is Informatica's GLOBAL PRODUCT CATALOG - what they sell - not what the org registered or the agent installed. Ground truth is the agent's adapter registry at <agent>/apps/Connector_Service/<ver>/connectors/cci/plugins/ (the ADAPTER_HOME its own log prints). On Org B that held 125 jars covering only adlsgen2, amazonredshift, aws, google, hdfs, jdbc_v2 and snowflakedwv2 - PostgreSQL and MongoDB were ABSENT even though package-postgresql.15 had been DOWNLOADED to ~/infaagent/downloads/. Downloaded != extracted != registered. Symptom: 403 'Unable to fetch Connector attributes, Ensure adapter ID is valid and the service is enabled [com.informatica.adapter.postgres]'.",
+          "The 342-item catalog was read as an entitlement list. Enabling agent SERVICES (engines) does not enable CONNECTORS - connector type registration is a separate, documented UI-only Save in Administrator that pushes the adapter package down."
+        ],
+        [
+          "JDBC_V2 credential fields",
+          "JDBC_V2 takes user/password like every other connection, in connParams.user.",
+          "The CCIManifest for package-JDBC_V2 declares HASUSERNAME=\"NO\" HASUSERPASSWORD=\"NO\" on the connection type, and its real attributeNames are `username` and `password` (NOT `user`) plus `additionalsecurityproperties` (all lowercase). Sending `user` silently does nothing, so the driver authenticates as the JDBC default account. Diagnostic that proves it: the target DB reports the DEFAULT username, not yours. Verify by hitting the DB directly - e.g. ClickHouse HTTP 8123 with X-ClickHouse-User/-Key succeeded while no-password reproduced the identical server error code.",
+          "Field names were guessed from other connectors instead of read from the authoritative CCIManifest.txt / <CONNECTOR>_Plugin.xml inside the downloaded package on the agent, which lists every attributeName exactly."
+        ],
+        [
+          "Third-party JDBC driver install",
+          "Copying a JDBC jar into the agent's driver directory is enough to make JDBC_V2 work.",
+          "UNRESOLVED after 4 file-copy locations, each with an agent restart: ext/jdbc/, apps/Data_Integration_Server/ext{,/drivers}/, ext/connectors/thirdparty/informatica.jdbc_v2/common/ (sitting alongside Informatica's OWN working ojdbc8.jar, dwdb2 and mssql-jdbc), and apps/<service>/<ver>/connectors/thirdparty/informatica.jdbc_v2/. The jar itself was proven sound - Java-8 bytecode, major version 52 IDENTICAL to the working ojdbc8.jar, correct META-INF/services/java.sql.Driver, and it connected successfully when run from the agent host's own JVM. Still 'Unable to load driver'. Strong hypothesis: the driver must be uploaded through Administrator, which writes org-side metadata a file copy cannot.",
+          "A file copy was assumed sufficient because Informatica's own drivers live in that directory. Treat driver registration as a UI step until proven otherwise, and note the ClickHouse -all classifier for 0.6.5 is NOT shaded (missing com.clickhouse.client.*) - use -shaded."
+        ],
+        [
+          "MDM 403 as existence proof",
+          "A 403 from GET /business-entity/.../entity/{be}/{id} means the business entity exists and you merely lack rights.",
+          "It proves only that the PLANE is real. The identical 403 fires for a nonsense entity name (ZZFAKEENTITY), because the ACL check runs BEFORE the metadata lookup. To test whether an entity actually exists, POST .../entity/{be}?sourceSystem=X and read the 404: 'The requested metadata with GUID [X] cannot be found during load' = no such entity. On Org B that 404 was byte-identical for Person, person, c360.person AND ZZFAKEENTITY - i.e. nothing was deployed.",
+          "A 403 was read as 'exists but forbidden' without running the bogus-twin control on the ENTITY NAME (not just the path). Law 2 applies to path segments too."
+        ],
+        [
+          "Product 360 vs MDM SaaS",
+          "Informatica's P360 docs describe the MDM you have, so its automation notes apply.",
+          "MDM - Product 360 (P360) Cloud Edition is a DIFFERENT PRODUCT - an AWS-hosted PIM - not MDM SaaS / Customer 360. Its own automation surface has NO REST at all: deploys are triggered by uploading empty marker files (do_deploy.txt / do_deploy_web.txt / restart_server.txt) into an S3 customization folder that a cron job scans; workflow deploy is an ActiveVOS console click; DEV->QA->PROD promotion is an Informatica support ticket with a 4-hour window. Check entitlement first: on Org B, p360 / catalog.item / supplier360 / s360 privileges were all ZERO.",
+          "A doc URL was assumed to describe the licensed product. Confirm which SKU a doc covers by grepping the org's privilege list for that product's prefix before designing against it."
+        ],
+        [
+          "MDM model deploy",
+          "Deploying/publishing an MDM model must have a REST verb somewhere - keep hunting for the right path.",
+          "It does not, and the failure shape proves it rather than merely failing to find it: SIX route shapes all return 404 CMN00005 (/business-entity/public/api/v1/{deploy,deployment,model/deploy,publish}, /mdm-config/api/v1/deploy, /data360/mdm/api/v1/deploy) and there is NO 405 anywhere. A 405 would mean 'route exists, wrong verb'; uniform 404 means the route does not exist. Business 360 Modeler Publish is a UI click. The clone-through-migration backdoor is ALSO closed on this pod: POST /public/core/v3/import/package -> 404 MigrationSvc_025 'Import request with identifier [package] doesnt exist' (the service reads the last segment as an importId, so every /import/{x} shape 404s), and there is nothing to clone from anyway.",
+          "Absence of a found path was being treated as 'not yet found'. Use the 404-vs-405 distinction as the stopping rule: uniform 404 across many shapes = route absent, stop; any 405 = keep going."
+        ],
+        [
+          "Reference 360 reachability",
+          "Reference 360 is unavailable because /rdm-service/api/v1/referenceDataSets returns 404.",
+          "A sibling path is live: POST /rdm-service/external/v1/search returns 400 RDM.0040044 'No input given to required...', which per Law 5 means the VERB EXISTS and only the body is wrong. GET on the same path returns 405 and a bogus twin returns 404 - both confirming a real handler. So R360 lookup IS headless.",
+          "One 404 on one path was generalised to a whole service. Probe at least one sibling and read a 400 as progress, not rejection."
+        ]
+      ],
+      "_migrated_from": "capref#23"
+    },
+    {
+      "type": "table",
+      "title": "Corrections and confirmations from this run",
+      "header": [
+        "Topic",
+        "What was believed",
+        "What is actually true",
+        "Why it matters"
+      ],
+      "rows": [
+        [
+          "Org B access",
+          "A hard access wall — 'only the org owner can clear it' (README, 24 July).",
+          "CLEARED. Login lands directly in the Org B sub-org with 876 privileges and 38 roles. Connection create and delete both succeeded.",
+          "The connector work is not blocked on access. It is blocked on one thing only: zero Secure Agents in the org."
+        ],
+        [
+          "CDGC in Org B",
+          "Not licensed.",
+          "LICENSED — create.mcp.CatalogSourceConfiguration, create.PROFILE, execute.mcp.CatalogSourceConfiguration, Governance Owner + Governance Administrator. The data360 plane nonetheless returns zero-byte 200s.",
+          "Separates a licensing question from a deployment question. Do not raise this as an entitlement ticket."
+        ],
+        [
+          "Asset-type censuses",
+          "objects?q=type=='X' returning count 0 proves the type is unsupported.",
+          "The filter is NOT validated. A fabricated type returns the same clean empty envelope. Verified with TOTALLY_FAKE_TYPE_ZZZ and XYZZY.",
+          "Retires a technique used elsewhere in this document as capability evidence. Valid for content, never for capability."
+        ],
+        [
+          "v2 task resources (dss, dtemplate, dmask, dreplicate, plan, fileListener)",
+          "Universally available on the v2 plane.",
+          "Present on Org A's dm-us pod, 404 on Org B's dmp-us pod — in an org holding 876 privileges.",
+          "Endpoint availability is per-pod. Never generalise a v2 inventory from one org."
+        ],
+        [
+          "Data Profiling API location",
+          "Documented but the paths are not held locally.",
+          "LIVE at <short>-dqprofile.<pod>/profiling-service/api/v1/profile. Returned 200 JSON.",
+          "Closes an open item. The host pattern was the missing piece, not the path."
+        ],
+        [
+          "CAI restadmin plane",
+          "Reached only on the dm-us host family.",
+          "LIVE on dmp-us at <pod>-cai. Processes and URN mappings both returned real JSON; scheduler 401s on a role gap.",
+          "Confirms the plane is a platform feature, not a pod accident — and isolates the scheduler as a separate permissions issue."
+        ],
+        [
+          "Operational Insights",
+          "A REST plane, probed as REST.",
+          "GraphQL, not REST: one endpoint at /active-bpel/opsanalytics-das/metrics taking ?query={...}. Org B returned 400 on a malformed query — which proves the endpoint parses input.",
+          "A 400 from a GraphQL endpoint is positive evidence. Send Accept: text/csv for CSV, omit it for JSON."
+        ],
+        [
+          "MCP servers",
+          "Roadmap, unverified.",
+          "DOCUMENTED AND SHIPPING — five servers, eleven actions, protocol 2025-06-18, three auth methods, in the April 2026 guide.",
+          "Moves the MCP section from speculation to fact. The guide is on docs.informatica.com."
+        ],
+        [
+          "Engine RUNNING vs resolvable",
+          "agentEngineStatus.status == RUNNING means the engine is usable, so a connection test should now pass.",
+          "There are THREE states, not two. IDMC's per-agent API can report RUNNING while the agent's own log reports the same engine UNKNOWN and the router still answers 'No running service found of type X'. Registration lags deployment by many minutes. Poll until a connection TEST passes -- that is the only proof the engine is resolvable, not the status field.",
+          "status was read as a completion signal. It is a deployment signal."
+        ],
+        [
+          "Enabling many services at once",
+          "Enabling every available service is free and harmless -- take them all.",
+          "Each service downloads its own package. On a live enablement the agent host went 79% -> 96% disk (33 GB -> 6.8 GB free) in ~45 min with 6 engines still deploying, and ~/infaagent/downloads reached 20 GB. Enable only the services you need, and check free space BEFORE clicking. Installer dirs under downloads/ do NOT map cleanly onto apps/ names, so they cannot be safely bulk-deleted by name match mid-deployment.",
+          "Nobody costed the disk. The toast says 'Changes successful' with no mention of GBs."
+        ],
+        [
+          "Mass Ingestion / DBMI 'wall'",
+          "Every dbmi/mi task path 404s, so Mass Ingestion authoring has no REST plane and is UI-only.",
+          "The 404s were a WRONG-HOST error. DBMI is served on a dedicated <pod>-ing.<domain> host. On -ing: task/details returns a typed DBMI_TASK_WAS_NOT_FOUND, job/status returns 415 (content negotiation, i.e. live), and task/create returns 405 on GET but 500 'Object.getClass() because o is null' on an empty POST - the handler parsed and ran. Proven live 2026-07-26 with DNS + same-path A/B + bogus-twin controls.",
+          "Every probe used the pod/saas host. Nobody questioned the BASE URL because the paths came from vendor docs that omit the host. A wrong host and an absent route both look like 404."
+        ],
+        [
+          "Probing a whole service",
+          "If the documented path 404s, the capability is absent (or unlicensed).",
+          "Enumerate the HOST FAMILY first. IDMC fans services onto per-product hosts: <pod>.<domain>/saas (platform), idmc-api (CDGC), <pod>-mdm, <pod>-cai, <pod>-dqcloud-api, <pod>-dqprofile, <pod>-ing (DBMI), and pod-without-/saas (file+streaming). A path is only meaningful WITH its host - test DNS on the candidate host and a bogus sibling before concluding anything.",
+          "The corpus already listed 8 host shapes, but a service-level 404 was never re-tried against an unlisted host. This cost a false 'UI-only' verdict on an entire product."
+        ],
+        [
+          "MDM host 'not mounted'",
+          "<pod>-mdm.dmp-us is 404 / not mounted on this org, so MDM SaaS has no reachable plane here.",
+          "The HOST IS LIVE. DNS resolves and /business-entity/public/api/v1/entity/{be}/search returns 403 'Authorization Client Error' with an errorId, while a bogus sibling under the same prefix returns 404 CMN00005 - so the route exists and the block is a ROLE gap, not an absent plane. Verified live 2026-07-26. (The earlier 404 was /business-360/*, a different prefix, which genuinely is absent.)",
+          "One prefix was probed (/business-360) and its 404 was generalised to the whole host. A host verdict needs more than one prefix."
+        ],
+        [
+          "APIM 503 = 'routed, nothing behind it'",
+          "<pod>-apigw returns 503 so the API Manager plane is routed but empty - unexplained.",
+          "There is a SECOND, previously unknown host: <pod>-apim.dmp-us (its DNS resolves). It returns an nginx 503 for EVERY path INCLUDING a bogus one, so the 503 is a load-balancer artifact with no backend attached - not a per-path verdict. Same class as the zero-byte 200 (Law 2): the response is identical for real and fake paths, so it proves nothing either way.",
+          "Law 2 was applied to 200s and to 403/500 router artifacts, but not to 503s. Any status that is identical for a bogus twin is an artifact."
+        ]
+      ],
+      "_migrated_from": "capref#39"
+    }
+  ],
+  "notes": [
+    {
+      "label": "Zero PUT and zero PATCH are live-proven anywhere in this document.",
+      "text": "Counted across all 166 endpoint rows in the service sections: PUT is 0 working / 14 documented / 12 rejected / 113 untested, and PATCH is 0 / 5 / 9 / 125. Every in-place update in IDMC is therefore either unproven or done another way - DELETE then re-POST, or on the v2 plane POST to /{id}, which IS the update. Do not tell anyone IDMC 'supports PUT' on the strength of a [doc] row."
+    }
+  ],
+  "open_questions": [
+    "FOR THE OWNER OF 01-executive-summary (fable): its 'Verbs proven' cells list PUT and/or PATCH for CAI asset lifecycle, CAI runtime admin, CDQ, Data Marketplace and MDM, but every detail row for those five services carries those verbs as 'PUT [doc]' / 'PATCH [doc]' - documented, never exercised. Under rule 7 the summary is claiming YES where the evidence is DOC. Either downgrade the summary cells to [doc], or produce the live response that upgrades the detail rows. Not edited here because that section is owned. Raised 2026-07-25 while generating IDMC Endpoint Dictionary.md, which counts from the detail rows."
+  ]
+}

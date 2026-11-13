@@ -1,0 +1,99 @@
+{
+ "name": "m_probe_mapplet",
+ "description": "[mapgen probe] a mapping that calls a generated mapplet",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_PEOPLE",
+   "conn": "BQ",
+   "query": "SELECT '  jane smith ' AS customer_name, 'new york' AS city UNION ALL SELECT 'bob o neil', '  paris'",
+   "fields": [
+    [
+     "customer_name",
+     "STRING",
+     256
+    ],
+    [
+     "city",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "mapplet",
+   "name": "MPL_CLEAN",
+   "mappletGuid": "${MAPPLET_GUID}",
+   "inputs": [
+    [
+     "in_name",
+     "STRING",
+     256
+    ],
+    [
+     "in_city",
+     "STRING",
+     256
+    ]
+   ],
+   "outputs": [
+    [
+     "clean_name",
+     "STRING",
+     256
+    ],
+    [
+     "clean_city",
+     "STRING",
+     256
+    ]
+   ],
+   "map": {
+    "in_name": "customer_name",
+    "in_city": "city"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_MPL",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_mapplet",
+   "truncate": true,
+   "fields": [
+    [
+     "clean_name",
+     "STRING"
+    ],
+    [
+     "clean_city",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_PEOPLE",
+   "MPL_CLEAN"
+  ],
+  [
+   "MPL_CLEAN",
+   "TGT_MPL"
+  ]
+ ],
+ "assets": [
+  {
+   "guid": "${MAPPLET_GUID}",
+   "name": "mplt_ex_clean_names",
+   "type": "DMAPPLET",
+   "path": "/Explore/${MAPPLET_FOLDER}"
+  }
+ ]
+}

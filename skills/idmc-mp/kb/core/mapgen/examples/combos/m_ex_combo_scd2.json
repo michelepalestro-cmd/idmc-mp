@@ -1,0 +1,187 @@
+{
+ "name": "m_ex_combo_scd2",
+ "description": "[mapgen combo scd2] SCD type 2 on ONE BigQuery table in ONE run: Lookup on the current rows, MD5 change flag (cents + NULL-safe category), Router CHANGED -> expire (DD_UPDATE) + version+1 (DD_INSERT), NEW -> version 1, Union, one Data Driven target keyed (product_id, version). Fixed timestamp 2026-10-01. Checks: suite/combos/scd2.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_STAGE",
+   "conn": "BQ",
+   "query": "SELECT product_id, price, category FROM `${BQ_PROJECT}.${DATASET}.combo_scd_stage`",
+   "fields": [
+    ["product_id", "STRING", 64],
+    ["price", "NUMERIC"],
+    ["category", "STRING", 256]
+   ]
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_DIM_CURRENT",
+   "connected": true,
+   "conn": "BQ",
+   "query": "SELECT product_id AS lk_product_id, version AS lk_version, price AS lk_price, category AS lk_category, valid_from AS lk_valid_from, row_hash AS lk_row_hash FROM `${BQ_PROJECT}.${DATASET}.combo_scd_dim` WHERE is_current",
+   "fields": [
+    ["lk_product_id", "STRING", 64],
+    ["lk_version", "INTEGER"],
+    ["lk_price", "NUMERIC"],
+    ["lk_category", "STRING", 256],
+    ["lk_valid_from", "TIMESTAMP"],
+    ["lk_row_hash", "STRING", 64]
+   ],
+   "cond": [
+    ["lk_product_id", "product_id"]
+   ],
+   "policy": "Use First Value"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SCD_HASH",
+   "fields": [
+    {"name": "v_new_in", "type": "STRING", "prec": 300, "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(price), '~', TO_CHAR(TO_BIGINT(ROUND(price * 100)))) || '|' || IIF(ISNULL(category), '~', '=' || category)"},
+    {"name": "v_old_in", "type": "STRING", "prec": 300, "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(lk_price), '~', TO_CHAR(TO_BIGINT(ROUND(lk_price * 100)))) || '|' || IIF(ISNULL(lk_category), '~', '=' || lk_category)"},
+    {"name": "v_new_hash", "type": "STRING", "prec": 32, "kind": "VARIABLE",
+     "expr": "LOWER(MD5(v_new_in))"},
+    {"name": "v_old_hash", "type": "STRING", "prec": 32, "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(lk_product_id), NULL, LOWER(MD5(v_old_in)))"},
+    {"name": "v_chg", "type": "STRING", "prec": 10, "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(lk_product_id), 'NEW', IIF(v_new_hash = v_old_hash, 'UNCHANGED', 'CHANGED'))"},
+    {"name": "new_hash", "type": "STRING", "prec": 32, "kind": "OUTPUT",
+     "expr": "v_new_hash"},
+    {"name": "chg_type", "type": "STRING", "prec": 10, "kind": "OUTPUT",
+     "expr": "v_chg"},
+    {"name": "eff_ts", "type": "TIMESTAMP", "kind": "OUTPUT",
+     "expr": "TO_DATE('2026-10-01 00:00:00', 'YYYY-MM-DD HH24:MI:SS')"}
+   ]
+  },
+  {
+   "type": "router",
+   "name": "RTR_SCD",
+   "groups": [
+    ["CHANGED", "chg_type = 'CHANGED'"],
+    ["NEW", "chg_type = 'NEW'"]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_EXPIRE",
+   "fields": [
+    {"name": "x_product_id", "type": "STRING", "prec": 64, "expr": "product_id"},
+    {"name": "x_version", "type": "INTEGER", "expr": "lk_version"},
+    {"name": "x_price", "type": "NUMERIC", "expr": "lk_price"},
+    {"name": "x_category", "type": "STRING", "prec": 256, "expr": "lk_category"},
+    {"name": "x_valid_from", "type": "TIMESTAMP", "expr": "lk_valid_from"},
+    {"name": "x_valid_to", "type": "TIMESTAMP", "expr": "eff_ts"},
+    {"name": "x_is_current", "type": "STRING", "prec": 10, "expr": "'false'"},
+    {"name": "x_row_hash", "type": "STRING", "prec": 64, "expr": "lk_row_hash"},
+    {"name": "x_op_flag", "type": "STRING", "prec": 1, "expr": "'U'"}
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_NEW_VERSION",
+   "fields": [
+    {"name": "n_product_id", "type": "STRING", "prec": 64, "expr": "product_id"},
+    {"name": "n_version", "type": "INTEGER", "expr": "lk_version + 1"},
+    {"name": "n_price", "type": "NUMERIC", "expr": "price"},
+    {"name": "n_category", "type": "STRING", "prec": 256, "expr": "category"},
+    {"name": "n_valid_from", "type": "TIMESTAMP", "expr": "eff_ts"},
+    {"name": "n_valid_to", "type": "TIMESTAMP", "expr": "NULL"},
+    {"name": "n_is_current", "type": "STRING", "prec": 10, "expr": "'true'"},
+    {"name": "n_row_hash", "type": "STRING", "prec": 64, "expr": "new_hash"},
+    {"name": "n_op_flag", "type": "STRING", "prec": 1, "expr": "'I'"}
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_NEW_PRODUCT",
+   "fields": [
+    {"name": "a_product_id", "type": "STRING", "prec": 64, "expr": "product_id"},
+    {"name": "a_version", "type": "INTEGER", "expr": "1"},
+    {"name": "a_price", "type": "NUMERIC", "expr": "price"},
+    {"name": "a_category", "type": "STRING", "prec": 256, "expr": "category"},
+    {"name": "a_valid_from", "type": "TIMESTAMP", "expr": "eff_ts"},
+    {"name": "a_valid_to", "type": "TIMESTAMP", "expr": "NULL"},
+    {"name": "a_is_current", "type": "STRING", "prec": 10, "expr": "'true'"},
+    {"name": "a_row_hash", "type": "STRING", "prec": 64, "expr": "new_hash"},
+    {"name": "a_op_flag", "type": "STRING", "prec": 1, "expr": "'I'"}
+   ]
+  },
+  {
+   "type": "union",
+   "name": "UNI_SCD",
+   "inputs": ["In_EXPIRE", "In_NEW_VERSION", "In_NEW_PRODUCT"],
+   "fields": [
+    ["product_id", "STRING", 64],
+    ["version", "INTEGER"],
+    ["price", "NUMERIC"],
+    ["category", "STRING", 256],
+    ["valid_from", "TIMESTAMP"],
+    ["valid_to", "TIMESTAMP"],
+    ["is_current", "STRING", 10],
+    ["row_hash", "STRING", 64],
+    ["op_flag", "STRING", 1]
+   ],
+   "map": {
+    "In_EXPIRE": {
+     "product_id": "x_product_id", "version": "x_version", "price": "x_price", "category": "x_category",
+     "valid_from": "x_valid_from", "valid_to": "x_valid_to", "is_current": "x_is_current", "row_hash": "x_row_hash",
+     "op_flag": "x_op_flag"
+    },
+    "In_NEW_VERSION": {
+     "product_id": "n_product_id", "version": "n_version", "price": "n_price", "category": "n_category",
+     "valid_from": "n_valid_from", "valid_to": "n_valid_to", "is_current": "n_is_current", "row_hash": "n_row_hash",
+     "op_flag": "n_op_flag"
+    },
+    "In_NEW_PRODUCT": {
+     "product_id": "a_product_id", "version": "a_version", "price": "a_price", "category": "a_category",
+     "valid_from": "a_valid_from", "valid_to": "a_valid_to", "is_current": "a_is_current", "row_hash": "a_row_hash",
+     "op_flag": "a_op_flag"
+    }
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_DIM",
+   "conn": "BQ",
+   "object": "${DATASET}/combo_scd_dim",
+   "truncate": false,
+   "fields": [
+    ["product_id", "STRING"],
+    ["version", "INTEGER"],
+    ["price", "NUMERIC"],
+    ["category", "STRING"],
+    ["valid_from", "TIMESTAMP"],
+    ["valid_to", "TIMESTAMP"],
+    ["is_current", "BOOLEAN"],
+    ["row_hash", "STRING"]
+   ],
+   "op": "Data Driven",
+   "updateColumns": ["product_id", "version"],
+   "updateStrategy": "IIF(op_flag = 'U', DD_UPDATE, DD_INSERT)",
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1",
+    "isMergeEnabled": "YES",
+    "isDataDrivenEnabled": "YES"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1",
+    "Enable Merge": "YES",
+    "Enable Data Driven": "YES"
+   }
+  }
+ ],
+ "links": [
+  ["SRC_STAGE", "LKP_DIM_CURRENT"],
+  ["LKP_DIM_CURRENT", "EXP_SCD_HASH"],
+  ["EXP_SCD_HASH", "RTR_SCD"],
+  ["RTR_SCD.CHANGED", "EXP_EXPIRE"],
+  ["RTR_SCD.CHANGED", "EXP_NEW_VERSION"],
+  ["RTR_SCD.NEW", "EXP_NEW_PRODUCT"],
+  ["EXP_EXPIRE", "UNI_SCD.In_EXPIRE"],
+  ["EXP_NEW_VERSION", "UNI_SCD.In_NEW_VERSION"],
+  ["EXP_NEW_PRODUCT", "UNI_SCD.In_NEW_PRODUCT"],
+  ["UNI_SCD", "TGT_DIM"]
+ ]
+}

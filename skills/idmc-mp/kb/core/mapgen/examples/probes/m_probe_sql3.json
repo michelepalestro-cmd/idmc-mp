@@ -1,0 +1,96 @@
+{
+ "name": "m_probe_sql3",
+ "description": "[mapgen probe] SQL transformation: a PostgreSQL entered query per row (no bound parameter), incoming fields pass through",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_KEYS",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k UNION ALL SELECT 'K2' UNION ALL SELECT 'K9'",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ]
+   ]
+  },
+  {
+   "type": "sql",
+   "name": "SQL_STOCK",
+   "conn": "PG",
+   "query": "SELECT max(n) AS stock_n, min(v) AS stock_v FROM ${PG_SCRATCH}.probe_upsert",
+   "outputs": [
+    [
+     "stock_n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ],
+    [
+     "stock_v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ]
+   ],
+   "passthrough": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ]
+   ],
+   "allowUnsupported": true
+  },
+  {
+   "type": "target",
+   "name": "TGT_SQL",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_sql",
+   "truncate": true,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "stock_n",
+     "INTEGER"
+    ],
+    [
+     "stock_v",
+     "STRING"
+    ],
+    [
+     "SQLError",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_KEYS",
+   "SQL_STOCK",
+   [
+    "k"
+   ]
+  ],
+  [
+   "SQL_STOCK",
+   "TGT_SQL"
+  ]
+ ]
+}

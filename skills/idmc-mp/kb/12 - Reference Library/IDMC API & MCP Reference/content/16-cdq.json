@@ -1,0 +1,112 @@
+{
+ "id": "16-cdq",
+ "title": "CDQ - Cloud Data Quality",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/quality/public/v2/dictionaries/",
+     "POST",
+     "CREATE a DQ dictionary",
+     "201 — name <=125 ch, <=42 columns  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/quality/public/v2/dictionaries/{id}",
+     "DELETE [doc]",
+     "Delete a dictionary",
+     "204 documented  —  untested: GET, POST, PUT, PATCH"
+    ],
+    [
+     "/quality/public/v2/dictionaries/{id}/rows",
+     "POST [doc], PUT [doc], DELETE [doc]",
+     "ADD rows — max 10,000 per call; REPLACE all rows — max 10,000; Delete all rows",
+     "201 documented; 413 if over  —  untested: GET, PATCH; 200 documented  —  untested: GET, PATCH; 204 documented  —  untested: GET, PATCH"
+    ],
+    [
+     "/quality/public/v2/dictionaries/{id}/finishUpload",
+     "POST [doc]",
+     "FINALIZE pending row operations",
+     "skip it and you get 424  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/quality/public/v2/scorecards",
+     "none proven",
+     "Scorecards over the public v2 API",
+     "404 — the API is dictionaries-only  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/objects?q=type==RULE_SPECIFICATION",
+     "GET",
+     "Rule-specification census; DQ asset census (18 / 1 / 15)",
+     "200 — 19 rules"
+    ],
+    [
+     "Rule-spec CLONE via v3 migration",
+     "none proven",
+     "Copy a rule-spec template",
+     "count went 4 -> 12"
+    ],
+    [
+     "Rule-spec LOGIC authoring",
+     "UI only",
+     "Write the actual rule expression",
+     "rulebuilder canvas"
+    ],
+    [
+     "/data360/dq/v1/ruleSpecifications",
+     "none proven",
+     "Native DQ rule CRUD",
+     "404 on all variants  —  rejected: GET 404, POST 404, PUT 404, PATCH 404, DELETE 404"
+    ],
+    [
+     "/data360/businessDataset/v1 (RuleOccurrence)",
+     "none proven",
+     "Bind a rule to an asset = the SCORING object",
+     "404 — CDGC DQO wizard only  —  rejected: POST 404; untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/dataquality/addressverification/api/v1/process",
+     "POST [doc]",
+     "Verify, standardize + geocode an address",
+     "POST only; 240+ countries  —  rejected: GET 405, PUT 405, PATCH 405, DELETE 405"
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "MCP coverage for this service",
+   "intro": "The Address Verification MCP server covers one corner of CDQ. Nothing in MCP touches dictionaries, rules or scorecards.",
+   "header": [
+    "MCP action",
+    "Verb",
+    "Server",
+    "What it does",
+    "REST equivalent"
+   ],
+   "rows": [
+    [
+     "verify_address",
+     "POST",
+     "Address Verification",
+     "Validates, standardizes and geocodes an address. 240+ countries.",
+     "Wraps POST /dataquality/addressverification/api/v1/process. REST does 1,000 per call, MCP one."
+    ]
+   ]
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

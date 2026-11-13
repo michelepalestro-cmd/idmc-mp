@@ -1,0 +1,364 @@
+{
+  "id": "30-mcp-servers",
+  "title": "MCP servers - the whole catalog in one place",
+  "owner": "fable",
+  "last_verified": "2026-07-26",
+  "status": "restructured",
+  "intro": "Informatica publishes five managed MCP servers exposing eleven actions between them. This section is the consolidated view; the same actions also appear inside each service section next to that product's API table. Source: the official April-2026 Getting Started with Informatica MCP Servers guide.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "The five servers, and which IDMC product each one covers",
+      "header": [
+        "MCP server",
+        "Backing IDMC service",
+        "Actions",
+        "What it is for"
+      ],
+      "rows": [
+        [
+          "Address Verification",
+          "Cloud Address Verification (CDQ)",
+          "1",
+          "Validate, standardize and geocode addresses in real time, 240+ countries"
+        ],
+        [
+          "CDGC Metadata Search",
+          "CDGC catalog",
+          "2",
+          "Natural-language asset discovery; returns metadata including lineage and profile"
+        ],
+        [
+          "Customer Identification",
+          "MDM SaaS / Customer 360",
+          "2",
+          "Fuzzy identity resolution plus master (golden) record retrieval"
+        ],
+        [
+          "Data Provisioning",
+          "Cloud Data Marketplace",
+          "3",
+          "List collections and targets, and raise a governed access request"
+        ],
+        [
+          "Job Management",
+          "CDI execution engine",
+          "3",
+          "Trigger, monitor and stop mapping tasks in real time"
+        ]
+      ],
+      "_migrated_from": "capref#19"
+    },
+    {
+      "type": "table",
+      "title": "All eleven actions across the five servers",
+      "header": [
+        "MCP action",
+        "Verb",
+        "Server",
+        "Key inputs",
+        "What it does"
+      ],
+      "rows": [
+        [
+          "verify_address",
+          "POST",
+          "Address Verification",
+          "address payload",
+          "Validates, standardizes and geocodes an address; returns a validation status. Persists nothing."
+        ],
+        [
+          "search_metadata",
+          "POST",
+          "CDGC Metadata Search",
+          "knowledgeQuery (NL string)",
+          "Natural-language catalog query returning matching asset IDs and core attributes."
+        ],
+        [
+          "get_asset_details",
+          "POST",
+          "CDGC Metadata Search",
+          "id, scheme",
+          "Full metadata for one asset — includes lineage, profile and full descriptions."
+        ],
+        [
+          "search_master_record",
+          "POST",
+          "Customer Identification",
+          "customer details",
+          "Fuzzy match returning the business ID of the best-matching master record."
+        ],
+        [
+          "get_master_record_details",
+          "POST",
+          "Customer Identification",
+          "business ID",
+          "The consolidated golden record, merged across source systems."
+        ],
+        [
+          "list_data_collections",
+          "POST",
+          "Data Provisioning",
+          "limit, search",
+          "Lists marketplace data collections."
+        ],
+        [
+          "list_delivery_targets",
+          "POST",
+          "Data Provisioning",
+          "id (uuid), segments",
+          "Returns collection detail. Note: despite the name it does not return a target list."
+        ],
+        [
+          "checkout_data_order",
+          "POST",
+          "Data Provisioning",
+          "dataCollectionId, justification, targetRef",
+          "The only write in the catalog. Raises a formal access request; requires a business justification."
+        ],
+        [
+          "run_mapping_task",
+          "POST",
+          "Job Management",
+          "task plus runtime parameters",
+          "Triggers execution of a CDI mapping task."
+        ],
+        [
+          "get_job_status",
+          "POST",
+          "Job Management",
+          "job id",
+          "Live execution state, row counts and error logs."
+        ],
+        [
+          "stop_running_job",
+          "POST",
+          "Job Management",
+          "job id",
+          "Sends an immediate termination request to the Secure Agent."
+        ]
+      ],
+      "_migrated_from": "capref#20",
+      "intro": "Every action, regardless of what it does, is invoked as an HTTP POST to its server's single endpoint. The action name carries the intent. Each service section elsewhere in this document repeats the actions relevant to that product."
+    },
+    {
+      "type": "table",
+      "title": "Protocol and transport",
+      "header": [
+        "Property",
+        "Value",
+        "Note"
+      ],
+      "rows": [
+        [
+          "MCP protocol version",
+          "2025-06-18",
+          "MCP guide p.7. Pin this when writing a client."
+        ],
+        [
+          "Transport",
+          "streamable HTTP",
+          "Not stdio. Remote servers, not local subprocesses."
+        ],
+        [
+          "Host / client model",
+          "your AI app = MCP host; each agent = MCP client; one client to one server",
+          "MCP guide p.6. Informatica calls MCP tools 'actions'; the details page says actions, third-party clients say tools. Same thing."
+        ],
+        [
+          "Where to see them",
+          "AI Agent Engineering > MCP Servers page",
+          "Each server's Configuration tab holds the endpoint URL and a paste-ready code block."
+        ],
+        [
+          "Supported clients",
+          "Claude Desktop, Cursor, VS Code, Python, and the AI Agent Engineering MCP Tool",
+          "MCP guide pp.13-14."
+        ],
+        [
+          "Metering",
+          "Not monetized during the AI Agent Engineering preview — BUT the underlying service APIs still bill IPUs at the service rate card",
+          "MCP guide p.7. The trap: MCP looks free, then CDGC, CDI, Marketplace and MDM calls appear on the bill. Budget the backing service, not the MCP layer."
+        ]
+      ],
+      "_migrated_from": "capref#33"
+    },
+    {
+      "type": "table",
+      "title": "Three ways to authenticate",
+      "header": [
+        "Method",
+        "Header to send",
+        "When to use it",
+        "Notes"
+      ],
+      "rows": [
+        [
+          "Session ID",
+          "headers={\"IDS-SESSION-ID\": \"<session ID>\"}",
+          "Quickest path; you already have this from a v1 login.",
+          "MCP guide pp.12-14. Same session ID the REST planes use."
+        ],
+        [
+          "JWT",
+          "headers={\"Authorization\": \"Bearer <token>\"}",
+          "When the org standardises on JWT.",
+          "Minted the same way as the data360 token. Remember the documented 30-minute lifetime."
+        ],
+        [
+          "OAuth — direct client",
+          "headers={\"Authorization\": \"Bearer <token>\"}",
+          "Production. The agent never holds a human user's IDMC credentials.",
+          "Client Credentials grant, POST to the token endpoint, OAuth 2.0. Recommended for anything long-lived."
+        ],
+        [
+          "OAuth — federated",
+          "headers={\"Authorization\": \"Bearer <token>\"}",
+          "Org uses SAML SSO; identity is delegated to Okta or Azure AD.",
+          "Requires the org configured for SAML with users set up as SAML users, plus a configured IdP."
+        ]
+      ],
+      "_migrated_from": "capref#34"
+    },
+    {
+      "type": "table",
+      "title": "OAuth client lifecycle — Configuration > MCP Server Authorization",
+      "header": [
+        "Operation",
+        "Where",
+        "What you get / must know"
+      ],
+      "rows": [
+        [
+          "Add OAuth client",
+          "Add OAuth Client wizard: Authentication > Details > Resources > Generate Credentials",
+          "Returns client ID, client secret, and an auth header value (base64 of id:secret). On the Resources page you pick WHICH MCP servers this client may reach — scope it narrowly."
+        ],
+        [
+          "Access-token timeout",
+          "Details page of the wizard",
+          "Default 5 minutes. Range 5 to 1440 minutes (24 h). Five minutes will bite any long-running agent — raise it deliberately."
+        ],
+        [
+          "Secret retrieval",
+          "Generate Credentials page, once",
+          "The secret and header value are NOT available after the wizard closes. Copy them then, or regenerate."
+        ],
+        [
+          "Regenerate secret",
+          "Actions menu > Regenerate Secret",
+          "Re-authenticates with username and password first. The recovery path when a secret is lost."
+        ],
+        [
+          "Disable / enable",
+          "Actions menu > Disable or Enable",
+          "Enabled on creation. Disable stops token issuance without deleting — the correct response to a compromised client."
+        ],
+        [
+          "Edit",
+          "Edit icon",
+          "Change name, description, timeout, or which MCP servers are in scope."
+        ],
+        [
+          "Delete",
+          "Delete icon",
+          "For clients no longer needed."
+        ],
+        [
+          "Download report",
+          "Download CSV icon",
+          "Name, description, status, MCP servers and last-update date for every client. Ignores on-screen filters — always the full list. Useful as an audit artifact."
+        ]
+      ],
+      "_migrated_from": "capref#35"
+    },
+    {
+      "type": "table",
+      "title": "The CLAIRE MCP server in a Claude host — live enumeration",
+      "header": [
+        "Tool",
+        "Accepted arguments",
+        "What it is"
+      ],
+      "rows": [
+        [
+          "OrchestratorSkill",
+          "prompt, conversation_id, name, external_id, artifacts, history, reasoning, events",
+          "General CLAIRE orchestration. One free-text prompt in, an artifact-bearing response out."
+        ],
+        [
+          "MdmOrchestratorSkill",
+          "prompt, conversation_id, name, external_id, artifacts, history, reasoning, events",
+          "The MDM-specialised twin."
+        ],
+        [
+          "new_conversation",
+          "(no domain args)",
+          "Must be called FIRST to obtain a conversation_id. Skipping it is the usual cause of a failed first call."
+        ],
+        [
+          "working",
+          "(NONE - takes no arguments at all)",
+          "Poll until the response is ready. CLAIRE is asynchronous - treat this as a poll-until-done loop. CORRECTED 2026-07-26 from the live tool schema: this action accepts NO arguments (properties={}), so do NOT pass conversation_id. It is cursor-based server-side and returns only items queued since your previous call. It is also a LOCAL POLLING SHIM that Informatica will remove once the MCP server provides native progress streaming."
+        ]
+      ],
+      "_migrated_from": "capref#36"
+    },
+    {
+      "type": "table",
+      "title": "How many MCP servers are there, really",
+      "header": [
+        "Class",
+        "Count",
+        "Evidence"
+      ],
+      "rows": [
+        [
+          "Informatica-MANAGED MCP servers",
+          "5 - Address Verification, CDGC Metadata Search, Customer Identification, Data Provisioning, Job Management",
+          "AIAE April 2026 'Available MCP servers' p.7-8 enumerates exactly these five and no others. This is the authoritative catalog for that release."
+        ],
+        [
+          "...of those, exposed on a probed org",
+          "2 of 5",
+          "GET /public/core/v3/mcpServers returned a populated registry on one org listing 2; the same path 404s on another org entirely. Exposure is per-org, not per-product."
+        ],
+        [
+          "CLAIRE / AI-agent MCP servers",
+          "separate class, NOT in the five",
+          "Reached at <claire_api_url>/claire-orchestrator-ai-agent/api/v1/mcp. Appears as tools in the HOST app, not in the org's mcpServers registry - so counting it against the five is a category error."
+        ],
+        [
+          "Your own / third-party servers",
+          "unbounded",
+          "Any MCP server you register in the host (claude mcp add) sits beside these. IDMC does not know about them."
+        ],
+        [
+          "Commonly-heard '5 to 10'",
+          "Treat as unverified",
+          "Only the 5 managed servers are vendor-enumerated for April 2026. If someone cites more, ask which RELEASE and whether they are counting AI-agent servers or their own registrations. Re-read the Available MCP servers page before quoting a number to a customer - the roadmap is active."
+        ]
+      ],
+      "_source": "AIAE_April2026_GettingStartedWithInformatica(MCP)Servers p.7-8 + live registry probe 2026-07-25/26"
+    }
+  ],
+  "notes": [
+    {
+      "label": "MCP is a small curated subset of REST, with two exceptions.",
+      "text": "Seven of the eleven actions are thin wrappers over a REST endpoint you could call directly, and in several cases REST is strictly more capable - raw Elasticsearch DSL instead of one search string, 1,000 addresses per call instead of one, full job history instead of a single job. The two genuine exceptions are asset lineage via get_asset_details and fuzzy identity match via search_master_record; neither has any REST equivalent on this platform."
+    },
+    {
+      "label": "No MCP action authors a design-time asset.",
+      "text": "There is no mapping designer, no rule authoring and no business-entity modelling in the MCP catalog. The read/write boundary is identical to REST's, which is the clearest evidence that MCP sits on top of the same service APIs rather than beside them."
+    },
+    {
+      "label": "Billing.",
+      "text": "MCP server usage is not separately metered during the AI Agent Engineering preview, but the shared servers call IDMC service APIs underneath and that consumption incurs IPUs at your normal service rate card. Budget MCP as the underlying service."
+    },
+    {
+      "label": "Server availability is per-org.",
+      "text": "Of the five published servers, a live enumeration of one lab tenant found only two exposed on its MCP host. The documented catalog is the ceiling, not a guarantee."
+    }
+  ],
+  "open_questions": []
+}

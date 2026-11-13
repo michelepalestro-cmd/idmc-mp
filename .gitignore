@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Credentials and per-user files: never commit
+IDMC_LOGIN.txt
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*_creds*
+*.creds
+**/tools/secret_scan_extra.txt
+.idmc_session*
+*.session.json
+*.block
+
+# Run output
+_output/
+*.log
+mapgen_out/
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

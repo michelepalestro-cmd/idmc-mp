@@ -1,0 +1,377 @@
+{
+ "name": "m_ex_price_scd2",
+ "description": "[mapgen-suite S07] SCD type 2 on product prices: current dimension rows (Filter) full-outer-joined to today's feed, MD5 hashes decide NEW / CHANGED / DISCONTINUED / UNCHANGED, and overlapping Router groups send a CHANGED row both to the insert and the expire target.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_FEED",
+   "conn": "BQ",
+   "query": "SELECT product_id AS f_product_id, price AS f_price, category AS f_category, FORMAT_DATE('%Y-%m-%d', feed_date) AS f_feed_date FROM `${BQ_PROJECT}.${DATASET}.product_price_feed`",
+   "fields": [
+    [
+     "f_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "f_price",
+     "NUMERIC"
+    ],
+    [
+     "f_category",
+     "STRING",
+     256
+    ],
+    [
+     "f_feed_date",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_DIM",
+   "conn": "BQ",
+   "query": "SELECT product_id AS d_product_id, version AS d_version, price AS d_price, category AS d_category, FORMAT_DATE('%Y-%m-%d', effective_from) AS d_effective_from, FORMAT_DATE('%Y-%m-%d', effective_to) AS d_effective_to FROM `${BQ_PROJECT}.${DATASET}.product_price_history`",
+   "fields": [
+    [
+     "d_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "d_version",
+     "INTEGER"
+    ],
+    [
+     "d_price",
+     "NUMERIC"
+    ],
+    [
+     "d_category",
+     "STRING",
+     256
+    ],
+    [
+     "d_effective_from",
+     "STRING",
+     256
+    ],
+    [
+     "d_effective_to",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_CURRENT",
+   "cond": "ISNULL(d_effective_to)"
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_SCD",
+   "master": "FIL_CURRENT",
+   "detail": "SRC_FEED",
+   "cond": [
+    [
+     "d_product_id",
+     "f_product_id"
+    ]
+   ],
+   "join": "FULL_OUTER"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SCD",
+   "fields": [
+    {
+     "name": "v_new",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(f_product_id), NULL, MD5(f_product_id || '|' || TO_CHAR(f_price) || '|' || IIF(ISNULL(f_category), '~', f_category)))",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_old",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(d_product_id), NULL, MD5(d_product_id || '|' || TO_CHAR(d_price) || '|' || IIF(ISNULL(d_category), '~', d_category)))",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_type",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, ISNULL(d_product_id), 'NEW', ISNULL(f_product_id), 'DISCONTINUED', v_new != v_old, 'CHANGED', 'UNCHANGED')",
+     "kind": "VARIABLE",
+     "prec": 16
+    },
+    {
+     "name": "product_id",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(f_product_id), d_product_id, f_product_id)",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "change_type",
+     "type": "STRING",
+     "expr": "v_type",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "price_change_pct",
+     "type": "NUMERIC",
+     "expr": "IIF(v_type = 'CHANGED' AND d_price != 0, ROUND((f_price - d_price) / d_price * 100, 4), NULL)",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "router",
+   "name": "RTR_SCD",
+   "groups": [
+    [
+     "INSERT_VERSION",
+     "change_type = 'NEW' OR change_type = 'CHANGED'"
+    ],
+    [
+     "EXPIRE_VERSION",
+     "change_type = 'CHANGED' OR change_type = 'DISCONTINUED'"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_INSERT",
+   "fields": [
+    {
+     "name": "version",
+     "type": "INTEGER",
+     "expr": "IIF(change_type = 'NEW', 1, d_version + 1)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "price",
+     "type": "NUMERIC",
+     "expr": "f_price",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "category",
+     "type": "STRING",
+     "expr": "f_category",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "effective_from",
+     "type": "STRING",
+     "expr": "f_feed_date || ' 00:00:00'",
+     "kind": "OUTPUT",
+     "prec": 19
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_EXPIRE",
+   "fields": [
+    {
+     "name": "version",
+     "type": "INTEGER",
+     "expr": "d_version",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "old_price",
+     "type": "NUMERIC",
+     "expr": "d_price",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "effective_to",
+     "type": "STRING",
+     "expr": "TO_CHAR(ADD_TO_DATE(TO_DATE('2026-06-15', 'YYYY-MM-DD'), 'DD', -1), 'YYYY-MM-DD') || ' 00:00:00'",
+     "kind": "OUTPUT",
+     "prec": 19
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_UNCHANGED",
+   "fields": [
+    {
+     "name": "version",
+     "type": "INTEGER",
+     "expr": "d_version",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "price",
+     "type": "NUMERIC",
+     "expr": "d_price",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_DIM_INSERTS",
+   "conn": "BQ",
+   "object": "${DATASET}/out_dim_inserts",
+   "truncate": true,
+   "fields": [
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "version",
+     "INTEGER"
+    ],
+    [
+     "price",
+     "NUMERIC"
+    ],
+    [
+     "category",
+     "STRING"
+    ],
+    [
+     "effective_from",
+     "STRING"
+    ],
+    [
+     "change_type",
+     "STRING"
+    ],
+    [
+     "price_change_pct",
+     "NUMERIC"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_DIM_EXPIRES",
+   "conn": "BQ",
+   "object": "${DATASET}/out_dim_expires",
+   "truncate": true,
+   "fields": [
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "version",
+     "INTEGER"
+    ],
+    [
+     "old_price",
+     "NUMERIC"
+    ],
+    [
+     "effective_to",
+     "STRING"
+    ],
+    [
+     "change_type",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_DIM_UNCHANGED",
+   "conn": "BQ",
+   "object": "${DATASET}/out_dim_unchanged",
+   "truncate": true,
+   "fields": [
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "version",
+     "INTEGER"
+    ],
+    [
+     "price",
+     "NUMERIC"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_DIM",
+   "FIL_CURRENT"
+  ],
+  [
+   "FIL_CURRENT",
+   "JNR_SCD.Master"
+  ],
+  [
+   "SRC_FEED",
+   "JNR_SCD.Detail"
+  ],
+  [
+   "JNR_SCD",
+   "EXP_SCD"
+  ],
+  [
+   "EXP_SCD",
+   "RTR_SCD"
+  ],
+  [
+   "RTR_SCD.INSERT_VERSION",
+   "EXP_INSERT"
+  ],
+  [
+   "EXP_INSERT",
+   "TGT_DIM_INSERTS"
+  ],
+  [
+   "RTR_SCD.EXPIRE_VERSION",
+   "EXP_EXPIRE"
+  ],
+  [
+   "EXP_EXPIRE",
+   "TGT_DIM_EXPIRES"
+  ],
+  [
+   "RTR_SCD.DEFAULT1",
+   "EXP_UNCHANGED"
+  ],
+  [
+   "EXP_UNCHANGED",
+   "TGT_DIM_UNCHANGED"
+  ]
+ ]
+}

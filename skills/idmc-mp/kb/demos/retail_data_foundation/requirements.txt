@@ -1,0 +1,4 @@
+# Standard library only (Python 3.10+). Nothing to pip install.
+# External command-line tools used by some steps (install them yourself):
+#   docker + docker compose    infra/ (the stand-in Postgres)
+#   bq (Google Cloud SDK)      infra/bq_setup.py --execute, verify/e2e_check.py

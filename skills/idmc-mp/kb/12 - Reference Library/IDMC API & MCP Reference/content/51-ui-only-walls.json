@@ -1,0 +1,133 @@
+{
+ "id": "51-ui-only-walls",
+ "title": "The UI-only walls, consolidated",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "migrated",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "header": [
+    "Operation",
+    "What DOES work over REST",
+    "The failure you will see",
+    "Where the human clicks"
+   ],
+   "rows": [
+    [
+     "CDI mapping design",
+     "list / run / schedule / monitor",
+     "POST /api/v2/mapping -> 400 HTML; v3 objects -> 405",
+     "Mapping Designer canvas"
+    ],
+    [
+     "Taskflow publish",
+     "GET taskflow returns 200",
+     "POST /api/v2/taskflow/publish -> 404",
+     "DI designer Publish click"
+    ],
+    [
+     "CAI publish",
+     "invoke, authenticated and anonymous",
+     "NOT A WALL — POST /active-bpel/asset/v1/publish -> 202",
+     "resolved: use the -cai host"
+    ],
+    [
+     "CAI process engine on prod agent",
+     "/process-engine/status 200",
+     "POST /api/v2/agent/service -> 403 APP_13401 / 500 CMN_001 -- but BOTH are router artifacts (bogus twins return them identically), so cite instead: POST /api/v2/agent/{id} with agentEngines[] returns 500 and read-back shows [] (silent no-op); identical as parent-org admin",
+     "Administrator UI toggle: Runtime Environments -> agent -> enable service"
+    ],
+    [
+     "Mass Ingestion authoring",
+     "engines RUNNING; activityLog",
+     "every mi / dbmi task path 404; MI_TASK count 0",
+     "Mass Ingestion wizard"
+    ],
+    [
+     "CDQ rule + scorecard authoring",
+     "rule specs readable and clonable",
+     "data360/dq/* 404; RuleOccurrence has no create API",
+     "rulebuilder + DQO wizard"
+    ],
+    [
+     "CLAIRE classification accept",
+     "classifications readable",
+     "37+ accept paths 404; the UI offers only Dismiss",
+     "auto-accept threshold + re-scan"
+    ],
+    [
+     "MDM business-entity deploy",
+     "97 MDM_* design objects readable",
+     "~20 deploy paths 404; BUSINESS_ENTITY count 0",
+     "Business 360 Modeler Publish"
+    ],
+    [
+     "MDM ingress / match-merge run",
+     "record ingest returns 201",
+     "all ingress and job paths 404",
+     "B360 Console click"
+    ],
+    [
+     "Glossary term to column binding",
+     "glossary readable in the UI",
+     "~20 glossary paths 404 with empty bodies",
+     "CDGC UI (partial ccgf-contentv2 workaround)"
+    ],
+    [
+     "Steward / data-owner assignment",
+     "stewards readable",
+     "stewardship writes 404 / 405",
+     "CDGC UI"
+    ],
+    [
+     "Marketplace delivery template",
+     "templates readable",
+     "405 on every verb",
+     "Marketplace UI, headed browser"
+    ],
+    [
+     "DAM masking policy",
+     "—",
+     "~40 policy paths 404; policy count 0",
+     "engine deployed, no REST plane"
+    ],
+    [
+     "Connector type registration",
+     "connector visible in global catalog",
+     "403 no connector with type=X",
+     "one UI Save in Administrator"
+    ],
+    [
+     "Agent service / engine enablement",
+     "GET /api/v2/agent/{id} and /agent/details/{id} show what IS assigned; a connection test names what is MISSING",
+     "GET /api/v2/connection/test/{id} -> 403 'No running service found of type Data_Integration_Server 77.* service for AgentGroup: {reId}' -- the cleanest Layer-3 proof",
+     "Administrator -> Runtime Environments -> agent -> enable Data Integration / Metadata. NO reinstall: the agent polls and pulls packages itself (verified: 1 engine -> 22 DEPLOYING)"
+    ],
+    [
+     "Connector type registration on an agent",
+     "GET /api/v2/connector lists 342 types; connections CREATE fine (200) against any of them",
+     "403 'Unable to fetch Connector attributes, Ensure adapter ID is valid and the service is enabled [com.informatica.adapter.<x>]' on GET /api/v2/connection/test/{id}; agent ADAPTER_HOME (<agent>/apps/Connector_Service/<ver>/connectors/cci/plugins/) has no jar for <x>",
+     "Administrator -> Runtime Environments -> agent -> add/enable the connector, which pushes its adapter package down. Enabling engines does NOT do this"
+    ],
+    [
+     "Third-party JDBC driver for JDBC_V2",
+     "nothing - a plain file copy into any of 4 driver dirs did not work",
+     "'Unable to load driver' even with a proven-good jar (Java-8 bytecode, correct META-INF/services/java.sql.Driver, connects from the agent host's own JVM)",
+     "Administrator upload-JAR flow for JDBC_V2 (unconfirmed but strongly indicated - a copy cannot write the org-side metadata)"
+    ],
+    [
+     "MDM model deploy / publish",
+     "ingest POST .../entity/{be}?sourceSystem=X, read GET .../entity/{be}/{id}, entity-xref for source updates, Reference 360 POST /rdm-service/external/v1/search",
+     "6 route shapes all 404 CMN00005 and NO 405 anywhere => route absent. Clone backdoor also closed: POST /public/core/v3/import/package -> 404 MigrationSvc_025",
+     "Business 360 Modeler -> Publish (one click). Once published the DATA side is fully headless - the gate check is the ingest POST flipping from 404 to 201"
+    ]
+   ],
+   "_migrated_from": "capref#22"
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

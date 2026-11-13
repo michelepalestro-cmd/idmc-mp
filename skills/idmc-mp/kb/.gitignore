@@ -1,0 +1,36 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Secrets and per-user files: never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*_creds*
+*.creds
+tools/secret_scan_extra.txt
+# the IDMC session cache / lockout block files written by the core library, if run from inside the repo
+.idmc_session*
+*.session.json
+*.block
+
+# Run output
+_output/
+*.log
+mapgen_out/
+*.zip
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

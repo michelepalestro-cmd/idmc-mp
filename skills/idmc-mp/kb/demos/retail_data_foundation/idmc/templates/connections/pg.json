@@ -1,0 +1,19 @@
+{
+ "@type": "connection",
+ "name": "${CONN_PG}",
+ "description": "[${TAG}] operational Postgres (native PostgreSQL connector)",
+ "type": "TOOLKIT_CCI",
+ "instanceName": "PostgreSQL",
+ "runtimeEnvironmentId": "${RE_ID}",
+ "connParams": {
+  "hostName": "${PG_HOST}",
+  "port": "${PG_PORT}",
+  "database": "${PG_DB}",
+  "userName": "${PG_USER}",
+  "authenticationType": "UserIdPassword",
+  "encryptionMethod": "noEncryption",
+  "tlsv1_2": "false",
+  "sslv3": "false",
+  "validateServerCertificate": "false"
+ }
+}

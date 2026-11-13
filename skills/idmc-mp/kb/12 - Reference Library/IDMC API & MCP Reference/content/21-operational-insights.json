@@ -1,0 +1,60 @@
+{
+ "id": "21-operational-insights",
+ "title": "Operational Insights",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/active-bpel/opsanalytics-das/metrics?query={processJobReport(...)}",
+     "GET [doc]",
+     "Export detailed CAI job execution data; Aggregated stats by process name + environment",
+     "documented — up to 13 months history  —  untested: POST, PUT, PATCH, DELETE; documented — up to 1 month history  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "Full GraphQL schema",
+     "none proven",
+     "All other query options",
+     "withheld — see Informatica KB 000259754  —  all five verbs untested"
+    ],
+    [
+     "MDM SaaS monitoring, alert rules, DI job export",
+     "UI only",
+     "Everything else in Operational Insights",
+     "console only; metrics refresh once a week"
+    ],
+    [
+     "/public/core/v3/operationalInsights",
+     "none proven",
+     "An OI resource on the platform plane",
+     "404 — wrong plane; OI is GraphQL on active-bpel  —  rejected: GET 404; untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "Alert rules, MDM monitoring, DI job export",
+     "UI only",
+     "Console only. Metrics refresh once a week",
+     ""
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No MCP server covers this service. Everything here is REST-only."
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

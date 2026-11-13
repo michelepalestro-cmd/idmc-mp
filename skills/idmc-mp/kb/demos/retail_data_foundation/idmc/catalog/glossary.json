@@ -1,0 +1,38 @@
+{
+  "_readme": "Business glossary for the Retail Data Foundation demo. 07_catalog.py creates the domain, then each term under it (idempotent via state/glossary_registry.json), then links each term to the cataloged assets named in 'links' (asset names are matched exactly after a scan). Plain words first: the glossary is what CLAIRE answers from.",
+  "domain": {
+    "key": "RDF",
+    "name": "Retail Data Foundation",
+    "description": "A simulated multi-store retail business. Customers sign up on the web, in the mobile app or in a store, buy products, pay, visit stores and can hold a paid membership (Bronze, Silver, Gold). All data is synthetic. Goal: one trusted, real-time view of every customer and every sale: captured once, cleansed and de-duplicated, governed and explained, then activated in the CRM."
+  },
+  "terms": [
+    {"name": "Customer", "description": "A person who signed up through any channel. One person can arrive as several source records; the golden record merges them.",
+     "links": ["customers", "stg_customers"]},
+    {"name": "Golden Customer Record", "description": "The single surviving, cleansed record per person (survivorship: complete address first, then the best data-quality score, then the earliest sign-up). Built by the mapping m_rdf_customer_golden.",
+     "links": ["customer_golden"]},
+    {"name": "Data Quality Score", "description": "Share of the four core rules a customer record passes: valid e-mail, valid phone, complete address, known membership tier. 1.0 = all pass.",
+     "links": ["stg_customers", "customer_golden"]},
+    {"name": "DQ Valid (clean-only gate)", "description": "A customer record with a valid e-mail AND a valid phone. Only DQ-valid golden records are sent to the CRM; the rest wait in the review queue.",
+     "links": ["customer_golden", "customer_review"]},
+    {"name": "Review Queue", "description": "Golden records that failed the clean-only gate. They are kept, never dropped, so a data steward can fix them at the source.",
+     "links": ["customer_review"]},
+    {"name": "Data Quality Scorecard", "description": "Pass rate per data-quality dimension (validity, completeness, consistency, uniqueness, integrity, accuracy) plus an overall row. Green at 99 % or more, amber at 90 % or more, else red.",
+     "links": ["dq_scorecard", "dq_results"]},
+    {"name": "Membership", "description": "A paid monthly plan: Bronze, Silver or Gold. The tier sets the discount on orders.",
+     "links": ["memberships"]},
+    {"name": "Order", "description": "A purchase in a store, on the web or in the app, with one or more order lines. Amount = list amount minus discount.",
+     "links": ["orders", "order_lines", "order_line_facts"]},
+    {"name": "Payment", "description": "Money received for an order or a membership. Status settled, failed or refunded.",
+     "links": ["payments"]},
+    {"name": "Store Visit", "description": "A customer checking in to a store; dwell minutes run until check-out.",
+     "links": ["visits", "visit_facts"]},
+    {"name": "Store Daily Sales", "description": "Order lines, units and revenue per store and day.",
+     "links": ["store_daily_sales"]},
+    {"name": "Change Data Capture (CDC)", "description": "Every insert, update and delete in the operational database replicated to the warehouse within seconds by IDMC Database Ingestion.",
+     "links": []},
+    {"name": "Reverse ETL", "description": "Sending governed warehouse data back to operational systems: golden records to the CRM and to the operational database.",
+     "links": ["customer_golden"]},
+    {"name": "Personal Data (PII)", "description": "Name, e-mail, phone and address of a customer. Classified automatically by the catalog scan; restricted to roles that need it.",
+     "links": ["customers", "customer_golden"]}
+  ]
+}

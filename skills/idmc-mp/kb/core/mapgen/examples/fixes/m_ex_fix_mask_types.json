@@ -1,0 +1,46 @@
+{
+ "name": "m_ex_fix_mask_types",
+ "description": "[mapgen fix types_nodes#4/#3/#6, verifier round 2] Data Masking whose entries give no pc: the rule's data type comes from the field (id INTEGER -> the numeric Key rule, bigint 19/0; dob TIMESTAMP -> the date Random rule, 1970..2038), passthrough restores id / dob / email with their own types, and the target carries no poll attribute of its own (generator default 1 s). Deployed through the lint gate (no --force-lint). Target ex_fix_mask_types_out (out_email STRING, out_id INT64, out_dob TIMESTAMP, email STRING, id INT64, dob TIMESTAMP).",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_PEOPLE",
+   "conn": "BQ",
+   "query": "SELECT 'Jane.Doe@example.com' AS email, 101 AS id, TIMESTAMP '1985-06-15 10:30:00' AS dob UNION ALL SELECT 'bob.roe@example.org', 102, TIMESTAMP '1999-12-31 23:59:59'",
+   "fields": [
+    ["email", "STRING", 64],
+    ["id", "INTEGER"],
+    ["dob", "TIMESTAMP"]
+   ]
+  },
+  {
+   "type": "masking",
+   "name": "DM_PEOPLE",
+   "entries": [
+    {"field": "email", "type": "Email address", "prec": 64},
+    {"field": "id", "type": "Key"},
+    {"field": "dob", "type": "Random"}
+   ],
+   "passthrough": true
+  },
+  {
+   "type": "target",
+   "name": "TGT_PEOPLE",
+   "conn": "BQ",
+   "object": "${DATASET}/ex_fix_mask_types_out",
+   "truncate": true,
+   "fields": [
+    ["out_email", "STRING"],
+    ["out_id", "INTEGER"],
+    ["out_dob", "TIMESTAMP"],
+    ["email", "STRING"],
+    ["id", "INTEGER"],
+    ["dob", "TIMESTAMP"]
+   ]
+  }
+ ],
+ "links": [
+  ["SRC_PEOPLE", "DM_PEOPLE"],
+  ["DM_PEOPLE", "TGT_PEOPLE"]
+ ]
+}

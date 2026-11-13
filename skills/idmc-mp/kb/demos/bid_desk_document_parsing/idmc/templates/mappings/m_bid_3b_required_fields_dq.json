@@ -1,0 +1,293 @@
+{
+ "name": "${idmc.project} - 3b Required Fields Data Quality",
+ "status": "PROVEN (2026-10-13, same shape); core/mapgen build ADAPTED (compiles offline; not yet imported in this form)",
+ "description": "SILVER, 6 steps: every response field each solicitation requires -> rule specifications: filled in (a blank line of underscores does not count), e-mail format -> field status -> Snowflake (full reload).",
+ "task": {
+  "folder": "f3",
+  "runtime": "main"
+ },
+ "notes": [
+  "TGT_SLV_REQUIRED_FIELDS: the target columns are those of BID_SLV_REQUIRED_FIELDS in infra/snowflake/03_silver_gold.sql (keep the two in step)"
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_REQUIRED_FIELDS",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_V_REQUIRED_FIELDS_SRC",
+   "fields": [
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "FORM_NAME",
+     "STRING",
+     60,
+     "varchar"
+    ],
+    [
+     "FIELD_NO",
+     "NUMERIC",
+     38,
+     "number",
+     0
+    ],
+    [
+     "FIELD_NAME",
+     "STRING",
+     60,
+     "varchar"
+    ],
+    [
+     "FIELD_VALUE",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "EMAIL_VALUE",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "rulespec",
+   "name": "RS_FILLED_IN",
+   "asset": "${state:rulespecs.Required value filled in}",
+   "inputs": [
+    [
+     "Text",
+     "STRING",
+     2000
+    ]
+   ],
+   "map": {
+    "Text": "FIELD_VALUE"
+   }
+  },
+  {
+   "type": "expression",
+   "name": "EXP_FILLED_IN",
+   "fields": [
+    {
+     "name": "o_filled",
+     "type": "STRING",
+     "prec": 10,
+     "expr": "Output"
+    }
+   ]
+  },
+  {
+   "type": "rulespec",
+   "name": "RS_EMAIL_FORMAT",
+   "asset": "${state:rulespecs.E-mail address format}",
+   "inputs": [
+    [
+     "Text",
+     "STRING",
+     255
+    ]
+   ],
+   "map": {
+    "Text": "EMAIL_VALUE"
+   }
+  },
+  {
+   "type": "expression",
+   "name": "EXP_FIELD_STATUS",
+   "fields": [
+    {
+     "name": "x_run",
+     "type": "STRING",
+     "expr": "TO_CHAR(SESSSTARTTIME, 'YYYYMMDDHH24MISS')",
+     "prec": 20
+    },
+    {
+     "name": "x_ts",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    },
+    {
+     "name": "o_email",
+     "type": "STRING",
+     "prec": 10,
+     "expr": "IIF(ISNULL(EMAIL_VALUE), NULL, Output)"
+    },
+    {
+     "name": "x_status",
+     "type": "STRING",
+     "prec": 20,
+     "expr": "IIF(o_filled = 'INVALID', 'BLANK', IIF(NOT ISNULL(EMAIL_VALUE) AND Output = 'INVALID', 'INVALID', 'OK'))"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_SLV_REQUIRED_FIELDS",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_SLV_REQUIRED_FIELDS",
+   "op": "Insert",
+   "writerAttrs": {
+    "opr": {
+     "presql": "TRUNCATE TABLE ${snowflake.database}.${snowflake.schema}.BID_SLV_REQUIRED_FIELDS"
+    },
+    "rt": {
+     "Pre SQL": "TRUNCATE TABLE ${snowflake.database}.${snowflake.schema}.BID_SLV_REQUIRED_FIELDS"
+    }
+   },
+   "fields": [
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "FORM_NAME",
+     "STRING",
+     60,
+     "varchar"
+    ],
+    [
+     "FIELD_NO",
+     "NUMERIC",
+     4,
+     "number",
+     0
+    ],
+    [
+     "FIELD_NAME",
+     "STRING",
+     60,
+     "varchar"
+    ],
+    [
+     "FIELD_VALUE",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "EMAIL_VALUE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "DQ_FILLED",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "DQ_EMAIL_FORMAT",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "FIELD_STATUS",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "IDMC_RUN_ID",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "LOADED_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_REQUIRED_FIELDS",
+   "RS_FILLED_IN"
+  ],
+  [
+   "RS_FILLED_IN",
+   "EXP_FILLED_IN"
+  ],
+  [
+   "EXP_FILLED_IN",
+   "RS_EMAIL_FORMAT",
+   {
+    "exclude": [
+     "Output"
+    ]
+   }
+  ],
+  [
+   "RS_EMAIL_FORMAT",
+   "EXP_FIELD_STATUS"
+  ],
+  [
+   "EXP_FIELD_STATUS",
+   "TGT_SLV_REQUIRED_FIELDS",
+   {
+    "SOLICITATION_NO": "SOLICITATION_NO",
+    "AGENCY": "AGENCY",
+    "FORM_NAME": "FORM_NAME",
+    "FIELD_NO": "FIELD_NO",
+    "FIELD_NAME": "FIELD_NAME",
+    "FIELD_VALUE": "FIELD_VALUE",
+    "EMAIL_VALUE": "EMAIL_VALUE",
+    "o_filled": "DQ_FILLED",
+    "o_email": "DQ_EMAIL_FORMAT",
+    "x_status": "FIELD_STATUS",
+    "CONTENT_VERSION_ID": "CONTENT_VERSION_ID",
+    "VERSION_NUMBER": "VERSION_NUMBER",
+    "x_run": "IDMC_RUN_ID",
+    "x_ts": "LOADED_AT"
+   }
+  ]
+ ]
+}

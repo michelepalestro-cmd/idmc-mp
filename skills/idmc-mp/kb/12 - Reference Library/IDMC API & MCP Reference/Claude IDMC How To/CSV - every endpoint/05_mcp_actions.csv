@@ -1,0 +1,12 @@
+﻿MCP action,Verb,MCP server,Backing IDMC service,What it does,REST equivalent,Read or write,Reachable over REST too?
+run_mapping_task,POST,Job Management,CDI - Cloud Data Integration,Triggers a mapping task with runtime parameters.,Wraps POST /api/v2/job. REST is equivalent.,READ,YES
+get_job_status,POST,Job Management,CDI - Cloud Data Integration,"Live execution state, row counts and error logs for one job.","Wraps GET /api/v2/activity/activityLog. REST returns full history, MCP one job.",READ,YES
+stop_running_job,POST,Job Management,CDI - Cloud Data Integration,Immediate termination request to the Secure Agent.,Wraps the v2 Stop Job resource.,READ,YES
+search_metadata,POST,CDGC Metadata Search,CDGC - Cloud Data Governance & Catalog,Natural-language catalog query returning matching asset IDs and core attributes.,Wraps POST /data360/search/api/v1/search. REST is richer: raw Elasticsearch DSL.,READ,YES
+get_asset_details,POST,CDGC Metadata Search,CDGC - Cloud Data Governance & Catalog,"Full metadata for one asset, INCLUDING lineage, profile and descriptions.",MCP ONLY for lineage. Every REST lineage path returns 404.,READ,NO - MCP only
+verify_address,POST,Address Verification,CDQ - Cloud Data Quality,"Validates, standardizes and geocodes an address. 240+ countries.","Wraps POST /dataquality/addressverification/api/v1/process. REST does 1,000 per call, MCP one.",READ,YES
+list_data_collections,POST,Data Provisioning,Data Marketplace,Lists marketplace data collections; optional name and search filters.,Wraps GET /data360/marketplace/api/v1/dataCollections.,READ,YES
+list_delivery_targets,POST,Data Provisioning,Data Marketplace,Returns collection detail. Despite the name it does NOT return a target list.,Wraps the cdmp-marketplace provisioning reads.,READ,YES
+checkout_data_order,POST,Data Provisioning,Data Marketplace,Raises a formal access request. Requires a business justification.,The only MCP action that persists anything new. Wraps POST .../orders.,WRITE,YES
+search_master_record,POST,Customer Identification,"MDM, Customer 360, Business 360 & Reference 360",Fuzzy identity match returning the business ID of the best-matching master record.,MCP ONLY. REST has no public MDM search or list resource.,READ,NO - MCP only
+get_master_record_details,POST,Customer Identification,"MDM, Customer 360, Business 360 & Reference 360","The consolidated golden record, merged across source systems.",REST equivalent is the disputed GET on entity/{be}/{id}. MCP is the safer path.,READ,DISPUTED

@@ -1,0 +1,12 @@
+IDMC MP is an independent community project. It is not an official Informatica product, is not endorsed or
+supported by Informatica, and comes with no warranty (see LICENSE).
+
+Informatica, Informatica Intelligent Data Management Cloud, IDMC, IICS, CLAIRE and related marks are trademarks of
+Informatica LLC. Other product names (Salesforce, Snowflake, Databricks, Google BigQuery, Tableau, PostgreSQL,
+ClickHouse, Microsoft SharePoint and others) are trademarks of their owners and appear only to describe
+interoperability.
+
+No Informatica product documentation is redistributed here. Short references to documented behaviour cite the
+public guides at https://docs.informatica.com.
+
+The sample documents in skills/idmc-mp/kb/demos/ are fictional.

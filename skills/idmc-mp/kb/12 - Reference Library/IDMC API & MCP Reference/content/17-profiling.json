@@ -1,0 +1,114 @@
+{
+ "id": "17-profiling",
+ "title": "Data Profiling",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/profiling-service/api/v1/profile",
+     "GET  ·  POST [doc]",
+     "Profile list",
+     "200 — SPA IDS session  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/profiling-service/api/v1/profile/{uuid}",
+     "GET  ·  PUT [doc], PATCH [doc], DELETE [doc]",
+     "Profile definition detail",
+     "200  —  untested: POST"
+    ],
+    [
+     "/profiling-service/api/v1/runDetail/{uuid}/filter",
+     "GET",
+     "Run history — status, rows, cost",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/profiling-service/api/v1/ruleOccurrence/...ForProfile_V2_Token/{uuid}",
+     "GET",
+     "Scorecard rule bindings for a profile",
+     "200"
+    ],
+    [
+     "/profiling-service/api/v1/ruleOccurrence/ruleType",
+     "GET",
+     "The six DQ dimensions",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/metric-store/api/v1/odata/Profiles('{uuid}')/Columns",
+     "GET",
+     "Per-column scored metrics (OData)",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/metric-store/.../Profiles('{uuid}')/Insights | Patterns | ValueFrequencies",
+     "GET",
+     "Insights, patterns, value frequencies",
+     "200"
+    ],
+    [
+     "Create / delete / update profiles and queries",
+     "none proven",
+     "Full profile CRUD",
+     "documented; paths in a separate guide"
+    ],
+    [
+     "Profiling execution",
+     "none proven",
+     "Runs as a CDGC catalog-source capability",
+     "via the executable API"
+    ],
+    [
+     "/data360/profiling/v1/results",
+     "GET",
+     "Profiling results on the data360 plane",
+     "404 — wrong host family"
+    ],
+    [
+     "/profiling-service/api/v1/ruleOccurrence/...{uuid}",
+     "GET",
+     "Scorecard rule bindings for a profile",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/metric-store/.../Profiles('{uuid}')/Insights|Patterns",
+     "GET",
+     "Insights, patterns, value frequencies",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "Query CRUD  (create / update / delete queries)",
+     "GET [doc], POST [doc], PUT [doc], PATCH [doc], DELETE [doc]",
+     "Vendor-stated. Paths are in a guide not held locally",
+     ""
+    ],
+    [
+     "/profiling-service/internal/api/v1/ruleOccurrence/publishResults",
+     "none proven",
+     "Publish rule-occurrence results (INTERNAL, unsupported)",
+     "CDP p.160. Appears only inside an error message, on an ops domain. The internal/ segment means unsupported - recorded so nobody mistakes it for a public API."
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No dedicated MCP server. Profiling statistics do reach MCP indirectly - the CDGC get_asset_details action bundles profile data into its response."
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

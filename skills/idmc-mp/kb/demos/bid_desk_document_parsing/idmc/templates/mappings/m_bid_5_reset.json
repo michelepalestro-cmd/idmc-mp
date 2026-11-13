@@ -1,0 +1,111 @@
+{
+ "name": "${idmc.project} - 5 Reset",
+ "status": "PROVEN (2026-10-13, same shape); core/mapgen build ADAPTED (compiles offline; not yet imported in this form)",
+ "description": "RESET, 3 steps: the task's pre-processing command attaches each agency's original again as a NEW version of the same CRM file wherever the newest differs (nothing deleted; CDI rejects a ContentVersion new-version insert, L-CONN-115) -> the mapping logs which documents were reset.",
+ "task": {
+  "folder": "f5",
+  "runtime": "crm",
+  "pre_processing": "${idmc.agent_python} ${idmc.agent_root}/infra/sf_files.py reset --execute --config ${idmc.agent_root}/config.json --env-file ${idmc.agent_root}/sf.env"
+ },
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_ORIGINALS",
+   "conn": "WH",
+   "query": "SELECT O.CONTENT_DOCUMENT_ID AS DOC, O.TITLE AS TITLE, L.VERSION_NUMBER AS LATEST FROM (SELECT * FROM ${snowflake.database}.${snowflake.schema}.BID_BRZ_SF_DOCUMENT QUALIFY ROW_NUMBER() OVER (PARTITION BY CONTENT_DOCUMENT_ID ORDER BY TRY_TO_NUMBER(VERSION_NUMBER), LOADED_AT) = 1) O JOIN (SELECT * FROM ${snowflake.database}.${snowflake.schema}.BID_BRZ_SF_DOCUMENT QUALIFY ROW_NUMBER() OVER (PARTITION BY CONTENT_DOCUMENT_ID ORDER BY TRY_TO_NUMBER(VERSION_NUMBER) DESC, LOADED_AT DESC) = 1) L ON L.CONTENT_DOCUMENT_ID = O.CONTENT_DOCUMENT_ID WHERE L.CHECKSUM <> O.CHECKSUM",
+   "fields": [
+    [
+     "DOC",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "TITLE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "LATEST",
+     "STRING",
+     20,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_RESET_FIELDS",
+   "fields": [
+    {
+     "name": "x_run",
+     "type": "STRING",
+     "expr": "TO_CHAR(SESSSTARTTIME, 'YYYYMMDDHH24MISS')",
+     "prec": 20
+    },
+    {
+     "name": "x_ts",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_RESET_LOG",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_RESET_LOG",
+   "op": "Insert",
+   "fields": [
+    [
+     "RESET_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ],
+    [
+     "RUN_ID",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "CONTENT_DOCUMENT_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "TITLE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "REPLACED_VERSION",
+     "STRING",
+     20,
+     "varchar"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_ORIGINALS",
+   "EXP_RESET_FIELDS"
+  ],
+  [
+   "EXP_RESET_FIELDS",
+   "TGT_RESET_LOG",
+   {
+    "x_ts": "RESET_AT",
+    "x_run": "RUN_ID",
+    "DOC": "CONTENT_DOCUMENT_ID",
+    "TITLE": "TITLE",
+    "LATEST": "REPLACED_VERSION"
+   }
+  ]
+ ]
+}

@@ -1,0 +1,8 @@
+﻿Verb,Works (proven),Documented only,Rejected,Untested,Endpoints total,% proven,What this means in IDMC
+GET,83,7,35,41,167,49.7%,The platform's real surface. Nearly everything readable is readable.
+POST,38,8,28,92,167,22.8%,"Every write, every run, and on the v2 plane every UPDATE. POST to /{id} IS the update."
+PUT,0,14,11,141,167,0.0%,"Effectively absent. Documented in places, never once proven live. Do not design on it."
+PATCH,0,5,9,152,167,0.0%,Does not exist in practice. No live proof anywhere; only MDM even discusses it.
+DELETE,5,7,6,148,167,3.0%,"Rare and clustered - admin, connections, catalog sources, CDQ dictionaries. It is half of the sanctioned update pattern (DELETE then re-POST)."
+HEAD,0,0,0,0,167,0.0%,"Appears in no guide and no probe. There is no preflight discovery in IDMC: to test a write verb, POST an empty body - 400/415/422 means the verb exists, 405 means it does not."
+OPTIONS,0,0,0,0,167,0.0%,"Appears in no guide and no probe. There is no preflight discovery in IDMC: to test a write verb, POST an empty body - 400/415/422 means the verb exists, 405 means it does not."

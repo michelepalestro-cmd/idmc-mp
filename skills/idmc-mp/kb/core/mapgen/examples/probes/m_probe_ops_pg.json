@@ -1,0 +1,216 @@
+{
+ "name": "m_probe_ops_pg",
+ "description": "[mapgen probe] PostgreSQL target operations: Upsert and Data Driven on a keyed table",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_UP",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n UNION ALL SELECT 'K3', 'new', 30",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_UPSERT",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/probe_upsert",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ],
+    [
+     "v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ],
+    [
+     "n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ]
+   ],
+   "op": "Upsert",
+   "updateColumns": [
+    "k"
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_DD",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n, 'U' AS op_flag UNION ALL SELECT 'K2', 'gone', 0, 'D' UNION ALL SELECT 'K4', 'new', 40, 'I' UNION ALL SELECT 'K5', 'bad', 0, 'R'",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ],
+    [
+     "op_flag",
+     "STRING",
+     4
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_DD",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/probe_dd",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ],
+    [
+     "v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ],
+    [
+     "n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ]
+   ],
+   "op": "Data Driven",
+   "updateColumns": [
+    "k"
+   ],
+   "updateStrategy": "DECODE(op_flag, 'I', DD_INSERT, 'U', DD_UPDATE, 'D', DD_DELETE, DD_REJECT)"
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_TRUNC_YES",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/probe_trunc1",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ],
+    [
+     "v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ],
+    [
+     "n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ]
+   ],
+   "truncate": true,
+   "writerAttrs": {
+    "opr": {
+     "TruncateTable": "YES"
+    },
+    "rt": {
+     "Truncate target": "YES"
+    }
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_TRUNC_TRUE",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/probe_trunc2",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ],
+    [
+     "v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ],
+    [
+     "n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ]
+   ],
+   "truncate": true,
+   "writerAttrs": {
+    "opr": {
+     "TruncateTable": "true"
+    },
+    "rt": {
+     "Truncate target": "true"
+    }
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_UP",
+   "TGT_PG_UPSERT"
+  ],
+  [
+   "SRC_DD",
+   "TGT_PG_DD"
+  ],
+  [
+   "SRC_UP",
+   "TGT_PG_TRUNC_YES"
+  ],
+  [
+   "SRC_UP",
+   "TGT_PG_TRUNC_TRUE"
+  ]
+ ]
+}

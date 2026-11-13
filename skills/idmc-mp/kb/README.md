@@ -1,0 +1,341 @@
+# Master IDMC KB
+
+> **Plugin install:** your login lives in `~/.idmc_toolkit/IDMC_LOGIN.txt` (run `python check_login.py` once
+> to create it), not in this folder. Where the docs below say "IDMC_LOGIN.txt at the toolkit root", that home
+> file is what is read (a root copy still works when you run from a git clone).
+
+**Answers:** What is this knowledge base, how should a Claude session read it, how do its placeholders map onto your own
+IDMC org, which safety rules apply to every session, and where is each kind of question answered?
+
+**Read when:** first, in every new session, project or org that uses this KB; again whenever you are unsure where an
+answer lives.
+
+**Key rules:**
+- Build on the user's own systems and never push another technology; never say "not possible" before the
+  workaround ladder has been worked in the org ([New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>)).
+- Prove which org you are in before anything else, and work in one org per session (L-AUTH-046, L-AUTH-047).
+- Take the host and header from the plane map, read the body rather than the status, and read back every write
+  (L-AUTH-001, L-METHOD-025, L-METHOD-030).
+- One login attempt, one shared session cache, a block file on rejection: rejected logins from every session add up to
+  one lockout (L-AUTH-036, L-AUTH-041).
+- Writes are dry runs until an org guard passes; runs, scans and previews are spend and need approval (L-METHOD-065,
+  L-IPU-005).
+- A wall is a dated verdict: check the Capability Map and Overturned Beliefs, then re-probe in your own org
+  (L-METHOD-034, L-METHOD-035).
+- Never write a secret, or an id or host of your own org, into this KB (L-METHOD-001).
+
+**Related:** [How to use this KB](<00 - Start Here/01 How to use this KB.md>) ·
+[The Laws of Headless IDMC](<00 - Start Here/02 The Laws of Headless IDMC.md>) ·
+[End-to-End Playbook](<00 - Start Here/07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>) ·
+[Capability Map](<00 - Start Here/03 Capability Map.md>) · [Error Triage](<00 - Start Here/04 Error Triage.md>)
+
+**Last verified:** 2026-11-10
+
+## What this KB is for
+
+**A working kit for building on Informatica IDMC with Claude.** Install it, point Claude at it, sign in to your IDMC
+org once, and create IDMC assets without the UI: connections to any database, cloud, file store or application that
+IDMC supports, runtime environments, projects and folders, mappings and mapping tasks, taskflows and schedules, CDC and
+file ingestion, CAI processes, data quality rules and profiles, catalog sources, glossary, classification and lineage,
+MDM, MCP. Everything in it comes from real IDMC builds: the calls that work, the errors and their fixes, and the order
+of work that gets an asset running fast.
+
+It is **guidance**. Use as much or as little as you like: follow the milestones, jump straight to one asset, or work
+your own way. Your systems, your naming and your order of work are always the right ones.
+
+### Quick start (about 15 minutes)
+
+| Step | Do | Detail |
+|---|---|---|
+| 1. Install | Clone the repository (`git clone <repo-url>`) or unzip it anywhere, then run `git config core.hooksPath tools/git-hooks` once so no commit can carry a secret. You need Python 3.10+ (standard library only) and Claude Code | `python setup/check_setup.py` checks the PC offline ([setup/SETUP.md](<setup/SETUP.md>)) |
+| 2. Point Claude at it | Open Claude Code in this folder: it reads `CLAUDE.md` and follows the KB. In the `idmc-mp` skill edition this KB is already installed as a skill (`../SKILL.md`) | [Claude Working Methods](<14 - Claude Working Methods & Tooling/01 How Claude Reaches and Drives IDMC.md>) |
+| 3. Sign in | Fill in `IDMC_LOGIN.txt` (three lines), or keep the same three lines in a private file outside this folder and point `IDMC_CREDS_FILE` at it. Then `python check_login.py`: one login, it prints your org | §0 below |
+| 4. Build | Ask Claude for what you need, in your own words: "create a connection to <system>", "build a nightly pipeline from <source> to <target>", "add a data quality rule", "scan this source into the catalog and show lineage" | the table below; [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>) for a whole pipeline |
+
+### Create any IDMC asset: where to start
+
+| You want to create | Start here | How it is done without the UI |
+|---|---|---|
+| A login session, and proof of which org you are in | [Login, Sessions & Tokens](<01 - Access, Auth & Orgs/02 Login, Sessions & Tokens.md>), [Identify the Org](<01 - Access, Auth & Orgs/03 Identify the Org Before You Write.md>) | `python check_login.py` (one attempt, cached session, lockout guard) |
+| Users, roles, permissions | [Users, Roles & Permissions](<01 - Access, Auth & Orgs/04 Users, Roles & Permissions.md>) | v3 users / roles, object permissions |
+| A Secure Agent, a runtime environment, its services and connectors | [Secure Agent](<02 - Secure Agent & Connections/01 Secure Agent - Install, Run & Tune.md>), [Runtime Environments](<02 - Secure Agent & Connections/02 Runtime Environments - Services & Connectors.md>) | install token + `configureToken`; runtime selections (`idmc_runtime_selections.py`) |
+| A connection to any database, cloud, file store or application | [Connections](<02 - Secure Agent & Connections/03 Connections - Create, Test, Update, Delete.md>), [Connector Notes](<02 - Secure Agent & Connections/04 Connector Notes (BigQuery, PostgreSQL, Salesforce, JDBC, Flat File).md>); a connector with no notes: [Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>) M2 | `POST /api/v2/connection` (`TOOLKIT_CCI` + the connector's `instanceName`), then a free `connection/test` |
+| A project or folder | [Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>) M3 | `POST /public/core/v3/projects`, then its folders; move assets with FRS `MoveEntities` |
+| A mapping, with any transformations | [Mapping Fast Path](<03 - Data Integration (CDI)/00 Mapping Fast Path - read this first.md>) | a JSON spec → `core/mapgen` lint → v3 import package |
+| A mapping task | [Mapping Tasks](<03 - Data Integration (CDI)/03 Mapping Tasks - Create, Update, Run, Monitor.md>) | the generator's `deploy`, or `POST /api/v2/mttask` |
+| A taskflow or a schedule | [Taskflows & Schedules](<03 - Data Integration (CDI)/04 Taskflows & Schedules.md>) | `idmc_taskflow_schedule.py` |
+| A whole pipeline (many mappings, lanes, pushdown) | [How Claude Builds Mappings Headless](<03 - Data Integration (CDI)/02 How Claude Builds Mappings Headless.md>), [The Pipeline-Generation Pattern](<03 - Data Integration (CDI)/05 The Pipeline-Generation Pattern.md>) | generated, consolidated mappings behind a swap gate |
+| A CDC / database ingestion task | [DBMI over REST](<04 - Mass Ingestion & CDC/01 DBMI over REST (create, deploy, run, stop).md>) | `idmc_dbmi.py` on the `-ing` service host |
+| A file ingestion task | [Mass Ingestion & CDC](<04 - Mass Ingestion & CDC/>) (lessons L-DBMI-060 to L-DBMI-062) | `POST /mftsaas/api/v1/mitasks`, then `job` |
+| A CAI process, app connection or service connector | [CAI Asset Lifecycle](<05 - Application Integration (CAI)/01 CAI Asset Lifecycle (author, publish, unpublish, delete).md>), [CAI Connections](<05 - Application Integration (CAI)/03 CAI Connections & Connectors (e.g. Salesforce OAuth).md>) | import package + publish (`idmc_cai_publish.py`) |
+| A Kafka or JMS event listener | [CAI Event Listeners](<05 - Application Integration (CAI)/06 CAI Event Listeners - Kafka & AMQP (JMS).md>) | listener + process, published |
+| A data quality rule, cleanse, dictionary or verifier | [DQ Assets](<06 - Data Quality & Profiling/01 DQ Assets (rule specs, cleanse, dictionaries, verifiers).md>) | clone-authored assets, run inside a mapping |
+| Address verification and enrichment (verify, standardize, geocode, CASS) | [DQ Assets](<06 - Data Quality & Profiling/01 DQ Assets (rule specs, cleanse, dictionaries, verifiers).md>) §6 | an on-agent Verifier asset in a mapping (the generator's `verifier` node), or the cloud Address Verification REST service (Certified mode for CASS) |
+| A data profile | [Profiling](<06 - Data Quality & Profiling/02 Profiling - What Is Headless.md>) | the profiling service REST API |
+| A catalog source and its scan | [Catalog Sources](<07 - Catalog & Governance (CDGC)/02 Catalog Sources - Create, Scan, Update, Purge.md>) | `idmc_cdgc.py` |
+| Glossary terms, links, classifications | [Glossary, Links & Classification](<07 - Catalog & Governance (CDGC)/03 Glossary, Links & Classification.md>) | CDGC content API |
+| Lineage (scanned and curated) | [Search, Lineage & Marketplace](<07 - Catalog & Governance (CDGC)/04 Search, Lineage & Marketplace.md>) | catalog scans + curated edges |
+| MDM business entities, records, a mastered table | [Business 360 Modeling](<08 - MDM/03 Business 360 Modeling & Match-Merge.md>), [MDM Records](<08 - MDM/02 MDM Records - Ingest, Search, Export, Cleanup.md>), [Mastering a Table](<08 - MDM/05 Mastering a Table - Repeatable Playbook.md>) | MDM APIs, or CDI mappings that master a table |
+| MCP access, CLAIRE GPT prompts | [Managed MCP Servers](<09 - CLAIRE & MCP/01 Managed MCP Servers (catalog & access).md>), [CLAIRE GPT](<09 - CLAIRE & MCP/03 CLAIRE GPT - Prompting Rules & Patterns.md>) | managed MCP + OAuth clients |
+| A copy, a move, an export / import, a clone of any asset | [Export & Import](<10 - Migration & Org Management/01 Export & Import (v3 Migration API).md>), [Migration-Clone Authoring](<10 - Migration & Org Management/03 Migration-Clone Authoring.md>) | v3 export / import packages; FRS `CopyEntities` / `MoveEntities` |
+| **Anything not in this table** | [Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>): "A system or connector the KB has never seen" and the workaround ladder | the closest pattern here, adapted and proven in your org, then recorded as a lesson |
+
+## About this knowledge base
+
+A knowledge base about Informatica IDMC (Intelligent Data Management Cloud), written for Claude sessions and the people
+who work with them. It explains how IDMC really behaves when it is driven without its UI: the routes, hosts, headers,
+bodies and error codes; what each wall turned into when it was tested; how mappings, pipelines, CDC, CAI, data quality,
+catalog, MDM and MCP work are built and operated; and more than 1,850 dated lessons, each with its evidence. It is
+**generic**: nothing in it belongs to one org, so it works in yours once you map its placeholders to your own values.
+
+Use it as a Claude project's knowledge base or as a folder the session can read. If you build IDMC skills or agents of
+your own, make each one start by reading this KB: a skill built from an older snapshot does not carry later lessons
+(L-METHOD-084).
+
+It is also a working kit: the same folder holds the Python library the KB describes, a headless mapping generator, a
+Claude Code skill and three ready-to-rebuild demo blueprints, so a new PC can go from `git clone` to a live org in one sitting.
+
+> **The goal:** help you deploy IDMC end to end, with every capability you ask for, on the systems you already have.
+> Two rules every Claude session using this KB follows:
+> 1. **It never pushes you to another technology.** No "use BigQuery / Snowflake instead". A system the KB has never
+>    covered (SAP, Oracle, files, an API...) is built brand new with everything the KB has learned.
+> 2. **It never says "not possible", and never treats something as forbidden because the KB does not mention it.**
+>    The KB is not an allow-list: anything IDMC can do is in scope. Before any "no" it works the workaround ladder in
+>    your org, native IDMC first and Python only when no IDMC path works: the lessons, a re-probe,
+>    another API plane, cloning a UI-made object, capturing the UI's own call, another IDMC component, a Python bridge,
+>    and only then one residual manual step
+>    ([New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>), "The goal and the two rules").
+>
+> **Guidance, not a script. Bring any source and any target.**
+> This KB is a field guide, not a reference architecture. Its examples use the systems its builds happened to use
+> (PostgreSQL, BigQuery, Snowflake, Databricks, Salesforce, SharePoint, ClickHouse, Tableau, flat files). Those are
+> examples, **not recommendations**: IDMC connects to hundreds of systems, and yours are the right ones for your
+> pipeline. Take the KB's order of work, its gates, its safety rules and its evidence on how IDMC behaves. Do not take
+> its choice of systems, object names or settings as-is. When your connector or source is not covered, the KB tells
+> you how to find out (read the connector's metadata, prove one small run, record a lesson), and that is the expected
+> path, not a failure. Lessons are dated evidence from particular orgs and releases: your own org's live answer wins.
+>
+> **Starting a new pipeline?** Work the milestones in order:
+> [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>): (1) identify the
+> Secure Agent / runtime, (2) identify the connections, (3) identify or create the folder and list the assets that go
+> in it, then the data contract, the mapping, the task, the first run and its proof, DQ, orchestration and governance.
+
+## 0. Connect to your IDMC org: one file
+
+Open **`IDMC_LOGIN.txt`** (in this folder), fill in the three lines, save:
+
+```
+IDMC_USER=jane.doe@example.com
+IDMC_PASS=<your IDMC password>
+IDMC_LOGIN_HOST=https://usw5.dm-us.informaticacloud.com/cloudUX/home    <- paste your browser's address bar
+```
+
+Then run `python check_login.py`: it logs in once and prints your org name, `orgIdV3` and pod. No org id to look up, no
+environment variable to set. Never share or re-zip the folder while that file is filled in (`python tools/secret_scan.py`
+fails until you empty it).
+
+### What else is in the folder
+
+| Path | What it is |
+|---|---|
+| `00 - Start Here` ... `14 - ...` | The knowledge base (the map is in §5) |
+| `IDMC_LOGIN.txt`, `check_login.py` | **Your IDMC login** (the only file you fill in to connect) and the one-command login check |
+| [`14 - .../Script Library/`](<14 - Claude Working Methods & Tooling/Script Library/README.md>) | The Python library (stdlib only): login with lockout guard, org proof, objects, export/import, package edits, mapping tasks, taskflows and schedules, CDC (Database Ingestion), CAI publish, catalog, MCP |
+| [`core/mapgen/`](<core/mapgen/README.md>) | The headless mapping generator: a mapping spec (JSON / Python) -> IDMC mapping -> importable package (stdlib only) |
+| [`demos/`](<demos/BLUEPRINT_CONVENTIONS.md>) | Three blueprints; each has `README.md` (what and why) and `BUILD.md` (numbered rebuild, gotchas, UI-only walls) |
+| `../SKILL.md`, `../references/` | The Claude Code skill around this KB (`idmc-mp`): entry point and the compact playbook |
+| [`setup/`](<setup/SETUP.md>) | `SETUP.md` (new-PC guide), `.env.example` (the blueprints' other credential keys, no values), `check_setup.py` |
+| `tools/secret_scan.py` | Run before you share your copy: must print CLEAN |
+| `CLAUDE.md` | The rules any Claude session follows in this folder |
+
+### The three blueprints
+
+| Blueprint | What it shows | IDMC services | Rebuild |
+|---|---|---|---|
+| [`retail_data_foundation`](<demos/retail_data_foundation/README.md>) (`rdf_`) | A multi-store retailer's whole data layer: Postgres -> CDC -> BigQuery, consolidated mappings to a golden customer record, DQ scorecard, reverse ETL to Postgres and Salesforce (batch and real time), catalog with glossary, classification and lineage | CDC (Database Ingestion), CDI, CAI, CDQ / Profiling, CDGC, address verification | 2-3 h first time |
+| [`bid_desk_document_parsing`](<demos/bid_desk_document_parsing/README.md>) (`bid_`) | Bid documents attached in the CRM -> SharePoint -> CLAIRE document parsing -> DQ rules -> a bid-readiness decision -> Snowflake -> one Tableau workbook (6 tabs); Run / What-if / Reset loop | CDI, CLAIRE parsing (Structure Parser), CDQ, CDGC, taskflows | about half a day |
+| [`message_bus_kafka_cai`](<demos/message_bus_kafka_cai/README.md>) (`mbr_`) | A legacy JMS retail integration bus replaced by Kafka + CAI: subscribers, validate / transform / route, retry with backoff, error queue, dead-letter and replay, JMS-to-Kafka bridge, nightly CDI batch to Oracle | CAI (Kafka / AMQP listeners, processes), CDI | 2-3 h |
+
+The blueprints name concrete systems only so that they can be rebuilt end to end as written. They are not a
+recommended stack: to build the same pattern on your own systems, keep each blueprint's stages and gates and swap the
+connections (the [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>)
+show how for a connector the KB has not covered).
+
+Each step in each `BUILD.md` is marked **PROVEN** (worked end to end in a real org, in an earlier non-generic form) or
+**ADAPTED** (rewritten generically, checked offline only). Expect to fix a few ADAPTED steps on the first run.
+
+### The rebuild path
+
+1. **Set up the PC**: fill in `IDMC_LOGIN.txt`, then follow [`setup/SETUP.md`](<setup/SETUP.md>) (install the skill,
+   `python setup/check_setup.py` until READY).
+2. **Read the laws**: [The Laws of Headless IDMC](<00 - Start Here/02 The Laws of Headless IDMC.md>): thirty rules that
+   override REST instincts (a 200 can be fake, logins are scarce, read back every write).
+3. **Prove the org**: `python check_login.py` (one login; note the `orgIdV3`).
+4. **Pick a blueprint**: `python setup/check_setup.py --demo <name>`, copy its `config.example.json` to `config.json`,
+   fill it in, then work through its `BUILD.md`. Every write is a dry run until `--execute --expect-org <orgIdV3>`.
+5. **When something fails**: [Error Triage](<00 - Start Here/04 Error Triage.md>), then
+   `grep -ril "<error code or object>" "13 - Lessons Learned"`.
+
+With Claude Code: open it in this folder and ask, for example, *"set up this PC, then rebuild the message bus blueprint
+in my org, dry run first"*. `CLAUDE.md` and the skill make it follow the same rules. **Cost:** building is free; every
+task or taskflow run, catalog scan and profile run is a job and uses IPUs. The blueprints never start a run, a schedule
+or a loop unless you ask.
+
+## 1. Start here: the read order
+
+| Step | Read | What you get | Time |
+|---|---|---|---|
+| 1 | [How to use this KB](<00 - Start Here/01 How to use this KB.md>) | the routing table, the placeholders, the evidence states, how each doc is built | 10 min |
+| 2 | [The Laws of Headless IDMC](<00 - Start Here/02 The Laws of Headless IDMC.md>) | the 30 rules that most change outcomes, each with its test | 15 min |
+| 3 | [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>) for one new pipeline; the [End-to-End Playbook](<00 - Start Here/07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>) when you build or extend a deployment; the [Capability Map](<00 - Start Here/03 Capability Map.md>) when the question is "can I do X headless?" | the order of work and its gates; the dated verdict per operation | 10 min |
+| 3b | [What Went Wrong](<00 - Start Here/09 What Went Wrong - Production Deployment Post-Mortem.md>) before you take IDMC onto a live production database or inherit someone else's build | the failures of a real production deployment, each with the check that catches it | 10 min |
+| 4 | The topic doc for your task (the routing table in step 1) | the 400-level detail: calls, bodies, failure modes, measured numbers | as needed |
+| 5 | [Error Triage](<00 - Start Here/04 Error Triage.md>) whenever a call fails or succeeds suspiciously | the real cause and the fix per code or message | as needed |
+| 6 | [Lessons Learned](<13 - Lessons Learned/README.md>) and [Overturned Beliefs](<13 - Lessons Learned/Overturned Beliefs.md>) | the evidence behind any claim, and what used to be believed | as needed |
+
+Every topic doc opens with the same block: **Answers** (the questions it answers), **Read when**, **Key rules** (each
+with its lesson ids), **Related** and **Last verified**. Read that block first; it tells you whether the doc is the
+right one.
+
+## 2. Map the KB onto your org
+
+Every org-specific value is written as a placeholder: `<pod>`, `<domain>` (so a pod host is
+`<pod>.<domain>.informaticacloud.com`, for example on the `dm-us` label), `<orgIdV3>` (the org id), `<reId>` (a runtime
+environment), `<connId>` (a connection), `<agent_home>`, `<cloud-project>`, `<warehouse-dataset>` and so on. Read the
+values live from your org at run time, keep them in private run notes outside the KB, and never copy an id from one org
+into another.
+
+1. Fill in `IDMC_LOGIN.txt` (§0), which the [Script Library](<14 - Claude Working Methods & Tooling/Script Library/README.md>)
+   reads by itself (`IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST` = your domain host or the browser address). To work in
+   several orgs, keep one 0600 file per org outside the KB and point `IDMC_CREDS_FILE` at it: it wins over the file.
+2. Run `python check_login.py` (= `idmc_session.py whoami`): it logs in once and prints the org name, both org id
+   shapes, the pod, the domain label and the base URL.
+3. Read the agents, runtime environments and connections: `python idmc_session.py get v2 /api/v2/agent`, then
+   `/api/v2/runtimeEnvironment` and `/api/v2/connection`.
+4. Fill the rest from your own estate: the agent host, its OS user and install root, the cloud project, the warehouse
+   datasets.
+
+The full placeholder table, with the other spellings you may meet, is in
+[How to use this KB](<00 - Start Here/01 How to use this KB.md>) §4.
+
+## 3. The safety rules in one screen
+
+1. **Org first.** Derive the org from the login every session; assert it in code before every write (laws 1 and 25).
+2. **Plane map.** Every host and header comes from the login answer and the plane table, never from a guess (laws 2 and 3).
+3. **Distrust 200s.** Read the body and read back every write; bogus-twin anything surprising (laws 4, 5 and 12).
+4. **Logins are scarce.** One designated session, one attempt, a shared cache, a block file per org (law 24).
+5. **Dry run by default.** A script writes only with `--execute --expect-org <orgIdV3>`; a destructive call takes an
+   explicit id list, a backup and a receipt line (law 25).
+6. **Spend needs approval.** Runs, previews, scans and profiles are metered; the monthly job cap is invisible, so count
+   jobs yourself (laws 26 and 29).
+7. **A denial covers the outcome.** Never re-attempt a denied action in pieces, through another tool or another session
+   (law 25).
+8. **Walls are dated.** Search the KB first, re-probe in your org, and record what you find as a lesson (laws 9 and 17).
+9. **Secrets** are read at run time, printed by name only, and rotated once exposed (law 30).
+
+## 4. Where each kind of question is answered
+
+| Question | Go to |
+|---|---|
+| Can IDMC do X without the UI? | [Capability Map](<00 - Start Here/03 Capability Map.md>), then the service folder, then [Overturned Beliefs](<13 - Lessons Learned/Overturned Beliefs.md>) |
+| I need a new pipeline: where do I start, and what must be done before I build? | [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>): runtime, connections, folder and assets, then build, run, prove |
+| My source, target or connector is not in the KB | [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>), "Using this KB as guidance"; [Mapping Fast Path](<03 - Data Integration (CDI)/00 Mapping Fast Path - read this first.md>) §2 and §7 |
+| What goes wrong on a live production deployment, and how do I avoid it? | [What Went Wrong: a Production Deployment Post-Mortem](<00 - Start Here/09 What Went Wrong - Production Deployment Post-Mortem.md>) |
+| In which order do I stand up or extend a deployment? | [End-to-End Playbook](<00 - Start Here/07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>) |
+| This call or run failed: why? | [Error Triage](<00 - Start Here/04 Error Triage.md>); for agent and connection failures [the Four Gates](<02 - Secure Agent & Connections/05 Troubleshooting - the Four Gates.md>) |
+| Which host, header or login? | [Pods, Hosts & Service Planes](<01 - Access, Auth & Orgs/01 Pods, Hosts & Service Planes.md>), [Login, Sessions & Tokens](<01 - Access, Auth & Orgs/02 Login, Sessions & Tokens.md>) |
+| Install, size, tune, resize or reboot a Secure Agent | [Secure Agent - Install, Run & Tune](<02 - Secure Agent & Connections/01 Secure Agent - Install, Run & Tune.md>) |
+| Build or change a mapping (start here) | [Mapping Fast Path](<03 - Data Integration (CDI)/00 Mapping Fast Path - read this first.md>): ten commands, per-connector settings, costly errors |
+| Build or change a pipeline | [How Claude Builds Mappings Headless](<03 - Data Integration (CDI)/02 How Claude Builds Mappings Headless.md>), then [Changing Pipelines Safely](<03 - Data Integration (CDI)/08 Changing Pipelines Safely.md>) |
+| Speed, concurrency, latency, job caps | [Performance, Concurrency & Job Caps](<03 - Data Integration (CDI)/07 Performance, Concurrency & Job Caps.md>), [Entitlement, Licenses & Job Caps](<11 - IPU, Metering & Licensing/03 Entitlement, Licenses & Job Caps.md>) |
+| Serve outputs to BI tools, CRM analytics or apps | [Serving Outputs to BI and Apps](<03 - Data Integration (CDI)/10 Serving Outputs to BI and Apps (freshness, latency, reverse ETL).md>) |
+| Event-driven CAI: listen to Kafka or a JMS broker, bridge JMS to Kafka, windowed subscribers | [CAI Event Listeners](<05 - Application Integration (CAI)/06 CAI Event Listeners - Kafka & AMQP (JMS).md>) |
+| Which layer owns a flow: IDMC or an API gateway? | [CAI Runtime](<05 - Application Integration (CAI)/02 CAI Runtime - Invoke, URLs & Control.md>) §10.7 and the [Capability Map](<00 - Start Here/03 Capability Map.md>) |
+| What does this term mean? | [Glossary](<00 - Start Here/05 Glossary.md>) |
+| What proved this claim, and when? | the lesson id in the text, in [Lessons Learned](<13 - Lessons Learned/README.md>) |
+| How should Claude sessions work on IDMC (evidence, coordination, approvals, secrets)? | [Claude Working Methods & Tooling](<14 - Claude Working Methods & Tooling/01 How Claude Reaches and Drives IDMC.md>) |
+
+## 5. The map
+
+| Folder | Read it when you need to… |
+|---|---|
+| [`00 - Start Here`](<00 - Start Here/>) | orient yourself: how to use this KB, **the laws of headless IDMC**, the capability map ("can I do X headless?"), error triage, the glossary, the changelog, the **end-to-end playbook** and **what went wrong** in a production deployment |
+| [`01 - Access, Auth & Orgs`](<01 - Access, Auth & Orgs/>) | log in, pick the right host and header for a service, handle session expiry, lockouts and the JWT change, prove which org you are in before writing, manage users, roles and entitlement reads |
+| [`02 - Secure Agent & Connections`](<02 - Secure Agent & Connections/>) | install, size, tune, resize or reboot a Secure Agent, enable services and connectors headless, create/test/update connections, fix "the connection is broken" |
+| [`03 - Data Integration (CDI)`](<03 - Data Integration (CDI)/>) | understand mappings vs mapping tasks vs templates, **build mappings and whole pipelines headless** (including pushdown), run and monitor jobs, taskflows, schedules, consolidation, performance and job caps, and **serve outputs to BI and apps** ([10 Serving Outputs to BI and Apps](<03 - Data Integration (CDI)/10 Serving Outputs to BI and Apps (freshness, latency, reverse ETL).md>)) |
+| [`04 - Mass Ingestion & CDC`](<04 - Mass Ingestion & CDC/>) | create/deploy/run DBMI tasks over REST, set up PostgreSQL CDC, measure CDC latency |
+| [`05 - Application Integration (CAI)`](<05 - Application Integration (CAI)/>) | author, publish, unpublish and invoke CAI processes, run a Process Server on an agent, split work between CAI and an API gateway |
+| [`06 - Data Quality & Profiling`](<06 - Data Quality & Profiling/>) | DQ assets, profiling, the CLAIRE DQ agent's file-based route, DQ scorecards |
+| [`07 - Catalog & Governance (CDGC)`](<07 - Catalog & Governance (CDGC)/>) | catalog sources and scans, glossary, links, classification, search, lineage, marketplace |
+| [`08 - MDM`](<08 - MDM/>) | MDM SaaS runtime vs design, records, Business 360; the repeatable playbook for mastering any table |
+| [`09 - CLAIRE & MCP`](<09 - CLAIRE & MCP/>) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP |
+| [`10 - Migration & Org Management`](<10 - Migration & Org Management/>) | v3 export/import, editing packages, clone-authoring, **org-to-org migration and cutover**, headless deletes and org cleanup |
+| [`11 - IPU, Metering & Licensing`](<11 - IPU, Metering & Licensing/>) | the IPU model and how consumption is metered, metering exports, entitlement vs licence, job caps and budgets |
+| [`12 - Reference Library`](<12 - Reference Library/>) | the generated API & MCP endpoint reference, the IICS→IPU KB, Informatica dictionaries/guides, the REST verb matrix |
+| [`13 - Lessons Learned`](<13 - Lessons Learned/>) | every lesson by domain (current and **overturned**), plus the corrections log, with stable IDs `L-<DOM>-###` |
+| [`14 - Claude Working Methods & Tooling`](<14 - Claude Working Methods & Tooling/>) | how Claude reaches and drives IDMC, evidence discipline, multi-agent coordination, UI automation, environment traps, secrets hygiene, and the **Script Library** |
+
+## 6. Scope: generic by design
+
+| What | Rule |
+|---|---|
+| **In this KB (folders `00`–`14`, plus `core`, `demos`, `claude`, `setup`, `tools`)** | Generic IDMC knowledge that works in *any* org: planes, hosts, routes, bodies, error codes, walls, timings, limits, workarounds, lessons and the scripts that apply them. No customer, application, person, org or object id, host, IP, cloud project or tracker key appears here. Numbers without names stay ("a 62-task linear taskflow took 21 min"): the timings and limits are the point |
+| **Kept outside this KB** | Deployment-specific material: which org is which, their ids, hosts and VMs, application names and status, migrations, tracker history, evidence, org-specific scripts, and the raw provenance of each lesson. Nothing in this KB links to it or depends on it |
+
+The one exception is `IDMC_LOGIN.txt`, which holds the reader's own login: it ships empty and must be emptied before the
+folder is shared again. The rule is enforced by a share gate script kept outside the KB (it names what it blocks, so it cannot live here). It
+scans every file under this folder (text, Office documents, PDFs and file names), and it must report CLEAN before the
+KB is shared or an edit is finished.
+
+## 7. Conventions
+
+- **Evidence states are never merged.** *Proven <date>* means a live response was observed. *Documented* means a
+  vendor guide says so and nobody has exercised it. *Rejected (<code>)* means the verb was explicitly refused.
+  *Untested* means unknown, not unsupported.
+- **Latest dated evidence wins.** Older beliefs are kept, marked superseded, in `13 - Lessons Learned`, so nobody
+  re-learns them.
+- **Lesson IDs** (`L-CDI-012`) are stable. Each lesson's text stands on its own; its raw sources are tracked in a
+  provenance file kept outside the KB.
+- **No secrets anywhere.** Credentials come from `IDMC_LOGIN.txt` (your own copy only, shipped empty), environment
+  variables or files outside this KB.
+
+## 8. Keeping it current
+
+- New **generic** knowledge goes to the matching topic doc *and* as a new lesson in `13 - Lessons Learned`, with a date
+  and evidence. When a belief is overturned, move it to the "Superseded / overturned" section; never delete it.
+- New **deployment- or org-specific** facts (which org, ids, hosts, application status) stay outside the KB.
+- Run the share gate and a link check before finishing: the gate must report CLEAN, and no link may point outside this
+  folder. The steps are in [How to use this KB](<00 - Start Here/01 How to use this KB.md>) §9.
+
+## 9. History
+
+- **2026-09-22:** first consolidation of scattered IDMC notes, scripts and references into 13 topic buckets.
+- **2026-09-29:** full rebuild: generic topic folders written from about 2,200 pooled lessons (deduplicated to 1,335),
+  vendor references moved to `12 - Reference Library\`, deployment-specific material and secret-bearing files moved
+  out, every move reversible from its undo log.
+- **2026-10-03:** share-readiness pass (every doc genericized to placeholders, every link kept inside the KB) and a
+  currency update (about 190 new field candidates checked against the KB; full pushdown and the remaining transformation
+  types headless; agent tuning, job budgets, latency and serving to BI; every doc in `00`–`02` given the Claude-friendly
+  block; the [End-to-End Playbook](<00 - Start Here/07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>)
+  added). See the [Changelog](<00 - Start Here/06 Changelog.md>).
+- **2026-10-23:** one combined Master IDMC KB: the IDMC Toolkit (mapping generator, three demo blueprints, Claude skill,
+  setup) folded in, the Script Library as its one library, and `IDMC_LOGIN.txt` as the one file a reader fills in to
+  connect.
+- **2026-10-26:** a [Mapping Fast Path](<03 - Data Integration (CDI)/00 Mapping Fast Path - read this first.md>) as the
+  first stop for any mapping work; the generator's spec reference and 28 proven example specs shipped in `core/mapgen/`;
+  54 new lessons (Hosted Agent limits, Databricks, Snowflake, SharePoint, moving an org). See the
+  [Changelog](<00 - Start Here/06 Changelog.md>).
+- **2026-11-03 (v4):** two rules up front (never push another technology; never say "not possible" before the
+  workaround ladder), [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>)
+  for any source and target, neutral wording in the entry docs and the generator (a connection with no `kind` now
+  warns instead of silently becoming BigQuery; flat-file targets documented), the skill's error index rebuilt from
+  the KB's own lessons, a quick start and a "create any IDMC asset" index, the exemplar route for any connector the
+  generator has no template for (`core/mapgen/exemplar.py`), and 65 new lessons (Hosted Agent outage, File Ingestion
+  and Local Spark headless, CAI file bytes, lineage design, address verification, database profiling over JDBC V2).
+  See the
+  [Changelog](<00 - Start Here/06 Changelog.md>).
+- **2026-11-10 (v5):** ready for GitHub (`.gitignore`, a pre-commit hook and a CI job that run `tools/secret_scan.py`,
+  `git clone` setup, no compiled caches or device paths), 93 new lessons from a production deployment onto a live
+  warehouse (backups, host failures, DQ gates that proved nothing, live-database profiling, inherited builds, many
+  sessions on one estate, cost), and [What Went Wrong](<00 - Start Here/09 What Went Wrong - Production Deployment Post-Mortem.md>), the post-mortem that turns
+  them into checks. See the [Changelog](<00 - Start Here/06 Changelog.md>).

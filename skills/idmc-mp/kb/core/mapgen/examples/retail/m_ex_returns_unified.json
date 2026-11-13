@@ -1,0 +1,623 @@
+{
+ "name": "m_ex_returns_unified",
+ "description": "[mapgen-suite S04] POS and online returns arrive in different shapes; Expressions normalise each side (online SKU resolved through an unconnected Lookup, free-text reasons classified, US-format text dates parsed with IS_DATE / TO_DATE), a Union maps both onto one shape, then Filter, Sorter + Sequence surrogate keys and an Aggregator.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_RET_POS",
+   "conn": "BQ",
+   "query": "SELECT return_id AS p_return_id, store_id AS p_store_id, order_id AS p_order_id, product_id AS p_product_id, qty AS p_qty, refund_amount AS p_refund, reason_code AS p_reason, return_ts AS p_return_ts FROM `${BQ_PROJECT}.${DATASET}.returns_pos`",
+   "fields": [
+    [
+     "p_return_id",
+     "STRING",
+     256
+    ],
+    [
+     "p_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "p_order_id",
+     "STRING",
+     256
+    ],
+    [
+     "p_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "p_qty",
+     "INTEGER"
+    ],
+    [
+     "p_refund",
+     "NUMERIC"
+    ],
+    [
+     "p_reason",
+     "STRING",
+     256
+    ],
+    [
+     "p_return_ts",
+     "TIMESTAMP"
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_RET_WEB",
+   "conn": "BQ",
+   "query": "SELECT rma_number AS w_rma, order_ref AS w_order_ref, sku AS w_sku, units AS w_units, refund_cents AS w_cents, reason_text AS w_reason_text, requested_at AS w_requested_at FROM `${BQ_PROJECT}.${DATASET}.returns_online`",
+   "fields": [
+    [
+     "w_rma",
+     "STRING",
+     256
+    ],
+    [
+     "w_order_ref",
+     "STRING",
+     256
+    ],
+    [
+     "w_sku",
+     "STRING",
+     256
+    ],
+    [
+     "w_units",
+     "INTEGER"
+    ],
+    [
+     "w_cents",
+     "INTEGER"
+    ],
+    [
+     "w_reason_text",
+     "STRING",
+     256
+    ],
+    [
+     "w_requested_at",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_SKU",
+   "conn": "BQ",
+   "query": "SELECT sku AS lk_sku, product_id AS lk_product_id FROM `${BQ_PROJECT}.${DATASET}.products`",
+   "fields": [
+    [
+     "lk_sku",
+     "STRING",
+     64
+    ],
+    [
+     "lk_product_id",
+     "STRING",
+     64
+    ]
+   ],
+   "cond": [
+    [
+     "lk_sku",
+     "IN_sku"
+    ]
+   ],
+   "ret": "lk_product_id"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_POS",
+   "fields": [
+    {
+     "name": "u_return_id",
+     "type": "STRING",
+     "expr": "'POS-' || p_return_id",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "u_channel",
+     "type": "STRING",
+     "expr": "'POS'",
+     "kind": "OUTPUT",
+     "prec": 8
+    },
+    {
+     "name": "u_order_id",
+     "type": "STRING",
+     "expr": "p_order_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "u_product_id",
+     "type": "STRING",
+     "expr": "p_product_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "u_store_id",
+     "type": "STRING",
+     "expr": "p_store_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "u_qty",
+     "type": "INTEGER",
+     "expr": "p_qty",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "u_refund",
+     "type": "NUMERIC",
+     "expr": "p_refund",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "u_reason",
+     "type": "STRING",
+     "expr": "UPPER(LTRIM(RTRIM(p_reason)))",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "u_return_ts",
+     "type": "TIMESTAMP",
+     "expr": "p_return_ts",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_WEB",
+   "fields": [
+    {
+     "name": "v_sku",
+     "type": "STRING",
+     "expr": "UPPER(LTRIM(RTRIM(w_sku)))",
+     "kind": "VARIABLE",
+     "prec": 32
+    },
+    {
+     "name": "v_txt",
+     "type": "STRING",
+     "expr": "LOWER(w_reason_text)",
+     "kind": "VARIABLE",
+     "prec": 128
+    },
+    {
+     "name": "x_return_id",
+     "type": "STRING",
+     "expr": "'WEB-' || w_rma",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "x_channel",
+     "type": "STRING",
+     "expr": "'ONLINE'",
+     "kind": "OUTPUT",
+     "prec": 8
+    },
+    {
+     "name": "x_order_id",
+     "type": "STRING",
+     "expr": "UPPER(w_order_ref)",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "x_product_id",
+     "type": "STRING",
+     "expr": ":LKP.LKP_SKU(v_sku)",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "x_store_id",
+     "type": "STRING",
+     "expr": "'WEB'",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "x_qty",
+     "type": "INTEGER",
+     "expr": "w_units",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "x_refund",
+     "type": "NUMERIC",
+     "expr": "ROUND(TO_DECIMAL(w_cents) / 100, 2)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "x_reason",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, INSTR(v_txt, 'damag') > 0, 'DAMAGED', INSTR(v_txt, 'size') > 0 OR INSTR(v_txt, 'fit') > 0, 'WRONG_SIZE', INSTR(v_txt, 'late') > 0, 'LATE', REG_MATCH(v_txt, '^.*(changed|mind).*$'), 'CHANGED_MIND', 'OTHER')",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "x_return_ts",
+     "type": "TIMESTAMP",
+     "expr": "IIF(IS_DATE(w_requested_at, 'MM/DD/YYYY HH24:MI'), TO_DATE(w_requested_at, 'MM/DD/YYYY HH24:MI'), NULL)",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "union",
+   "name": "UNI_RETURNS",
+   "inputs": [
+    "In_POS",
+    "In_WEB"
+   ],
+   "fields": [
+    [
+     "u_return_id",
+     "STRING",
+     24
+    ],
+    [
+     "u_channel",
+     "STRING",
+     8
+    ],
+    [
+     "u_order_id",
+     "STRING",
+     16
+    ],
+    [
+     "u_product_id",
+     "STRING",
+     16
+    ],
+    [
+     "u_store_id",
+     "STRING",
+     16
+    ],
+    [
+     "u_qty",
+     "INTEGER"
+    ],
+    [
+     "u_refund",
+     "NUMERIC"
+    ],
+    [
+     "u_reason",
+     "STRING",
+     24
+    ],
+    [
+     "u_return_ts",
+     "TIMESTAMP"
+    ]
+   ],
+   "map": {
+    "In_WEB": {
+     "u_return_id": "x_return_id",
+     "u_channel": "x_channel",
+     "u_order_id": "x_order_id",
+     "u_product_id": "x_product_id",
+     "u_store_id": "x_store_id",
+     "u_qty": "x_qty",
+     "u_refund": "x_refund",
+     "u_reason": "x_reason",
+     "u_return_ts": "x_return_ts"
+    }
+   }
+  },
+  {
+   "type": "filter",
+   "name": "FIL_POSITIVE",
+   "cond": "u_refund > 0 AND u_qty > 0"
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_RETURN_ID",
+   "keys": [
+    "u_return_id"
+   ]
+  },
+  {
+   "type": "sequence",
+   "name": "SEQ_RETURN_SK",
+   "start": 1,
+   "inc": 1
+  },
+  {
+   "type": "expression",
+   "name": "EXP_RETURN",
+   "fields": [
+    {
+     "name": "return_sk",
+     "type": "INTEGER",
+     "expr": "NEXTVAL",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "return_id",
+     "type": "STRING",
+     "expr": "u_return_id",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "channel",
+     "type": "STRING",
+     "expr": "u_channel",
+     "kind": "OUTPUT",
+     "prec": 8
+    },
+    {
+     "name": "order_id",
+     "type": "STRING",
+     "expr": "u_order_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "product_id",
+     "type": "STRING",
+     "expr": "u_product_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "store_id",
+     "type": "STRING",
+     "expr": "u_store_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "qty",
+     "type": "INTEGER",
+     "expr": "u_qty",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "refund_amount",
+     "type": "NUMERIC",
+     "expr": "u_refund",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "reason",
+     "type": "STRING",
+     "expr": "u_reason",
+     "kind": "OUTPUT",
+     "prec": 24
+    },
+    {
+     "name": "return_ts",
+     "type": "TIMESTAMP",
+     "expr": "u_return_ts",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "return_date",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(u_return_ts), NULL, TO_CHAR(TRUNC(u_return_ts, 'DD'), 'YYYY-MM-DD HH24:MI:SS'))",
+     "kind": "OUTPUT",
+     "prec": 19
+    },
+    {
+     "name": "refund_bucket",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, u_refund >= 100, 'HIGH', u_refund >= 25, 'MEDIUM', 'LOW')",
+     "kind": "OUTPUT",
+     "prec": 8
+    },
+    {
+     "name": "product_known",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(u_product_id), 'N', 'Y')",
+     "kind": "OUTPUT",
+     "prec": 1
+    }
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_REASON",
+   "groupBy": [
+    "channel",
+    "reason"
+   ],
+   "fields": [
+    {
+     "name": "returns",
+     "type": "INTEGER",
+     "expr": "COUNT(return_id)"
+    },
+    {
+     "name": "units",
+     "type": "INTEGER",
+     "expr": "SUM(qty)"
+    },
+    {
+     "name": "refund_total",
+     "type": "NUMERIC",
+     "expr": "SUM(refund_amount)"
+    },
+    {
+     "name": "unknown_products",
+     "type": "INTEGER",
+     "expr": "COUNT(return_id, product_known = 'N')"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_RETURNS_UNIFIED",
+   "conn": "BQ",
+   "object": "${DATASET}/out_returns_unified",
+   "truncate": true,
+   "fields": [
+    [
+     "return_sk",
+     "INTEGER"
+    ],
+    [
+     "return_id",
+     "STRING"
+    ],
+    [
+     "channel",
+     "STRING"
+    ],
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "refund_amount",
+     "NUMERIC"
+    ],
+    [
+     "reason",
+     "STRING"
+    ],
+    [
+     "return_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "return_date",
+     "STRING"
+    ],
+    [
+     "refund_bucket",
+     "STRING"
+    ],
+    [
+     "product_known",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_RETURN_REASONS",
+   "conn": "BQ",
+   "object": "${DATASET}/out_return_reasons",
+   "truncate": true,
+   "fields": [
+    [
+     "channel",
+     "STRING"
+    ],
+    [
+     "reason",
+     "STRING"
+    ],
+    [
+     "returns",
+     "INTEGER"
+    ],
+    [
+     "units",
+     "INTEGER"
+    ],
+    [
+     "refund_total",
+     "NUMERIC"
+    ],
+    [
+     "unknown_products",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_RET_POS",
+   "EXP_POS"
+  ],
+  [
+   "SRC_RET_WEB",
+   "EXP_WEB"
+  ],
+  [
+   "EXP_POS",
+   "UNI_RETURNS.In_POS"
+  ],
+  [
+   "EXP_WEB",
+   "UNI_RETURNS.In_WEB"
+  ],
+  [
+   "UNI_RETURNS",
+   "FIL_POSITIVE"
+  ],
+  [
+   "FIL_POSITIVE",
+   "SRT_RETURN_ID"
+  ],
+  [
+   "SRT_RETURN_ID",
+   "SEQ_RETURN_SK"
+  ],
+  [
+   "SEQ_RETURN_SK",
+   "EXP_RETURN"
+  ],
+  [
+   "EXP_RETURN",
+   "TGT_RETURNS_UNIFIED"
+  ],
+  [
+   "EXP_RETURN",
+   "AGG_REASON"
+  ],
+  [
+   "AGG_REASON",
+   "TGT_RETURN_REASONS"
+  ]
+ ]
+}
