@@ -29,6 +29,10 @@ belief.
 - **Quick Start** ([10 Quick Start](<10 Quick Start - your first hour with IDMC and Claude.md>)): the first hour for a
   new user: connect, prove the org, what to ask Claude for each common task, and the lessons that trip up almost every
   new user.
+- **20 more from a live review of a mappings-built property MDM (2,036 in total):** mapping vs SQL write speed and
+  why mapping-based mastering must be incremental; a 12-point checklist for why it failed at national scale; telling
+  who wrote a table from the query log; address-verification job-cap burn and re-paying for verified addresses;
+  blank match keys that block merges.
 - **51 new lessons (2,016 in total)** from session work 2026-10-08 to 2026-11-13 that earlier harvests had not read:
   - IDMC native source control with a self-hosted Git: routing through the agent, checkout before an OVERWRITE
     import, no unlink endpoint, check-in limits.

@@ -1,5 +1,5 @@
 # Lessons: Environment & Ops
-106 current lessons, 3 superseded, plus 26 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-08. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+109 current lessons, 3 superseded, plus 26 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-08. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [Environment traps](<../14 - Claude Working Methods & Tooling/05 Environment Traps (Windows, git-bash, az, gcloud, Docker).md>) · [How Claude reaches and drives IDMC](<../14 - Claude Working Methods & Tooling/01 How Claude Reaches and Drives IDMC.md>) · [Secrets hygiene](<../14 - Claude Working Methods & Tooling/06 Secrets Hygiene.md>) · [Claude Working Methods lessons](<12 Claude Working Methods.md>) · [UI Automation lessons](<14 UI Automation.md>)
 
@@ -432,6 +432,18 @@ To guarantee that old pipelines, their schedules, external watchers and catalog 
 ### L-ENV-136  A Snowflake resource monitor guards only its warehouses: a system warehouse granted to PUBLIC lets the IDMC service user spend outside the guard
 **Kind:** SECURITY · **Proven:** 2026-10-13 · **Evidence:** SHOW WAREHOUSES as the service user listed 3 warehouses, one outside the monitor (2026-10-13)
 The quota guard was attached to the demo warehouse only. Snowflake trial accounts also have system warehouses such as `SYSTEM$STREAMLIT_NOTEBOOK_WH`, granted to PUBLIC, so the IDMC service user could use it (PUBLIC is always among a user's roles, and default secondary roles widen this) and spend credits the monitor never sees. List what the service user can use (`SHOW WAREHOUSES` as that user), then close the gap as ACCOUNTADMIN: `REVOKE USAGE ON WAREHOUSE <wh> FROM ROLE PUBLIC` (may be refused for a system warehouse) or `ALTER USER <service user> SET DEFAULT_SECONDARY_ROLES = ()`, or attach the monitor at account level. Refines L-ENV-096.
+
+### L-ENV-137  Preflight for a live IDMC-backed demo: check the causes that actually stopped cleanse, match and verify, not just whether the agent is up
+**Kind:** PROCESS · **Proven:** 2026-11-10 · **Evidence:** Disk full on two dates broke verification; quota exhaustion failed every DQ job on one day; job budget 1,588 used vs soft 8,500 / hard 9,500; SaaS API 9,455 of 15,000 left; 16 containers checked
+Causes that made name, email and address steps hang in one live pipeline, each with its check: pipelines switched off to save the job budget (turn on; watchdog every 15 min); the hosted runtime down, so batch SaaS-sync tasks failed while CAI real-time calls kept working (rebind, or show values from earlier stages); the agent host's disk full, which broke address verification twice; the warehouse's daily query quota used up by BI refreshes, which failed every DQ task (L-CONN-133: cap refreshes, grep for 'quota exceeded'); the monthly job count (count this month's activity-log jobs against soft/hard limits, L-IPU-041); recent failure counts of the golden and DQ tasks; CDC lag; SaaS storage and daily API limits (do a test insert, since the storage gauge recalculates late). Include one real end-to-end test record in the check. Refines L-CONN-133.
+
+### L-ENV-138  A BigQuery service key without bigquery.jobs.list/listAll cannot read INFORMATION_SCHEMA.JOBS_BY_PROJECT or JOBS_BY_USER, so it cannot measure the quota it is spending
+**Kind:** GOTCHA · **Proven:** 2026-11-10 · **Evidence:** ERR 403 Access Denied ... 'bigquery.jobs.listAll' / 'bigquery.jobs.list' permission(s) at the project level
+When checking how much of a project's daily query quota IDMC tasks and dashboard refreshes used, both `region-us.INFORMATION_SCHEMA.JOBS_BY_PROJECT` and `JOBS_BY_USER` returned 403 accessDenied for the pipeline's key (needs bigquery.jobs.listAll at project level, or bigquery.jobs.list). Either grant a read-only monitoring identity those permissions, or estimate from your own logs (bytes per build x builds) and cap the callers (for example 24 refresh builds an hour at about 3.8 GB each against a shared 2 TiB/day quota). Refines L-CONN-133.
+
+### L-ENV-139  A ReplacingMergeTree golden table read without FINAL returns superseded versions: readers counted ~104M rows for 91.7M real entities
+**Kind:** GOTCHA · **Proven:** 2026-11-12 · **Evidence:** 204,582,711 rows / 203,871,806 distinct ids; golden table 91,749,560 rows with FINAL vs ~104M without
+Golden tables on ClickHouse's replacing engine keep old row versions until a background merge, so count(), duplicate checks, DQ profiles and downstream readers that omit FINAL (or an argMax by version) see stale and duplicate rows. Measured: 204.58M rows vs 203.87M distinct ids in one table (710,905 unmerged versions) and about 104M rows read vs 91.7M with FINAL in another. Run every acceptance gate with FINAL and cap memory/threads in SETTINGS (needs readonly=2 on read-only sessions, L-ENV-112); list the table's readers in query_log and fix any that skip FINAL, including IDMC source queries. Refines L-MDM-079.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

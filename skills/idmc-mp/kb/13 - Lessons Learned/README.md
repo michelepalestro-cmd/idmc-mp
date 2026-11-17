@@ -1,8 +1,8 @@
 # Lessons Learned
 
-> **Summary.** Every lesson this KB rests on: **2,016 lessons** in 14 domain files, each with a stable id
+> **Summary.** Every lesson this KB rests on: **2,036 lessons** in 14 domain files, each with a stable id
 > (`L-<DOM>-<NNN>`), a kind, a date, the evidence that proved it and one to six sentences of generic, placeholder-only
-> text. 1,811 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
+> text. 1,831 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
 > these ids; [Overturned Beliefs](<Overturned Beliefs.md>) lists every belief that fell and what replaced it.
 
 Last verified: 2026-11-03, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-13 across all files).
@@ -47,17 +47,17 @@ Counts are the `### L-` headings in each file.
 |---|---|---|---|---|---|---|
 | [01 Access & Auth](<01 Access & Auth.md>) | `AUTH` | 98 | 86 | 11 | 1 | 2026-06-27 to 2026-11-10 |
 | [02 Secure Agent & Connections](<02 Secure Agent & Connections.md>) | `AGENT` (123), `CONN` (141) | 264 | 238 | 23 | 3 | 2026-06-27 to 2026-11-05 |
-| [03 Data Integration (CDI)](<03 Data Integration (CDI).md>) | `CDI` | 303 | 279 | 21 | 3 | 2026-06-27 to 2026-11-04 |
+| [03 Data Integration (CDI)](<03 Data Integration (CDI).md>) | `CDI` | 305 | 281 | 21 | 3 | 2026-06-27 to 2026-11-12 |
 | [04 Mass Ingestion & CDC](<04 Mass Ingestion & CDC.md>) | `DBMI` | 64 | 58 | 5 | 1 | 2026-07-04 to 2026-11-02 |
 | [05 Application Integration (CAI)](<05 Application Integration (CAI).md>) | `CAI` | 163 | 146 | 16 | 1 | 2026-07-01 to 2026-11-01 |
-| [06 Data Quality & Profiling](<06 Data Quality & Profiling.md>) | `DQ` | 159 | 141 | 14 | 4 | 2026-06-27 to 2026-11-05 |
+| [06 Data Quality & Profiling](<06 Data Quality & Profiling.md>) | `DQ` | 163 | 145 | 14 | 4 | 2026-06-27 to 2026-11-12 |
 | [07 Catalog & Governance (CDGC)](<07 Catalog & Governance (CDGC).md>) | `CDGC` | 226 | 198 | 26 | 2 | 2026-06-27 to 2026-11-01 |
-| [08 MDM](<08 MDM.md>) | `MDM` | 83 | 70 | 11 | 2 | 2026-07-04 to 2026-11-04 |
+| [08 MDM](<08 MDM.md>) | `MDM` | 90 | 77 | 11 | 2 | 2026-07-04 to 2026-11-12 |
 | [09 CLAIRE & MCP](<09 CLAIRE & MCP.md>) | `MCP` | 131 | 115 | 14 | 2 | 2026-07-04 to 2026-11-13 |
 | [10 Migration & Org Management](<10 Migration & Org Management.md>) | `MIG` (100), `CLEAN` (36) | 136 | 118 | 17 | 1 | 2026-07-04 to 2026-11-02 |
-| [11 IPU, Metering & Licensing](<11 IPU, Metering & Licensing.md>) | `IPU` | 59 | 50 | 7 | 2 | 2026-06-28 to 2026-11-10 |
-| [12 Claude Working Methods](<12 Claude Working Methods.md>) | `METHOD` | 157 | 149 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-13 |
-| [13 Environment & Ops](<13 Environment & Ops.md>) | `ENV` | 136 | 133 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-03 |
+| [11 IPU, Metering & Licensing](<11 IPU, Metering & Licensing.md>) | `IPU` | 60 | 51 | 7 | 2 | 2026-06-28 to 2026-11-12 |
+| [12 Claude Working Methods](<12 Claude Working Methods.md>) | `METHOD` | 160 | 152 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-13 |
+| [13 Environment & Ops](<13 Environment & Ops.md>) | `ENV` | 139 | 136 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-12 |
 | [14 UI Automation](<14 UI Automation.md>) | `UI` | 37 | 30 | 6 | 1 | 2026-07-06 to 2026-10-26 |
 | **Total** | 16 prefixes | **1,763** | **1,563** | **181** | **19** | 2026-06-27 to 2026-10-26 |
 

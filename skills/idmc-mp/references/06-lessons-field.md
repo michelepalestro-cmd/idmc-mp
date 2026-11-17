@@ -2,7 +2,7 @@
 
 # Field lessons: error signatures and their causes
 
-292 current KB lessons that name an error code, an HTTP status or an error message, out of 2016 lessons.
+294 current KB lessons that name an error code, an HTTP status or an error message, out of 2036 lessons.
 Each row points at its lesson id in the KB (`13 - Lessons Learned`), where the full text and the evidence are.
 
 **Grep this file for your error string first**; then open the lesson. The evidence is dated: re-probe in your
@@ -148,6 +148,7 @@ own org before you rely on it, and your org's live answer wins.
 | `TM_6660`, `DBG_21699`, `JDBC_V2_10000`, `TM_6966` | L-CDI-290 Read the real DTM buffers and the generated JDBC V2 SQL from the session log: TM_6660 for pool and block size, DBG_21699 for back-pressure, JDBC_V2_10000 for the exact SELECT and INSERT | The session log of a JDBC V2 mapping task states what actually ran: `TM_6660 Total Buffer Pool size is <n> bytes and Block size is <m> bytes` (left at defaults, one task with wide ports got a 22 MB pool and 1.2 MB blocks; with se… |
 | `TE_7002` | L-CDI-299 SUM(NULL) in an Aggregator fails the run: TE_7002 'constant operand evaluated to NULL not allowed' | An Aggregator output written as `SUM(NULL)` (meant as 'no value for this row type') validated but the run failed: `TE_7002 Transformation stopped due to a fatal error in the mapping. The expression [SUM(NULL)] contains the follow… |
 | `TABLEAUV3_10000` | L-CDI-303 Tableau V3 target: an invalid targetOperation in the plain attribute is silently ignored, the writer uses Create, and the second run fails 403007 | Setting `targetOperation` = `Replace` in the writer's operation and runtime attribute sets (without the `targetOperation$` parameter form) raised no error at import or validation; the deployed mapping still showed Replace, but th… |
+| `'The Mapping task failed to run. Another instance of the task is currently running.'` | L-CDI-304 Starting a mapping task on demand while its scheduled pipeline run is active fails at once with 'The Mapping task failed to run. Another instance of the task is currently running.' and fails the whole lane | To beat a latency target, extra runs of a golden-record mapping task were started with `POST /api/v2/job` (taskType MTT) whenever a new record landed. When the pipeline's own run was already in progress, the extra run ended in ab… |
 
 ## Mass Ingestion & CDC
 
@@ -360,6 +361,7 @@ own org before you rely on it, and your org's live answer wins.
 | `429` | L-ENV-090 Flex Gateway Local Mode: it needs a Local Mode registration.yaml, a Connected Mode copy pulls another environment's APIs, and rate limiting is the proven local policy | A Flex Gateway in Local Mode needs a registration.yaml in its conf.d even though it reads its APIs from local files; without one it loads '0 listeners' and never binds its port. Do not copy a registration.yaml from a gateway that… |
 | `422` | L-ENV-096 A Snowflake resource monitor that suspends at its quota stops every IDMC, catalog and BI job on the warehouse | When a resource monitor with a suspend trigger reaches its credit quota, every client of the warehouse fails at once: the SQL API answers 422 with code 090073 "Warehouse '<wh>' cannot be resumed because resource monitor '<monitor… |
 | `APP_105060` | L-ENV-100 Hosted Agent outage runbook: confirm, inventory, rebind tasks and connections with full-body backups, leave the exceptions, unblock the chain, undo when the runtime is back | 1) Confirm it is the platform runtime: every hosted connection fails its test with APP_105060 on the hosted agent group, and hosted runs fail in seconds with 'no active Secure Agent in group Informatica Cloud Hosted Agent'. Open… |
+| `403` | L-ENV-138 A BigQuery service key without bigquery.jobs.list/listAll cannot read INFORMATION_SCHEMA.JOBS_BY_PROJECT or JOBS_BY_USER, so it cannot measure the quota it is spending | When checking how much of a project's daily query quota IDMC tasks and dashboard refreshes used, both `region-us.INFORMATION_SCHEMA.JOBS_BY_PROJECT` and `JOBS_BY_USER` returned 403 accessDenied for the pipeline's key (needs bigqu… |
 
 ## Claude working methods
 
