@@ -51,7 +51,8 @@ how sure is each claim, and how do I add what I learn?
 
 **First 15 minutes of a new session:**
 
-1. This page, then [The Laws of Headless IDMC](<02 The Laws of Headless IDMC.md>) once.
+1. New to IDMC with Claude? The [Quick Start](<10 Quick Start - your first hour with IDMC and Claude.md>) first.
+   Then this page, then [The Laws of Headless IDMC](<02 The Laws of Headless IDMC.md>) once.
 2. A new pipeline: [New Pipeline Milestones](<08 New Pipeline Milestones - any source, any target.md>) (runtime,
    connections, folder and assets first). Building or extending a deployment: the [End-to-End Playbook](<07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>).
    Asking "can I do X?": the [Capability Map](<03 Capability Map.md>). Going onto a live production system or

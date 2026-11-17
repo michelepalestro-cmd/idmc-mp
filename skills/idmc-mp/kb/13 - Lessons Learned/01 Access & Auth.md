@@ -50,7 +50,7 @@ Probed the same week on a `dm-us` org and a `dmp-us` sub-org: `GET /api/v2/licen
 
 ### L-AUTH-011  A result proven on one org or pod is not evidence for another
 **Kind:** LAW · **Proven:** 2026-09-28 · **Evidence:** Live A/B across two orgs (2026-07-25/26); profiling session difference between two pods (2026-09-28)
-Route availability, accepted session types and error behaviour differ by pod, org and licensed engine; for example, one pod's profiling service rejected the v2 session that another pod's accepted. Re-probe every route in the org you are working in, store host, header, path, status and date with each verdict, and work in one org per session unless told otherwise.
+Route availability, accepted session types and error behaviour differ by pod, org and licensed engine; for example, one pod's profiling service rejected the v2 session that another pod's accepted. Re-probe every route in the org you are working in, store host, header, path, status and date with each verdict, and work in one org per session unless told otherwise. Newer evidence: L-METHOD-155.
 
 ### L-AUTH-012  Read the kind of 404 before concluding anything; a 405 proves the route exists
 **Kind:** LAW · **Proven:** 2026-07-26 · **Evidence:** 405 vs 404 contrast on data360 routes (2026-07-06); parent-path 404 beside a 200 collection (2026-07-04); typed error on the -ing host vs bare 404 on the pod host (2026-07-26)

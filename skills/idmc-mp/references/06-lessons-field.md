@@ -2,7 +2,7 @@
 
 # Field lessons: error signatures and their causes
 
-287 current KB lessons that name an error code, an HTTP status or an error message, out of 1965 lessons.
+292 current KB lessons that name an error code, an HTTP status or an error message, out of 2016 lessons.
 Each row points at its lesson id in the KB (`13 - Lessons Learned`), where the full text and the evidence are.
 
 **Grep this file for your error string first**; then open the lesson. The evidence is dated: re-probe in your
@@ -146,6 +146,8 @@ own org before you rely on it, and your org's live answer wins.
 | `502` | L-CDI-287 Classify mapping-task failures by errorMsg before retrying: transport and capacity errors retry, data and permission errors do not | In about 1,100 retained activity-log entries of one project the most frequent messages were: 'Aborted by agent disconnection.' 134 (all 62 full runs of one workflow design ended this way, and every running workflow failed in the… |
 | `CMN_001`, `404`, `500` | L-CDI-289 Dynamic Mapping Tasks are v3 type BATCH_MAPPING and are read at /batch-mapping/api/v1/dynamictask/<id> on the pod host, without /saas | A v3 objects query for type DMAPPINGTASK or DMT returns count 0, exactly like an invented type; the Dynamic Mapping Task type is `BATCH_MAPPING`. `GET https://<pod>.<domain>.informaticacloud.com/batch-mapping/api/v1/dynamictask/<… |
 | `TM_6660`, `DBG_21699`, `JDBC_V2_10000`, `TM_6966` | L-CDI-290 Read the real DTM buffers and the generated JDBC V2 SQL from the session log: TM_6660 for pool and block size, DBG_21699 for back-pressure, JDBC_V2_10000 for the exact SELECT and INSERT | The session log of a JDBC V2 mapping task states what actually ran: `TM_6660 Total Buffer Pool size is <n> bytes and Block size is <m> bytes` (left at defaults, one task with wide ports got a 22 MB pool and 1.2 MB blocks; with se… |
+| `TE_7002` | L-CDI-299 SUM(NULL) in an Aggregator fails the run: TE_7002 'constant operand evaluated to NULL not allowed' | An Aggregator output written as `SUM(NULL)` (meant as 'no value for this row type') validated but the run failed: `TE_7002 Transformation stopped due to a fatal error in the mapping. The expression [SUM(NULL)] contains the follow… |
+| `TABLEAUV3_10000` | L-CDI-303 Tableau V3 target: an invalid targetOperation in the plain attribute is silently ignored, the writer uses Create, and the second run fails 403007 | Setting `targetOperation` = `Replace` in the writer's operation and runtime attribute sets (without the `targetOperation$` parameter form) raised no error at import or validation; the deployed mapping still showed Replace, but th… |
 
 ## Mass Ingestion & CDC
 
@@ -249,6 +251,7 @@ own org before you rely on it, and your org's live answer wins.
 | `V3API_AccessControlError_001`, `404` | L-CDGC-195 No per-catalog-source permission route was found: a user who must not see other sources gets no catalog role | To show one user only some catalog sources: `GET /ccgf-catalog-source-management/api/v1/datasources/<id>` carries no access-control fields, six guessed sub-resources (`permissions`, `acl`, `acls`, `accessControl`, `accessControlL… |
 | `CMN_001` | L-CDGC-205 An IICS catalog scan can fail at Test Connection on a transient IDMC 500: retry before changing the source | An IICS source's scan failed at Test Connection with 'Unexpected response received, code: 500 ... CMN_001 ... I/O error on GET request for "https://<pod>/cloudshell/api/v1/Products": Read timed out' in the agent's `<source>_Sync.… |
 | `400` | L-CDGC-234 The generic JDBC catalog-source type offers no Lineage Discovery capability: lineage for a database reached only through JDBC comes from the IICS source or curated edges | `GET https://cdgc-api.<domain>.informaticacloud.com/ccgf-catalog-source-management/api/v1/type/JDBC/capability/<Capability>/configuration` (L-CDGC-016) answered 200 for Metadata Extraction, Data Profiling, Data Quality, Data Clas… |
+| `'s data-dictionary views (SYS.DBA_*), not only the schema'` | L-CDGC-235 An Oracle catalog scan fails with ORA-00942 on SYS.DBA_* views until the scan user has SELECT_CATALOG_ROLE | The CDGC Oracle scanner reads the database's data-dictionary views (SYS.DBA_*), not only the schema's own tables. With a schema user that owns the tables but has no dictionary access, the first Metadata Extraction failed with ORA… |
 
 ## MDM
 
@@ -315,6 +318,8 @@ own org before you rely on it, and your org's live answer wins.
 | `FRS_127`, `403` | L-MIG-084 License-installed MDM bundle content cannot be deleted headless, even by an admin: FRS answers 403 FRS_127 | In an org provisioned with MDM bundles, the bundle projects' content (for example the unused C360/P360/S360 objects) unpublished fine, but `DELETE` of the entities through FRS BaseEntities answered 403 FRS_127 "permission [delete… |
 | `404` | L-MIG-085 Change a folder's description: PATCH /frs/v1/Folders('<folderId>') | PATCH https://<pod>.<domain>.informaticacloud.com/frs/v1/Folders('<folderId>') with header IDS-SESSION-ID and body {"description": "..."} answers 204, and GET /frs/v1/Folders('<folderId>') reads the new text back. The v3 form PAT… |
 | `XFER_500`, `XFER_200` | L-MIG-087 Make view-only walk-through copies of mappings with FRS CopyEntities: name and describe them in the call, omit conflictResolution ('NONE' gives XFER_500), and take the new id from tgtGuid | `POST https://<pod>.<domain>.informaticacloud.com/frs/api/v1/CopyEntities` (header `IDS-SESSION-ID`) with {"xferSpec": {"targetLocationId": "<folderId>", "sourceSpecArr": [{"sourceEntityId": "<frsId>", "destName": "<new name>", "… |
+| `VCS_029`, `400` | L-MIG-095 IDMC native source control with a self-hosted GitLab: choose Platform = On-Premise, and Git traffic goes through a runtime environment's GitRepoConnectApp | IDMC source control supports GitHub and GitLab (cloud or self-hosted), Bitbucket (self-hosted, or cloud for Data Integration assets only) and Azure DevOps (cloud only). For a GitLab on your own domain set Administrator > Settings… |
+| `OIE_007` | L-MIG-100 Mapping-task package import OIE_007 'Internal application provider error': mtTask.json holds the runtime environment as an '@<FRS id>' reference; do not overwrite it with a v2 id | When cloning a mapping-task (MTT) from an export, the task's `mtTask.json` carries `runtimeEnvironmentId` as an FRS reference of the form `@<22-character id>`, not the v2 `01...25...` runtime id. Replacing it with the v2 id made… |
 
 ## Org cleanup
 

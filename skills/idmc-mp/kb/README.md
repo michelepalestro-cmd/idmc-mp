@@ -24,12 +24,12 @@ answer lives.
   (L-METHOD-034, L-METHOD-035).
 - Never write a secret, or an id or host of your own org, into this KB (L-METHOD-001).
 
-**Related:** [How to use this KB](<00 - Start Here/01 How to use this KB.md>) ·
+**Related:** [Quick Start](<00 - Start Here/10 Quick Start - your first hour with IDMC and Claude.md>) · [How to use this KB](<00 - Start Here/01 How to use this KB.md>) ·
 [The Laws of Headless IDMC](<00 - Start Here/02 The Laws of Headless IDMC.md>) ·
 [End-to-End Playbook](<00 - Start Here/07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>) ·
 [Capability Map](<00 - Start Here/03 Capability Map.md>) · [Error Triage](<00 - Start Here/04 Error Triage.md>)
 
-**Last verified:** 2026-11-10
+**Last verified:** 2026-11-17
 
 ## What this KB is for
 
@@ -185,6 +185,7 @@ or a loop unless you ask.
 
 | Step | Read | What you get | Time |
 |---|---|---|---|
+| 0 | [Quick Start](<00 - Start Here/10 Quick Start - your first hour with IDMC and Claude.md>) if you are new: connect, prove the org, what to ask Claude for each task, the lessons that bite first | a working org in the first hour | 10 min |
 | 1 | [How to use this KB](<00 - Start Here/01 How to use this KB.md>) | the routing table, the placeholders, the evidence states, how each doc is built | 10 min |
 | 2 | [The Laws of Headless IDMC](<00 - Start Here/02 The Laws of Headless IDMC.md>) | the 30 rules that most change outcomes, each with its test | 15 min |
 | 3 | [New Pipeline Milestones](<00 - Start Here/08 New Pipeline Milestones - any source, any target.md>) for one new pipeline; the [End-to-End Playbook](<00 - Start Here/07 End-to-End Playbook - Deploy and Operate IDMC with Claude.md>) when you build or extend a deployment; the [Capability Map](<00 - Start Here/03 Capability Map.md>) when the question is "can I do X headless?" | the order of work and its gates; the dated verdict per operation | 10 min |

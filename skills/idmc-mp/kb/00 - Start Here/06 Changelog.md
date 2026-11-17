@@ -24,6 +24,21 @@ belief.
 
 ---
 
+## 2026-11-17: a Quick Start, and the last two weeks of field work
+
+- **Quick Start** ([10 Quick Start](<10 Quick Start - your first hour with IDMC and Claude.md>)): the first hour for a
+  new user: connect, prove the org, what to ask Claude for each common task, and the lessons that trip up almost every
+  new user.
+- **51 new lessons (2,016 in total)** from session work 2026-10-08 to 2026-11-13 that earlier harvests had not read:
+  - IDMC native source control with a self-hosted Git: routing through the agent, checkout before an OVERWRITE
+    import, no unlink endpoint, check-in limits.
+  - Oracle: catalog scans need SELECT_CATALOG_ROLE; an Oracle target through the exemplar route; no engine restart.
+  - CAI: idle timers still cost runs; anonymous processes on an agent port.
+  - Tableau V3 targets: char_string publishes '0.0'; an invalid targetOperation is ignored.
+  - OIE_007 on mapping-task imports; CLAIRE structure models tuned headless.
+  - SharePoint connector traps; replication slots filling a CDC host; GCP, BigQuery and Azure CLI traps.
+  - Claude working methods: subagents that die before writing, auto-mode production blocks, testing a packaged skill.
+
 ## 2026-11-10 (v5): ready for GitHub; what went wrong in a production deployment
 
 Why: the KB is published as a git repository, and a production deployment onto a live warehouse (hundreds of tables,

@@ -43,6 +43,7 @@ set or the home file is filled in, it is already connected: run `check_login.py`
 ## Where to go
 | Task | Start at |
 |---|---|
+| New to IDMC with Claude: first hour, what to ask, top lessons | `kb/00 - Start Here/10 Quick Start - your first hour with IDMC and Claude.md` |
 | New pipeline, any source to any target | `kb/00 - Start Here/08 New Pipeline Milestones - any source, any target.md` |
 | Any single asset type | `kb/README.md` ("Create any IDMC asset" table) |
 | Login, orgs, pods, sessions | `kb/01 - Access, Auth & Orgs/` |

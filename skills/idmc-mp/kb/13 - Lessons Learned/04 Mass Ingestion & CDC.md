@@ -1,5 +1,5 @@
 # Lessons: Mass Ingestion & CDC
-58 current lessons (1 of them disputed) and 5 superseded, IDs L-DBMI-###; evidence dated 2026-07-04 to 2026-11-02. Every lesson is generic; its sources are mapped outside the generic zone.
+59 current lessons (1 of them disputed) and 5 superseded, IDs L-DBMI-###; evidence dated 2026-07-04 to 2026-10-12. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [DBMI over REST](<../04 - Mass Ingestion & CDC/01 DBMI over REST (create, deploy, run, stop).md>) · [CDC from PostgreSQL](<../04 - Mass Ingestion & CDC/02 CDC from PostgreSQL.md>) · [DBMI Targets & Drivers](<../04 - Mass Ingestion & CDC/03 DBMI Targets & Drivers.md>)
 
 ## Current
@@ -58,7 +58,7 @@ A Database Ingestion CDC source role needs REPLICATION, CONNECT and SELECT on th
 
 ### L-DBMI-014  An unconsumed slot pins WAL: create it at the switch, cap retention, watch the lag
 **Kind:** GOTCHA · **Proven:** 2026-09-28 · **Evidence:** disk about 95% full during planning; retention capped at 8 GB (2026-09-26 to 2026-09-28)
-A logical slot that no job consumes keeps WAL until `max_slot_wal_keep_size` is reached, and then the slot is invalidated. Create a migration's new slot only right before the switch (a slot created days early can fill a nearly full disk), and expect a stopped job's slot to start retaining WAL. Check with `SELECT slot_name, active, pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)) FROM pg_replication_slots;`.
+A logical slot that no job consumes keeps WAL until `max_slot_wal_keep_size` is reached, and then the slot is invalidated. Create a migration's new slot only right before the switch (a slot created days early can fill a nearly full disk), and expect a stopped job's slot to start retaining WAL. Check with `SELECT slot_name, active, pg_size_pretty(pg_wal_lsn_diff(pg_current_wal_lsn(), confirmed_flush_lsn)) FROM pg_replication_slots;`. Newer evidence: L-DBMI-064.
 
 ### L-DBMI-015  One DBMI job per replication slot; never run two CDC jobs into the same target
 **Kind:** LAW · **Proven:** 2026-09-28 · **Evidence:** one consumer, 0 errors, confirmed_flush lag 0 after the switch (2026-09-28)
@@ -235,6 +235,10 @@ A File Ingestion and Replication task read from an Azure Blob Storage V3 connect
 ### L-DBMI-063  A hard stop of the source host leaves CDC jobs FAILED with PWX-36749 'Call to read from a replication slot failed' (Not retriable): unlike after an agent reboot, they stay down until job/resume
 **Kind:** ERROR · **Proven:** 2026-11-02 · **Evidence:** two CDC jobs down from a 10-minute source-host stop until they were resumed 3 days later; 2.68 GB of slot lag drained in about 3 minutes; the restart-window auto-resume passed 5 of 5 simulated cuts; latency 73 s on the first cycle, then 20.6 s (2026-11-02)
 The cloud provider hard-stopped the VM hosting the PostgreSQL source for about 10 minutes. Two Database Ingestion CDC jobs failed with PWX-36749 'Call to read from a replication slot failed', marked Not retriable. They did NOT come back when the database returned. After an agent-host reboot, by contrast, deployed jobs pass through awaiting_auto_restart and recover by themselves (L-DBMI-028). Here the jobs stayed failed for 3 days, because the alert went to an inbox nobody read. `POST /dbmi/public/api/v2/job/resume` {"jobId": <id>} resumed both from their restart points: 2.68 GB of slot lag drained in about 3 minutes, with no re-baseline (L-DBMI-059). A rule that is safe to automate: auto-resume when the failed job's endTime falls in a window around a source restart (30 minutes before to 15 minutes after the database's start time, or the start of the tunnel the agent reads through), at most 3 times per hour. Decide on the failure time, not on log text: the existing log-based watchdog never fired, because it read task logs from the old agent host after a runtime move (L-DBMI-059). The first apply cycle after the resume took 73 s; steady state then returned to about 21 s. Send CDC alerts to a channel that someone works. Also drop latency samples that span an outage, or a catch-up shows an 'average latency' of tens of thousands of seconds.
+
+### L-DBMI-064  Unused logical replication slots on a CDC source fill its disk: find which slot the live CDC job uses before dropping the rest
+**Kind:** GOTCHA · **Proven:** 2026-10-12 · **Evidence:** data disk 92% full; about 700 MB held by unused slots; left untouched pending a slot-to-task mapping (2026-10-12)
+On a demo PostgreSQL host that fed Database Ingestion CDC, leftover replication slots from earlier tasks kept retaining WAL: about 700 MB, which pushed the data disk to 92% against an 85% rule. Before dropping anything, map each slot in pg_replication_slots to a running CDC task (a polling job's slot shows active=f between cycles, L-DBMI-016), drop only the orphans, and set max_slot_wal_keep_size so a forgotten slot cannot fill the disk again (L-DBMI-014). Include a slot and disk check in every pre-demo checklist. Refines L-DBMI-014.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 
