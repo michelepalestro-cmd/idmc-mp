@@ -19,6 +19,15 @@ In Claude Code:
 
 Restart Claude Code. The skill loads on its own for IDMC work, or call it with `/idmc-mp:idmc-mp`.
 
+## Stay up to date
+
+New lessons are released often. Turn on auto-update once: in Claude Code type `/plugin`, open **Marketplaces**, pick
+**idmc-mp** and enable auto-update. Or update by hand at any time:
+
+```
+claude plugin marketplace update idmc-mp
+```
+
 ## Quick start (first hour)
 
 1. `/idmc-mp:connect`: creates your login file, then logs in once and prints your org.

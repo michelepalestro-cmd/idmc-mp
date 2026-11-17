@@ -1,6 +1,6 @@
 {
   "name": "idmc-mp",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "Build and run Informatica IDMC / IICS headless with Claude: REST and MCP for CDI, CAI, CDQ, CDGC, MDM, CDC, Secure Agents and IPU metering, with field lessons, a quick start, slash commands, a deploy playbook, a Python library and a mapping generator.",
   "author": {
     "name": "IDMC MP contributors"
