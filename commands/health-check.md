@@ -2,10 +2,10 @@
 description: Read-only health check of your IDMC org: runtimes, agents, connections, projects, what it can run
 ---
 
-Use the idmc-mp skill. Read-only: no writes and no job runs.
+Use the idmc-mp skill. On Windows, use `python` (or `py`) where these steps say `python3`. Read-only: no writes and no job runs.
 
-1. Prove the org: `python "${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/check_login.py"`. If it fails, follow its message; never retry a login.
-2. Read with `python "${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/14 - Claude Working Methods & Tooling/Script Library/idmc_session.py" get <plane> <path>`:
+1. Prove the org: `python3 "${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/check_login.py"`. If it fails, follow its message; never retry a login.
+2. Read with `python3 "${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/14 - Claude Working Methods & Tooling/Script Library/idmc_session.py" get <plane> <path>`:
    runtime environments and agents (`v2 /api/v2/runtimeEnvironment`, `v2 /api/v2/agent`, and per agent its
    `agentEngines[]` and health), connections (`v2 /api/v2/connection`), and projects and folders (v3 objects).
    Check each path against the lessons first: `grep -i "<path>" "${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/13 - Lessons Learned/lessons.jsonl"`.

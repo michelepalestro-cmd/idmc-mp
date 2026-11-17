@@ -6,6 +6,8 @@ description: Use when working with Informatica IDMC / IICS without its UI or bui
 # IDMC MP: build and run Informatica IDMC headless
 
 Everything here is relative to this skill's folder (the base directory shown when the skill loads).
+**Python command:** where this KB says `python`, use `python3` on macOS and Linux (macOS has no `python`), and `python`
+or `py` on Windows. The library needs only the standard library (Python 3.8+).
 `kb/` is the full Master IDMC KB: topic folders `00`-`14`, ~1,970 field lessons, a Python library, a mapping
 generator and three demo blueprints. Informatica's own product guides are not bundled: use https://docs.informatica.com.
 
