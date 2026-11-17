@@ -210,7 +210,7 @@ Order: the one Modeler step, ingest, first match/merge, then a native-versus-sta
 
 ### L-MDM-052  Do not call a SQL dedup layer a golden record or MDM in an Informatica conversation
 **Kind:** DECISION · **Proven:** 2026-09-27 · **Evidence:** 0 visible golden/MDM strings after a relabel of demo pages and dashboards (2026-09-27)
-In Informatica terms "golden record" and "single source of truth" mean MDM. A warehouse pipeline that cleanses, standardises, DQ-scores and rule-deduplicates without MDM is better described as a trusted curated layer, and a CRM's unified profile is its own concept. Change the visible wording; identifiers can stay.
+In Informatica terms "golden record" and "single source of truth" mean MDM. A warehouse pipeline that cleanses, standardises, DQ-scores and rule-deduplicates without MDM is better described as a trusted curated layer, and a CRM's unified profile is its own concept. Change the visible wording; identifiers can stay. CDQ Deduplicate does include basic rule survivorship (row- or field-based consolidation into a preferred record), so do not say it has none; what it lacks is source trust, cross-reference, history, unmerge and stewardship (L-DQ-164).
 
 ### L-MDM-053  Prepare an activation-readiness package per MDM domain before the first native run
 **Kind:** PROCESS · **Proven:** 2026-07-05 · **Evidence:** a 44-file readiness package built for four domains (2026-07-05)
