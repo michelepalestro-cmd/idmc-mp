@@ -4,7 +4,7 @@ A Claude Code plugin that teaches Claude to build and run Informatica Intelligen
 **without the UI**: REST and MCP calls for CDI, CAI, CDQ, CDGC, MDM, Mass Ingestion / CDC, Secure Agents, runtime
 environments, connections, mappings, taskflows, profiling, data quality, catalog and IPU metering.
 
-Inside: 2,036 field lessons (error signature -> cause -> fix), a Quick Start, slash commands, a 13-stage
+Inside: 2,039 field lessons (error signature -> cause -> fix), a Quick Start, slash commands, a 13-stage
 deploy-and-operate playbook, a Python script library with a login lockout guard, a mapping generator, three rebuildable
 demo blueprints and an endpoint-level API and MCP reference.
 
