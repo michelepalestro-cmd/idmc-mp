@@ -1,8 +1,8 @@
 # Lessons Learned
 
-> **Summary.** Every lesson this KB rests on: **2,039 lessons** in 14 domain files, each with a stable id
+> **Summary.** Every lesson this KB rests on: **2,042 lessons** in 14 domain files, each with a stable id
 > (`L-<DOM>-<NNN>`), a kind, a date, the evidence that proved it and one to six sentences of generic, placeholder-only
-> text. 1,834 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
+> text. 1,837 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
 > these ids; [Overturned Beliefs](overturned-beliefs.md) lists every belief that fell and what replaced it.
 
 Last verified: 2026-11-18, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-13 across all files).

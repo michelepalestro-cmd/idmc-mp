@@ -2,7 +2,7 @@
 
 # Field lessons: error signatures and their causes
 
-294 current KB lessons that name an error code, an HTTP status or an error message, out of 2039 lessons.
+294 current KB lessons that name an error code, an HTTP status or an error message, out of 2042 lessons.
 Each row points at its lesson id in `lessons/lessons.jsonl`, where the full text and the evidence are.
 
 **Grep this file for your error string first**; then open the lesson. The evidence is dated: re-probe in your

@@ -5,7 +5,7 @@ A Claude Code plugin that makes Claude an IDMC co-pilot: it understands Informat
 promote, tune Secure Agents, build and speed up CDI pipelines, set up CDC, publish CAI processes, add data quality,
 scan into the catalog, master data, and read IPU use, on the systems you already have.
 
-Inside: 2,039 field lessons (error signature -> cause -> fix), one skill per IDMC area, eleven slash commands, a
+Inside: 2,042 field lessons (error signature -> cause -> fix), one skill per IDMC area, twelve slash commands, a
 13-stage deploy-and-operate playbook, a Python library with a login lockout guard, a mapping generator, three
 rebuildable demo blueprints, and an endpoint-level API and MCP reference.
 
@@ -43,7 +43,7 @@ The full guide is the [Quick Start](knowledge/00-start-here/10-quick-start-your-
 | Data Integration (CDI) | `idmc-cdi` | `new-pipeline`, `optimize` | "build a mapping from `<source>` to `<target>` and schedule it nightly" |
 | Mass ingestion, CDC | `idmc-cdc` | | "set up CDC from my `<database>` to `<target>`" |
 | Application Integration (CAI) | `idmc-cai` | | "publish a process that `<does X>` when `<event>`" |
-| Data quality, profiling | `idmc-data-quality` | `add-dq` | "profile `<table>` and add DQ rules to the pipeline" |
+| Data quality, profiling, cleaning | `idmc-data-quality` | `add-dq`, `clean-data` | "find the duplicate records in `<table>` and clean them with mappings" |
 | Data governance, catalog (CDGC) | `idmc-governance` | `catalog` | "scan `<source>` into the catalog and show lineage to the report" |
 | MDM | `idmc-mdm` | | "master the customer table into golden records" |
 | CLAIRE, MCP | `idmc-claire-mcp` | | "connect to our managed MCP servers" |
@@ -71,7 +71,7 @@ One file per org instead? Point `IDMC_CREDS_FILE` at it; its values win.
 ```
 .claude-plugin/   marketplace.json (one plugin) and plugin.json
 skills/           idmc-mp (core: rules, login, routing) + one skill per IDMC area
-commands/         the eleven /idmc-mp:<name> slash commands
+commands/         the twelve /idmc-mp:<name> slash commands
 knowledge/        the knowledge base: 00-start-here ... 14-claude-working-methods, playbook/, README (map), RULES
 lessons/          lessons.jsonl (the source of truth), by-domain/ (readable), overturned-beliefs.md, case-studies/
 toolkit/          lib/ (Python library), mapgen/ (mapping generator), demos/, setup/, tools/, check_login.py

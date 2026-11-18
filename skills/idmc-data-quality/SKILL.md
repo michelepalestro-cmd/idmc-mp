@@ -25,6 +25,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - Profile a table and propose DQ rules for it.
 - Put the rules into the pipeline and score the data.
 - Publish a DQ scorecard people can read.
+- Clean a big table: standardize, find duplicates, pick survivors (`/idmc-mp:clean-data`).
 
 ## How to work
 1. Profile (doc 02 says what is headless) and read the results.
@@ -39,6 +40,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | Profiling: what is headless | `knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md` |
 | CLAIRE DQ agent | `knowledge/06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md` |
 | Scorecards | `knowledge/06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md` |
+| Clean a large table with mappings (match, survivors, twin proof) | `knowledge/06-data-quality-profiling/05-cleaning-a-large-dataset-with-mappings.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/mapgen/mapgen.py`: rule specs run inside generated mappings

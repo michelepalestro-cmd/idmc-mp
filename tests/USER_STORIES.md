@@ -29,6 +29,7 @@ Record each live run in the table at the bottom (date, org type, result, notes).
 | US-16 | architect | Claude connected to our managed MCP servers, and told when to use MCP vs REST | we use CLAIRE and MCP where they fit | skill `idmc-claire-mcp` |
 | US-17 | presales / learner | a demo blueprint rebuilt end to end | I can show the pattern on real systems | `toolkit/demos/*/BUILD.md` |
 | US-18 | any user | updates that never touch my login or my lessons | updating is always safe | `/plugin update idmc-mp@idmc-mp` |
+| US-19 | data steward | duplicates and bad values in a large table cleaned with IDMC mappings, proven before anything changes | the data gets cleaner without slowing every rebuild | `/idmc-mp:clean-data` |
 
 ## Live checklists
 
@@ -36,7 +37,7 @@ Run in a new Claude Code session after installing the plugin. "Pass" means every
 
 **US-01 install**
 - `/plugin` shows one marketplace `idmc-mp` with one plugin `idmc-mp`, and its version matches `plugin.json`.
-- Typing `/idmc-mp:` lists the eleven commands; asking "what IDMC skills do you have?" names the eleven skills.
+- Typing `/idmc-mp:` lists the twelve commands; asking "what IDMC skills do you have?" names the eleven skills.
 
 **US-02 connect**
 - First `/idmc-mp:connect` creates `~/.idmc_toolkit/IDMC_LOGIN.txt` and stops without a login attempt.
@@ -96,6 +97,11 @@ Run in a new Claude Code session after installing the plugin. "Pass" means every
 **US-17 demo**
 - `python3 verify/offline_check.py` (retail) and `python3 verify/bid_verify.py offline` pass; a live rebuild follows
   `BUILD.md` to its proof step.
+
+**US-19 clean-data**
+- Measures the slice first and reuses the org's Cleanse / dictionary / rule assets; writes only a stage table.
+- After one job: agreement with the SQL twin per record (decision, survivor), the extra finds with examples, run time.
+- Nothing applied to the real table without a yes on the merge list.
 
 **US-18 update**
 - After `/plugin update`, `~/.idmc_toolkit/` is unchanged and `/idmc-mp:connect` still logs straight in.

@@ -23,7 +23,7 @@ TESTS = []
 SKILLS = ["idmc-mp", "idmc-secure-agent", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
           "idmc-governance", "idmc-mdm", "idmc-claire-mcp", "idmc-deploy", "idmc-ipu"]
 COMMANDS = ["connect", "health-check", "new-pipeline", "fix-error", "save-lesson", "tune-agent", "optimize",
-            "promote", "add-dq", "catalog", "ipu-report"]
+            "promote", "add-dq", "catalog", "ipu-report", "clean-data"]
 DOMAINS = {"auth", "agent", "connections", "cdi", "dbmi-cdc", "cai", "dq-profiling", "cdgc", "mdm", "claire-mcp",
            "migration", "org-cleanup", "ipu-licensing", "environment-ops", "claude-method", "ui-automation"}
 LESSON_KEYS = {"id", "domain", "kind", "title", "text", "evidence", "status", "date", "supersedes_id"}
