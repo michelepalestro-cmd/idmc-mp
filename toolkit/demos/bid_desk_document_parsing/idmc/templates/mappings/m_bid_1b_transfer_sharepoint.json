@@ -1,0 +1,263 @@
+{
+ "name": "${idmc.project} - 1b Transfer to SharePoint",
+ "status": "PROVEN (2026-10-13, same shape); toolkit/mapgen build ADAPTED (compiles offline; not yet imported in this form)",
+ "description": "TRANSFER, 6 steps: the newest version of every bid document -> transferred already? (Lookup on the log) -> only new files (Filter) -> folder + file name, one folder per solicitation (Expression) -> SharePoint Online (library INSERT) + the transfer log.",
+ "task": {
+  "folder": "f1",
+  "runtime": "main",
+  "pre_processing": "${idmc.agent_python} ${idmc.agent_root}/infra/sf_files.py stage --dir ${sharepoint.download_dir_on_agent} --config ${idmc.agent_root}/config.json --env-file ${idmc.agent_root}/sf.env"
+ },
+ "notes": [
+  "SRC_BID_DOCUMENTS declares only the fields the flow uses, so CONTENT_B64 (the file bytes) is never read (the Snowflake reader selects the declared fields only, L-CDI-233); the bytes reach the agent through the task's pre-processing command, under Attachment_File_Path (L-CONN-107)"
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_BID_DOCUMENTS",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_V_DOCUMENTS",
+   "fields": [
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "CONTENT_DOCUMENT_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "TITLE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "SP_FOLDER",
+     "STRING",
+     1000,
+     "varchar"
+    ],
+    [
+     "SP_FILE_NAME",
+     "STRING",
+     500,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_TRANSFERRED_ALREADY",
+   "connected": true,
+   "conn": "WH",
+   "query": "SELECT CONTENT_VERSION_ID AS \"lt_cv\", MAX(SP_PATH) AS \"lt_path\" FROM ${snowflake.database}.${snowflake.schema}.BID_BRZ_SP_TRANSFER GROUP BY 1",
+   "cond": [
+    [
+     "lt_cv",
+     "CONTENT_VERSION_ID"
+    ]
+   ],
+   "policy": "Use Any Value",
+   "fields": [
+    [
+     "lt_cv",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "lt_path",
+     "STRING",
+     1000,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_NEW_FILES",
+   "cond": "ISNULL(lt_cv)"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SHAREPOINT_PATH",
+   "fields": [
+    {
+     "name": "x_run",
+     "type": "STRING",
+     "expr": "TO_CHAR(SESSSTARTTIME, 'YYYYMMDDHH24MISS')",
+     "prec": 20
+    },
+    {
+     "name": "x_ts",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    },
+    {
+     "name": "x_folder",
+     "type": "STRING",
+     "prec": 1000,
+     "expr": "'${sharepoint.site_relative}/${sharepoint.library}/${sharepoint.root_folder}/' || REPLACESTR(1, SP_FOLDER, '/', '-')"
+    },
+    {
+     "name": "x_path",
+     "type": "STRING",
+     "prec": 1000,
+     "expr": "'${sharepoint.site_relative}/${sharepoint.library}/${sharepoint.root_folder}/' || REPLACESTR(1, SP_FOLDER, '/', '-') || '/' || SP_FILE_NAME"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_SHAREPOINT_UPLOAD",
+   "conn": "SP",
+   "object": "${sharepoint.library_object}",
+   "op": "Insert",
+   "fields": [
+    [
+     "ServerRelativeUrl",
+     "STRING",
+     255,
+     "string",
+     0
+    ],
+    [
+     "Name",
+     "STRING",
+     255,
+     "string",
+     0
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_TRANSFER_LOG",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_BRZ_SP_TRANSFER",
+   "op": "Insert",
+   "fields": [
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "CONTENT_DOCUMENT_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "TITLE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "SP_FOLDER",
+     "STRING",
+     1000,
+     "varchar"
+    ],
+    [
+     "SP_PATH",
+     "STRING",
+     1000,
+     "varchar"
+    ],
+    [
+     "IDMC_RUN_ID",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "TRANSFERRED_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_BID_DOCUMENTS",
+   "LKP_TRANSFERRED_ALREADY"
+  ],
+  [
+   "LKP_TRANSFERRED_ALREADY",
+   "FIL_NEW_FILES"
+  ],
+  [
+   "FIL_NEW_FILES",
+   "EXP_SHAREPOINT_PATH"
+  ],
+  [
+   "EXP_SHAREPOINT_PATH",
+   "TGT_SHAREPOINT_UPLOAD",
+   {
+    "x_folder": "ServerRelativeUrl",
+    "SP_FILE_NAME": "Name"
+   }
+  ],
+  [
+   "EXP_SHAREPOINT_PATH",
+   "TGT_TRANSFER_LOG",
+   {
+    "CONTENT_VERSION_ID": "CONTENT_VERSION_ID",
+    "CONTENT_DOCUMENT_ID": "CONTENT_DOCUMENT_ID",
+    "AGENCY": "AGENCY",
+    "SOLICITATION_NO": "SOLICITATION_NO",
+    "TITLE": "TITLE",
+    "VERSION_NUMBER": "VERSION_NUMBER",
+    "x_folder": "SP_FOLDER",
+    "x_path": "SP_PATH",
+    "x_run": "IDMC_RUN_ID",
+    "x_ts": "TRANSFERRED_AT"
+   }
+  ]
+ ]
+}

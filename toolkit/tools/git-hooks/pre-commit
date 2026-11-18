@@ -1,0 +1,5 @@
+#!/bin/sh
+# Blocks a commit when toolkit/tools/secret_scan.py finds a credential, a filled-in IDMC_LOGIN.txt, an IP,
+# an email or a local path. Install once per clone:  git config core.hooksPath toolkit/tools/git-hooks
+PY=python3; command -v "$PY" >/dev/null 2>&1 || PY=python
+"$PY" toolkit/tools/secret_scan.py || { echo "pre-commit: secret_scan failed; fix the hits above (or empty IDMC_LOGIN.txt)."; exit 1; }

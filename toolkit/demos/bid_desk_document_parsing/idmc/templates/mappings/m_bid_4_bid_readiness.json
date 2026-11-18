@@ -1,0 +1,605 @@
+{
+ "name": "${idmc.project} - 4 Bid Readiness",
+ "status": "ADAPTED (decision texts and rule rewritten generically; the 9-step shape ran 2026-10-13); toolkit/mapgen build ADAPTED (compiles offline; not yet imported in this form)",
+ "description": "GOLD, 9 steps: every solicitation in play + its bid lines per status (Aggregator) + its required fields per status (Aggregator), joined (master-outer Joiners) -> one decision for the sales desk (Expression): PRICE THE BID, FIX n ITEMS, READY TO SUBMIT, SIGN THE FORM, FIX THE FORM, SUBMIT THE FORM.",
+ "task": {
+  "folder": "f4",
+  "runtime": "main"
+ },
+ "notes": [
+  "EXP_DECISION: OUTPUT ports cannot reference other OUTPUT ports: the shared counts are VARIABLE ports (L-CDI-105)",
+  "TGT_GLD_READINESS: the target columns are those of BID_GLD_READINESS in infra/snowflake/03_silver_gold.sql (keep the two in step)"
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_SOLICITATIONS",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_V_SOLICITATIONS",
+   "fields": [
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "DOC_TYPE",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "SOLICITATION_TITLE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "BID_DUE",
+     "STRING",
+     40,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_BID_LINES_SILVER",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_SLV_BID_LINES",
+   "fields": [
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "LINE_STATUS",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "DQ_PRICE_FILLED",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "DQ_PRICE_DECIMALS",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "DQ_BRAND_FILLED",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "LINE_VALUE",
+     "NUMERIC",
+     14,
+     "number",
+     2
+    ]
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_LINES",
+   "groupBy": [
+    "CONTENT_VERSION_ID"
+   ],
+   "fields": [
+    {
+     "name": "a_doc",
+     "type": "STRING",
+     "prec": 18,
+     "expr": "MAX(CONTENT_VERSION_ID)"
+    },
+    {
+     "name": "a_lines",
+     "type": "INTEGER",
+     "expr": "COUNT(LINE_STATUS)"
+    },
+    {
+     "name": "a_priced",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(DQ_PRICE_FILLED = 'VALID', 1, 0))"
+    },
+    {
+     "name": "a_to_price",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(LINE_STATUS = 'TO PRICE', 1, 0))"
+    },
+    {
+     "name": "a_to_fix",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(LINE_STATUS = 'FIX', 1, 0))"
+    },
+    {
+     "name": "a_dec3",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(DQ_PRICE_DECIMALS = 'INVALID', 1, 0))"
+    },
+    {
+     "name": "a_nobrand",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(DQ_BRAND_FILLED = 'INVALID' AND DQ_PRICE_FILLED = 'VALID', 1, 0))"
+    },
+    {
+     "name": "a_checks",
+     "type": "INTEGER",
+     "expr": "COUNT(LINE_STATUS) * 3"
+    },
+    {
+     "name": "a_passed",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(DQ_PRICE_FILLED = 'VALID', 1, 0) + IIF(DQ_PRICE_DECIMALS = 'VALID', 1, 0) + IIF(DQ_BRAND_FILLED = 'VALID', 1, 0))"
+    },
+    {
+     "name": "a_value",
+     "type": "NUMERIC",
+     "prec": 14,
+     "scale": 2,
+     "expr": "SUM(LINE_VALUE)"
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_REQUIRED_FIELDS_SILVER",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_SLV_REQUIRED_FIELDS",
+   "fields": [
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "FIELD_STATUS",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "DQ_EMAIL_FORMAT",
+     "STRING",
+     10,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_FIELDS",
+   "groupBy": [
+    "CONTENT_VERSION_ID"
+   ],
+   "fields": [
+    {
+     "name": "f_doc",
+     "type": "STRING",
+     "prec": 18,
+     "expr": "MAX(CONTENT_VERSION_ID)"
+    },
+    {
+     "name": "f_required",
+     "type": "INTEGER",
+     "expr": "COUNT(FIELD_STATUS)"
+    },
+    {
+     "name": "f_filled",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(FIELD_STATUS = 'BLANK', 0, 1))"
+    },
+    {
+     "name": "f_blank",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(FIELD_STATUS = 'BLANK', 1, 0))"
+    },
+    {
+     "name": "f_invalid",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(FIELD_STATUS = 'INVALID', 1, 0))"
+    },
+    {
+     "name": "f_checks",
+     "type": "INTEGER",
+     "expr": "COUNT(FIELD_STATUS) + SUM(IIF(ISNULL(DQ_EMAIL_FORMAT), 0, 1))"
+    },
+    {
+     "name": "f_passed",
+     "type": "INTEGER",
+     "expr": "SUM(IIF(FIELD_STATUS = 'BLANK', 0, 1)) + SUM(IIF(DQ_EMAIL_FORMAT = 'VALID', 1, 0))"
+    }
+   ]
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_LINES",
+   "cond": [
+    [
+     "a_doc",
+     "CONTENT_VERSION_ID"
+    ]
+   ],
+   "join": "MASTER_OUTER"
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_FIELDS",
+   "cond": [
+    [
+     "f_doc",
+     "CONTENT_VERSION_ID"
+    ]
+   ],
+   "join": "MASTER_OUTER"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_DECISION",
+   "fields": [
+    {
+     "name": "x_run",
+     "type": "STRING",
+     "expr": "TO_CHAR(SESSSTARTTIME, 'YYYYMMDDHH24MISS')",
+     "prec": 20
+    },
+    {
+     "name": "x_ts",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    },
+    {
+     "name": "v_open",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(a_to_fix), 0, a_to_fix) + IIF(ISNULL(f_blank), 0, f_blank) + IIF(ISNULL(f_invalid), 0, f_invalid)"
+    },
+    {
+     "name": "v_checks",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(a_checks), 0, a_checks) + IIF(ISNULL(f_checks), 0, f_checks)"
+    },
+    {
+     "name": "v_passed",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(ISNULL(a_passed), 0, a_passed) + IIF(ISNULL(f_passed), 0, f_passed)"
+    },
+    {
+     "name": "x_score",
+     "type": "NUMERIC",
+     "prec": 5,
+     "scale": 1,
+     "expr": "IIF(v_checks = 0, NULL, ROUND(100 * v_passed / v_checks, 1))"
+    },
+    {
+     "name": "x_checks",
+     "type": "INTEGER",
+     "expr": "v_checks"
+    },
+    {
+     "name": "x_passed",
+     "type": "INTEGER",
+     "expr": "v_passed"
+    },
+    {
+     "name": "x_decision",
+     "type": "STRING",
+     "prec": 40,
+     "expr": "IIF(DOC_TYPE = 'Bid packet', IIF(IIF(ISNULL(a_to_price), 0, a_to_price) > 0, 'PRICE THE BID', IIF(v_open > 0, 'FIX ' || TO_CHAR(v_open) || IIF(v_open = 1, ' ITEM', ' ITEMS'), 'READY TO SUBMIT')), IIF(IIF(ISNULL(f_blank), 0, f_blank) > 0, 'SIGN THE FORM', IIF(IIF(ISNULL(f_invalid), 0, f_invalid) > 0, 'FIX THE FORM', 'SUBMIT THE FORM')))"
+    },
+    {
+     "name": "x_detail",
+     "type": "STRING",
+     "prec": 400,
+     "expr": "IIF(DOC_TYPE = 'Bid packet', TO_CHAR(IIF(ISNULL(a_lines), 0, a_lines)) || ' bid-form lines, ' || TO_CHAR(IIF(ISNULL(a_priced), 0, a_priced)) || ' priced; ' || TO_CHAR(IIF(ISNULL(a_dec3), 0, a_dec3)) || ' price(s) with 3 decimals; ' || TO_CHAR(IIF(ISNULL(a_nobrand), 0, a_nobrand)) || ' line(s) without a brand; ' || TO_CHAR(IIF(ISNULL(f_blank), 0, f_blank)) || ' proposal field(s) blank', TO_CHAR(IIF(ISNULL(f_blank), 0, f_blank)) || ' of ' || TO_CHAR(IIF(ISNULL(f_required), 0, f_required)) || ' vendor fields blank; ' || TO_CHAR(IIF(ISNULL(f_invalid), 0, f_invalid)) || ' invalid')"
+    },
+    {
+     "name": "x_sort",
+     "type": "INTEGER",
+     "expr": "IIF(DOC_TYPE = 'Bid packet', 1, 2)"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_GLD_READINESS",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_GLD_READINESS",
+   "op": "Insert",
+   "writerAttrs": {
+    "opr": {
+     "presql": "TRUNCATE TABLE ${snowflake.database}.${snowflake.schema}.BID_GLD_READINESS"
+    },
+    "rt": {
+     "Pre SQL": "TRUNCATE TABLE ${snowflake.database}.${snowflake.schema}.BID_GLD_READINESS"
+    }
+   },
+   "fields": [
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "DOC_TYPE",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "SOLICITATION_TITLE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "BID_DUE",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "LINES",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "LINES_PRICED",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "LINES_TO_PRICE",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "LINES_TO_FIX",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "PRICES_3_DECIMALS",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "LINES_NO_BRAND",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "REQUIRED_FIELDS",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "FIELDS_FILLED",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "FIELDS_BLANK",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "FIELDS_INVALID",
+     "NUMERIC",
+     6,
+     "number",
+     0
+    ],
+    [
+     "DQ_CHECKS",
+     "NUMERIC",
+     8,
+     "number",
+     0
+    ],
+    [
+     "DQ_PASSED",
+     "NUMERIC",
+     8,
+     "number",
+     0
+    ],
+    [
+     "DQ_SCORE",
+     "NUMERIC",
+     5,
+     "number",
+     1
+    ],
+    [
+     "BID_VALUE",
+     "NUMERIC",
+     14,
+     "number",
+     2
+    ],
+    [
+     "DECISION",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "DETAIL",
+     "STRING",
+     400,
+     "varchar"
+    ],
+    [
+     "SORT_ORDER",
+     "NUMERIC",
+     4,
+     "number",
+     0
+    ],
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "IDMC_RUN_ID",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "LOADED_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_BID_LINES_SILVER",
+   "AGG_LINES"
+  ],
+  [
+   "SRC_REQUIRED_FIELDS_SILVER",
+   "AGG_FIELDS"
+  ],
+  [
+   "AGG_LINES",
+   "JNR_LINES.Master",
+   [
+    "a_doc",
+    "a_lines",
+    "a_priced",
+    "a_to_price",
+    "a_to_fix",
+    "a_dec3",
+    "a_nobrand",
+    "a_checks",
+    "a_passed",
+    "a_value"
+   ]
+  ],
+  [
+   "SRC_SOLICITATIONS",
+   "JNR_LINES.Detail"
+  ],
+  [
+   "AGG_FIELDS",
+   "JNR_FIELDS.Master",
+   [
+    "f_doc",
+    "f_required",
+    "f_filled",
+    "f_blank",
+    "f_invalid",
+    "f_checks",
+    "f_passed"
+   ]
+  ],
+  [
+   "JNR_LINES",
+   "JNR_FIELDS.Detail"
+  ],
+  [
+   "JNR_FIELDS",
+   "EXP_DECISION"
+  ],
+  [
+   "EXP_DECISION",
+   "TGT_GLD_READINESS",
+   {
+    "SOLICITATION_NO": "SOLICITATION_NO",
+    "AGENCY": "AGENCY",
+    "DOC_TYPE": "DOC_TYPE",
+    "SOLICITATION_TITLE": "SOLICITATION_TITLE",
+    "BID_DUE": "BID_DUE",
+    "a_lines": "LINES",
+    "a_priced": "LINES_PRICED",
+    "a_to_price": "LINES_TO_PRICE",
+    "a_to_fix": "LINES_TO_FIX",
+    "a_dec3": "PRICES_3_DECIMALS",
+    "a_nobrand": "LINES_NO_BRAND",
+    "f_required": "REQUIRED_FIELDS",
+    "f_filled": "FIELDS_FILLED",
+    "f_blank": "FIELDS_BLANK",
+    "f_invalid": "FIELDS_INVALID",
+    "x_checks": "DQ_CHECKS",
+    "x_passed": "DQ_PASSED",
+    "x_score": "DQ_SCORE",
+    "a_value": "BID_VALUE",
+    "x_decision": "DECISION",
+    "x_detail": "DETAIL",
+    "x_sort": "SORT_ORDER",
+    "CONTENT_VERSION_ID": "CONTENT_VERSION_ID",
+    "VERSION_NUMBER": "VERSION_NUMBER",
+    "x_run": "IDMC_RUN_ID",
+    "x_ts": "LOADED_AT"
+   }
+  ]
+ ]
+}

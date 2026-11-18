@@ -4,7 +4,7 @@ description: Connect Claude to your IDMC org (login file outside the plugin) and
 
 Use the idmc-mp skill. On Windows, use `python` (or `py`) where these steps say `python3`. Goal: the user is connected to their IDMC org and the org is proven.
 
-1. Run `python3 "${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/check_login.py"` once.
+1. Run `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` once.
 2. If it just created `~/.idmc_toolkit/IDMC_LOGIN.txt`, tell the user to fill in `IDMC_USER` and `IDMC_PASS` of a
    **native** IDMC user (SSO-only users cannot log in over REST) and `IDMC_LOGIN_HOST` (the browser address after they
    sign in), then stop. If they give you the values, write them only to that file and confirm with key names and a

@@ -1,0 +1,102 @@
+{
+  "_readme": "Copy to config.json (same folder) and fill in. No secrets here: passwords come from the toolkit .env (see ENV_KEYS.md). Ids the build creates are written to state/ids.json.",
+
+  "org": {
+    "org_id_v3": "<22-char v3 org id of the org you build into; also pass it as --expect-org>",
+    "org_name": "<org name as shown in Administrator (only written into the package metadata)>"
+  },
+
+  "agent": {
+    "name": "<Secure Agent name as shown in Administrator > Runtime Environments (CAI 'Run On' target)>",
+    "runtime_environment": "<runtime environment (agent group) name, for the CDI tasks and connections>",
+    "runtime_environment_id": "<v2 id of that runtime environment, e.g. from: python "toolkit/lib/idmc_session.py" get v2 /api/v2/runtimeEnvironment>",
+    "process_engine_url": "http://127.0.0.1:7080/process-engine/public/rt"
+  },
+
+  "project": {
+    "name": "Message Bus Replacement",
+    "description": "Legacy message bus (JMS topics, subscriber adapters, hospital retry) replaced by Kafka + CAI. Synthetic data only.",
+    "folders": {
+      "connections": "1 Connections",
+      "bridge": "2 Bridge JMS to Kafka",
+      "subscribers": "3 Subscribers",
+      "errors": "4 Error Queue and Replay",
+      "batch": "5 Nightly Batch"
+    },
+    "tag": "mbr"
+  },
+
+  "kafka": {
+    "host": "127.0.0.1",
+    "port": "9092",
+    "additional_brokers": "",
+    "use_ssl": false,
+    "use_sasl": false,
+    "topics": {
+      "item": {"name": "mbr.item", "partitions": 3},
+      "po":   {"name": "mbr.po",   "partitions": 3},
+      "perf": {"name": "mbr.perf", "partitions": 6},
+      "dlq":  {"name": "mbr.dlq",  "partitions": 3}
+    },
+    "groups": {
+      "item": "mbr-cai-item",
+      "po": "mbr-cai-po",
+      "store_price": "mbr-cai-store-price",
+      "perf": "mbr-cai-perf"
+    },
+    "consumer_options": "autoOffsetReset=earliest&consumersCount=3&maxPollRecords=5&maxPollIntervalMs=600000&autoCommitIntervalMs=1000",
+    "perf_consumer_options": "autoOffsetReset=earliest&consumersCount=6&maxPollRecords=50&autoCommitIntervalMs=1000",
+    "producer_options": "requestRequiredAcks=all&enableIdempotence=true&retries=10&maxInFlightRequest=5&maxRequestSize=5242880",
+    "container": "mbr-kafka"
+  },
+
+  "artemis": {
+    "host": "127.0.0.1",
+    "amqp_port": "5672",
+    "stomp_port": "61616",
+    "queues": {"items": "mbr.items.legacy", "pos": "mbr.pos.legacy", "dlq": "mbr.dlq.legacy"},
+    "query_parameters": "jms.validatePropertyNames=false"
+  },
+
+  "ledger_api": {
+    "_note": "PostgREST over the Postgres ops ledger + stand-in targets (infra/). The agent calls it on the host loopback.",
+    "base_url": "http://127.0.0.1:18080",
+    "request_timeout_s": 10
+  },
+
+  "retry": {
+    "_note": "Defaults; the live values are read by CAI from the ledger (table mbr.config) on every message.",
+    "retry_max": 5,
+    "backoff_base_s": 2,
+    "backoff_mult": 2,
+    "backoff_max_s": 60,
+    "hospital_sweep_every_s": 60,
+    "hospital_max_replays": 3
+  },
+
+  "validation": {
+    "departments": ["101", "110", "120", "130", "140", "150", "160"]
+  },
+
+  "cdi_batch": {
+    "postgres_connection": "mbr_ledger_pg",
+    "oracle_connection": "mbr_oracle",
+    "postgres": {"host": "127.0.0.1", "port": "15432", "database": "mbr"},
+    "oracle": {"host": "127.0.0.1", "port": 1521, "service": "FREEPDB1", "schema": "MBR_BATCH"},
+    "template_task_id": "<v2 id of ANY mapping task built on the Add-On Bundle template dsst__copy_data_new_tgt (see BUILD.md step 9)>",
+    "tasks": [
+      {"name": "mt_mbr_items_to_oracle",     "query": "templates/batch_items.sql",     "target": "MBR_ITEMS"},
+      {"name": "mt_mbr_po_header_to_oracle", "query": "templates/batch_po_header.sql", "target": "MBR_PO_HEADER"},
+      {"name": "mt_mbr_po_line_to_oracle",   "query": "templates/batch_po_line.sql",   "target": "MBR_PO_LINE"}
+    ],
+    "taskflow": "tf_mbr_nightly_batch",
+    "schedule": {"name": "sch_mbr_nightly_0230", "start_local": "02:30", "timezone_note": "v2 schedule times are pod-local; see core idmc_taskflow_schedule.py"}
+  },
+
+  "verify": {
+    "large_po_lines": 19500,
+    "load_rate_per_s": 40,
+    "load_seconds": 30,
+    "wait_timeout_s": 120
+  }
+}

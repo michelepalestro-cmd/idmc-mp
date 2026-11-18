@@ -3,9 +3,9 @@ description: Save something you learned about IDMC as a reusable lesson on your 
 argument-hint: "<what you learned>"
 ---
 
-Use the idmc-mp skill. Save this as a lesson: $ARGUMENTS
+Use the idmc-mp skill. On Windows, use `python` (or `py`) where these steps say `python3`. Save this as a lesson: $ARGUMENTS
 
-1. Check it is new: grep `${CLAUDE_PLUGIN_ROOT}/skills/idmc-mp/kb/13 - Lessons Learned/lessons.jsonl` and `~/.idmc_toolkit/lessons-local.jsonl`.
+1. Check it is new: grep `${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl` and `~/.idmc_toolkit/lessons-local.jsonl`.
    If it repeats a lesson, say which one and stop. If it adds to one, note `Refines <id>`.
 2. Write it in generic form: no org ids, hosts, pod names, people, customer names, emails or secrets (use `<org>`,
    `<pod>`, `<host>`, `<connection>`). Include the exact verb, path, setting or error code, the cause, the fix and how

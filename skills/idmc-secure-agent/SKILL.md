@@ -1,0 +1,58 @@
+---
+name: idmc-secure-agent
+description: Use for Informatica IDMC Secure Agent and connection work: install or register an agent headless, run it as a service, size and tune it (memory, heap, DTM pool, two agents on a host), pick the services and connectors a runtime environment needs, create/test/update connections, and fix connection or agent errors (the four gates).
+---
+
+# IDMC co-pilot: Secure Agent, runtime environments and connections
+
+Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+(two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
+
+## Ground rules (from the core `idmc-mp` skill; they always apply)
+- **Lessons first.** Before any call or design choice, search the lessons:
+  `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "agent"`, `"domain": "connections"`),
+  then `lessons/by-domain/02-secure-agent-connections.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+- **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
+  lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
+- **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
+- **Never say "not possible"** before the workaround ladder in
+  `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
+- **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
+- **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
+  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+
+## What users ask for
+- Stand up a Secure Agent on a VM and register it to the right org, headless.
+- Make it survive reboots and restarts (service unit, orphan reaping, port guards).
+- Tune it: memory, heap, disk, DTM pool and concurrency, or split work across two agents.
+- Turn on only the services and connectors the pipelines need.
+- Create, test and fix connections to the user's own systems.
+
+## How to work
+1. Prove the org; list runtime environments and agents read-only (`/idmc-mp:health-check` does this).
+2. Install/register: installer URL and org-scoped token from the v2 route, then the host steps in doc 01 section 3.
+3. Run as a service (doc 01 section 4); check the post-boot checklist after any resize or reboot.
+4. Select services and connectors with `toolkit/lib/idmc_runtime_selections.py` (doc 02): only what is needed.
+5. Connections: create, test, update per doc 03 and the connector notes in doc 04; test every one.
+6. Tuning: measure first (DTM pool, memory, heap per doc 01 sections 5-6 and CDI doc 07 section 6.1), change one thing, re-measure.
+7. Errors: walk the four gates in order (doc 05): host, engine, adapter, driver.
+
+## Read (in this order when unsure)
+| Need | File |
+|---|---|
+| Install, service, tuning, two agents, memory | `knowledge/02-secure-agent-connections/01-secure-agent-install-run-tune.md` |
+| Services and connectors on a runtime environment | `knowledge/02-secure-agent-connections/02-runtime-environments-services-connectors.md` |
+| Connections: create, test, update, delete | `knowledge/02-secure-agent-connections/03-connections-create-test-update-delete.md` |
+| Per-connector settings that work | `knowledge/02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md` |
+| Troubleshooting: the four gates | `knowledge/02-secure-agent-connections/05-troubleshooting-the-four-gates.md` |
+| Zero to a running job (HOST -> ENGINE -> ADAPTER -> DRIVER) | `knowledge/playbook/03-bootstrap.md` |
+| Concurrency and the DTM pool | `knowledge/03-cdi-data-integration/07-performance-concurrency-job-caps.md` |
+
+## Tools (`--help` on each)
+- `toolkit/lib/idmc_session.py`: org-aware session: whoami, get/post on any plane
+- `toolkit/lib/idmc_runtime_selections.py`: services and connectors of a runtime environment
+- `toolkit/lib/idmc_probe.py`: route discovery that cannot fool itself (bogus-twin check)
+
+## When you learn something
+Append a generic lesson (no org ids, hosts, people or secrets; same shape as `lessons/lessons.jsonl`) to
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
