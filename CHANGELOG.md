@@ -3,9 +3,9 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
-## 1.5.0 (2026-11-19): 188 lessons from public IDMC code
+## 1.5.0 (2026-11-19): 186 lessons from public IDMC code
 
-- **188 new lessons** (2,236 in total) mined from about 40 public IDMC repositories and the vendor's own Claude skill,
+- **186 new lessons** (2,234 in total) mined from about 40 public IDMC repositories and the vendor's own Claude skill,
   each labelled Reported or Documented with a confidence note; nothing was run against an org.
 - **New:** [Community code index](knowledge/12-reference-library/community-code-index.md): which public file each
   lesson came from. The ecosystem doc lists the newly found repositories, what to avoid, and the patterns worth copying.

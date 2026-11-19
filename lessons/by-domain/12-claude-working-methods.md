@@ -1,5 +1,5 @@
 # Lessons: Claude Working Methods
-147 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+146 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [How Claude reaches and drives IDMC](../../knowledge/14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) · [Evidence discipline](../../knowledge/14-claude-working-methods/02-evidence-discipline.md) · [Multi-agent coordination](../../knowledge/14-claude-working-methods/03-multi-agent-coordination.md) · [Secrets hygiene](../../knowledge/14-claude-working-methods/06-secrets-hygiene.md) · [Environment & Ops lessons](13-environment-ops.md) · [UI Automation lessons](14-ui-automation.md)
 
@@ -572,10 +572,6 @@ Credential or auth changes are read from a plan file on the server (`{connection
 ### L-METHOD-164  Do not front a write-capable IDMC MCP with an unattended claude -p --dangerously-skip-permissions bot
 **Kind:** SECURITY · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
 A Slack Socket Mode bot passed every channel message to `claude -p <msg> --mcp-config <cfg> --dangerously-skip-permissions`. The MCP config exposes create, update and delete for CDGC assets, catalog sources and marketplace objects. Any channel member, or text injected into a catalog description the model reads, can then trigger writes with no approval. If a chat front end is needed, give it a read-only tool set or keep a confirm gate that a human answers.
-
-### L-METHOD-165  Pin a server to one project: allowlist by v3 location and return the API chain it ran
-**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
-A server fixed to one project through an env variable lists `type=='TASKFLOW' and location=='<project>'` through v3 objects. It refuses any taskflow outside that set, and filters tf/status run listings to those asset names. Every tool returns the list of REST calls it executed (`hidden_api_chain_executed`) for auditability. The repo is verified only against its own mock. Its run-listing form `GET /active-bpel/services/tf/status?startTime=..&endTime=..&rowLimit=50&runStatus=..` is unproven.
 
 ### L-METHOD-166  Catalog discovery round model: parallel searches, then details with a fast or slow path
 **Kind:** PATTERN · **Documented:** 2026-11-19 · **Evidence:** The vendor's own Claude plugin skill, read 2026-11-19; not probed here

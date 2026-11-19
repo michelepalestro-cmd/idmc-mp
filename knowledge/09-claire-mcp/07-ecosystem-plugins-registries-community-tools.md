@@ -31,7 +31,7 @@ another implementation to compare a route against.
 > plugin (one skill, two connectors; L-MCP-123, L-MCP-135) and partner listings such as Microsoft's MCP catalog
 > (L-MCP-136). The community side is thin: most repositories have 0-5 stars. One CLI is maintained and safe to
 > recommend; a few MCP servers and skills are useful to read but not to run as-is (L-MCP-137). Their code was mined for
-> 188 more lessons (Reported, not probed here); the [community code index](../12-reference-library/community-code-index.md)
+> 186 more lessons (Reported, not probed here); the [community code index](../12-reference-library/community-code-index.md)
 > maps each one to the file it came from.
 
 ---
@@ -140,20 +140,20 @@ Verdicts: **Recommend** = maintained, licensed, credential-safe; **Read** = usef
 |---|---|---|---|---|
 | `jbrazda/ai-agent-skills` | Apache-2.0 | 2026-10-13 | `iics-doc-gen` skill: Markdown documentation from exported CAI process and taskflow XML; manifests for Claude Code, Cursor and Copilot; offline, no credentials | **Recommend** for CAI documentation (compare the managed `idmcassetdocumentation` server, L-MCP-132) |
 | `jklim-insfa/idmc-cdgc-mcp-server` | none | 2026-09-24 | 18 CDGC tools over `identity-service` login and `/data360/*` routes | Read (no license) |
-| `haystraw/Informatica_CDGC_MCP_Server` | none | 2026-06-24 | CDGC, Data Marketplace and `ccgf-*` routes; a container mode with encrypted per-user token headers | Read: a pattern for multi-user credential isolation (no license) |
 | `jpeckjr/informatica-mcp` | none | 2026-10-13 | 42 tools over v2 jobs, mappings, connections, agents and CAI taskflow run/status/terminate, plus a Slack monitor | Read only: its README says the credential points at a **production** org |
-| `sppavankumar/idmc-jobs-mcp-server`, `andregit2026/MCP_IDMC` and copies | Apache-2.0 / none | 2026-03 to 2026-04 | a handful of job tools over the v2 login | Skip (toy; credentials in `.env` or the MCP config) |
-| `fortunato-rodrigo/claude-code-powerbi-skills` | MIT | 2026-10-30 | Power BI skills; one extracts IICS mapping lineage from exports | Skip: it calls a non-existent export route and tells users to copy the browser's session cookie into a config file |
 | `woppedisano323/Informatica-MDM-kit` | none | 2026-11-11 | Claude Code commands that coach an MDM SaaS build: setup, profile, deploy, operate; the irreversible steps | Read (no license) |
 | `woppedisano323/Informatica-CDGC-kit` | none | 2026-10-10 | Claude Code commands plus scripts that generate CDGC bulk-import workbooks and import them over REST | Read (no license; a few internal contradictions, flagged in the lessons) |
 | `wil-schneider/CDQ-DQRO-Score-Upload` | none | 2026-06-16 | creates catalog DQ rule occurrences and uploads external scores | Read (no license) |
-| `haystraw/Informatica_Custom_Lineage_Creator`, `Informatica_Simple_Classification_Creator`, `Informatica_Populate_Policies` | none | 2025-2026 | custom lineage through a Custom catalog source; custom classifications and lookup tables; policy propagation | Read only: two of them **send a usage report** (hostname and login details) to a personal endpoint on every run (L-METHOD-170; see §5) |
-| `haystraw/Informatica_CDGC_MCP_Server` Slack bot | none | | pipes any channel message into an unattended Claude run with permission checks skipped and catalog write tools | **Avoid** that part (see §5) |
 | `bmantha/data-classification-policy`, `bmantha/dq-gate-policy` | none | 2026-11-17 | API-gateway policies that block agent (MCP, A2A) calls by CDGC classification or DQ score | Read: a pattern for governing agents with the catalog |
 | `datahub-project/datahub` (Informatica source) | Apache-2.0 | 2026-11-18 | an open-source catalog's IDMC ingestion: v2 lists, v3 export lineage, session checks | **Recommend** as a reference implementation |
 | `rashmiprabhu8192/cdgc_metadata_propagation`, `monte-carlo-data/apollo-agent`, `IBM/data-intelligence-sdk` | none / source-available / unknown | 2026 | metadata propagation over the audit API; IdP-JWT login; data contracts from CDGC metadata | Read |
 
 No Informatica-specific Cursor rules or Copilot instruction files were found.
+
+Repositories with security problems are deliberately not named or linked in this KB: scripts that report the user's
+hostname and login details to a personal server, a chat bot that runs Claude with permission checks skipped and catalog
+write tools, an extractor that has users copy their browser session cookie into a file, and servers that take the IDMC
+password as a tool argument or store it in a config file. §5 says how to spot each of these in any tool you are given.
 
 ### 4.3 CI/CD, packaging and reference assets
 

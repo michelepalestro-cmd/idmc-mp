@@ -24,12 +24,12 @@ belief.
 
 ---
 
-## 2026-11-19 (later): 188 lessons mined from public IDMC code
+## 2026-11-19 (later): 186 lessons mined from public IDMC code
 
 - **About 40 public repositories read** (no code run): CLIs, SDKs, community MCP servers, CAI and CI/CD repos, the
   vendor's own Claude skill, MDM and CDGC kits, and an open-source catalog's IDMC connector. Each candidate was checked
   against the existing lessons; duplicates were merged and unverified claims left out.
-- **188 new lessons** (2,236 in total), every one labelled **Reported** (third-party code, not probed here) or
+- **186 new lessons** (2,234 in total), every one labelled **Reported** (third-party code, not probed here) or
   **Documented** (the vendor skill), with a confidence note. Largest gains: CDGC (search behaviour, bulk import and
   export, audit events, DQ score upload, custom lineage and classifications), CAI (taskflow run, resume and terminate,
   package internals, fault-alert handlers, deployment settings), migration and source control, Secure Agent service and
