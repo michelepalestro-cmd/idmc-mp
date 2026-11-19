@@ -11,6 +11,7 @@ already does the thing I am about to build?
   Claude skill). Probe a route on your org before relying on it, then record the result as a lesson (L-MCP-137).
 - Read, do not copy: most of these repositories carry no license, and one is GPL. Check the verdicts in
   [Ecosystem](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md) §4 before using any code.
+- Repositories with security problems are not linked; their plain IDMC API facts are kept as lessons.
 - Never run community code against a production org first (L-MCP-124, L-MCP-137).
 
 **Related:** [Ecosystem: plugins, registries, community tools](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md) ·
@@ -18,8 +19,8 @@ already does the thing I am about to build?
 
 **Last verified:** 2026-11-19 (each repository read at its default branch that day; line numbers can drift)
 
-> **Summary.** 186 lessons mined from about 40 public repositories on 2026-11-19, grouped by area. Links point at each
-> repository's default branch, so a file may have moved since.
+> **Summary.** 292 lessons mined from about 50 public repositories on 2026-11-19 (two passes), grouped by area. Links
+> point at each repository's default branch, so a file may have moved since.
 
 ---
 
@@ -49,6 +50,24 @@ Lessons file: [01-access-auth](../../lessons/by-domain/01-access-auth.md)
 | L-AUTH-116 | An org guard after every login accepts both org-id forms and fails closed | [jpeckjr/informatica-mcp `idmc_client.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/idmc_client.py#L208-L252) | high |
 | L-AUTH-117 | Check a v2 session before reuse: POST /api/v2/user/validSessionId | [datahub-project/datahub `client.py`](https://github.com/datahub-project/datahub/blob/HEAD/metadata-ingestion/src/datahub/ingestion/source/informatica/client.py#L155-L235) | high |
 | L-AUTH-118 | Log in to IDMC with an identity-provider JWT: POST /ma/api/v2/user/loginOAuth | [monte-carlo-data/apollo-agent `resolve_informatica_session.py`](https://github.com/monte-carlo-data/apollo-agent/blob/HEAD/apollo/integrations/ctp/transforms/resolve_informatica_session.py#L1-L80) | medium |
+| L-AUTH-119 | Role assignment to users matches the role's displayName, not roleName; SAML-mapped orgs reject the change | [jbrazda/iics-cli `2026-09-30-user-update-v2-403.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/issues/completed/2026-09-30-user-update-v2-403.md#L91-L102) | high |
+| L-AUTH-120 | v3 user groups: create once, then change only membership; name and description are immutable, no GET or PUT by id | [jbrazda/iics-cli `CR-0034-group-command-interactive-bulk.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0034-group-command-interactive-bulk.md#L8-L32) | high |
+| L-AUTH-121 | A role cannot be left without privileges: V3API_IDSError_088 | [jbrazda/iics-cli `CR-0040-role-interactive-privilege-editor.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0040-role-interactive-privilege-editor.md#L1-L40) | medium |
+| L-AUTH-122 | v2 audit log pages with batchSize and batchId, newest batch first; default is the latest 200 entries | [jbrazda/iics-cli `CR-0015-auditlog-command.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0015-auditlog-command.md#L19-L90) | medium |
+| L-AUTH-123 | End a v3 REST session with POST /saas/public/core/v3/logout; the vendor connector sends the wrong header | [InformaticaCloudApplicationIntegration/Service-Connectors `Informatica`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Informatica)<br>[jbrazda/iics-quickstart-bundle `IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/ServiceConnectors/IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml#L590-L620) | medium |
+| L-AUTH-124 | Treat 403 with error.code AUTH_01 as an expired session, like 401 | [datahub-project/datahub `client.py`](https://github.com/datahub-project/datahub/blob/HEAD/metadata-ingestion/src/datahub/ingestion/source/informatica/client.py#L238-L290) | medium |
+| L-AUTH-125 | JWT-authentication orgs return a JWT as the session id: allow up to 16,000 characters and re-auth before expiry | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-126 | validSessionId: timeUntilExpire drops to 0 under one minute; re-login at 0, not at isValidToken=false | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-127 | REST rules: no session header on login/register, @type only on v2 JSON, POST is full-replace unless partial mode | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-128 | SCIM 2.0: manage SCIM tokens on v3 and read SCIM-managed users and groups on /scim-service | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-AUTH-129 | SAML mapping bodies use plural arrays samlGroupNames / samlRoleNames; role mappings have their own add/remove routes | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-AUTH-130 | Register an OIDC identity provider before loginOAuth; the JWT must carry iss, sub, aud, exp, nbf, iat, jti and is single-use | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-AUTH-131 | loginSaml and loginSf: v2 logins with an IdP SAML assertion or a Salesforce session | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-AUTH-132 | logoutall ends every v2 REST session in the org, not just yours | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-133 | TrustedIP PUT overwrites all ranges; enabling it from automation can lock out your own callers | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-134 | Create automation users as identityType 2 (non-human); users list caps at limit 200 and is dynamically rate limited | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-135 | securityLog defaults to the last 24 h / 200 rows; actor, actionCategory, objectName and skip need an entryTime range; event codes to alert on | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-AUTH-136 | The v2 login response carries user PII (emails, security question, roles, group creators): allow-list fields, never log it raw | [auth/login.py `1-120`](https://github.com/auth/login.py/blob/HEAD/1-120) | high |
 
 ## Secure Agent
 
@@ -70,6 +89,11 @@ Lessons file: [02-secure-agent-connections](../../lessons/by-domain/02-secure-ag
 | L-AGENT-135 | v2 lookups by name: runtimeEnvironment/name/<n>, agent/name/<n>, org/name/<n>; agent/details?onlyStatus=true; server/serverTime | [BrentGruber/pydmc `v2.py`](https://github.com/BrentGruber/pydmc/blob/HEAD/pydmc/v2.py#L143-L251)<br>[jonbowring/idmc-cli `api.py`](https://github.com/jonbowring/idmc-cli/blob/HEAD/src/idmc_cli/api.py#L5271-L5290) | low |
 | L-AGENT-136 | Agent health monitor in CAI: count RUNNING engines per agent against an expected list | [jbrazda/icai-fault-alert-service `IICS-REST-API-V2.AI_SERVICE_CONNECTOR.xml`](https://github.com/jbrazda/icai-fault-alert-service/blob/HEAD/src/ipd/Explore/Tools/ServiceConnectors/IICS-REST-API-V2.AI_SERVICE_CONNECTOR.xml#L95-L136)<br>[jbrazda/icai-fault-alert-service `SecureAgentMonitor.PROCESS.xml`](https://github.com/jbrazda/icai-fault-alert-service/blob/HEAD/src/ipd/Explore/Alerting/Processes/SecureAgentMonitor.PROCESS.xml#L120-L135) | high |
 | L-AGENT-137 | Agent-group CAI failover: per-node engine database, stateless round-robin, republish after moving DR agents | [jbrazda/Informatica `disaster_recovery.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/disaster_recovery.md#L150-L225) | medium |
+| L-AGENT-138 | Agent details: onlyStatus=false adds agentConfigs and per-engine agentEngineConfigs; a group id answers 403 | [jbrazda/iics-cli `CR-0029-agent-api-coverage.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0029-agent-api-coverage.md#L9-L60) | high |
+| L-AGENT-139 | Process Server can take up to 20 minutes to reach subState 0; the details 'customized' flag marks custom rows only | [jbrazda/iics-cli `CHANGELOG.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/CHANGELOG.md#L36-L58) | medium |
+| L-AGENT-140 | Secure Agent installer: custom directory with -DUSER_INSTALL_DIR, and the consoleAgentManager maintenance operations | [jbrazda/Informatica `ic_sa_installation.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/ic_sa_installation.md#L23-L200) | medium |
+| L-AGENT-141 | Elastic runtime environment config is public v3: ClusterConfig and RuntimeEnvironment/<rteId>/Cluster | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-AGENT-142 | Elastic RTE images and container-image tokens need the k8s privileges; AIS_007, AIS_013, AIS_014 | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 
 ## Connections
 
@@ -84,6 +108,10 @@ Lessons file: [02-secure-agent-connections](../../lessons/by-domain/02-secure-ag
 | L-CONN-146 | Snowflake KeyPair mode hides the connector's role field: carry role=<ROLE> in connParams.additionalparam | [jpeckjr/informatica-mcp `mcp_server.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/mcp_server.py#L455-L551) | medium |
 | L-CONN-147 | Connection data preview and field routes; database objects need DB/SCHEMA/TABLE | [jpeckjr/informatica-mcp `idmc_client.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/idmc_client.py#L622-L634) | high |
 | L-CONN-148 | Built-in CAI connector descriptors (uuid, plugin, type) for hand-built AI_CONNECTION files | [jbrazda/iics-quickstart-bundle `*.AI_CONNECTION.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/Connections/*.AI_CONNECTION.xml)<br>[jbrazda/iics-reporting-tools `ipd-metadata.xqm`](https://github.com/jbrazda/iics-reporting-tools/blob/HEAD/src/basex/webapp/iics/modules/ipd-metadata.xqm#L250-L283) | medium |
+| L-CONN-149 | v2 list routes ignore filter parameters: /api/v2/connection drops type and name, /api/v2/agent drops limit and skip | [jbrazda/iics-cli `CR-0047-connection-connector-project-folder-patch.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0047-connection-connector-project-folder-patch.md#L55-L58) | high |
+| L-CONN-150 | SAP BAPI/RFC libraries on a Secure Agent: process-engine/ext for CAI, deploy_to_main rdtm folders plus JAVA_LIBS for CDI | [jbrazda/Informatica `ICRT_org_configuration.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/ICRT_org_configuration.md#L137-L180) | medium |
+| L-CONN-151 | Repoint assets from an old connector version to the new one: POST /api/v2/connectionMigration/migrate | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CONN-152 | Read or set the schema of Avro/Parquet/ORC/JSON objects on a v2 connection: POST .../fields?objectName= with a dataFormat body | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 
 ## Data Integration (CDI)
 
@@ -102,6 +130,20 @@ Lessons file: [03-data-integration-cdi](../../lessons/by-domain/03-data-integrat
 | L-CDI-314 | Lineage from mapping exports: resolve the IMF by templateId, never by file size or name prefixes | [jbrazda/CI-CD-Demo `mappingTemplate.json`](https://github.com/jbrazda/CI-CD-Demo/blob/HEAD/src/iics/Explore/CI-CD-Demo/DI/m_SFDC_FF_Accounts.DTEMPLATE.zip.nzip/mappingTemplate.json#L1) | medium |
 | L-CDI-315 | v2 mapping and connection lists are unpaginated: limit, skip and maxRecordsCount are ignored | [datahub-project/datahub `informatica_post.md`](https://github.com/datahub-project/datahub/blob/HEAD/metadata-ingestion/docs/sources/informatica/informatica_post.md#L30-L60) | high |
 | L-CDI-316 | Table lineage from a v3 mapping export: bin/@3.bin JSON transformations and saas:@ connection refs | [datahub-project/datahub `client.py`](https://github.com/datahub-project/datahub/blob/HEAD/metadata-ingestion/src/datahub/ingestion/source/informatica/client.py#L613-L900) | medium |
+| L-CDI-317 | Asset name length limits by type (field guide): CDI 100, mappings 200, CAI connectors and connections 128, processes 80 | [jbrazda/Informatica `naming_conventions.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/naming_conventions.md#L150-L360)<br>[jbrazda/iics-cli `CR-0049-agent-level-service-properties.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0049-agent-level-service-properties.md#L224) | low |
+| L-CDI-318 | v3 MTT object rows lack the mapping reference: enrich with GET /api/v2/mttask/name/<name>; taskflow by-name reads fail on modern pods | [datahub-project/datahub `client.py`](https://github.com/datahub-project/datahub/blob/HEAD/metadata-ingestion/src/datahub/ingestion/source/informatica/client.py#L450-L540) | medium |
+| L-CDI-319 | Code task API: submit a Scala Spark JAR to an advanced cluster via /disnext/api/v1/CodeTask | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CDI-320 | Poll a code task job: CodeTask/JobStatus, then logservice logs and callback | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CDI-321 | Update-Mode: PARTIAL works on six v2 resources; collection entries need their key fields | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CDI-322 | Documented job-history read: cdiinsights-service JobLogEntries (33 days, 500 rows per filter) | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CDI-323 | Job callbackURL: at-least-once delivery, 30 s timeout, retries for 30 minutes; make the receiver idempotent | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CDI-324 | Hierarchical mapper (h2h) API: create, run synchronously with a buffer or file, read metadata | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CDI-325 | Render a mapping diagram: GET /api/v2/mapping/<id>/image?deployed=true/false | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CDI-326 | Run industry data services (HL7, EDI parsers etc.) via /DSRepo/rest/api/v1/services/run/<serviceName> | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CDI-327 | Run, monitor and stop a dynamic mapping task on /batch-mapping/api/v1/Job, never v2 job/activityLog | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CDI-328 | v2 detail by federated id works only for mapping tasks: mttask/frs/<id>; dsstask/<frsId> and workflow/<frsId> give 500 | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CDI-329 | mttask lastRunTime is epoch milliseconds while createTime/updateTime are ISO strings | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CDI-330 | Read transformation order and connection parameterization from mttask parameters[], not the mapping | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 
 ## Mass ingestion & CDC
 
@@ -111,6 +153,11 @@ Lessons file: [04-mass-ingestion-cdc](../../lessons/by-domain/04-mass-ingestion-
 |---|---|---|---|
 | L-DBMI-065 | DBMI job status: a GET with a JSON body {jobId} on the -ing host; the fallback is /dbmi/api/v1/job/<id>/metrics/v2 | [jpeckjr/informatica-mcp `idmc_client.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/idmc_client.py#L748-L770) | high |
 | L-DBMI-066 | DBMI per-table metrics: POST /dbmi/public/api/v2/job/metrics; stateFilter must be an array | [jpeckjr/informatica-mcp `idmc_client.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/idmc_client.py#L772-L810) | high |
+| L-DBMI-067 | Ad-hoc managed file transfer without a task: mftsaas sendfiles / receivefiles on an Advanced FTP/FTPS/SFTP or AS2 connection | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-DBMI-068 | File listener REST lives on mftsaas: CRUD, start/stop, status and activityLog | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-DBMI-069 | Resolve DBMI numeric ids by name: task/fetchId (task id, also a paged task list) and task/fetch/<taskId>/job (job id) | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-DBMI-070 | File ingestion history and per-file events: mftsaas mitasks/activityLog v1 (taskId or runId) and v2 (all jobs, file events) | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-DBMI-071 | Streaming ingestion (SIS) REST on the -ing host: sisvc CreateEntity/CopyEntities, OData.SI.Deploy/Start/Stop/Undeploy, monitor and MIJobs | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 
 ## Application Integration (CAI)
 
@@ -143,6 +190,32 @@ Lessons file: [05-application-integration-cai](../../lessons/by-domain/05-applic
 | L-CAI-186 | Process-object descriptions are single-line: import drops text after a line break | [jbrazda/icai-migration-tools `update_description_version.xsl`](https://github.com/jbrazda/icai-migration-tools/blob/HEAD/xsl/update_description_version.xsl#L30-L40) | low |
 | L-CAI-187 | Do not derive a CAI asset path from rep:Name: guide names differ from file names | [jbrazda/icai-fault-alert-service `Secure`](https://github.com/jbrazda/icai-fault-alert-service/blob/HEAD/src/ipd/Explore/Alerting/Guides/Secure) | medium |
 | L-CAI-188 | Recommended CAI engine monitor thresholds on Secure Agents | [jbrazda/Informatica `ICRT_org_configuration.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/ICRT_org_configuration.md#L281-L326) | low |
+| L-CAI-189 | Process Server limits you can raise per agent: 5 MB message size, heap, plan caches, Shell and Email services off by default | [jbrazda/Informatica `ICRT_org_configuration.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/ICRT_org_configuration.md#L413-L425) | medium |
+| L-CAI-190 | Upload an IDMC import package from a CAI service connector: one attachment input named 'package', multipart | [InformaticaCloudApplicationIntegration/Service-Connectors `Informatica`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Informatica)<br>[InformaticaCloudApplicationIntegration/Service-Connectors `...IICSServiceConnectorPackage1018.zip`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/...IICSServiceConnectorPackage1018.zip)<br>[jbrazda/iics-quickstart-bundle `IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/ServiceConnectors/IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml#L300-L352) | medium |
+| L-CAI-191 | Service-connector action inheritance: isAbstract base actions, inherits=, and inheritanceMetadata inherit/extend/overwrite | [InformaticaCloudApplicationIntegration/Service-Connectors `Microsoft`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Microsoft)<br>[InformaticaCloudApplicationIntegration/Service-Connectors `CallidusCloud`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/CallidusCloud)<br>[jbrazda/iics-quickstart-bundle `IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/ServiceConnectors/IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml) | high |
+| L-CAI-192 | Compute values inside a connector call: otherParams with nogen="true" are chained local variables (JWT HS256 example) | [InformaticaCloudApplicationIntegration/Service-Connectors `Zoom`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Zoom/Zoom) | medium |
+| L-CAI-193 | nogen marks inputs the connector must not auto-send; other inputs of a GET go out as query parameters | [InformaticaCloudApplicationIntegration/Service-Connectors `SAP`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/SAP)<br>[InformaticaCloudApplicationIntegration/Service-Connectors `Informatica`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Informatica/Informatica) | medium |
+| L-CAI-194 | REST action body generators: UnwrappedJSON, JSON, Form (from otherParams), URL, or a literal template | [InformaticaCloudApplicationIntegration/Service-Connectors `(registry-wide`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/(registry-wide)<br>[InformaticaCloudApplicationIntegration/Service-Connectors `Microsoft`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Microsoft) | high |
+| L-CAI-195 | Call a SOAP service from a REST service connector: SOAPAction header, XML envelope body, simplifyXml output | [InformaticaCloudApplicationIntegration/Service-Connectors `CallidusCloud`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/CallidusCloud) | medium |
+| L-CAI-196 | Parse a JSON reply that contains control characters: read $RESTResponse/*:payload, scrub, util:parseJSON in try/catch | [InformaticaCloudApplicationIntegration/Service-Connectors `Facebook`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Facebook/Facebook) | medium |
+| L-CAI-197 | Return a JSON array as an objectlist: the 'unwrap the object list' output XQuery | [InformaticaCloudApplicationIntegration/Service-Connectors `Informatica`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Informatica/Informatica) | medium |
+| L-CAI-198 | Connector-level connection properties and per-action basic auth in service-connector XML | [InformaticaCloudApplicationIntegration/Service-Connectors `SAP`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/SAP) | high |
+| L-CAI-199 | Build optional query strings in a connector URL with XQuery: skip empty inputs, encode-for-uri, join with &amp;amp; | [jbrazda/iics-quickstart-bundle `IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/ServiceConnectors/IICS-REST-API-V3.AI_SERVICE_CONNECTOR.xml#L285) | high |
+| L-CAI-200 | The built-in ICS-API connector (ICS_API): Login outputs, session inputs and its action list | [jbrazda/iics-quickstart-bundle `SP-IICS-GetAuditLog.PROCESS.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/Processes/SP-IICS-GetAuditLog.PROCESS.xml#L60-L95) | medium |
+| L-CAI-201 | Run Cloud Task system service ICSExecuteTask: 'Task Name' carries the type in brackets; outputs row counts and RunId | [jbrazda/iics-quickstart-bundle `SP-ICS-Run-Job-Cloud.PROCESS.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/Processes/SP-ICS-Run-Job-Cloud.PROCESS.xml#L40-L80) | medium |
+| L-CAI-202 | Catch, log and rethrow a fault in PROCESS XML: eventContainer, catch faultField="faultInfo", throwInput | [jbrazda/iics-quickstart-bundle `execMultiSQLProxy.PROCESS.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/DAS/Processes/execMultiSQLProxy.PROCESS.xml)<br>[doc/logging_framework.md `330-370`](https://github.com/doc/logging_framework.md/blob/HEAD/330-370) | high |
+| L-CAI-203 | Data Access Service (DAS) system service: execSQL / execMultiSQL request and response shape, agent only | [jbrazda/iics-quickstart-bundle `How-To`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/DAS/How-To) | medium |
+| L-CAI-204 | Deploy a Process Developer BPR to CAI: Console Deployed Assets, or the ActiveBpelDeployBPR service on cloud and agents | [jbrazda/iics-quickstart-bundle `How-To`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/DAS/How-To) | low |
+| L-CAI-205 | More CAI system-service names for hand-written PROCESS XML: jmsEnqueueService, avDeleteAnyEntityService | [jbrazda/iics-quickstart-bundle `SP-Shell-CMD.PROCESS.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/Processes/SP-Shell-CMD.PROCESS.xml#L70-L100) | medium |
+| L-CAI-206 | Call a logger as a Service step, not a Subprocess, so its tracing level survives the parent's publish | [jbrazda/iics-quickstart-bundle `logging_framework.md`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/doc/logging_framework.md#L300-L330) | medium |
+| L-CAI-207 | util:getOrganizationId() can return the literal 'public'; combine it with an orgid URN | [jbrazda/iics-quickstart-bundle `SP-IPaaS-Create-Job-Entry-DB-DAS.PROCESS.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Logging/Logger_Database_DAS/SP-IPaaS-Create-Job-Entry-DB-DAS.PROCESS.xml#L115-L120) | low |
+| L-CAI-208 | Lesser-known process XQuery utilities: getCatalogResource, getUserName, getAssetName, iif, toJSON/toXML | [jbrazda/iics-quickstart-bundle `SP_GetCatalogResource_G01.PROCESS.xml`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/src/ipd/Explore/Tools/Processes/SP_GetCatalogResource_G01.PROCESS.xml#L30-L62) | medium |
+| L-CAI-209 | Send e-mail from a process: Email connection action sendEmailService with an EmailTaskInput | [jbrazda/icai-fault-alert-service `UncaughtFaultAlertHandler-Cloud.PROCESS.xml`](https://github.com/jbrazda/icai-fault-alert-service/blob/HEAD/src/ipd/Explore/Alerting/Processes/UncaughtFaultAlertHandler-Cloud.PROCESS.xml#L825-L853) | high |
+| L-CAI-210 | tf/status list mode: runStatus/startTime/endTime/offset/rowLimit (default 10, max 50) and subtaskDetails=Yes | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-CAI-211 | Tag a taskflow run with a custom instance name: TF-INSTANCE-NAME header or RunAJob -in | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CAI-212 | Wrap a Marketplace write in a CAI process: POST <pod>-cai/active-bpel/rt/<process> with a form field payload={items:[...]} | [agile-lab-dev/informatica-data-catalog-plugin `DataAssetApiClient.java`](https://github.com/agile-lab-dev/informatica-data-catalog-plugin/blob/HEAD/src/main/java/com/witboost/plugin/informatica/marketplace/service/client/DataAssetApiClient.java#L60-L100) | low |
+| L-CAI-213 | tf/status pollers: 200 {"status":"No status available."} means purged logs (not running); 503 needs at least 6 retries from 10 s | [prefectlabs/prefect-informatica `taskflows.py`](https://github.com/prefectlabs/prefect-informatica/blob/HEAD/src/prefect_informatica/taskflows.py#L1-L53) | high |
+| L-CAI-214 | Exported CAI PROCESS.xml / TASKFLOW.xml structure: Item/Entry/<process/taskflow>, input/output/tempFields, a flow of typed steps linked by targetId | [jbrazda/ai-agent-skills `extract_iics_asset.py`](https://github.com/jbrazda/ai-agent-skills/blob/HEAD/skills/iics-doc-gen/scripts/extract_iics_asset.py#L37-L260) | high |
 
 ## Data quality & profiling
 
@@ -153,7 +226,8 @@ Lessons file: [06-data-quality-profiling](../../lessons/by-domain/06-data-qualit
 | L-DQ-168 | Pre-flight a CDQ rule model: POST <pod>-dqcloud /rule-service/api/v1/validateRule | [shruthi-dn-incept/ai-idmc-governance-all-features `governance_engine.py`](https://github.com/shruthi-dn-incept/ai-idmc-governance-all-features/blob/HEAD/src/idmc_governance/servers/governance_engine.py#L50-L56) | medium |
 | L-DQ-169 | Profiling reads on the -dqprofile host: list filters, recent runs, OData column drill-down, CLAIRE insights | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 | L-DQ-170 | Data Profiling: a replaced file with a different column count keeps stale metadata and writes 0 rows | [woppedisano323/Informatica-MDM-kit `mdm-profile.md`](https://github.com/woppedisano323/Informatica-MDM-kit/blob/HEAD/.claude/commands/mdm-profile.md#L220-L240) | medium |
-| L-DQ-171 | Export a profile's results to Excel from metric-store | [mhassanmlengineer-ML/Informatica-IDMC-Profiling-Automation `profile_result_export.py`](https://github.com/mhassanmlengineer-ML/Informatica-IDMC-Profiling-Automation/blob/HEAD/profile_results_export/profile_result_export.py#L1-L29) | medium |
+| L-DQ-171 | Export a profile's results to Excel from metric-store | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-DQ-172 | Bulk-profile a whole SQL Server schema: v2 object list by connection name, field list per table, one COLUMN_PROFILE per table keyed by the connection federatedId | [profile_creation/connections_retriever.py `1-30`](https://github.com/profile_creation/connections_retriever.py/blob/HEAD/1-30)<br>[profile_creation/connection_objects_retriever.py `1-20`](https://github.com/profile_creation/connection_objects_retriever.py/blob/HEAD/1-20)<br>[profile_running/profile_running.py `1-15`](https://github.com/profile_running/profile_running.py/blob/HEAD/1-15) | medium |
 
 ## Catalog & governance (CDGC)
 
@@ -196,6 +270,11 @@ Lessons file: [07-catalog-governance-cdgc](../../lessons/by-domain/07-catalog-go
 | L-CDGC-270 | Catalog source payload changes in 2026: Runtime Environment mandatory, JSON create answers 415 | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 | L-CDGC-271 | Download a CDGC metamodel or its bulk-import template from ccgf-modelv2 | [rashmiprabhu8192/cdgc_metadata_propagation `cdgc_test_global_filter.py`](https://github.com/rashmiprabhu8192/cdgc_metadata_propagation/blob/HEAD/cdgc_test_global_filter.py#L470-L480) | medium |
 | L-CDGC-272 | Create custom data-element classifications and lookup tables on ccgf-metadata-discovery | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-CDGC-273 | Marketplace v2 data-collections lifecycle: PATCH answers 204 or 202 (async job for category/stakeholder changes); membership via PATCH .../data-assets | [agile-lab-dev/informatica-data-catalog-plugin `DataCollectionApiClient.java`](https://github.com/agile-lab-dev/informatica-data-catalog-plugin/blob/HEAD/src/main/java/com/witboost/plugin/informatica/marketplace/service/client/DataCollectionApiClient.java#L80-L1120) | medium |
+| L-CDGC-274 | Marketplace integration reads on the idmc-api plane: integration/dataAssets, integration/provisioning/deliveryTemplates filters, integration/model/customAttributes | [agile-lab-dev/informatica-data-catalog-plugin `application.yml`](https://github.com/agile-lab-dev/informatica-data-catalog-plugin/blob/HEAD/src/main/resources/application.yml#L60-L72)<br>[docs/low-level-design.md `60-75`](https://github.com/docs/low-level-design.md/blob/HEAD/60-75) | medium |
+| L-CDGC-275 | Idempotent catalog-source links: read GET search/v1/assets/<externalId>?segments=neighborhood:core.Resource before the relationship PATCH | [agile-lab-dev/informatica-data-catalog-plugin `DataCatalogAssetApiClient.java`](https://github.com/agile-lab-dev/informatica-data-catalog-plugin/blob/HEAD/src/main/java/com/witboost/plugin/informatica/datacatalog/service/client/DataCatalogAssetApiClient.java#L210-L400) | medium |
+| L-CDGC-276 | Publish a data product catalog-first: two-phase xlsx import (systems/datasets, then columns), wait on each job, then Marketplace | [agile-lab-dev/informatica-data-catalog-plugin `low-level-design.md`](https://github.com/agile-lab-dev/informatica-data-catalog-plugin/blob/HEAD/docs/low-level-design.md#L40-L140) | medium |
+| L-CDGC-277 | Build a data contract (ODCS) from a catalog table: segments=all on the table, then each hierarchy column, reading the relational attributes | [IBM/data-intelligence-sdk `generate_odcs_from_informatica.py`](https://github.com/IBM/data-intelligence-sdk/blob/HEAD/src/wxdi/odcs_generator/generate_odcs_from_informatica.py#L40-L80) | high |
 
 ## MDM
 
@@ -224,6 +303,15 @@ Lessons file: [08-mdm](../../lessons/by-domain/08-mdm.md)
 | L-MDM-109 | MDM SaaS data model: static field groups only, and mark Required sparingly | [woppedisano323/Informatica-MDM-kit `mdm-deploy.md`](https://github.com/woppedisano323/Informatica-MDM-kit/blob/HEAD/.claude/commands/mdm-deploy.md#L960-L1010) | medium |
 | L-MDM-110 | MDM SaaS approval workflow: copy the MDM Multi-Step Approval Template and grant Workflow Approver | [woppedisano323/Informatica-MDM-kit `mdm-operate.md`](https://github.com/woppedisano323/Informatica-MDM-kit/blob/HEAD/.claude/commands/mdm-operate.md#L25-L60) | medium |
 | L-MDM-111 | MDM SaaS DQ rule severities and DaaS verification entitlements | [woppedisano323/Informatica-MDM-kit `mdm-profile.md`](https://github.com/woppedisano323/Informatica-MDM-kit/blob/HEAD/.claude/commands/mdm-profile.md#L436-L461) | low |
+| L-MDM-112 | MDM SaaS pod health check: GET https://<pod>-mdm.<domain>.informaticacloud.com/healthz | [jbrazda/Informatica `usefull_commands.md`](https://github.com/jbrazda/Informatica/blob/HEAD/Guides/InformaticaCloud/usefull_commands.md#L30-L38) | low |
+| L-MDM-113 | MDM record reads: by source key, contributing source records (entity-member), and the _skipLookup/_showContentMeta/_showPending flags | [GlennSvanberg/idmc-client `business-entity.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/business-entity.md#L230-L260) | medium |
+| L-MDM-114 | MDM writes: PATCH takes a JSON-Patch array, restore uses _operationType=restore with {}, writes answer approvalRequired | [GlennSvanberg/idmc-client `business-entity.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/business-entity.md#L660-L800)<br>[docs/decisions.md `30-34`](https://github.com/docs/decisions.md/blob/HEAD/30-34) | medium |
+| L-MDM-115 | Related records of a master: POST /business-entity/public/api/v1/related-entities/<businessId> | [GlennSvanberg/idmc-client `business-entity.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/business-entity.md#L1133-L1325) | medium |
+| L-MDM-116 | Anonymize a master record's history (preview): POST .../entity-history/<be>/anonymize, 204 | [GlennSvanberg/idmc-client `business-entity.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/business-entity.md#L1326-L1383) | medium |
+| L-MDM-117 | Deep-link a master record into the MDM UI: /ui-x360-app/app/<app>/public/<be>/<businessId> | [GlennSvanberg/idmc-client `business-entity.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/business-entity.md#L1384-L1413) | medium |
+| L-MDM-118 | MDM Search filters: deleted records, incremental by _meta.lastUpdateDate range, exact phrases and system fields | [GlennSvanberg/idmc-client `search.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/search.md#L30-L60) | medium |
+| L-MDM-119 | MDM Search traps: same-entry matching in field groups, a 10-minute privilege lag, and index limits per record | [GlennSvanberg/idmc-client `search.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/idmc-api/search.md#L8-L25) | medium |
+| L-MDM-120 | MDM Search hits are not records: prefixed field names, missing fields, Name-only lookups | [GlennSvanberg/idmc-client `decisions.md`](https://github.com/GlennSvanberg/idmc-client/blob/HEAD/docs/decisions.md#L22-L26) | medium |
 
 ## CLAIRE & MCP
 
@@ -272,6 +360,22 @@ Lessons file: [10-migration-org-management](../../lessons/by-domain/10-migration
 | L-MIG-121 | Redeploy with a package that leaves out the Connections folder so target connection settings survive | [jbrazda/iics-quickstart-bundle `build.md`](https://github.com/jbrazda/iics-quickstart-bundle/blob/HEAD/doc/build.md#L444-L470)<br>[jbrazda/CI-CD-Demo `all_exclude_connections.package.txt`](https://github.com/jbrazda/CI-CD-Demo/blob/HEAD/conf/all_exclude_connections.package.txt#L1-L3) | high |
 | L-MIG-122 | exportPackage.chksum is a Java properties file: skip '#' header lines | [InformaticaCloudApplicationIntegration/Service-Connectors `Informatica`](https://github.com/InformaticaCloudApplicationIntegration/Service-Connectors/blob/HEAD/Informatica) | high |
 | L-MIG-123 | Commit export trees with line-ending conversion off | [jbrazda/CI-CD-Demo `.gitattributes`](https://github.com/jbrazda/CI-CD-Demo/blob/HEAD/.gitattributes#L1-L25)<br>[jbrazda/icai-migration-tools `sort-connector-design.xsl`](https://github.com/jbrazda/icai-migration-tools/blob/HEAD/xsl/sort-connector-design.xsl#L1-L40) | medium |
+| L-MIG-124 | v3 export: includeDependencies belongs on each object; at the request root it answers 400 V3API_007 | [jbrazda/iics-cli `Bug-Export-InvalidRequest.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/issues/completed/Bug-Export-InvalidRequest.md#L9-L87) | medium |
+| L-MIG-125 | Strip CurrentServerDateTime from exported CAI XML before committing: the package still imports with checksumValid=true | [jbrazda/iics-cli `CR-0005-strip-server-timestamp-on-expand.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0005-strip-server-timestamp-on-expand.md#L1-L60) | high |
+| L-MIG-126 | Vendor Asset Management CLI V2 reportedly exits 0 when an export or import fails | [jbrazda/iics-cli `comparison-informatica-cli.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/documentation/comparison-informatica-cli.md#L22-L31) | low |
+| L-MIG-127 | CDI-PC domain API: status, reconcile and delete under /public/api/v1/domains/<ldoId> on the Domain Management Service | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-MIG-128 | Carry task runtime state (sequence NEXTVAL, last run time) across orgs with fetchState/loadState | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-MIG-129 | v3 export/import: 1000 objects per job, no schedule links, target org must be on the same or newer release, dynamic 'too many requests' limit | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-MIG-130 | Convert synchronization tasks (DSS) to data transfer tasks (DTT): test parity, then /dtt/dss/convert/<assetId> | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-MIG-131 | v3 objects q grammar: lowercase and/or only (AND gives 400 V3API_ObjectsListError_04); name and path are not filterable; offset/page are ignored | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+
+## Org clean-up
+
+Lessons file: [10-migration-org-management](../../lessons/by-domain/10-migration-org-management.md)
+
+| Lesson | What | Source code | Confidence |
+|---|---|---|---|
+| L-CLEAN-037 | Before deleting a user, reassign their file listener associations with ChangeCallbackOwnership | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
 
 ## IPU & metering
 
@@ -281,6 +385,12 @@ Lessons file: [11-ipu-metering-licensing](../../lessons/by-domain/11-ipu-meterin
 |---|---|---|---|
 | L-IPU-065 | Job-level IPU metering is a separate async export: POST license/metering/ExportServiceJobLevelMeteringData {startDate,endDate,allMeters:true} | [jonbowring/idmc-cli `api.py`](https://github.com/jonbowring/idmc-cli/blob/HEAD/src/idmc_cli/api.py#L6184-L6390) | medium |
 | L-IPU-066 | ExportMeteringData also takes allLinkedOrgs and combinedMeterUsage; job states are CREATED, PROCESSING, SUCCESS | [jonbowring/idmc-cli `api.py`](https://github.com/jonbowring/idmc-cli/blob/HEAD/src/idmc_cli/api.py#L6184-L6250) | medium |
+| L-IPU-067 | Activity-log logEntryItemAttrs is a string map holding compute units, serverless flag and session log name | [jbrazda/iics-cli `CR-0005-activitylog-enhancements.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/ChangeRequests/completed/CR-0005-activitylog-enhancements.md#L39-L44) | medium |
+| L-IPU-068 | License read routes besides license/org: GET /public/core/v3/license/application and /license/edition | [jbrazda/iics-cli `IICS`](https://github.com/jbrazda/iics-cli/blob/HEAD/testdata/IICS) | low |
+| L-IPU-069 | Read custom IPU alert thresholds: GET /public/core/v3/metering/ipuAlert/org('<orgId>')[/viewTagsPreference] | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
+| L-IPU-070 | Metering export caps: 5 active jobs per org, SUMMARY/JOB windows up to 180 days, ZIP kept 3 days, PARTIAL_SUCCESS is downloadable | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-IPU-071 | Global meter IDs for single-meter ASSET or job-level metering exports | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-IPU-072 | Update a sub-org's licences: PUT /public/core/v3/license/org/<subOrgId> is a full overwrite; GET, edit, PUT back | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
 
 ## Environment & ops
 
@@ -291,6 +401,8 @@ Lessons file: [13-environment-ops](../../lessons/by-domain/13-environment-ops.md
 | L-ENV-140 | Failure-only Slack monitor that proves its own silence | [jpeckjr/informatica-mcp `monitor.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/monitor.py#L1-L30) | high |
 | L-ENV-141 | Webhook URLs are credentials: httpx logs full request URLs at INFO | [jpeckjr/informatica-mcp `monitor.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/monitor.py#L388-L420) | high |
 | L-ENV-142 | Dual-environment MCP deployment: per-env files, distinct server names, stdio over ssh | [jpeckjr/informatica-mcp `config.py`](https://github.com/jpeckjr/informatica-mcp/blob/HEAD/config.py#L1-L60) | high |
+| L-ENV-143 | v3 list envelopes differ per resource: schedule is {schedules:[]}, securityLog is {entries:[]}, userGroups is a bare array | [jbrazda/iics-cli `Bug-schedule-list-wrong-response-type.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/issues/completed/Bug-schedule-list-wrong-response-type.md#L61-L91) | medium |
+| L-ENV-144 | Org encryption key rotation interval: GET/PATCH /public/core/v3/key/rotationSettings (Key Admin role) | not linked: the source repository was flagged unsafe (see Ecosystem §5) | medium |
 
 ## Working methods (agents, MCP tool design)
 
@@ -306,3 +418,5 @@ Lessons file: [12-claude-working-methods](../../lessons/by-domain/12-claude-work
 | L-METHOD-168 | Intent taxonomy: 15 catalog intents with routing and per-intent call budgets | [forcedotcom/informatica-claude-plugins `SKILL.md`](https://github.com/forcedotcom/informatica-claude-plugins/blob/HEAD/informatica-for-claude-platform/skills/catalog-and-data-discovery/SKILL.md#L250-L278) | vendor-documented |
 | L-METHOD-169 | Delegate only fully-specified catalog calls to smaller models | [forcedotcom/informatica-claude-plugins `SKILL.md`](https://github.com/forcedotcom/informatica-claude-plugins/blob/HEAD/informatica-for-claude-platform/skills/catalog-and-data-discovery/SKILL.md#L280-L288) | vendor-documented |
 | L-METHOD-170 | Community CDGC scripts that phone home: grep for outbound telemetry before running | not linked: the source repository was flagged unsafe (see Ecosystem §5) | high |
+| L-METHOD-171 | Do not type IDMC response structs from the docs alone: capture a live body and make fakes reproduce live failures | [jbrazda/iics-cli `BUG-release-plan-lookup-all-missing.md`](https://github.com/jbrazda/iics-cli/blob/HEAD/docs/issues/pending/BUG-release-plan-lookup-all-missing.md#L12-L19)<br>[docs/CLAUDE.md `401-430`](https://github.com/docs/CLAUDE.md/blob/HEAD/401-430) | medium |
+| L-METHOD-172 | Document CAI assets token-efficiently: script-extract the XML, give the model only long XQuery expressions | [jbrazda/ai-agent-skills `SKILL.md`](https://github.com/jbrazda/ai-agent-skills/blob/HEAD/skills/iics-doc-gen/SKILL.md#L1-L200) | medium |

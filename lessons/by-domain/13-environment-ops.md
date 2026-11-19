@@ -1,5 +1,5 @@
 # Lessons: Environment & Ops
-112 current lessons, 3 superseded, plus 26 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-08. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+114 current lessons, 3 superseded, plus 26 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-08. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [Environment traps](../../knowledge/14-claude-working-methods/05-environment-traps-windows-git-bash-az-gcloud-docker.md) · [How Claude reaches and drives IDMC](../../knowledge/14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) · [Secrets hygiene](../../knowledge/14-claude-working-methods/06-secrets-hygiene.md) · [Claude Working Methods lessons](12-claude-working-methods.md) · [UI Automation lessons](14-ui-automation.md)
 
@@ -456,6 +456,14 @@ httpx logs every request's full URL at INFO, and for a Slack incoming webhook th
 ### L-ENV-142  Dual-environment MCP deployment: per-env files, distinct server names, stdio over ssh
 **Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
 One codebase serves prod and dev. An env variable selects the environment, and each environment loads only its own env files, so a personal prod credential cannot leak into dev. The MCP server names differ, so two instances coexist in one client without tool confusion, and dev additionally enforces the org guard. Claude Desktop launches the stdio server over `ssh -T` to a cloud VM: no public endpoint and no bearer token to leak. Secrets come from the cloud secret manager through the instance role. Pin `mcp[cli]<2`, because 2.x renamed FastMCP and broke a shared install. With a shared team credential, IDMC startedBy/updatedBy shows the team account for everyone, and per-person attribution lives only in the SSH logs.
+
+### L-ENV-143  v3 list envelopes differ per resource: schedule is {schedules:[]}, securityLog is {entries:[]}, userGroups is a bare array
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`GET /public/core/v3/schedule` returns `{"schedules":[...]}`, not an array; each schedule carries `id`, `scheduleFederatedId`, `timeZoneId` (not `timezone`), integer `dayOfMonth`, `weekDay` and booleans `sun`..`sat`. `GET /public/core/v3/securityLog` (singular; `/securityLogs` is 404 'No static resource') wraps rows in `{"entries":[...]}` with `actor`, `actionEvent`, `actionCategory`, `objectId`, `objectName`, `entryTime`. `GET /public/core/v3/userGroups` returns a bare array whose name field is `userGroupName` and whose `roles[]`/`users[]` are objects, and v3 users rows carry `groups[]` and `roles[]` as objects. Decode each list by its own shape; a client typed from the docs failed on all four. Refines L-CDI-309.
+
+### L-ENV-144  Org encryption key rotation interval: GET/PATCH /public/core/v3/key/rotationSettings (Key Admin role)
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`GET <baseApiUrl>/public/core/v3/key/rotationSettings` (INFA-SESSION-ID) returns {orgId, validRotationIntervals:["90_DAYS","120_DAYS","180_DAYS","365_DAYS"], rotationInterval}. Change it with `PATCH` on the same path, body {"rotationInterval":"120_DAYS"} (the doc's example line says POST; the method table says PATCH). Both need the Key Admin role, which ordinary org admins do not hold by default.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

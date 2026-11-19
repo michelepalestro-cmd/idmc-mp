@@ -3,6 +3,17 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.7.0 (2026-11-19): a second pass over public IDMC code
+
+- **106 more lessons** (2,340 in total) from a second, file-by-file pass: every bug and change note of the best-maintained
+  CLI, the vendor admin REST documentation bundled in one repository, Informatica's service-connector packages, the CAI
+  quickstart bundle, MDM record and search API docs, and repositories the first pass had not read.
+- Highlights: v3 logout and the org-wide `logoutall`, SCIM tokens, SAML mapping bodies, trusted IP and sub-org licence
+  overwrites, fetchState/loadState, metering export caps and meter ids, job callbacks, taskflow status polling rules,
+  code tasks, elastic runtimes, file listeners and MFT, service-connector authoring, and MDM record reads and writes.
+- Unsafe material stays out: the shell-command service is not documented, and four more repositories with security
+  problems are not linked (their plain API facts are kept). L-AUTH-108 points to a reported alternative (L-AUTH-129).
+
 ## 1.6.0 (2026-11-19): setup anyone can follow
 
 - **README rewritten around a 3-step setup** in plain words: a checklist of what you need, install, connect, check,

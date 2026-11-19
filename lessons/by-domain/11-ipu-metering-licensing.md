@@ -1,5 +1,5 @@
 # Lessons: IPU, Metering & Licensing
-55 current lessons (2 of them disputed), 7 superseded; evidence dates 2026-06-28 to 2026-10-03.
+61 current lessons (2 of them disputed), 7 superseded; evidence dates 2026-06-28 to 2026-10-03.
 
 Every lesson is generic (placeholders `<pod>`, `<domain>`, `<serverUrl>`, `<agent_home>`, `<reId>`, `<agentId>`, `<connId>`, `<orgIdV3>`). Where a lesson came from a proof in one org or pod, re-test it in yours. Provenance (sources, raw ids) is kept outside this zone.
 
@@ -228,6 +228,30 @@ A script outside IDMC re-imported the verification mapping with new key bounds a
 ### L-IPU-066  ExportMeteringData also takes allLinkedOrgs and combinedMeterUsage; job states are CREATED, PROCESSING, SUCCESS
 **Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
 Besides `jobType`, `startDate` and `endDate`, the ExportMeteringData body accepts `allLinkedOrgs` ("TRUE"/"FALSE") to include linked sub-orgs, and, for SUMMARY and project exports, `combinedMeterUsage` ("TRUE"/"FALSE"). The poll returns `status` CREATED or PROCESSING until SUCCESS, and anything else is a failure. The client defaults to the last 14 days and formats dates as `YYYY-MM-DDTHH:MM:SSZ`. It sends combinedMeterUsage only when jobType is 'PROJECT', not 'PROJECT_FOLDER', so the flag never reaches project exports. Refines L-IPU-021.
+
+### L-IPU-067  Activity-log logEntryItemAttrs is a string map holding compute units, serverless flag and session log name
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+In `GET /api/v2/activity/activityLog` entries, `logEntryItemAttrs` is an object of string values, not an array, for example `{"CONSUMED_COMPUTE_UNITS":"0.0","REQUESTED_COMPUTE_UNITS":"0.0","IS_SERVER_LESS":"false","ERROR_CODE":"0","Session Log File Name":"s_mtt_<...>.log"}`; parse the numbers yourself. `transformationEntries[]` items are `{"@type":"transformationLogEntry","txName","txType" (SOURCE/TARGET),"successRows","failedRows","affectedRows"}`, and `state` is 1 SUCCESS, 2 ERRORS (warning), 3 FAILED, 4 NOT STARTED. Use CONSUMED_COMPUTE_UNITS and IS_SERVER_LESS to attribute serverless runs.
+
+### L-IPU-068  License read routes besides license/org: GET /public/core/v3/license/application and /license/edition
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+A CLI author's saved request collection calls `GET <baseApiUrl>/public/core/v3/license/application` and `GET <baseApiUrl>/public/core/v3/license/edition` (header `INFA-SESSION-ID`) next to `GET /public/core/v3/license/org/<orgIdV3>`. No responses were saved, so treat them as candidate routes for the licence definitions of applications and editions: probe each once and read the 404 kind (L-AUTH-012) before building on them.
+
+### L-IPU-069  Read custom IPU alert thresholds: GET /public/core/v3/metering/ipuAlert/org('<orgId>')[/viewTagsPreference]
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`GET <baseApiUrl>/public/core/v3/metering/ipuAlert/org('<orgId>')` (OData-style key in parentheses, quoted) returns per-org alerts {orgName, orgId, parentOrgId (null unless sub-org), thresholdValue, ipuConsumed, ipuThresholdPrefType ABSOLUTE|PERCENTAGE}. Append `/viewTagsPreference` for project/folder-scoped alerts {projectName, folderName (null for project-level), thresholdValue, currentConsumption, ipuThresholdPrefType}. Read-only in the public API; thresholds are configured in the UI.
+
+### L-IPU-070  Metering export caps: 5 active jobs per org, SUMMARY/JOB windows up to 180 days, ZIP kept 3 days, PARTIAL_SUCCESS is downloadable
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes, or vendor documentation bundled in the repository); not probed here
+Vendor docs: an org can have at most 5 active metering export jobs (status CREATED or PROCESSING), so queue further requests. Date windows: SUMMARY and job-level exports up to 180 days; PROJECT_FOLDER and ASSET up to 30 days. The ZIP from `GET .../license/metering/ExportMeteringData/<jobId>/download` (application/zip) is kept for 3 days after SUCCESS or PARTIAL_SUCCESS; a PARTIAL_SUCCESS ZIP downloads but may be incomplete, so flag it rather than treat it as final. SUMMARY needs access rights to the parent org and every linked org. Refines L-IPU-021.
+
+### L-IPU-071  Global meter IDs for single-meter ASSET or job-level metering exports
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes, or vendor documentation bundled in the repository); not probed here
+Asset and job-level metering exports take an optional meterId (omit = all meters); the ids are global vendor constants, not org ids. Examples from the vendor table: Data Integration a2nB20h1o0lc7k3P9xtWS8; Data Integration with Advanced Serverless 35m9fB23Tykj4Fb3rN5q2J; Advanced Data Integration 3TaYTMo6BFYeNIABfVmH0n; Advanced Pushdown Optimization dMN0VeTW4cThHyPovp4GEX; Data Integration - CDC 0sDTANKFZBSbqjzKaXKlmB; Data Quality cPnPIT3XYAziLqIoXtd0KC; Mass Ingestion Database aluxJ8jOKmzdXwD0JuHRS1 (CDC) / 24WXkCWzeSHjFlQvLPDegF; Mass Ingestion Files lCwc4CfL7EEhv9773egFC8; Mass Ingestion Streaming hr7GsCwFFmyfvfZQFn8v81 (job only); Application Integration classic 3uIRkIV5Rt9lBbAPzeR5Kj (job only). Some meters are asset-only (Data Quality, Data Masking, Data Loader), so a job-level request on them returns nothing.
+
+### L-IPU-072  Update a sub-org's licences: PUT /public/core/v3/license/org/<subOrgId> is a full overwrite; GET, edit, PUT back
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes, or vendor documentation bundled in the repository); not probed here
+Logged in to the PARENT org as an admin, `PUT <baseApiUrl>/public/core/v3/license/org/<subOrgId22>` with {customLicenses:[{licenseDef, licenseType TRIAL|SUBSCRIPTION|FREE|NONE, expirationDate}], assignedEditions:[{edition, expirationDate}], customLimits:[{limitDefinition, value (-1 = unlimited)}]} replaces the sub-org's licences with exactly what is sent. Anything omitted is removed, so always GET the same path first, modify the returned object and PUT it back; keep the GET as a rollback copy.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

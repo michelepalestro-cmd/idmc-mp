@@ -1,5 +1,5 @@
 # Lessons: Claude Working Methods
-146 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+148 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [How Claude reaches and drives IDMC](../../knowledge/14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) · [Evidence discipline](../../knowledge/14-claude-working-methods/02-evidence-discipline.md) · [Multi-agent coordination](../../knowledge/14-claude-working-methods/03-multi-agent-coordination.md) · [Secrets hygiene](../../knowledge/14-claude-working-methods/06-secrets-hygiene.md) · [Environment & Ops lessons](13-environment-ops.md) · [UI Automation lessons](14-ui-automation.md)
 
@@ -592,6 +592,14 @@ Keep intent classification, synthesis, trust scoring, root cause and the final a
 ### L-METHOD-170  Community CDGC scripts that phone home: grep for outbound telemetry before running
 **Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
 Several public CDGC utility scripts from one author send an infaLog 'phone home' POST to a third-party workers.dev endpoint with a hard-coded X-Auth-Key, including the org id or user name, the pod URL, the script version and the machine hostname, on every login. Before running any community IDMC script, grep it for requests to hosts other than *.informaticacloud.com (workers.dev, webhook, telemetry, X-Auth-Key) and strip them. Credentials were not seen in the payload. Refines L-MCP-124.
+
+### L-METHOD-171  Do not type IDMC response structs from the docs alone: capture a live body and make fakes reproduce live failures
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+In one Claude-built IDMC CLI, more than a dozen fixes were shapes taken from documentation that the live API did not match: list wrappers (`{schedules:[]}`, `{entries:[]}`), objects typed as strings (user groups, roles, privileges), wrong singular/plural paths (`securityLog`, `runtimeEnvironment`), verbs the path does not allow (405 on `GET /users/<id>`, `PUT /userGroups/<id>`), a missing `@type` and a root-level field the API rejects. One regression shipped because the test fake answered a batch lookup with partial results while the real API fails the whole batch (`V3API_LookupError_012`). Before writing a client struct, capture one real response; make fakes return the real error shapes; and record in the change note which findings were verified live and when.
+
+### L-METHOD-172  Document CAI assets token-efficiently: script-extract the XML, give the model only long XQuery expressions
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+Documenting a process or taskflow is mostly mechanical (interface tables, step graph, invoked services and subflows, short field copies). A stdlib parser turns the export into a full facts.json for a renderer and a small brief.json for the model containing only name, description, step titles, dependencies and the assignment expressions longer than 3 lines (often an 80-90% context reduction). The model writes only an overview and one-line intent summaries per long expression; a template renders Markdown with a mermaid flowchart from the link graph. Staleness: compare the doc's last-modified line to ModificationDate in the XML and re-summarize only changed long expressions. Branch labels come from the enclosing container title, so fault and success paths under one decision need hand labels.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

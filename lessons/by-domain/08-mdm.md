@@ -1,5 +1,5 @@
 # Lessons: MDM
-93 current lessons (2 of them disputed) and 11 superseded, IDs L-MDM-###; evidence dated 2026-07-04 to 2026-11-12. Every lesson is generic; its sources are mapped outside the generic zone.
+102 current lessons (2 of them disputed) and 11 superseded, IDs L-MDM-###; evidence dated 2026-07-04 to 2026-11-12. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [MDM Runtime vs Design](../../knowledge/08-mdm/01-mdm-saas-runtime-vs-design.md) · [MDM Records](../../knowledge/08-mdm/02-mdm-records-ingest-search-export-cleanup.md) · [Business 360 Modeling & Match-Merge](../../knowledge/08-mdm/03-business-360-modeling-match-merge.md) · [P360 vs MDM SaaS & Licensing](../../knowledge/08-mdm/04-p360-vs-mdm-saas-licensing-notes.md)
 
 ## Current
@@ -403,6 +403,42 @@ Business events route record changes through a CAI process copied from the 'MDM 
 ### L-MDM-111  MDM SaaS DQ rule severities and DaaS verification entitlements
 **Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
 Rule severity Information or Warning lets users save in the UI; Error blocks UI saves unless error remediation is enabled, and rejects on ingress only when 'Reject records that fail validation' is set. Trust downgrade is a per-association percentage applied on load regardless of severity. Address Verification is predefined but disabled by default on blank-canvas entities and needs the DaaS license file uploaded (without it, ingress fails at load); phone and email verification are separate entitlements.
+
+### L-MDM-112  MDM SaaS pod health check: GET https://<pod>-mdm.<domain>.informaticacloud.com/healthz
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+A field 'useful commands' page checks the MDM service of a pod with `GET https://<pod>-mdm.<domain>.informaticacloud.com/healthz` (its example is on a `dmp-us` domain). Use it as a reachability test from an agent host or network before blaming MDM API calls, with normal certificate verification. The page does not show the response body or whether it needs a session, so record both on first use.
+
+### L-MDM-113  MDM record reads: by source key, contributing source records (entity-member), and the _skipLookup/_showContentMeta/_showPending flags
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`GET <mdmHost>/business-entity/public/api/v1/entity/<be>/<sourceSystem>/<sourcePKey>` reads the active master record for a source key; `GET .../entity-member/<be>/<businessId>` lists the source records (sourceSystem, sourcePKey) that contribute to a master. Both reads and `.../entity/<be>/<businessId>` accept `_skipLookup=true` (picklist values from the Business 360 store, faster but possibly stale versus Reference 360), `_showContentMeta=true` (trust scores, survivorship, failed data-enhancement rules) and `_showPending=true` (records pending approval). Header `IDS-SESSION-ID`; fields the role cannot read are silently omitted.
+
+### L-MDM-114  MDM writes: PATCH takes a JSON-Patch array, restore uses _operationType=restore with {}, writes answer approvalRequired
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`PATCH .../entity/<be>/<businessId>?sourceSystem=<src>[&_resolveCrosswalk=true]` takes `[{"op":"add|replace|remove","path":"<field>","value":...}]` (for a repeating field group the path names the entry's internal id); a PATCH on a merged-away business id updates the surviving master. `PUT .../entity/<be>/<businessId>?sourceSystem=<src>` replaces the record; a deleted master must first be restored with `PUT .../entity/<be>/<businessId>?sourceSystem=<src>&_operationType=restore` and the body `{}`, which works only if one source record is still active. PUT, PATCH, DELETE and restore return 200 `{"approvalRequired":true|false}`, so a true means nothing changed yet. `_resolveCrosswalk=true` standardizes picklist codes through the source system's crosswalk. Refines L-MDM-094.
+
+### L-MDM-115  Related records of a master: POST /business-entity/public/api/v1/related-entities/<businessId>
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+Body `{"_page":0,"_size":50,"_anchorBusinessEntity":["<be1>","<be2>"],"_relationship":"<relId,...>"}`: `_size` at most 50, up to 10 anchor entities, at most 10,000 relationships in total. The reply's `content[]` holds `relation` (`_from`, `_to`, `_meta` with relationship id, state, audit fields) and `targetEntity` (`_meta` with businessEntity, businessId, state, consolidation, validation), plus `resultsInPage`, `size`, `page`. Relationships made through a business-entity reference attribute are not returned, and a business id that exists in several anchor entities returns nothing.
+
+### L-MDM-116  Anonymize a master record's history (preview): POST .../entity-history/<be>/anonymize, 204
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`POST <mdmHost>/business-entity/public/api/v1/entity-history/<be>/anonymize` with `{"sourceSystem":"<src>","sourcePKey":"<pk>","fields":{"firstName":"XXX","lastName":"XXX"},"redoAnonymizedBefore":<epoch ms>}` replaces that source record's values in the master's history and returns 204; `redoAnonymizedBefore` re-anonymizes history written before the timestamp. Preview since the May 2025 release, so not for production. Use it alongside the record delete in right-to-be-forgotten runs, because deleting the record leaves history intact.
+
+### L-MDM-117  Deep-link a master record into the MDM UI: /ui-x360-app/app/<app>/public/<be>/<businessId>
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+`https://<mdm UI host>/ui-x360-app/app/<c360|p360|s360|mde>/public/<businessEntity>/<businessId>` opens the record page in the business application for a user with a valid session and access to the record; the link stays valid until the record is purged. Use it in reports, alerts and steward tickets instead of copying data out.
+
+### L-MDM-118  MDM Search filters: deleted records, incremental by _meta.lastUpdateDate range, exact phrases and system fields
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+Deleted masters: `{"comparator":"IN","fieldName":"recordStateIndicator","fieldValue":["DELETED"]}` (or ACTIVE). Changed since: `{"comparator":"BETWEEN","fieldName":"_meta.lastUpdateDate","range":{"from":"<epoch ms>","to":"<epoch ms>"}}` (also `_meta.creationDate`, `_meta.createdBy`, `_meta.updatedBy`), which gives incremental extraction without Egress. An exact match is `"search":"\"London\""`; the words AND, OR and NOT as values must be quoted the same way or the call returns nothing; `NOT_EQUALS` skips blank fields (use IS_MISSING). Filter on `validationType` (ERROR, WARNING, INFO) or `validationState` (PASSED, FAILED); `searchLocale` is en or ja. Refines L-MDM-091.
+
+### L-MDM-119  MDM Search traps: same-entry matching in field groups, a 10-minute privilege lag, and index limits per record
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+Several conditions on one field group match only when a single entry satisfies all of them (city of one address plus street of another returns nothing). After changing record or field privileges or data access rules, custom-role users get wrong search results for at least 10 minutes. The search index job indexes at most 100 dynamic fields and 25,000 field-group entries per record (validation errors are indexed first), and flags overflow in `_indexValidationError.code` with `INDEX.100001` (dynamic fields) or `INDEX.100002` (entries); filter on that code to find records whose data is not fully searchable.
+
+### L-MDM-120  MDM Search hits are not records: prefixed field names, missing fields, Name-only lookups
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+Search hit fields are prefixed with the entity id without dots (`c360person.firstName`, `c360person.PostalAddress.addressLine1` for a nested group), while the business-entity read API uses unprefixed names; filter and sort fields take the prefixed form. Hits often lack fields the record has (fullName, birthDate, phone, e-mail), so read the full record with `GET .../entity/<be>/<businessId>` before acting. Lookups come as `{Code, Name}` but a hit may carry only Name; dates may come as epoch ms; the record key is `_meta.businessId`, never `_meta.id`.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

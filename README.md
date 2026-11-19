@@ -1,14 +1,14 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
 [![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.6.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.7.0-blue)](CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP turns Claude Code into a helper for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS).
 You tell Claude what you want in plain words, and it builds, runs, checks and fixes it in your IDMC org **without
 clicking through the IDMC website**: pipelines, Secure Agents, data quality, the catalog, MDM, deployments and IPU costs.
 
-It comes with 2,234 field lessons (what went wrong in real orgs and how it was fixed), one skill per IDMC area,
+It comes with 2,340 field lessons (what went wrong in real orgs and how it was fixed), one skill per IDMC area,
 twelve slash commands and a small Python toolkit that guards your login.
 
 ---

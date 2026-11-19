@@ -1,5 +1,5 @@
 # Lessons: Data Quality & Profiling
-144 current lessons (2 of them disputed), 14 superseded; evidence dated 2026-06-27 to 2026-11-12.
+145 current lessons (2 of them disputed), 14 superseded; evidence dated 2026-06-27 to 2026-11-12.
 
 Topic docs: [DQ Assets](../../knowledge/06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) · [Profiling - What Is Headless](../../knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md) · [CLAIRE DQ Agent](../../knowledge/06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md) · [DQ Scorecards](../../knowledge/06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md) · [Overturned Beliefs](../overturned-beliefs.md)
 
@@ -634,6 +634,10 @@ If a profiled file is replaced by one with a different column count under the sa
 ### L-DQ-171  Export a profile's results to Excel from metric-store
 **Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
 GET https://<pod>-dqprofile.<domain>.informaticacloud.com/metric-store/api/v1/Profiles('<profileId>')/Export?runKey=<n>&range=ALL_COLUMNS&fileFormat=EXCEL with header IDS-SESSION-ID streams the profile results workbook. Runs start with POST .../profiling-service/api/v1/profile/<profileId>/execute.
+
+### L-DQ-172  Bulk-profile a whole SQL Server schema: v2 object list by connection name, field list per table, one COLUMN_PROFILE per table keyed by the connection federatedId
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
+List tables with `GET <serverUrl>/api/v2/connection/source/name/<connName>?maxRecordsCount=100000` (icSessionId; default cap is 200 objects), read columns with `GET .../connection/source/name/<connName>/field/<table>`, keep only types the profiler accepts (one script whitelists CHAR, INTEGER, DECIMAL, DATE, BOOLEAN, FLOAT, DOUBLE, TIMESTAMP, NVARCHAR, NTEXT), then `POST https://<pod>-dqprofile.<domain>.informaticacloud.com/profiling-service/api/v1/profile` (IDS-SESSION-ID) with {name, orgId, frsProjectId, frsFolderId, connectionId: <the connection's federatedId from GET /api/v2/connection>, source:{name, sourceType DATASOURCE, dataSourceType SQL_SERVER, properties:{dataSourceType, sourcePath:<schema>}, fields[{name, dataType, precision, scale, pcType, order}]}, profileableFields[{sourceName, fieldName, fieldType DATASOURCEFIELD, precision, scale}], samplingOptions:{rows:-1, samplingType ALL_ROWS}, drillDownType:"ON", profileType:"COLUMN_PROFILE"}. Run each with `POST .../profile/<id>/execute`. Refines L-DQ-108.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

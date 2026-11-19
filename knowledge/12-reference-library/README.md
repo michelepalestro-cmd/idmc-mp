@@ -36,7 +36,7 @@ host, a vendor sentence, a licensing rule). For "how do I do X", start with the 
 |---|---|---|
 | `IDMC API & MCP Reference\` | Every IDMC REST endpoint and MCP action the corpus has seen: 167 endpoints, 11 MCP actions, 28 operations with no endpoint. For each one it gives the verbs in one of four states (**Works** = a live status code was seen, **Documented** = vendor-documented but unexercised, **Rejected** = refused with a code, **Untested**), the auth plane, the host pattern, the header and the evidence. The source of truth is `content\*.json` (30 sections); everything else is generated from it. | `Claude IDMC How To\start-here.md` |
 | `IICS-to-IPUs KB\` | A customer-facing KB on the move from legacy IICS licensing (per-service subscriptions, connector tiers) to the IDMC IPU consumption model, anchored on CPDS v39.1. It has 13 section files and a generated `.md` + `.pdf`. | `start-here.md` |
-| `community-code-index.md` | For each of the 186 lessons mined from public IDMC code on 2026-11-19, the repository and file it came from, grouped by area. | [community-code-index.md](community-code-index.md) |
+| `community-code-index.md` | For each of the 292 lessons mined from public IDMC code on 2026-11-19 (two passes), the repository and file it came from, grouped by area. | [community-code-index.md](community-code-index.md) |
 | `REST Verb Matrix\` | The 2026-07-25 generator and data module behind the retired "IDMC Verb Matrix - API vs MCP" document. Its rows were merged into `IDMC API & MCP Reference\content\` the same day, so this is history. Running `build_verbmatrix.py` writes that old `.docx` next to the script. | nothing, unless you are auditing the merge |
 
 Inside `IDMC API & MCP Reference\`:

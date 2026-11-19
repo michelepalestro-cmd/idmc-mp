@@ -31,7 +31,7 @@ another implementation to compare a route against.
 > plugin (one skill, two connectors; L-MCP-123, L-MCP-135) and partner listings such as Microsoft's MCP catalog
 > (L-MCP-136). The community side is thin: most repositories have 0-5 stars. One CLI is maintained and safe to
 > recommend; a few MCP servers and skills are useful to read but not to run as-is (L-MCP-137). Their code was mined for
-> 186 more lessons (Reported, not probed here); the [community code index](../12-reference-library/community-code-index.md)
+> 292 more lessons in two passes (Reported, not probed here); the [community code index](../12-reference-library/community-code-index.md)
 > maps each one to the file it came from.
 
 ---
@@ -153,7 +153,8 @@ No Informatica-specific Cursor rules or Copilot instruction files were found.
 Repositories with security problems are deliberately not named or linked in this KB: scripts that report the user's
 hostname and login details to a personal server, a chat bot that runs Claude with permission checks skipped and catalog
 write tools, an extractor that has users copy their browser session cookie into a file, and servers that take the IDMC
-password as a tool argument or store it in a config file. §5 says how to spot each of these in any tool you are given.
+password as a tool argument or store it in a config file, a server that logs request bodies holding passwords,
+and repositories that commit real org ids or profiling results. §5 says how to spot each of these in any tool you are given.
 
 ### 4.3 CI/CD, packaging and reference assets
 

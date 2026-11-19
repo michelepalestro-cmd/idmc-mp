@@ -24,6 +24,13 @@ belief.
 
 ---
 
+## 2026-11-19 (second pass): 106 more lessons from public IDMC code
+
+- A file-by-file pass over the repositories the first pass covered thinly or not at all: 106 new lessons (2,340 in
+  total), all **Reported**. The [Community code index](../12-reference-library/community-code-index.md) now maps 292
+  lessons to their source files; repositories with security problems are not linked.
+- L-AUTH-108 (SAML mapping body) now points to a reported alternative, L-AUTH-129. Probe it.
+
 ## 2026-11-19 (later): 186 lessons mined from public IDMC code
 
 - **About 40 public repositories read** (no code run): CLIs, SDKs, community MCP servers, CAI and CI/CD repos, the

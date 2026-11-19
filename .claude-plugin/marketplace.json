@@ -5,14 +5,14 @@
   },
   "metadata": {
     "description": "IDMC MP: the Informatica IDMC co-pilot for Claude Code",
-    "version": "1.6.0"
+    "version": "1.7.0"
   },
   "plugins": [
     {
       "name": "idmc-mp",
       "source": "./",
       "description": "The Informatica IDMC / IICS co-pilot for Claude: understand, deploy, optimize and run IDMC headless (Secure Agent, CDI, CDC, CAI, data quality, governance, MDM, MCP, IPU), with 2,000+ field lessons, one skill per area, slash commands, a Python library and a mapping generator.",
-      "version": "1.6.0",
+      "version": "1.7.0",
       "author": {
         "name": "IDMC MP contributors"
       },
