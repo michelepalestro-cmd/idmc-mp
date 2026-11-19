@@ -1,7 +1,9 @@
 -- Retail Data Foundation: PostgreSQL prerequisites for IDMC Database Ingestion CDC (pgoutput), hot + cold tasks.
 -- PROVEN pattern (a production demo, 2026-09): two CDC tasks, each with its OWN slot and publication.
--- Run as the database owner, passing the CDC role's login secret as a psql variable (never type it into this file):
---   psql -U <PG_USER> -d <PG_DB> -v cdc_user=rdf_cdc -v cdc_pw="$PG_CDC_PASS" -v owner=<PG_USER> -f 02_cdc_prereqs.sql
+-- Run as the database owner. The CDC role's login secret is read from psql's ENVIRONMENT (PG_CDC_PASS) with \getenv
+-- (psql 15+), never from a command-line argument (argv shows in the process list) and never typed into this file:
+--   PG_CDC_PASS=... psql -v ON_ERROR_STOP=1 -U <PG_USER> -d <PG_DB> -v cdc_user=rdf_cdc -v owner=<PG_USER> -f 02_cdc_prereqs.sql
+-- (with docker: `docker compose ... exec -T -e PG_CDC_PASS postgres psql ...` forwards the variable by NAME only)
 --
 -- Rules learned the hard way (each failed a job until fixed):
 --   1. the task CREATEs public.infa_persistent_<job> itself        -> the CDC role needs CREATE on schema public
@@ -13,8 +15,13 @@
 -- pg_hba.conf (in the data directory): allow  host replication <cdc_user> <agent network> scram-sha-256
 --   and     host <db> <cdc_user> <agent network> scram-sha-256
 
+\getenv cdc_pw PG_CDC_PASS
+\if :{?cdc_pw}
+\else
+  DO $$ BEGIN RAISE EXCEPTION 'PG_CDC_PASS is not set in the environment of psql'; END $$;
+\endif
 CREATE ROLE :"cdc_user" LOGIN REPLICATION;
--- the login secret comes in as a psql variable and is quoted by format(), so this file holds no secret
+-- the login secret comes in from the environment and is quoted by format(), so this file holds no secret
 -- (switch off log_statement = all / ddl while running it if your server logs DDL)
 SELECT format('ALTER ROLE %I PASSWORD %L', :'cdc_user', :'cdc_pw') \gexec
 GRANT CONNECT ON DATABASE :"DBNAME" TO :"cdc_user";

@@ -1,5 +1,5 @@
 # Lessons: IPU, Metering & Licensing
-61 current lessons (2 of them disputed), 7 superseded; evidence dates 2026-06-28 to 2026-10-03.
+68 lessons: 59 current, 2 disputed, 7 superseded; evidence dated 2026-06-28 to 2026-11-19.
 
 Every lesson is generic (placeholders `<pod>`, `<domain>`, `<serverUrl>`, `<agent_home>`, `<reId>`, `<agentId>`, `<connId>`, `<orgIdV3>`). Where a lesson came from a proof in one org or pod, re-test it in yours. Provenance (sources, raw ids) is kept outside this zone.
 

@@ -1,5 +1,5 @@
 # Lessons: Data Quality & Profiling
-145 current lessons (2 of them disputed), 14 superseded; evidence dated 2026-06-27 to 2026-11-12.
+172 lessons: 154 current, 4 disputed, 14 superseded; evidence dated 2026-06-27 to 2026-11-19.
 
 Topic docs: [DQ Assets](../../knowledge/06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) · [Profiling - What Is Headless](../../knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md) · [CLAIRE DQ Agent](../../knowledge/06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md) · [DQ Scorecards](../../knowledge/06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md) · [Overturned Beliefs](../overturned-beliefs.md)
 

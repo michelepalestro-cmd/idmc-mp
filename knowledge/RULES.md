@@ -1,11 +1,9 @@
-# Master IDMC KB: rules for any Claude session working here
+# Rules for any Claude session working with the IDMC MP plugin
 
-> **Plugin install:** your login lives in `~/.idmc_toolkit/IDMC_LOGIN.txt` (run `python3 toolkit/check_login.py`
-> from the plugin root once to create it), not in the plugin. Paths in inline code are relative to the plugin root. Where the docs below say "IDMC_LOGIN.txt at the toolkit root", that home
-> file is what is read (a root copy still works when you run from a git clone).
-
-You are in the **Master IDMC KB**: one folder with the knowledge base (topic folders `00`-`14`), its Python library
-(`14 - .../Script Library`), a mapping generator and three demo blueprints for building and running Informatica IDMC demos **headless** (REST, no UI), in the user's own IDMC org.
+Paths in inline code are relative to the plugin root. The plugin holds the knowledge base (topic folders `00`-`12` and
+`14` under `knowledge/`), the lessons (`lessons/`), the skills and commands, and a Python toolkit (`toolkit/lib/`, a
+mapping generator in `toolkit/mapgen/` and three demo blueprints in `toolkit/demos/`) for building and running
+Informatica IDMC **headless** (REST, no UI), in the user's own IDMC org.
 
 ## The goal and the two rules (they override everything below)
 **Goal:** help the user create any IDMC asset and deploy IDMC end to end, with every capability they ask for, on the
@@ -41,7 +39,7 @@ that. The README's "Create any IDMC asset" table says where each asset type star
 - **Lessons are dated evidence.** Your org's live answer wins; re-probe when a lesson and the org disagree.
 
 ## Read in this order
-1. `README.md` (what is here, how to connect, the rebuild path, the KB map)
+1. `knowledge/README.md` (what is here and the KB map); the root `README.md` for setup
 2. `knowledge/00-start-here/02-the-laws-of-headless-idmc.md` (30 laws; they override your instincts about REST APIs)
 3. **A new pipeline:** `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` (runtime → connections →
    folder and assets → contract → mapping → task → first run and proof → DQ → orchestration → governance).
@@ -51,25 +49,24 @@ that. The README's "Create any IDMC asset" table says where each asset type star
 5. **Live production system, or a build someone else made:** `knowledge/00-start-here/09-what-went-wrong-production-deployment-post-mortem.md` (each failure with the
    check that catches it)
 6. `knowledge/00-start-here/04-error-triage.md` when anything fails
-7. The blueprint's `README.md` then `BUILD.md` (`demos/<name>/`)
-8. Before any IDMC call, search the lessons first: `grep -ril "<thing>" "lessons"`
+7. The blueprint's `README.md` then `BUILD.md` (`toolkit/demos/<name>/`)
+8. Before any IDMC call, search the lessons first: `grep -i "<thing>" lessons/lessons.jsonl` and the user's own
+   `~/.idmc_toolkit/lessons-local.jsonl`
 
 This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, playbook in `knowledge/playbook/`): nothing else to install.
 
 ## Non-negotiables
-- **The IDMC login lives in `IDMC_LOGIN.txt`** (the KB root: `IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST`); every
-  script reads it. If the user cannot connect, have them fill in that file, nothing else. It is the ONE credential file
-  allowed in the folder; the blueprints' other secrets live outside it, in `~/.idmc_toolkit/.env` (`IDMC_CREDS_FILE`).
-  Never print the file's values, and never write a credential, token, session id or key anywhere else in the toolkit,
-  a transcript or a command line. Print key names, never values.
-- **One login, one attempt.** A few rejected logins lock the account (`IDS_086`). The core library serializes logins,
+- **The IDMC login lives in `~/.idmc_toolkit/IDMC_LOGIN.txt`** (`IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST`), outside
+  the plugin; `IDMC_CREDS_FILE` or environment variables can point elsewhere. If the user cannot connect, run
+  `/idmc-mp:connect` and have them fill it in with `python3 toolkit/check_login.py --setup` in a terminal. Never ask
+  for a password in the chat, never print the file's values, and never write a credential, token, session id or key
+  into the plugin, a transcript, a log or a command line. Print key names, never values.
+- **One login, one attempt.** A few rejected logins lock the account (`IDS_086`). The library serializes logins,
   caches the session and writes a block file after a rejected login: never delete that file without the user confirming
   the password was fixed.
-- **One writer per org.** Only one session writes to an org at a time. Prove the org (`python3 toolkit/check_login.py`, which runs the
-  Script Library's `idmc_session.py whoami`) before any change, and pass `--execute --expect-org <orgIdV3>` for writes. Everything is a dry run otherwise.
-  The mapping generator is the one exception: `toolkit/mapgen/mapgen.py deploy` writes unless you pass `--dry-run`. So
-  prove the org first, run `--dry-run` before every deploy, and keep the profile's `guards` covering every connection
-  alias you write to.
+- **One writer per org.** Only one session writes to an org at a time. Prove the org (`python3 toolkit/check_login.py`)
+  before any change. Every write, including the mapping generator's, is a dry run until you pass
+  `--execute --expect-org <orgIdV3>`, and it refuses to run in any other org.
 - **Read back every write.** A 200 can be empty or silently reverted (Law 4, Law 12).
 - **Runs cost money / jobs.** Every task and taskflow run counts against the org's job budget and IPUs. Building is
   free; ask the user before running loads, schedules or anything that loops.
@@ -77,10 +74,13 @@ This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, play
   building, deploying, verifying and stand-in traffic, and, where IDMC has no native path, for a small bridge (an agent
   pre/post step, or a script that fetches, converts or stages data for an IDMC connector). A bridge is a valid
   workaround to offer; a refusal is not.
-- **Keep the toolkit generic.** Your org's ids go in each blueprint's `config.json` / `state/`; don't share
-  those files. Before re-sharing the toolkit empty `IDMC_LOGIN.txt` and run `python toolkit/tools/secret_scan.py`; it must print CLEAN.
+- **Talk only to the user's systems.** Never send org data, credentials or logs to any other host, and never run
+  third-party IDMC tools before reviewing them (`knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md` §5).
+- **Keep the plugin generic.** The user's org ids go in each blueprint's `config.json` / `state/` (git-ignored); never
+  write them into the plugin folder. Before sharing a clone, run `python3 toolkit/tools/secret_scan.py`; it must print CLEAN.
 - **Never delete what you can't restore.** Export (v3 export package) before deleting IDMC objects; keep undo files.
 
 ## When you learn something
-Add the reusable fact to the matching topic doc (`01`-`12`, `14`) and as a lesson in `lessons` (generic: no org
-ids, hosts, people or secrets), and fix the blueprint's BUILD.md "Gotchas" if it changes a step.
+Save it as a generic lesson (no org ids, hosts, people or secrets) in the user's `~/.idmc_toolkit/lessons-local.jsonl`
+with `/idmc-mp:save-lesson`: the plugin folder is replaced on every update, so never write into it. To share a lesson
+with everyone, follow `CONTRIBUTING.md` (an issue or a pull request).

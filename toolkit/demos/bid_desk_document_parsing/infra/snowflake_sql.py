@@ -19,6 +19,7 @@ from __future__ import annotations
 
 import glob
 import json
+import re
 import sys
 import time
 import urllib.error
@@ -52,18 +53,78 @@ def split_sql(text):
     return out
 
 
-def run(cfg, statement, timeout=300):
-    """one statement -> (status, json). Never prints the token."""
+_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_$]*$")
+
+
+def ident(name):
+    """A Snowflake identifier, double-quoted with embedded quotes doubled (upper-case it first for the unquoted
+    meaning: "BID_LINEAGE" is the same object as BID_LINEAGE)."""
+    return '"' + str(name).replace('"', '""') + '"'
+
+
+def lit(value):
+    """A Snowflake string literal for the few statements that cannot take bind variables (SHOW ... LIKE). Backslash is
+    an escape character inside Snowflake single-quoted strings, so it is doubled first, then the quote."""
+    return "'" + str(value).replace("\\", "\\\\").replace("'", "''") + "'"
+
+
+def _bind(v):
+    if v is None:
+        return {"type": "TEXT", "value": None}
+    if isinstance(v, bool):
+        return {"type": "BOOLEAN", "value": str(v).lower()}
+    if isinstance(v, int):
+        return {"type": "FIXED", "value": str(v)}
+    if isinstance(v, float):
+        return {"type": "REAL", "value": repr(v)}
+    return {"type": "TEXT", "value": str(v)}
+
+
+def insert_sql(table, rows):
+    """(statement, bindings) for INSERT INTO <table> VALUES (?, ...), ... - every value travels as a bind variable of the
+    SQL API, never inside the SQL text, so values read back from IDMC cannot change the statement."""
+    if not _IDENT.match(table):
+        raise ValueError("unexpected table name: %r" % table)
+    rows = [tuple(r) for r in rows]
+    if not rows:
+        return None, None
+    width = len(rows[0])
+    if any(len(r) != width for r in rows):
+        raise ValueError("rows of different widths")
+    ph = "(" + ", ".join("?" * width) + ")"
+    stmt = "INSERT INTO %s VALUES\n" % ident(table.upper()) + ",\n".join(ph for _ in rows)
+    flat = [v for r in rows for v in r]
+    return stmt, {str(i): _bind(v) for i, v in enumerate(flat, 1)}
+
+
+def insert_rows(cfg, table, rows, execute):
+    """Insert rows with bind variables; dry run prints the statement shape and the row count only."""
+    stmt, binds = insert_sql(table, rows)
+    if stmt is None:
+        print("[DRY-RUN] Snowflake: no rows for %s" % table if not execute else "Snowflake: no rows for %s" % table)
+        return None
+    if not execute:
+        print("[DRY-RUN] Snowflake: %s ... (%d rows, %d bind variables)" % (stmt.splitlines()[0], len(rows), len(binds)))
+        return None
+    st, d = run(cfg, stmt, bindings=binds)
+    print("Snowflake %s %s" % (st, (d.get("message") or "")[:160]))
+    return st
+
+
+def run(cfg, statement, timeout=300, bindings=None):
+    """one statement -> (status, json). Never prints the token. bindings: SQL API bind variables for '?' markers."""
     sf = cfg["snowflake"]
     body = {"statement": statement, "timeout": timeout, "warehouse": sf["warehouse"], "database": sf["database"],
             "schema": sf["schema"], "role": sf["role"], "parameters": {"QUERY_TAG": "bid_desk_blueprint"}}
+    if bindings:
+        body["bindings"] = bindings
     req = urllib.request.Request(endpoint(cfg) + "?requestId=" + str(uuid.uuid4()), data=json.dumps(body).encode(), method="POST",
                                  headers={"Authorization": "Bearer " + C.env("SNOWFLAKE_PAT"),
                                           "X-Snowflake-Authorization-Token-Type": "PROGRAMMATIC_ACCESS_TOKEN",
                                           "Content-Type": "application/json", "Accept": "application/json",
                                           "User-Agent": "bid-desk-blueprint/1"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout + 30) as r:
+        with C.urlopen(req, timeout=timeout + 30) as r:
             st, d = r.status, json.loads(r.read() or b"{}")
     except urllib.error.HTTPError as e:
         st, d = e.code, json.loads(e.read() or b"{}") if e.headers.get("Content-Type", "").startswith("application/json") else {}
@@ -73,7 +134,7 @@ def run(cfg, statement, timeout=300):
                                      headers={"Authorization": "Bearer " + C.env("SNOWFLAKE_PAT"),
                                               "X-Snowflake-Authorization-Token-Type": "PROGRAMMATIC_ACCESS_TOKEN",
                                               "Accept": "application/json"})
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with C.urlopen(req, timeout=120) as r:
             st, d = r.status, json.loads(r.read() or b"{}")
     if str(d.get("code")) == "090073":
         C.H.die("Snowflake 090073: the resource monitor stopped the warehouse (quota reached). Raise it: "
@@ -121,7 +182,7 @@ def main():
         for r in rows(cfg, " ".join(a.args)):
             print(json.dumps(r, default=str))
     else:
-        for r in rows(cfg, f"SHOW RESOURCE MONITORS LIKE '{cfg['snowflake']['monitor']}'"):
+        for r in rows(cfg, "SHOW RESOURCE MONITORS LIKE " + lit(cfg["snowflake"]["monitor"])):
             print({k: r.get(k) for k in ("name", "credit_quota", "used_credits", "remaining_credits", "level", "frequency")})
 
 

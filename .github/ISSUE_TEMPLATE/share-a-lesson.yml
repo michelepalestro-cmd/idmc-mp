@@ -1,0 +1,45 @@
+name: Share a lesson
+description: Something IDMC did that would help other users (an error and its fix, a route, a limit, a trap).
+title: "Lesson: "
+labels: ["lesson"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you! Keep it **generic**: no org ids, hosts, IP addresses, company, customer or people's names, e-mails,
+        and never a password, token or key. Use placeholders like `<pod>`, `<domain>`, `<orgIdV3>`, `<connId>`.
+  - type: dropdown
+    id: domain
+    attributes:
+      label: Area
+      options: [auth, agent, connections, cdi, dbmi-cdc, cai, dq-profiling, cdgc, mdm, claire-mcp, migration, org-cleanup, ipu-licensing, environment-ops, claude-method, ui-automation]
+    validations:
+      required: true
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Kind
+      options: [GOTCHA (a trap), ERROR (an error and what it means), ROUTE (an exact API call), RECIPE (steps that work), LIMIT or FACT, WORKAROUND, OTHER]
+    validations:
+      required: true
+  - type: textarea
+    id: lesson
+    attributes:
+      label: The lesson
+      description: What happened, why, and what to do. Include the exact verb, path, setting or error code.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence
+      description: How you know (an HTTP status, a read-back, a count, a measured time), and the date.
+    validations:
+      required: true
+  - type: checkboxes
+    id: generic
+    attributes:
+      label: Before you submit
+      options:
+        - label: It contains no org ids, hosts, IPs, names, e-mails, passwords, tokens or keys.
+          required: true

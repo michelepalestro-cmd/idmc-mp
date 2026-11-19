@@ -21,6 +21,7 @@ connectors, and the CRM needs the fields the sync writes.
 
 1. **Secure Agent** running and registered in the org, in a runtime environment whose name you put in
    `config.json` `idmc.runtimeEnvironment`. It must reach the stand-in Postgres (`PG_HOST:PG_PORT`) and the internet.
+   The stand-in publishes Postgres on **127.0.0.1 only**, so run the agent on the docker host (`PG_HOST=127.0.0.1`).
    Agent services: Data Integration Server, Database Ingestion (Mass Ingestion), Connector Service, plus the
    metadata / profiling services for steps 9-10. Change selections **between** runs: every change rolls services to
    the newest build and queues jobs for about 5 minutes. Never select every connector on a small host (one did,
@@ -61,8 +62,12 @@ python infra/seed.py --customers 500 --apply
 **Expected.** `generated: {'customers': ~520, 'memberships': ~200, 'orders': ~1300}` then `applied`.
 **Verify.** `... psql -U rdf_app -d rdf_retail -c "select count(*) from public.customers"`.
 **Undo.** `docker compose -p rdf -f infra/docker-compose.yml down -v`.
-Seed a **fresh** database only (the generator numbers foreign keys from 1). Allow the agent's network in `pg_hba.conf`
-if the agent is not on the docker host.
+Seed a **fresh** database only (the generator numbers foreign keys from 1). The compose file publishes the port on
+**127.0.0.1 only** and the stand-in has **no TLS**, so the IDMC connections switch encryption off for a loopback
+`PG_HOST` only (`config.json` `source.tls`: `auto`). Agent on another host: do not publish this stand-in on a network
+address; use an SSH tunnel from the agent host to the docker host (`ssh -N -L 5432:127.0.0.1:5432 <docker host>`,
+`PG_HOST=127.0.0.1` on the agent), or a real PostgreSQL with `ssl=on` and a server certificate the agent trusts (any
+non-loopback `PG_HOST` gets `encryptionMethod SSL`, TLS 1.2 and server-certificate validation).
 
 ## Step 2. Warehouse datasets and tables  (ADAPTED)
 
@@ -116,8 +121,9 @@ connection and re-test (see Gotchas). KB: [Connections](../../../knowledge/02-se
 cycle (measured 10-22 s end to end; one combined task gave 15-35 s).
 
 ```
-docker compose -p rdf -f infra/docker-compose.yml exec -T postgres psql -U rdf_app -d rdf_retail \
-    -v cdc_user=rdf_cdc -v cdc_pw="$PG_CDC_PASS" -v owner=rdf_app < infra/sql/02_cdc_prereqs.sql
+# PG_CDC_PASS must be exported in this shell; -e forwards it by NAME (never put the value on a command line)
+docker compose -p rdf -f infra/docker-compose.yml exec -T -e PG_CDC_PASS postgres psql -v ON_ERROR_STOP=1 \
+    -U rdf_app -d rdf_retail -v cdc_user=rdf_cdc -v owner=rdf_app < infra/sql/02_cdc_prereqs.sql
 python idmc/02_cdc.py render                     # state/rendered/dbmi_rdf_cdc_hot.json + _cold.json
 python idmc/02_cdc.py create --lane hot --execute --expect-org <orgIdV3>
 ```
@@ -212,19 +218,36 @@ every taskflow run is a job; a trial org had a hidden cap of about 10k per month
 
 ```
 python idmc/05_cai.py harvest --execute --expect-org <orgIdV3>   # exports one task of the folder for its folder files
-python idmc/05_cai.py build                                        # state/packages/rdf_cai.pkg.zip (0600)
+python idmc/05_cai.py build                                        # state/packages/rdf_cai.pkg.zip (0600, no secret)
 python idmc/05_cai.py import  --execute --expect-org <orgIdV3>
+python idmc/05_cai.py set-secret --execute --expect-org <orgIdV3>  # SF_CLIENT_ID / SF_CLIENT_SECRET, stored encrypted
 python idmc/05_cai.py publish --execute --expect-org <orgIdV3>
-python idmc/05_cai.py purge                                        # the package holds the Connected App secret
+python idmc/05_cai.py purge
 python idmc/05_cai.py url                                          # copy CAI_RT_BASE into the .env
 python infra/traffic.py --count 1 --kind signup --cai              # expect "HTTP 200 in ~1 s ... upserted"
+```
+
+**Who may call the processes.** They are published **with authentication**: only the IDMC users in `config.json`
+`cai.allowedUsers` (and members of `cai.allowedGroups`) may call them, with Basic Authentication on
+`https://<pod>-cai.<domain>.informaticacloud.com/active-bpel/rt/<process>`. Before `build`: create a native IDMC user
+for the caller (for example `rdf_cai_caller`, with only the role it needs to run processes), put its name in
+`cai.allowedUsers`, and its login in the toolkit `.env` as `RDF_CAI_USER` / `RDF_CAI_PASS`. `build` refuses an empty
+allow-list (the endpoints would answer 403 to everyone). An application calls them like this (`traffic.py` does the
+same, https only, credentials never on a command line):
+
+```
+POST https://<pod>-cai.<domain>.informaticacloud.com/active-bpel/rt/rdf_cai_customer_to_crm
+Authorization: Basic base64(<RDF_CAI_USER>:<RDF_CAI_PASS>)
+Content-Type: application/json
+{"customer_id": "123", "email": "a@example.com", "full_name": "Ada Quinn", "phone": "2175550101", "tier": "Gold", "channel": "web"}
 ```
 
 **Expected.** import `SUCCESSFUL` with 4 objects; publish waves connector -> connection -> processes, every item
 `SUCCESS`. **Verify.** The Contact exists in Salesforce with the external id = the new `customer_id`.
 **Undo.** `python idmc/05_cai.py unpublish --execute --expect-org <orgIdV3>`, then `teardown/teardown.py run --only cai`.
-The processes are **anonymous** REST (`config.json` `cai.anonymous`); set it to false for a shared org and call them
-with a session or basic auth instead. Every writer of a Contact field must apply the same rule (the CAI process,
+`cai.anonymous: true` (test-only opt-in, default false) publishes them with **no authentication** under
+`/active-bpel/public/rt/<orgIdV3>/<process>`: anyone who learns the URL can then write Contacts into the CRM with the
+Connected App's rights. Never use it in a shared or customer org. Every writer of a Contact field must apply the same rule (the CAI process,
 the batch sync): otherwise the batch silently undoes the real-time result 2-3 minutes later.
 KB: [CAI Asset Lifecycle](../../../knowledge/05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md),
 [CAI Connections & Connectors](../../../knowledge/05-cai-application-integration/03-cai-connections-connectors-e.g.-salesforce-oauth.md).
@@ -311,7 +334,8 @@ delete may already have removed objects: read back before reporting.
 - Native PostgreSQL: `type: TOOLKIT_CCI` + `instanceName: PostgreSQL`; the user key is **`userName`** (with `user` the
   bean reads null and you get an opaque `403 APP_105060 error [null]` in ~7 ms); `authenticationType` must match the
   driver build: `UserIdPassword` on the build seen in 2026-09 (`Standard`, `md5`, `scram` were rejected; an earlier
-  build wanted `Database`). `encryptionMethod: noEncryption`. No `schemaName` key.
+  build wanted `Database`). `encryptionMethod`: `SSL` + `tlsv1_2` + `validateServerCertificate` `true` for any real
+  server; `noEncryption` only for the loopback stand-in without TLS (`source.tls`, `rdf_common.pg_tls_vars`). No `schemaName` key.
 - A type that the org has never had answers `403 APP_10519 'The connection type is not valid'` (looks like licensing,
   is not): create the first connection of that type in the UI once.
 - Update = `POST /api/v2/connection/<id>` with the full body and the secret again (GET masks it). There is no PUT.
@@ -369,9 +393,9 @@ delete may already have removed objects: read back before reporting.
 **CAI**
 - Asset paths are `Explore/<project>/<folder>/<name>.<TYPE>.xml`; publish waves connector -> connection -> processes;
   a 202 is only submission (read every `itemDetail[].itemState`); the runtime serves the old version for ~20 s.
-- The app connection is imported with `encrypted="false"` attributes: the client secret then travels in clear text in
-  every later export of that connection. Keep exports out of shared folders, `purge` the built package, or build with
-  `--no-secrets` and type the values into the connection in Application Integration.
+- The app connection's `SF_CLIENT_ID` / `SF_CLIENT_SECRET` are packaged `encrypted="true"` with **empty** values, and
+  `05_cai.py set-secret` stores them with `PUT /active-bpel/asset/v1/update?assetType=AppConnection` (L-CAI-132; this
+  connector: ADAPTED). An attribute authored `encrypted="false"` is stored, and exported, in clear text.
 - OAuth token parameters go in a form-encoded **body**, not the URL. The built-in Salesforce connector needs
   ModifyMetadata (breaks least privilege): this blueprint uses its own REST service connector.
 - CAI omits empty outputs: read optional outputs with a default. Callers should fail open with a short timeout.

@@ -179,5 +179,5 @@ side (headed browser, flags, reloads) fixed the designer regression; the REST ro
 | API activation after a deactivation | Console APIs page only | L-CAI-010 |
 | MCP tool connections in a new org | Import fails; recreate in the designer only if the org was in the AI Agent Engineering private preview, otherwise the type does not exist | L-CAI-027, L-MCP-081 |
 | File listeners, human tasks | Designer-only constructs (Kafka and AMQP event sources, listener processes and fault handling author by package: [CAI Event Listeners](06-cai-event-listeners-kafka-amqp-jms.md)) | L-CAI-025, L-CAI-116 |
-| Shell Service enablement on an agent | One-time UI step | L-CAI-053 |
+| Shell Service enablement on an agent | One-time UI step; it lets processes run OS commands on that agent, so use a dedicated agent | L-CAI-053 |
 | Managed APIs and policies in API Manager | No REST in July 2026; re-probe | L-CAI-094 |

@@ -10,17 +10,23 @@
 Credentials never live in a profile. ``profile["auth"]`` names environment variables (defaults IDMC_USER,
 IDMC_PASS, IDMC_LOGIN_URL) and may name a KEY=VALUE file (``envFile``, or the MAPGEN_ENV_FILE variable) that
 supplies them. ``auth.loginUrl`` may hold the login host itself (e.g. https://dm-us.informaticacloud.com).
-With no env file named, the toolkit's IDMC_LOGIN.txt (toolkit root) is used; its IDMC_LOGIN_HOST gives the login URL.
+With no env file named, the toolkit's login file is used (~/.idmc_toolkit/IDMC_LOGIN.txt; a repo-root
+IDMC_LOGIN.txt only as a git-clone legacy fallback); its IDMC_LOGIN_HOST gives the login URL.
+Credentials go ONLY to https://<domain>.informaticacloud.com (anything else raises LoginError before a byte is sent),
+and an "auth" block is never taken from a spec's inline "profile" object (spec.resolve_profile refuses it).
 
-Login safety: ONE attempt. A failed login raises LoginError and leaves a marker; any login in the next
-15 minutes (from any process using the same state dir) refuses to try again, so a wrong password can never
-turn into an account lockout. Delete the marker (path in the error) once the credentials are fixed.
-A cached session is reused for 24 minutes (IDMC sessions die 30 minutes after grant), then replaced.
-Every host comes from the login answer's serverUrl; nothing is guessed.
+Login safety: the login itself is toolkit/lib/idmc_session.py's (Session.v2()), so mapgen shares the library's ONE
+lockout guard: one attempt, a file lock, and after a rejected login (4xx) a block file keyed by an HMAC fingerprint of
+the credentials; while it matches, no process (library or mapgen) logs in again. Fix the credentials (the fingerprint
+changes) or have a human confirm them before deleting the block file (its path is in the error). Sessions are cached
+0600 in IDMC_CACHE_DIR (default ~/.idmc_session) and reused for 24 minutes (IDMC sessions die 30 minutes after grant).
+Every host comes from the login answer's serverUrl; nothing is guessed. Redirects are followed only to https on the
+same host, and an absolute URL passed to call() must be https under the login domain.
 """
-import hashlib
 import json
 import os
+import re
+import sys
 import time
 import urllib.error
 import urllib.parse
@@ -28,12 +34,17 @@ import urllib.request
 
 from . import lock
 
+_LIB = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "lib"))
 SESSION_MAX_AGE_S = 24 * 60
-FAILED_LOGIN_HOLD_S = 15 * 60
-_PW_FIELD = "pass" + "word"   # the v2 login body key (spelled so secret scanners skip this variable)
+RELOGIN_GAP_S = 5 * 60          # after a 401: at most one forced re-login per client in this window
 DEFAULT_AUTH = {"userEnv": "IDMC_USER", "passwordEnv": "IDMC_PASS", "loginUrlEnv": "IDMC_LOGIN_URL"}
-LOGIN_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "IDMC_LOGIN.txt")
-HOME_LOGIN_FILE = os.path.join(os.path.expanduser("~"), ".idmc_toolkit", "IDMC_LOGIN.txt")
+
+
+def _lib(name):
+    """A toolkit/lib module (idmc_session, idmc_http, idmc_login)."""
+    if _LIB not in sys.path:
+        sys.path.insert(0, _LIB)
+    return __import__(name)
 
 
 class LoginError(RuntimeError):
@@ -93,21 +104,23 @@ class Client:
         self.profile = profile
         self.auth = dict(DEFAULT_AUTH, **(profile.get("auth") or {}))
         self.expected_org = (profile.get("org") or {}).get("v2Id")
-        self.state_dir = os.path.expanduser(state_dir or lock.STATE_DIR)
+        self.state_dir = os.path.expanduser(state_dir or lock.STATE_DIR)   # live lock / job ledger (sessions: idmc_session)
         self._env = os.environ if env is None else env
-        self._urlopen = urlopen or urllib.request.urlopen
+        self._urlopen = urlopen or _lib("idmc_http").urlopen     # SafeRedirect: same-host https redirects only
         self._clock = clock or time.time
         self._sess = None
-        self.logins = 0                       # logins performed by this client (tests and audit)
+        self._lib_sess = None
+        self._relogin_at = None
+        self.logins = 0                       # sessions obtained by this client (tests and audit)
 
-    # ---------- credentials and session cache ----------
+    # ---------- credentials and session ----------
     def _creds(self):
+        L = _lib("idmc_login")
         env_file = (self.auth.get("envFile") or self._env.get("MAPGEN_ENV_FILE")
                     or self._env.get("IDMC_CREDS_FILE"))
-        if not env_file and os.path.isfile(LOGIN_FILE):
-            env_file = os.path.normpath(LOGIN_FILE)
-        if not env_file and os.path.isfile(HOME_LOGIN_FILE):
-            env_file = HOME_LOGIN_FILE
+        if not env_file:
+            lf = L.login_file()               # ~/.idmc_toolkit/IDMC_LOGIN.txt, else the git-clone legacy copy
+            env_file = str(lf) if lf else None
         file_vals = read_env_file(env_file) if env_file else {}
 
         def get(var):
@@ -116,93 +129,73 @@ class Client:
         pw = get(self.auth["passwordEnv"])
         url = self.auth.get("loginUrl") or get(self.auth["loginUrlEnv"])
         if not url and get("IDMC_LOGIN_HOST"):       # IDMC_LOGIN.txt: a domain host or a pasted browser address
-            host = urllib.parse.urlparse("//" + get("IDMC_LOGIN_HOST").split("//")[-1]).hostname or ""
-            url = "https://" + ".".join(host.split(".")[-3:])
+            raw = get("IDMC_LOGIN_HOST").strip()
+            url = raw if "//" in raw else "https://" + raw
         missing = [n for n, v in ((self.auth["userEnv"], user), (self.auth["passwordEnv"], pw),
                                   ("auth.loginUrl or " + self.auth["loginUrlEnv"], url)) if not v]
         if missing:
             raise LoginError("missing credentials: set %s (environment%s)" % (
                 ", ".join(missing), " or " + env_file if env_file else ", or auth.envFile / MAPGEN_ENV_FILE"))
-        return user, pw, url.rstrip("/")
+        return user, pw, self.login_url(url)
 
-    def _key(self):
-        user, _, url = self._creds()
-        return hashlib.sha1(("%s|%s" % (url, user)).encode()).hexdigest()[:12]
+    @staticmethod
+    def login_url(url):
+        """https://<domain>.informaticacloud.com or LoginError: credentials are never sent to any other place."""
+        L = _lib("idmc_login")
+        u = urllib.parse.urlsplit(url.strip())
+        if u.scheme.lower() != "https" or u.username or u.password or u.port not in (None, 443):
+            raise LoginError("login URL %r refused: it must be https://<domain>.informaticacloud.com "
+                             "(credentials are never sent elsewhere)" % url)
+        host = L.normalize_host(u.hostname or "")
+        if not L.is_login_host(host):
+            raise LoginError("login host %r refused: it must be <domain>.informaticacloud.com "
+                             "(credentials are never sent elsewhere)" % (u.hostname or url))
+        return "https://" + host
 
-    def _session_path(self):
-        return os.path.join(self.state_dir, "session_%s.json" % self._key())
-
-    def _failed_path(self):
-        return os.path.join(self.state_dir, "login_failed_%s.json" % self._key())
-
-    def _save(self, d):
-        os.makedirs(self.state_dir, exist_ok=True)
-        p = self._session_path()
-        with open(p, "w", encoding="utf-8") as f:
-            json.dump(d, f)
-        try:
-            os.chmod(p, 0o600)
-        except OSError:
-            pass
+    def _library_session(self):
+        """The idmc_session.Session that does the login (one lockout guard for the whole toolkit)."""
+        if self._lib_sess is None:
+            user, pw, url = self._creds()
+            S = _lib("idmc_session")
+            try:
+                self._lib_sess = S.Session({"IDMC_USER": user, "IDMC_PASS": pw,
+                                            "IDMC_LOGIN_HOST": urllib.parse.urlsplit(url).hostname})
+            except S.LoginError as e:
+                raise LoginError(str(e)) from None
+        return self._lib_sess
 
     def session(self, fresh=False):
-        """A live session: the in-memory one, the cached one (< 24 min old), or one new login."""
+        """A live session: the in-memory one, the cached one (< 24 min old), or ONE guarded login (idmc_session)."""
         now = self._clock()
         if not fresh and self._sess and now - self._sess.t < SESSION_MAX_AGE_S:
             return self._sess
-        if not fresh:
-            p = self._session_path()
-            if os.path.exists(p):
-                try:
-                    with open(p, encoding="utf-8") as f:
-                        d = json.load(f)
-                    if now - d.get("t", 0) < SESSION_MAX_AGE_S and d.get("icSessionId") and d.get("serverUrl"):
-                        self._sess = Session(d)
-                        return self._sess
-                except (OSError, ValueError):
-                    pass
-        self._sess = self.login()
+        self._sess = self.login(fresh=fresh)
         return self._sess
 
-    def login(self):
-        """ONE v2 login attempt. Never retried here; a failure blocks further attempts for 15 minutes."""
-        user, pw, url = self._creds()
-        fp = self._failed_path()
-        if os.path.exists(fp):
-            try:
-                with open(fp, encoding="utf-8") as f:
-                    info = json.load(f)
-            except (OSError, ValueError):
-                info = {"t": self._clock()}
-            if self._clock() - info.get("t", 0) < FAILED_LOGIN_HOLD_S:
-                raise LoginError("a login failed %d s ago (%s); not trying again for 15 min to avoid a lockout. "
-                                 "Fix the credentials, then delete %s" % (self._clock() - info.get("t", 0), info.get("why", ""), fp))
-        body = json.dumps({"@type": "login", "username": user, _PW_FIELD: pw}).encode()
-        req = urllib.request.Request(url + "/ma/api/v2/user/login", data=body, method="POST",
-                                     headers={"Content-Type": "application/json", "Accept": "application/json"})
-        self.logins += 1
+    def login(self, fresh=False):
+        """ONE v2 login attempt through idmc_session (file lock + credential-fingerprint block file). Never retried."""
+        ls = self._library_session()
+        S = _lib("idmc_session")
+        if fresh:
+            ls.drop("v2")
         try:
-            with self._urlopen(req, timeout=60) as x:
-                d = json.loads(x.read())
-        except urllib.error.HTTPError as e:
-            why = "HTTP %s %s" % (e.code, e.read().decode(errors="replace")[:200])
-            self._mark_failed(why)
-            raise LoginError("login FAILED (%s) - not retrying" % why) from None
-        except Exception as e:      # network errors count as a failed attempt too: never loop on them
-            self._mark_failed(repr(e)[:200])
-            raise LoginError("login FAILED (%r) - not retrying" % e) from None
-        if not d.get("icSessionId") or not d.get("serverUrl"):
-            self._mark_failed("no icSessionId/serverUrl in the answer")
+            d = ls.v2()
+        except S.LoginError as e:
+            raise LoginError(str(e)) from None
+        if not d.get("sid") or not d.get("serverUrl"):
             raise LoginError("login answer has no icSessionId/serverUrl - not retrying")
-        s = {k: d.get(k) for k in ("icSessionId", "serverUrl", "orgId", "orgUuid")}
-        s["t"] = self._clock()
-        self._save(s)
-        return Session(s)
+        self.logins += 1
+        return Session({"icSessionId": d["sid"], "serverUrl": d["serverUrl"], "orgId": d.get("orgId"),
+                        "orgUuid": d.get("orgUuid"), "t": self._clock() - (time.time() - d.get("t", time.time()))})
 
-    def _mark_failed(self, why):
-        os.makedirs(self.state_dir, exist_ok=True)
-        with open(self._failed_path(), "w", encoding="utf-8") as f:
-            json.dump({"t": self._clock(), "why": why}, f)
+    def _check_url(self, url, s):
+        """An absolute URL gets the session only when it is https under the login domain."""
+        u = urllib.parse.urlsplit(url)
+        host = (u.hostname or "").lower()
+        dom = ".".join(urllib.parse.urlsplit(s.server_url).hostname.lower().split(".")[-3:])
+        if u.scheme.lower() != "https" or not (host == dom or host.endswith("." + dom)):
+            raise ValueError("refusing to send the IDMC session to %s://%s (only https hosts under %s)"
+                             % (u.scheme, host, dom))
 
     # ---------- calls ----------
     def call(self, path, body=None, method=None, v3=False, raw=None, ctype="application/json", accept="application/json",
@@ -210,6 +203,7 @@ class Client:
         """-> (status, parsed body). status -1 = transport error (body = repr). Never raises on HTTP errors."""
         s = self.session()
         if path.startswith("http"):
+            self._check_url(path, s)
             url = path
         elif frs:
             url = s.host + "/frs/v1/" + path.lstrip("/")
@@ -232,13 +226,11 @@ class Client:
                 return status, b
         except urllib.error.HTTPError as e:
             txt = e.read().decode(errors="replace")[:4000]
-            if e.code == 401 and _retry:
-                # the cached session died early: drop it and make ONE fresh login (a new attempt, not a retry of a failed one)
+            if e.code == 401 and _retry and (self._relogin_at is None or self._clock() - self._relogin_at >= RELOGIN_GAP_S):
+                # the cached session died early: drop it and make ONE fresh login (a new attempt, not a retry of a
+                # failed one); at most one such re-login per call and per RELOGIN_GAP_S, so a 401 loop never logs in
+                self._relogin_at = self._clock()
                 self._sess = None
-                try:
-                    os.remove(self._session_path())
-                except OSError:
-                    pass
                 self.session(fresh=True)
                 return self.call(path, body, method, v3, raw, ctype, accept, base, timeout, headers, frs, _retry=False)
             return e.code, _parse(txt.encode()) if txt[:1] in "{[" else txt
@@ -273,3 +265,15 @@ class Client:
             raise OrgMismatch("session org is %s (%s), the profile expects %s - refusing to continue"
                               % (who["id"], who["name"], expected))
         return who
+
+    def require_org(self, expected_v3):
+        """The write guard: the live org must be ``expected_v3`` (22-char v3 org id), proven exactly as
+        idmc_session.Session.require_org proves it (GET /api/v2/org + the session user). Raises OrgMismatch."""
+        if not re.fullmatch(r"[A-Za-z0-9]{22}", expected_v3 or ""):
+            raise OrgMismatch("--expect-org must be the 22-character v3 org id (orgUuid), got %r" % (expected_v3,))
+        self.session()
+        try:
+            return self._library_session().require_org(expected_v3)
+        except SystemExit:
+            raise OrgMismatch("ORG GUARD FAILED for --expect-org %s (see the message above); nothing was sent"
+                              % expected_v3) from None

@@ -1,35 +1,34 @@
-<!-- The playbook: Laws 0-7, error triage, preflight. Paths are relative to the skill folder. -->
+<!-- The playbook: Laws 0-7, error triage, preflight. Paths are relative to the plugin root. -->
 # IDMC headless
 
-## Master IDMC KB — read this FIRST (it is newer and far larger than this skill)
+## Read this first: where the knowledge base is
 
-This skill is a July 2026 snapshot (~11 reference files). The maintained knowledge base is
-`kb\` (the Master IDMC KB folder; inside this skill) (start at `README.md`):
-~2,400 files, **1,800+ lessons** (`lessons\lessons.jsonl`, ids `L-<DOM>-###`, with status current/disputed/superseded).
-Where it disagrees with this skill, **the KB wins** (check `lessons\overturned-beliefs.md`).
+This playbook is a compact July 2026 snapshot. The maintained knowledge base is in this plugin: start at
+`knowledge/README.md`. The lessons (`lessons/lessons.jsonl`, ids `L-<DOM>-###`, status current, disputed or superseded)
+are dated evidence. Where they disagree with this playbook, **the lessons win** (check `lessons/overturned-beliefs.md`).
 
-| Need | KB folder |
+| Need | Where |
 |---|---|
 | **A new pipeline (any source, any target)** | `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md`: runtime → connections → folder and assets → contract → mapping → task → run and proof |
 | Laws, capability map, error triage | `knowledge/00-start-here` |
 | Login, orgs, pods, sessions | `knowledge/01-access-auth-orgs` |
 | Secure Agent, runtime, connections (incl. Salesforce) | `knowledge/02-secure-agent-connections` |
-| Mappings / taskflows headless, mapping generator, consolidation | `knowledge/03-cdi-data-integration`: **start with `00-mapping-fast-path-read-this-first.md`** (ten commands, per-connector spec settings, costly errors), then one spec from `core\mapgen\examples\` and `core\mapgen\docs\SPEC_REFERENCE.md` |
+| Mappings / taskflows headless, mapping generator, consolidation | `knowledge/03-cdi-data-integration`: **start with `00-mapping-fast-path-read-this-first.md`**, then one spec from `toolkit/mapgen/examples/` and `toolkit/mapgen/docs/SPEC_REFERENCE.md` |
 | DBMI / CDC | `knowledge/04-cdc-mass-ingestion` |
 | CAI publish/deploy/processes | `knowledge/05-cai-application-integration` |
 | CDQ rules, profiling | `knowledge/06-data-quality-profiling` |
 | CDGC catalog, lineage, glossary | `knowledge/07-catalog-governance-cdgc` |
 | MDM SaaS | `knowledge/08-mdm` |
-| CLAIRE GPT, MCP servers | `knowledge/09-claire-mcp` |
+| CLAIRE GPT, MCP servers, plugins and community tools | `knowledge/09-claire-mcp` |
 | Export/import, org cleanup, migration | `knowledge/10-migration-org-management` |
 | IPU, metering, job caps | `knowledge/11-ipu-metering-licensing` |
-| API & MCP reference corpus, verb matrix | `knowledge/12-reference-library` |
-| Lessons by domain | `lessons` |
-| How Claude works (scripts, patterns) | `knowledge/14-claude-working-methods` (`Script Library\`) |
-| Your IDMC login (user, password, login address) | `kb\IDMC_LOGIN.txt` |
-| Ready-to-rebuild demo blueprints (CDC, CDI, CAI, CDQ, CDGC) | `kb\demos\` (start at `BLUEPRINT_CONVENTIONS.md`) |
-| The generic Python library every blueprint imports | `kb\knowledge/14-claude-working-methods\Script Library\` |
-| The headless mapping generator (spec -> mapping -> import package) | `kb\core\mapgen\` |
+| API & MCP reference corpus, community code index | `knowledge/12-reference-library` |
+| Lessons by domain | `lessons/by-domain` |
+| How Claude works (scripts, patterns) | `knowledge/14-claude-working-methods` |
+| The user's IDMC login (user, password, login address) | `~/.idmc_toolkit/IDMC_LOGIN.txt`, created by `toolkit/check_login.py` (never inside the plugin) |
+| Ready-to-rebuild demo blueprints (CDC, CDI, CAI, CDQ, CDGC) | `toolkit/demos/` (start at `BLUEPRINT_CONVENTIONS.md`) |
+| The Python library every blueprint imports | `toolkit/lib/` |
+| The headless mapping generator (spec -> mapping -> import package) | `toolkit/mapgen/` |
 
 **The KB and this skill are guidance, not a script.** Build with the user's own source, target and connectors. The
 systems in the examples (PostgreSQL, BigQuery, Snowflake, Databricks, Salesforce, SharePoint, ClickHouse, Tableau, flat

@@ -1,7 +1,7 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
 [![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.7.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.8.0-blue)](CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP turns Claude Code into a helper for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS).
@@ -205,19 +205,28 @@ Updates never touch your login or your own lessons: they live in `~/.idmc_toolki
 skills/           idmc-mp (core: rules, login, routing) + one skill per IDMC area
 commands/         the twelve /idmc-mp:<name> slash commands
 knowledge/        the knowledge base: 00-start-here ... 14-claude-working-methods, playbook/, reference library
-lessons/          lessons.jsonl (the source of truth), by-domain/ (readable), overturned-beliefs.md, case-studies/
+lessons/          lessons.jsonl (the source of truth), by-domain/ (readable), overturned-beliefs.md
 toolkit/          lib/ (Python library), mapgen/ (mapping generator), demos/, setup/, tools/, check_login.py
 tests/            run_tests.py (offline tests, run in CI) and USER_STORIES.md
+.github/          CI workflows, issue forms and the pull-request checklist
 ```
 
 Lessons are the evidence behind everything: each has an id (`L-<AREA>-###`), the evidence that proved it, and a status
 (current, superseded or disputed). The [lessons README](lessons/README.md) explains the format.
 
+## Getting help
+
+- A login or setup problem: the [troubleshooting table](#if-the-login-doesnt-work) above.
+- An IDMC error: `/idmc-mp:fix-error` in Claude Code.
+- A bug in the plugin: open an [issue](https://github.com/michelepalestro-cmd/idmc-mp/issues/new/choose).
+- A security problem: see [SECURITY.md](SECURITY.md) (please don't open a public issue).
+- Anything else: e-mail the maintainer at michelepalestro@gmail.com.
+
 ## Contributing
 
 `/idmc-mp:save-lesson` keeps new lessons on your computer. To share one with everyone, open an issue or a pull request
-with the lesson in generic form: no org ids, hosts, people, customer names or secrets. See
-[CONTRIBUTING.md](CONTRIBUTING.md).
+with the lesson in generic form: no org ids, hosts, people, customer names or secrets. The "Share a lesson" issue form
+makes it easy. See [CONTRIBUTING.md](CONTRIBUTING.md) and the [Code of Conduct](CODE_OF_CONDUCT.md).
 
 ## Notes
 

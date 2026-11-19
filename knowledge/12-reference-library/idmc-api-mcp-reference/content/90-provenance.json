@@ -29,11 +29,6 @@
      "Live testing, org B",
      "~110 combinations against Org B, a sub-org on a dmp-us pod, on 25 July 2026, including a create-then-delete write round trip.",
      "The independent second data point. It is what turns 'works' into 'works on both pods', or exposes a finding as pod-specific."
-    ],
-    [
-     "Vendor conversation",
-     "A July 2026 meeting with Informatica's Headless IDMC team.",
-     "First-party confirmation of the read/run versus publish/deploy boundary, and of the roadmap: API mapping design previewed late 2026, GA around 2027."
     ]
    ]
   },

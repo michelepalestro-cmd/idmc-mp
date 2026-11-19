@@ -3,17 +3,18 @@
 build_kb.py — assemble the readable master KB from the modular sections/ files.
 
 This is the "Integrator" role from AGENTS.md, made reproducible. It:
-  1. reads sections/00-executive-summary.md .. 11-glossary.md in order,
+  1. reads sections/00-executive-summary.md .. 12-glossary.md in order,
   2. strips each file's trailing "## Sources" block (citations live in sources/SOURCES.md),
   3. demotes every heading one level (so the master has a single H1),
   4. rewrites cross-references like (./04-....md) into in-document #anchors,
   5. prepends a title, provenance line, and an auto-generated table of contents,
-  6. writes "IICS to IPUs — Knowledge Base.md" at the KB root.
+  6. writes iics-to-ipus-knowledge-base.md at the KB root.
 
-Run it after editing any section:
-    python build/build_kb.py
+The output is generated on demand and is not shipped in the repo (sections/ is the
+source of truth). Run it when you want the single-file version:
+    python3 build/build_kb.py
 
-No third-party dependencies. Safe to re-run (idempotent).
+Python 3.10+, standard library only. Safe to re-run (idempotent).
 """
 
 import os
@@ -24,7 +25,7 @@ import datetime
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 KB_ROOT = os.path.dirname(BUILD_DIR)
 SECTIONS_DIR = os.path.join(KB_ROOT, "sections")
-OUTPUT = os.path.join(KB_ROOT, "IICS to IPUs — Knowledge Base.md")
+OUTPUT = os.path.join(KB_ROOT, "iics-to-ipus-knowledge-base.md")
 
 # --- ordered section files (numeric prefix -> filename) ---
 SECTION_FILES = [
@@ -98,12 +99,12 @@ def build_anchor_map():
 
 
 def rewrite_links(text, anchor_map):
-    """(./NN-anything.md) and (./NN-anything.md#frag) -> (#section-anchor)."""
+    """(NN-anything.md), (./NN-anything.md) and either with #frag -> (#section-anchor)."""
     def repl(m):
         num = m.group(1)
         anchor = anchor_map.get(num)
         return "(#%s)" % anchor if anchor else m.group(0)
-    return re.sub(r"\(\.\/(\d\d)-[^)]+\.md(?:#[^)]*)?\)", repl, text)
+    return re.sub(r"\((?:\.\/)?(\d\d)-[^)/]+\.md(?:#[^)]*)?\)", repl, text)
 
 
 def main():
@@ -120,7 +121,7 @@ def main():
     )
     header.append("")
     header.append(
-        "> **Do not hand-edit this file.** It is generated from `sections/00…11` by "
+        "> **Do not hand-edit this file.** It is generated from `sections/00…12` by "
         "`build/build_kb.py`. Edit the section files, then re-run the build. "
         "See [`AGENTS.md`](./AGENTS.md) and [`README.md`](./README.md). "
         "All citations live in [`sources/SOURCES.md`](./sources/SOURCES.md)."

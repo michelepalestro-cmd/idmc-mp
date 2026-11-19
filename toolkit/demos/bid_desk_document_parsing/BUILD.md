@@ -102,7 +102,7 @@ org trusts (`runtime_environment_crm`).
 3. Mint the token AFTER consent, for the SharePoint audience (not Graph):
 ```
 python infra/sharepoint_setup.py token-url          # sign in once, copy the code
-python infra/sharepoint_setup.py redeem --code <code> --out <file outside the toolkit>   # then copy the value into .env
+python infra/sharepoint_setup.py redeem --out <file outside the toolkit>   # paste the code at the hidden prompt; then copy the value into .env
 python infra/sharepoint_setup.py check
 python infra/sharepoint_setup.py mkdirs --execute
 ```

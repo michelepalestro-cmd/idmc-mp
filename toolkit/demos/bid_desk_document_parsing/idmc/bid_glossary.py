@@ -139,16 +139,12 @@ def main():
         defs = {t["name"]: t["definition"] for t in g["terms"]}
         rows = [(n, defs.get(n, ""), k.split("|", 1)[1]) for k in (reg.get("links") or {}) for n in [k.split("|", 1)[0]]]
         rows += [(n, defs[n], "") for n in defs if not any(r[0] == n for r in rows)]
-        esc = lambda s: str(s).replace("'", "''")  # noqa: E731
         now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-        sql = "INSERT INTO BID_GLOSSARY VALUES\n" + ",\n".join(
-            "('%s','%s','%s','%s','Published','%s')" % (now, esc(dname), esc(n), esc(d), esc(l)) for n, d, l in rows)
-        if not ctx.execute:
-            print("[DRY-RUN] Snowflake: %s ... (%d rows)" % (sql[:300], len(rows)))
-        else:
-            sys.path.insert(0, str(C.BP / "infra"))
-            import snowflake_sql as SQ
-            print("Snowflake", SQ.run(cfg, sql)[0])
+        sys.path.insert(0, str(C.BP / "infra"))
+        import snowflake_sql as SQ
+        # every value is a SQL API bind variable, never part of the SQL text
+        SQ.insert_rows(cfg, "BID_GLOSSARY", [(now, str(dname), str(n), str(d), "Published", str(l)) for n, d, l in rows],
+                       ctx.execute)
     else:
         order = list(reversed(list((reg.get("terms") or {}).items())))
         for n, v in order:

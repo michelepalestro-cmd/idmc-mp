@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""idmc_http.py - shared plumbing for the IDMC Script Library (stdlib only).
+"""idmc_http.py - shared plumbing for the IDMC script library, toolkit/lib (stdlib only).
 
 HTTP that never raises, a dry-run write gate, redaction, multipart bodies, polling, JSON diffs and an
 append-only log. Nothing here logs in or knows an org; idmc_session.py builds on it.
@@ -9,7 +9,8 @@ Rules every script inherits from this module:
     sent. --execute sends it, and --execute always needs --expect-org <orgIdV3>; the gate checks that id
     against the live org (Session.require_org) before the first write.
   * Secrets never reach the console or a log: redact() masks session ids, tokens, passwords, private
-    keys and client secrets by key name, and printed headers are always redacted.
+    keys and client secrets by key name (case-insensitive substring), and printed headers are always redacted.
+  * Redirects are followed only to https on the same host (SafeRedirect): session headers never leave it.
   * HTTP errors are data, not exceptions: request() returns Resp for every HTTP status and status -1
     for DNS/TLS/timeouts. Callers must check r.status (older helpers that returned only the body hid
     failures; a 200 whose body is the login HTML page is a wrong-plane answer, see Resp.verdict()).
@@ -27,12 +28,16 @@ import sys
 import time
 import uuid
 import urllib.error
+import urllib.parse
 import urllib.request
 
 TIMEOUT = 120
 SECRET_KEYS = {"icsessionid", "infa-session-id", "ids-session-id", "authorization", "cookie", "password",
                "sessionid", "sid", "jwt", "jwt_token", "access_token", "refresh_token", "clientsecret",
                "client_secret", "privatekey", "private_key", "securitytoken", "token", "mcp-session-id"}
+# any key whose name, lower-cased with spaces, '_' and '-' removed, contains one of these is a secret
+_SECRET_RE = re.compile(r"password|passwd|passphrase|^pass$|pwd|secret|token|apikey|privatekey|sessionid|"
+                        r"authorization|cookie|^sas|sas$|signature|credential")
 _JWT_RE = re.compile(r"eyJ[A-Za-z0-9_-]{8,}\.[A-Za-z0-9_-]{8,}(?:\.[A-Za-z0-9_-]+)?")
 
 
@@ -50,11 +55,32 @@ def die(msg, code=2):
     sys.exit(code)
 
 
+def is_secret_key(k):
+    """True for a secret-ish key name, case-insensitively by substring ('Client Secret', 'secretKey', 'IICS Password',
+    'api-key', 'Private Key Password', 'X-Session-Id' ...)."""
+    if isinstance(k, dict):                 # CDGC style {"$t": "IICS Password"}
+        k = k.get("$t", "")
+    n = re.sub(r"[\s_\-]", "", str(k).lower())
+    return n in SECRET_KEYS or bool(_SECRET_RE.search(n))
+
+
+def _mask(v):
+    return f"<redacted:{len(str(v))}>" if v not in (None, "") else v
+
+
 def redact(obj):
-    """Deep copy with secret-named values replaced by <redacted:N>. Use on anything you print or log."""
+    """Deep copy with secret-named values replaced by <redacted:N>. Use on anything you print or log.
+    Also masks "value" / "values" of a {"key": <secret-ish name>, ...} pair object (CDGC options, CAI properties)."""
     if isinstance(obj, dict):
-        return {k: (f"<redacted:{len(str(v))}>" if str(k).lower() in SECRET_KEYS and v not in (None, "")
-                    else redact(v)) for k, v in obj.items()}
+        pair = ("key" in obj and is_secret_key(obj["key"])) or ("name" in obj and "value" in obj
+                                                                and is_secret_key(obj["name"]))
+        out = {}
+        for k, v in obj.items():
+            if is_secret_key(k) or (pair and k in ("value", "values")):
+                out[k] = [_mask(x) for x in v] if isinstance(v, list) else _mask(v)
+            else:
+                out[k] = redact(v)
+        return out
     if isinstance(obj, list):
         return [redact(v) for v in obj]
     if isinstance(obj, str):
@@ -115,6 +141,27 @@ class Resp:
                 422: "422 route+verb exist, body invalid"}.get(s, str(s))
 
 
+class SafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Follows a redirect only to https on the SAME host; any other Location (another host, an http downgrade) is
+    refused, so the session headers (icSessionId, INFA-SESSION-ID, IDS-SESSION-ID, Authorization, Cookie) never
+    leave the host they were meant for. A refused redirect comes back as the 3xx answer itself."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        old, new = urllib.parse.urlsplit(req.full_url), urllib.parse.urlsplit(newurl)
+        if new.scheme.lower() != "https" or (new.hostname or "").lower() != (old.hostname or "").lower() \
+                or new.port != old.port:
+            return None
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+
+_OPENER = urllib.request.build_opener(SafeRedirect)
+
+
+def urlopen(req, timeout=TIMEOUT):
+    """urllib.request.urlopen with the SafeRedirect policy (TLS verification as urllib's default)."""
+    return _OPENER.open(req, timeout=timeout)
+
+
 def request(method, url, headers=None, body=None, raw=None, ctype=None, timeout=TIMEOUT):
     """One HTTP call. body=JSON-able object, or raw=bytes with ctype. Returns Resp; never raises."""
     h = {"Accept": "application/json"}
@@ -124,7 +171,7 @@ def request(method, url, headers=None, body=None, raw=None, ctype=None, timeout=
         h["Content-Type"] = ctype or "application/json"
     req = urllib.request.Request(url, data=data, headers=h, method=method)
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with urlopen(req, timeout=timeout) as r:
             b, hd, st = r.read(), dict(r.headers), r.status
     except urllib.error.HTTPError as e:
         b, hd, st = e.read(), dict(e.headers or {}), e.code
@@ -199,6 +246,19 @@ def save_json(path, obj, private=True):
     fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600 if private else 0o644)
     with os.fdopen(fd, "w", encoding="utf-8") as f:
         json.dump(obj, f, indent=1, default=str)
+    return path
+
+
+def write_private(path, data):
+    """Write bytes to a file created 0600 (export packages and edited packages can hold plaintext secrets)."""
+    os.makedirs(os.path.dirname(os.path.abspath(path)) or ".", exist_ok=True)
+    fd = os.open(path, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o600)
+    with os.fdopen(fd, "wb") as f:
+        f.write(data)
+    try:
+        os.chmod(path, 0o600)              # an existing file keeps its old mode through O_TRUNC
+    except OSError:
+        pass
     return path
 
 

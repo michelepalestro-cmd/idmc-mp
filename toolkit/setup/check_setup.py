@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""check_setup.py - offline readiness check for the Master IDMC KB on a new PC (makes no network call).
+"""check_setup.py - offline readiness check for the idmc-mp plugin on a new PC (makes no network call).
 
     python3 toolkit/setup/check_setup.py                 # core checks + the IDMC login (IDMC_LOGIN.txt)
     python3 toolkit/setup/check_setup.py --demo <name>   # also the keys one blueprint needs (from setup/.env.example)
@@ -76,7 +76,7 @@ def main():
                   f"[{a.demo}] keys)")
             fails += 1
         elif ROOT in p.resolve().parents:
-            print(f"{BAD} credentials file is inside the toolkit ({p}); move it out so a re-zip can never leak it")
+            print(f"{BAD} credentials file is inside the toolkit ({p}); move it out so sharing or committing the folder can never leak it")
             fails += 1
         else:
             print(f"{OK} credentials file {p}")

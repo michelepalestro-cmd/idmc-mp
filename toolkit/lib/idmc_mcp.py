@@ -51,7 +51,7 @@ def read_env(path):
     if not path or not os.path.exists(path):
         H.die("give --env PATH (the 0600 file written by client-create) or --auth session")
     if _inside_kb(path):
-        H.die("the OAuth env file must live outside the KB")
+        H.die("the OAuth env file must live outside the idmc-mp plugin")
     return dict(ln.strip().split("=", 1) for ln in open(path, encoding="utf-8") if "=" in ln and not ln.startswith("#"))
 
 
@@ -195,7 +195,7 @@ def main():
         gate.guard()
         if a.cmd == "client-create":
             if _inside_kb(a.env_out) or os.path.exists(a.env_out):
-                H.die("--env-out must be a NEW file outside the KB (the secret is shown only once)")
+                H.die("--env-out must be a NEW file outside the idmc-mp plugin (the secret is shown only once)")
             if any(c.get("clientName") == a.name for c in (S.get("hdm", LIST_CLIENTS).json({}) or {}).get("content") or []):
                 H.die(f"client '{a.name}' exists; its secret cannot be read again: delete and recreate it deliberately")
             reg = {s.get("context"): s for s in (S.get("hdm", f"{MGMT}/mcp-servers?type=MANAGED").json({}) or {}).get("servers") or []}

@@ -1,5 +1,5 @@
 # Lessons: MDM
-102 current lessons (2 of them disputed) and 11 superseded, IDs L-MDM-###; evidence dated 2026-07-04 to 2026-11-12. Every lesson is generic; its sources are mapped outside the generic zone.
+120 lessons: 107 current, 2 disputed, 11 superseded; evidence dated 2026-07-04 to 2026-11-19. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [MDM Runtime vs Design](../../knowledge/08-mdm/01-mdm-saas-runtime-vs-design.md) · [MDM Records](../../knowledge/08-mdm/02-mdm-records-ingest-search-export-cleanup.md) · [Business 360 Modeling & Match-Merge](../../knowledge/08-mdm/03-business-360-modeling-match-merge.md) · [P360 vs MDM SaaS & Licensing](../../knowledge/08-mdm/04-p360-vs-mdm-saas-licensing-notes.md)
 
 ## Current

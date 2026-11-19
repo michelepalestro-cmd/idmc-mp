@@ -1,5 +1,5 @@
 # Lessons: Migration & Org Management
-147 current lessons (1 of them disputed) and 17 superseded, IDs L-CLEAN-### and L-MIG-###; evidence dated 2026-07-04 to 2026-10-13. Every lesson is generic; its sources are mapped outside the generic zone.
+168 lessons: 150 current, 1 disputed, 17 superseded; evidence dated 2026-07-04 to 2026-11-19. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [Export & Import](../../knowledge/10-migration-org-management/01-export-import-v3-migration-api.md) · [Editing Packages Safely](../../knowledge/10-migration-org-management/02-editing-packages-safely.md) · [Migration-Clone Authoring](../../knowledge/10-migration-org-management/03-migration-clone-authoring.md) · [Org-to-Org Migration Runbook](../../knowledge/10-migration-org-management/04-org-to-org-migration-runbook.md) · [Cutover & Rollback](../../knowledge/10-migration-org-management/05-cutover-rollback.md) · [Headless Deletes & Org Cleanup](../../knowledge/10-migration-org-management/06-headless-deletes-org-cleanup.md)
 
 ## Current

@@ -3,20 +3,24 @@
 **Read this before touching anything in this folder.** It is the contract that lets several
 agents improve this document at the same time without fighting each other.
 
-There is **exactly one master document**: `IDMC API & MCP Master Reference.docx`.
-It is **generated**. Never edit it.
+The source of truth is `content/*.json`. Everything else is **generated** from it: the endpoint
+dictionary and CSVs in `claude-idmc-how-to/` (shipped), and the master document
+`idmc-api-mcp-master-reference.docx` (not shipped; `build/build_master.py` renders it on demand and
+needs `pip install python-docx`). Never hand-edit a generated file.
 
 ---
 
 ## The 30-second version
 
-```bash
-cd "<KB root>\knowledge/12-reference-library\IDMC API & MCP Reference"
+From the repo root, with Python 3.10+:
 
-python build/validate_content.py         # 1. confirm the tree is clean before you start
+```bash
+cd knowledge/12-reference-library/idmc-api-mcp-reference
+
+python3 build/validate_content.py          # 1. confirm the tree is clean before you start
 #    ... edit exactly ONE file in content/ ...
-python build/validate_content.py 12-cdi  # 2. check just your section
-python build/build_master.py             # 3. regenerate the single master doc
+python3 build/validate_content.py 12-cdi   # 2. check just your section
+python3 build/build_dictionary.py --csv    # 3. regenerate the dictionary and CSVs
 ```
 
 **One agent, one section file, one sitting.** That is the whole concurrency model.
@@ -40,12 +44,13 @@ happened here. So the truth moved out of the document into `content/*.json`:
 
 ## Rules
 
-1. **Never edit the .docx.** Your edits are destroyed on the next build. Edit `content/*.json`.
+1. **Never edit a generated file** (the dictionary, the CSVs, the .docx). Your edits are destroyed
+   on the next build. Edit `content/*.json`.
 2. **Claim your section first.** Set `"owner"` to your agent name and `"status": "in-progress"`
    in that file, as your first change. Check nobody else holds it.
 3. **One file per agent.** If your finding spans two sections, edit one, and add a line to the
    other's `open_questions` saying what still needs doing there. Do not edit both.
-4. **Validate before you finish.** `python build/validate_content.py <your-section>` must exit 0.
+4. **Validate before you finish.** `python3 build/validate_content.py <your-section>` must exit 0.
 5. **Never delete a row to "fix" it.** If a row is wrong, correct it and say so in `notes`, or move
    it to `open_questions`. Losing a finding is worse than carrying a disputed one.
 6. **Every claim carries its evidence.** A row with an empty evidence cell is an unsourced claim
@@ -55,9 +60,10 @@ happened here. So the truth moved out of the document into `content/*.json`:
    documents it. `YES` means you saw a status code. These are different and the distinction is the
    most valuable thing in this document.
 8. **Stamp `last_verified`** (YYYY-MM-DD) whenever you re-confirm a section against a live org.
-9. **Do not run `build/seed_content.py` again.** It was a one-time migration and would overwrite
-   everyone's work. It refuses without `--force` for that reason.
-10. **Re-run `build/build_master.py` when you are done** so the master reflects your work.
+9. **No re-seeding.** The `content/` files were seeded once, on 2026-07-25, from probe evidence kept
+   outside this repo. They are now edited by hand, one section at a time.
+10. **Re-run `build/build_dictionary.py --csv` when you are done** so the shipped dictionary and CSVs
+   reflect your work.
 11. **No skill work here.** The Claude skill once generated from this corpus is org-specific and is not
     part of this KB. Do not recreate `skill/`, `skill_src/` or `build_skill.py` in this folder.
 12. **No secrets and no identities.** No tokens, cookies, private keys or passwords in `content/` or
@@ -66,14 +72,14 @@ happened here. So the truth moved out of the document into `content/*.json`:
     connection / object IDs, IP addresses or VM host names. Use the neutral labels (**Org A** = an org on a
     dm-us pod, **Org B** = a sub-org on a dmp-us pod) and placeholders (`<pod>`, `<orgIdV2>`, `<orgIdV3>`,
     `<agentId>`, `<reId>`, `<connId>`, `<private-ip>`). Domain labels (`dm-us`, `dmp-us`) are platform
-    facts and are fine; write pod names as `<pod>`. Before you finish, run the KB's share gate (kept
-    outside the shared KB) over the KB root; it must report no hit in this folder.
+    facts and are fine; write pod names as `<pod>`. Before you finish, run
+    `python3 toolkit/tools/secret_scan.py .` from the repo root; it must print CLEAN.
 
 ---
 
 ## Section files
 
-Filename prefix sets the order in the document, so leave gaps for insertions.
+Filename prefix sets the order in the generated outputs, so leave gaps for insertions.
 
 | Range | What lives there |
 |---|---|
@@ -84,8 +90,8 @@ Filename prefix sets the order in the document, so leave gaps for insertions.
 | `60`–`89` | Multi-org / per-pod validation |
 | `90`+ | Provenance and back matter |
 
-To add a section, drop in a new `NN-name.json` with the shape below. The builder and the contents
-table pick it up automatically — no registration step.
+To add a section, drop in a new `NN-name.json` with the shape below. The builders pick it up
+automatically; there is no registration step.
 
 ### File shape
 
@@ -179,31 +185,31 @@ older capability words where they genuinely apply: `WRITE` `RUN` `READ` `UI-ONLY
 ## Where to find evidence
 
 - The Informatica guides at https://docs.informatica.com (not bundled). Cite guide plus page for any `DOC` row.
-- The recorded probe results and the extraction record (`_extracted_all_tables.json`, every table from
-  the two superseded documents) are org-specific and are not part of this KB.
+- The recorded probe results and the extraction record (every table from the two superseded
+  documents) are org-specific and are not in this repo.
 - `probe_idmc_surface.py`, the live probe harness, is not shipped either, because it reads a local
   credential file. It is GET-only by default; `--allow-write` adds a create-and-delete round trip.
   **Reproduce its calls against your own org to re-date a live row** (method in `content/90-provenance.json`).
 
 ## Superseded documents
 
-`IDMC API & MCP Capability Reference.docx` and `IDMC Verb Matrix - API vs MCP.docx` were merged
-into the master on 2026-07-25 and retired. All 633 of their
-data rows are in `content/`. Do not resurrect them; add to the master instead.
+"IDMC API & MCP Capability Reference" and "IDMC Verb Matrix - API vs MCP" were merged into
+`content/` on 2026-07-25 and retired. All 633 of their data rows are there. Do not resurrect them;
+add to `content/` instead.
 
 ---
 
 ## Good first tasks
 
-Anything in the contents table with `status: migrated` and no owner needs a pass. In priority order:
+Any section file with `status: migrated` and no owner needs a pass. In priority order:
 
-1. **`90-provenance.json` is empty** — it needs the sources and re-verification method written up.
-2. **Re-probe the four open questions** listed in the master's own open-questions table. Each is a
+1. **Re-probe the four open questions** carried as disputed (see §7 of
+   `claude-idmc-how-to/what-idmc-can-and-cannot-do.md`). Each is a
    live-verifiable fact currently carried as disputed.
-3. **Probe the untested verbs** — every `untested:` entry in a service table's notes is a verb nobody
+2. **Probe the untested verbs** — every `untested:` entry in a service table's notes is a verb nobody
    sent. A live probe (see "Where to find evidence") turns it into a proven verb or a `rejected:` code.
    This is the highest-value grind in the whole document.
-4. **Cite the `DOC` rows** — several name a vendor guide but not a page. Add page numbers from
+3. **Cite the `DOC` rows** — several name a vendor guide but not a page. Add page numbers from
    the guide at https://docs.informatica.com.
-5. **Add the MCP table to a service that has none** if a new Informatica server ships covering it.
-6. **Split any section that has grown past ~60 rows** into two files at the next free prefix.
+4. **Add the MCP table to a service that has none** if a new Informatica server ships covering it.
+5. **Split any section that has grown past ~60 rows** into two files at the next free prefix.

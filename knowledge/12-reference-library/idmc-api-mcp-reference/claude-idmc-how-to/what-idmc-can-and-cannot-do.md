@@ -9,9 +9,13 @@
 live HTTP status code observed against a real IDMC org, or a named Informatica guide — and the two
 are never blended into a single confident-sounding sentence.
 
-Corpus: **166 endpoints**, **830 endpoint×verb combinations**, **11 MCP actions**, **26 operations
-with no endpoint at all**, across **13 services** and **14 auth planes**. Verified 2026-07-25 against
-two orgs (Org A on a `dm-us` pod, and Org B, a sub-org on a `dmp-us` pod).
+Corpus as of 2026-07-26: **166 endpoints**, **830 endpoint×verb combinations**, **11 MCP actions**,
+**26 operations with no endpoint at all**, across **13 services** and **14 auth planes**. Verified
+2026-07-25 against two orgs (Org A on a `dm-us` pod, and Org B, a sub-org on a `dmp-us` pod).
+
+> **Counts in this file are as of 2026-07-26.** The generated set has since grown (167 endpoints,
+> 102 with a working verb, 835 combinations, 28 endpointless operations, 15 auth planes); take
+> current numbers from `csv-every-endpoint/` or `idmc-endpoint-dictionary.md`, not from this file.
 
 ---
 
@@ -330,7 +334,7 @@ detail rows are authoritative** — that is what §3.2 counts. Flagged to that s
 | Does verb X work on path Y? | `02_endpoint_verb_matrix.csv` — filter `State` |
 | What can I call today, and how? | `01_endpoints.csv` — filter `Any working verb? = YES` |
 | Full prose on one endpoint | `idmc-endpoint-dictionary.md` |
-| The whole story, by product | `IDMC API & MCP Master Reference.docx` |
+| The whole story, by product | the master `.docx` (not shipped; build it with `../build/build_master.py`, needs `python-docx`) |
 | Every MCP action | `05_mcp_actions.csv` |
 | What has no endpoint at all | `06_no_endpoint_ui_only.csv`, `10_ui_only_walls.csv` |
 
@@ -344,6 +348,6 @@ calls against your own org:
 
 ---
 
-*Derived from `content/*.json` — 166 endpoints, 830 verb combinations, 11 MCP actions, 26
+*Derived from `content/*.json` as of 2026-07-26 — 166 endpoints, 830 verb combinations, 11 MCP actions, 26
 endpointless operations. Live evidence 2026-07-25 from two orgs on two pods. The four verb states
 (**Works** / **Documented** / **Rejected** / **Untested**) are never merged anywhere in this corpus.*

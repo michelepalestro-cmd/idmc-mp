@@ -22,11 +22,24 @@ IDMC_LOGIN.txt
 *.session.json
 *.block
 
+# Per-user demo and generator files: they hold your org's ids
+toolkit/demos/*/config.json
+toolkit/demos/*/state/*
+!toolkit/demos/*/state/README.md
+!toolkit/demos/*/state/.gitignore
+toolkit/demos/*/build/
+toolkit/mapgen/profile.json
+
 # Run output
 _output/
 *.log
 mapgen_out/
 *.zip
+**/build/_kb_render.html
+# Reference-library outputs built on demand
+knowledge/12-reference-library/iics-to-ipus-kb/iics-to-ipus-knowledge-base.md
+knowledge/12-reference-library/iics-to-ipus-kb/iics-to-ipus-knowledge-base.pdf
+knowledge/12-reference-library/idmc-api-mcp-reference/idmc-api-mcp-master-reference.docx
 
 # OS / editor
 .DS_Store

@@ -38,7 +38,7 @@ Claude **designs and orchestrates**. The Secure Agent **moves the data**. Claude
 - **The mapping definition:** laptop → Informatica Cloud, once, as an import package.
 - **Job state, logs and row counts:** agent → Informatica Cloud → laptop, read over REST.
 - **Credentials:** database credentials live (encrypted) in your org's *connections* and are used by the agent; the spec only
-  names a connection by its ID. The IDMC login comes from environment variables on the laptop, never from a spec or a profile.
+  names a connection by its ID. The IDMC login comes from the login file `~/.idmc_toolkit/IDMC_LOGIN.txt` or environment variables, never from a spec or a profile, and goes only to `https://<domain>.informaticacloud.com`.
 - **Verification:** after the run Claude queries the target (row counts, two-way diffs) with a warehouse client. Those are
   small result sets, not the data set.
 
@@ -111,7 +111,7 @@ m_names_upper.pkg.zip
 | # | Call | Purpose |
 |---|---|---|
 | 1 | `POST /ma/api/v2/user/login` | a session, valid for about 30 minutes (mapgen signs in again after 24) |
-| 2 | `GET /api/v2/org` | confirm the org before any write |
+| 2 | `GET /api/v2/org` (+ the session user) | confirm the org before any write: the profile's `org.v2Id`, then `--expect-org <orgIdV3>` (writes are dry runs until `--execute --expect-org`) |
 | 3 | `POST /public/core/v3/import/package` (multipart, field `package`) | upload → `jobId` |
 | 4 | `POST /public/core/v3/import/{jobId}` | start it: `REUSE` for a new mapping, `OVERWRITE` to rebuild one under the same GUID |
 | 5 | `GET /public/core/v3/import/{jobId}` | poll until `SUCCESSFUL`; read the import log |

@@ -491,14 +491,11 @@ def main():
             sys.path.insert(0, str(C.BP / "infra"))
             import snowflake_sql as SQ  # noqa: E402
             now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-            vals = ",\n".join("('%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', %s, %s, %s, %s)" % (
+            # values read back from IDMC profiling travel as SQL API bind variables, never inside the SQL text
+            SQ.insert_rows(ctx.cfg, "BID_DQ_SCORECARD", [(
                 now, r["layer"], r["profile"], r["run_ref"], r["table"], r["column"], rname(ctx.cfg, r["rule"]), r["frs"],
-                r["dimension"], *("NULL" if r[k] is None else r[k] for k in ("checked", "passed", "failed", "score"))) for r in rows)
-            sql = "INSERT INTO BID_DQ_SCORECARD VALUES\n" + (vals or "-- no rows")
-            if not (a.execute and rows):
-                print("[DRY-RUN] Snowflake:", sql[:600])
-            else:
-                print(SQ.run(ctx.cfg, sql)[0])
+                r["dimension"], *(r[k] for k in ("checked", "passed", "failed", "score"))) for r in rows],
+                bool(a.execute and rows))
 
 
 if __name__ == "__main__":

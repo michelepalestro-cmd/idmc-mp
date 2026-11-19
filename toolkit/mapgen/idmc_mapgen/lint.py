@@ -1,6 +1,6 @@
 """Static checks on a mapping spec, run before anything is imported.
 
-Every rule below comes from a failure that was hit for real (the lesson ids point at the KB). The most
+Every rule below comes from a failure that was hit for real (the lesson ids point at lessons/lessons.jsonl). The most
 useful ones need the field flow (fieldflow.py): a target maps its fields BY NAME, so a field that never
 arrives is written as NULL with no error, and an expression that names a missing field fails only at run time.
 

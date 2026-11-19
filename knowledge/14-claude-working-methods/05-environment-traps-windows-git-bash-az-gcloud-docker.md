@@ -77,23 +77,25 @@ new workstation or agent host; before resizing or rebooting an agent VM.
 | a VM "rename" is impossible | Azure VM resource names cannot change (a rename is a delete and recreate) | label with tags (`alias=`, `role=`, `keep=true`, `status=`); change the OS hostname only after checking what has it built in | (L-ENV-076) |
 | existing tags vanish after a tag write; `vm update --set tags.keep=true` is rejected | `resource tag... --tags k=v` replaces the whole tag set (older CLI builds have no `--operation merge`); a boolean-looking value fails through `--set` | read the tags first and send them back with the new ones through `resource tag`; one resource per call, spaced out and retried; read back with `-o tsv` and include a positive control | (L-ENV-076) |
 
-### 2.1 Getting backups off a VM with curl and a SAS
+### 2.1 Getting backups off a VM without sending a secret
 
-Use this to move database dumps or agent-host configuration off a VM before a migration or decommission, without
-azcopy (L-ENV-073).
+Use this to move database dumps or agent-host configuration off a VM before a migration or decommission (L-ENV-073).
 
-1. Create a private container and a time-limited container SAS with permissions `racwl`.
-2. Base64-encode the SAS locally and send only the encoded text to the VM.
-3. On the VM, decode and upload with one Put Blob per file (dumps of about 300 MB went in one call; the service accepts
-   much larger single Put Blob uploads on recent versions).
-4. For recurring backups keep a longer-lived SAS in a root-only file (0600), drive the upload from `/etc/cron.d`, add a
-   lifecycle rule (for example delete after 90 days), and list the cron entry, script and SAS file for removal at
-   decommission. The SAS is a secret: never put it in a script you hand to someone else.
+1. **Preferred, no secret at all:** give the VM a managed identity, grant it **Storage Blob Data Contributor** on one
+   private container only, and upload from the VM with `az storage blob upload --auth-mode login` (or
+   `azcopy login --identity`). Remove the role assignment when the move is done.
+2. **Only if a managed identity is impossible:** use a SAS that can only create and write (`cw`, never `racwl`), scoped
+   to that one container, expiring within hours. Copy it to the VM as a root-only 0600 file (for example with `scp`),
+   never through `az vm run-command`: run-command scripts and their parameters are kept on the VM and in Azure logs, and
+   base64 is encoding, not protection. Delete the file and let the SAS expire when you are done.
+3. Upload one file per Put Blob call (dumps of about 300 MB went in one call; recent service versions accept much larger
+   single uploads), then check the blob size against the local file.
+4. For recurring backups, use the managed identity from `/etc/cron.d`, add a lifecycle rule (for example delete after
+   90 days), and list the cron entry and script for removal at decommission.
 
 ```bash
-S=$(echo '<sas-b64>' | base64 -d)
-curl -sS -X PUT -H 'x-ms-blob-type: BlockBlob' --data-binary @dump.pgc \
-  "https://<account>.blob.core.windows.net/<container>/<host>/$(date -u +%Y%m%dT%H%MZ)/dump.pgc?$S"
+az storage blob upload --auth-mode login --account-name <account> --container-name <container> \
+  --name "<host>/$(date -u +%Y%m%dT%H%MZ)/dump.pgc" --file dump.pgc
 ```
 
 ## 3. gcloud and IAP
@@ -244,7 +246,7 @@ serving-mode decision, zero-copy activation) are in [Serving Outputs to BI and A
 | `FUNCTIONALITY_NOT_ENABLED` on segment create or publish, schedule changes or data-stream runs | an API-only integration user with the Data Cloud User permission set | that user can run identity resolution (`POST /ssot/identity-resolutions/<rulesetId>/actions/run-now`); segment and activation steps need a Data Cloud admin or the UI | (L-ENV-087) |
 | a Grafana BigQuery datasource health check shows 403 | the Cloud Resource Manager API is disabled in the project; real queries still work | judge the datasource with `POST /api/ds/query` | (L-ENV-056), (L-ENV-056) |
 | `docker cp` into Grafana provisioning fails | the provisioning directory is bind-mounted read-only | write the host-side directory, then `POST /api/admin/provisioning/dashboards/reload` | (L-ENV-056) |
-| Grafana GETs work but POST or DELETE answer "Permissions needed"; curl returns 000 | an e-mail admin login inside the URL splits the host; wrong admin credentials fall back silently to the anonymous Viewer | `curl -u '<user>@example.com:<password>'` | (L-ENV-056) |
+| Grafana GETs work but POST or DELETE answer "Permissions needed"; curl returns 000 | an e-mail admin login inside the URL splits the host; wrong admin credentials fall back silently to the anonymous Viewer | `curl -u '<user>@example.com'` (curl then asks for the password, so it never sits on the command line or in shell history) | (L-ENV-056) |
 | an API gateway cannot time calls (`now` is a parse error, `uuid` is evaluated once) | gateway policy expressions have no clock | each backend adds a `server-timing: app;dur=<ms>` response header and the access log carries it; analytics on gateway traffic go through IDMC (CAI or CDC/CDI into the warehouse), per the integration-layer split in [CAI Runtime](../05-cai-application-integration/02-cai-runtime-invoke-urls-control.md) | (L-ENV-088) |
 
 ## 10. Pre-flight for a new workstation or host

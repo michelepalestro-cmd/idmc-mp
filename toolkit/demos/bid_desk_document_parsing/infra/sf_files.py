@@ -38,6 +38,27 @@ from pathlib import Path
 BP = Path(__file__).resolve().parents[1]
 
 
+class SafeRedirect(urllib.request.HTTPRedirectHandler):
+    """Never re-send the Bearer token to another host on a 3xx, and refuse an https -> http downgrade
+    (urllib's default handler copies every header to whatever Location the server names)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is None:
+            return None
+        o, n = urllib.parse.urlsplit(req.full_url), urllib.parse.urlsplit(new.full_url)
+        if o.scheme == "https" and n.scheme != "https":
+            raise urllib.error.HTTPError(req.full_url, code, "refused redirect from https to " + n.scheme, headers, fp)
+        if (o.scheme, o.hostname, o.port) != (n.scheme, n.hostname, n.port):
+            for d in (new.headers, new.unredirected_hdrs):
+                for k in [k for k in d if k.lower() in ("authorization", "cookie")]:
+                    del d[k]
+        return new
+
+
+OPENER = urllib.request.build_opener(SafeRedirect)
+
+
 def load_env(path):
     out = dict(os.environ)
     if path and os.path.exists(path):
@@ -70,7 +91,7 @@ class SF:
             h["Authorization"] = "Bearer " + self.tok
         req = urllib.request.Request(url, data=body, method=method, headers=h)
         try:
-            with urllib.request.urlopen(req, timeout=300) as r:
+            with OPENER.open(req, timeout=300) as r:
                 data = r.read()
                 return r.status, (data if binary else json.loads(data or b"{}"))
         except urllib.error.HTTPError as e:

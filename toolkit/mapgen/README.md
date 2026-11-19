@@ -29,10 +29,10 @@ scenarios); this copy differs only by generic comment wording and one renamed lo
 
 **1. Through a blueprint (recommended).** `toolkit/demos/retail_data_foundation/idmc/03_mappings.py` and
 `toolkit/demos/bid_desk_document_parsing/idmc/bid_mappings.py` use only the offline half (lint -> compile -> package) and import
-the packages through the Script Library (`toolkit/lib`) with its single login, org guard and dry run. Copy that pattern for new demos:
+the packages through the script library (`toolkit/lib`) with its single login, org guard and dry run. Copy that pattern for new demos:
 
 ```python
-sys.path.insert(0, str(TOOLKIT_ROOT / "core" / "mapgen"))
+sys.path.insert(0, str(TOOLKIT_ROOT / "mapgen"))
 from idmc_mapgen import lint as L
 from idmc_mapgen.spec import load_spec
 from idmc_mapgen.compile import build
@@ -40,6 +40,20 @@ from idmc_mapgen.package import package_bytes
 ```
 
 **2. Its own CLI** (`python toolkit/mapgen/mapgen.py --help`): `build` and `lint` are offline; `whoami`, `resolve`,
-`import`, `task`, `run` and `deploy` log in with mapgen's **own** client and session cache (a second login next to the
-core library's). It reads the toolkit's `IDMC_LOGIN.txt` (nothing to set up), or `IDMC_USER`, `IDMC_PASS` and
-`IDMC_LOGIN_URL` (`https://<IDMC_LOGIN_HOST>`) from the environment or from the file named by `MAPGEN_ENV_FILE`. Like the core library it makes one login attempt and holds off for 15 minutes after a rejected one.
+`import`, `task`, `run` and `deploy` log in through the core library's session (`toolkit/lib/idmc_session.py`: the
+same session cache, file lock and lockout guard, so a rejected login blocks both until the credentials change). It reads
+the login file `~/.idmc_toolkit/IDMC_LOGIN.txt` (nothing to set up; a repo-root `IDMC_LOGIN.txt` is only a git-clone
+legacy fallback), or `IDMC_USER`, `IDMC_PASS` and `IDMC_LOGIN_URL` (`https://<IDMC_LOGIN_HOST>`) from the environment
+or from the file named by `MAPGEN_ENV_FILE`. Credentials are sent only to `https://<domain>.informaticacloud.com`, and a
+spec's inline `"profile"` object may not carry an `auth` block.
+
+**Writes are dry runs by default.** `import`, `task`, `run` and `deploy` print what they would do and send nothing
+unless `--execute` is given, and `--execute` needs `--expect-org <orgIdV3>` (the 22-character v3 org id that
+`toolkit/check_login.py` prints), which is checked against the live org before the first write. `--dry-run` is still
+accepted (it is the default and wins over `--execute`).
+
+```
+python mapgen.py --profile p.json deploy spec.json                                   # dry run: lint, build, package
+python mapgen.py --profile p.json deploy spec.json --run --execute --expect-org <orgIdV3>   # import, task, run
+python mapgen.py --profile p.json import build/m_x.pkg.zip --mode OVERWRITE --execute --expect-org <orgIdV3>
+```

@@ -1,5 +1,5 @@
 # Lessons: Application Integration (CAI)
-198 current lessons (0 of them disputed) and 16 superseded, IDs L-CAI-###; evidence dated 2026-07-01 to 2026-10-12. Every lesson is generic; its sources are mapped outside the generic zone.
+214 lessons: 197 current, 1 disputed, 16 superseded; evidence dated 2026-07-01 to 2026-11-19. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [CAI Asset Lifecycle](../../knowledge/05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md) · [CAI Runtime](../../knowledge/05-cai-application-integration/02-cai-runtime-invoke-urls-control.md) · [CAI Connections & Connectors](../../knowledge/05-cai-application-integration/03-cai-connections-connectors-e.g.-salesforce-oauth.md) · [Process Server on a Secure Agent](../../knowledge/05-cai-application-integration/04-process-server-on-a-secure-agent.md) · [CAI Troubleshooting](../../knowledge/05-cai-application-integration/05-cai-troubleshooting-stuck-assets.md) · [CAI Event Listeners](../../knowledge/05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md)
 
 ## Current
@@ -214,7 +214,7 @@ For processes that run on a Secure Agent's process engine, run history sits in t
 
 ### L-CAI-053  Record CAI run evidence yourself: from the caller, inside the process, or with a Shell Service step
 **Kind:** RECIPE · **Proven:** 2026-07-09 · **Evidence:** design notes from the Monitor and Design guides (2026-07-09); caller-side decision tables in use (2026-09-24 onward)
-Neither the scheduler nor the Data Integration activity log records CAI runs for you. Write one row per call from the caller, or from the process itself (a service step that posts to your own endpoint or table). For agent-bound processes a "Run a Shell Command" step pinned to a Secure Agent can run a script, after a one-time UI enablement of the Shell Service (Console > Server Configuration > System Services > Shell Service) on that agent.
+Neither the scheduler nor the Data Integration activity log records CAI runs for you. Write one row per call from the caller, or from the process itself (a service step that posts to your own endpoint or table). For agent-bound processes a "Run a Shell Command" step pinned to a Secure Agent can run a script, after a one-time UI enablement of the Shell Service (Console > Server Configuration > System Services > Shell Service) on that agent. Warning: the Shell Service lets any process published to that agent run operating-system commands as the agent user. Enable it only on a dedicated agent, limit who can publish processes there, and prefer a service step that posts to your own endpoint.
 
 ### L-CAI-054  Model long-running external work as an async process
 **Kind:** RECIPE · **Proven:** 2026-07-08 · **Evidence:** edge processes modelled on an existing async sample process (2026-07-08)

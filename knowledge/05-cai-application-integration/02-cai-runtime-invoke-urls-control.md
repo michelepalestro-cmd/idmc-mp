@@ -236,7 +236,9 @@ full schema is in Informatica KB article 000259754. `/public/core/v3/operational
 | Data Integration activity log | Never: CAI runs do not appear there, and they do not count against the monthly job cap (a job budget did not move around a test burst) | L-CAI-041, L-CAI-038 |
 
 For agent-bound processes a "Run a Shell Command" step can write evidence on the agent after a one-time UI
-enablement of the Shell Service on that agent (L-CAI-053).
+enablement of the Shell Service on that agent (L-CAI-053). **Careful:** the Shell Service lets any process published to
+that agent run operating-system commands as the agent user; enable it only on a dedicated agent and prefer a service step
+that posts to your own endpoint.
 
 ---
 

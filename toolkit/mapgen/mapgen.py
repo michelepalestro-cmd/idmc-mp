@@ -5,10 +5,10 @@
   python mapgen.py lint    spec.json [--profile p] [--allow-live]   static checks (known runtime traps)
   python mapgen.py whoami  [--profile p]                            login (cached) + org assertion
   python mapgen.py resolve [--profile p] [--write]                  fill profile ids BY NAME (read-only)
-  python mapgen.py import  pkg.zip [--mode REUSE|OVERWRITE] [--no-sc] [--dry-run]
-  python mapgen.py task    <mapping name> [--folder Project/Folder] [--name mt_x] [--dry-run]
-  python mapgen.py run     <task id | task name> [--folder Project/Folder] [--no-wait] [--dry-run]
-  python mapgen.py deploy  spec.json [--run] [--mode ...] [--allow-live] [--force] [--dry-run]
+  python mapgen.py import  pkg.zip [--mode REUSE|OVERWRITE] [--no-sc] [--execute --expect-org <orgIdV3>]
+  python mapgen.py task    <mapping name> [--folder Project/Folder] [--name mt_x] [--execute --expect-org <orgIdV3>]
+  python mapgen.py run     <task id | task name> [--folder Project/Folder] [--no-wait] [--execute --expect-org <orgIdV3>]
+  python mapgen.py deploy  spec.json [--run] [--mode ...] [--allow-live] [--force] [--execute --expect-org <orgIdV3>]
   python mapgen.py log     <activity id> [--out file]                session log of one run
   python mapgen.py jobs                                              job-ledger count (budget guard)
 
@@ -18,7 +18,11 @@ counts as unset; a non-empty one is the profile path, '~' = the home folder, rel
 the file must exist: a missing one is an error, never skipped), else ./profile.json, else local/profile.local.json
 next to this file (these two only when the file exists). jobs reads no profile.
 (Python 3.10+: idmc_mapgen/nodes/__init__.py uses sys.stdlib_module_names.)
-Credentials come from the environment (see profile.example.json "auth"), never from the profile itself.
+Writes (import, task, run, deploy) are DRY RUNS unless --execute is given; --execute needs --expect-org <orgIdV3>
+(the 22-char v3 org id, printed by toolkit/check_login.py), checked against the live org before the first write.
+--dry-run is still accepted (it is the default, and wins over --execute).
+Credentials come from the environment or the login file (see profile.example.json "auth"), never from the profile
+itself, and are sent only to https://<domain>.informaticacloud.com.
 Exit codes: 0 ok, 1 failure (import/run/lint errors), 2 usage, spec or profile problem.
 """
 import argparse
@@ -88,6 +92,26 @@ def _folder(prof, path, client=None):
         return {"path": path, "guid": None}
     from idmc_mapgen.resolve import folder_ids
     return {"path": path, "guid": folder_ids(client, path)[1]}
+
+
+class _Usage(Exception):
+    pass
+
+
+def _dry(a):
+    """True unless --execute (and not --dry-run). --execute without --expect-org is a usage error (exit 2)."""
+    if a.execute and not a.dry_run:
+        if not a.expect_org:
+            raise _Usage("--execute needs --expect-org <orgIdV3>: name the org you mean to change "
+                         "(toolkit/check_login.py prints it)")
+        return False
+    return True
+
+
+def _guard(c, a):
+    """The org proof before the first write (also in a dry run when --expect-org is given and a session exists)."""
+    if a.expect_org:
+        c.require_org(a.expect_org)
 
 
 def _print(obj):
@@ -161,12 +185,14 @@ def cmd_resolve(a, prof, ppath):
 def cmd_import(a, prof):
     from idmc_mapgen import deploy as dp, lock
     data = open(a.pkg, "rb").read()
-    if a.dry_run:
+    if _dry(a):
         from idmc_mapgen import sc
         print("dry run: would import %s (%d bytes, mode %s); objects: %s" % (a.pkg, len(data), a.mode, sc.package_objects(data)))
+        print("(nothing sent: add --execute --expect-org <orgIdV3> to import)")
         return 0
     c = _client(prof)
     c.assert_org()
+    _guard(c, a)
     with lock.live_lock("cli-import"):
         r = dp.import_package(c, data, a.mode, source_control=not a.no_sc,
                               checkin_new=(prof.get("sourceControl") or {}).get("checkinNew", False))
@@ -176,8 +202,10 @@ def cmd_import(a, prof):
 
 def cmd_task(a, prof):
     from idmc_mapgen import deploy as dp, lock
+    dry = _dry(a)
     c = _client(prof)
     c.assert_org()
+    _guard(c, a)
     f = _folder(prof, a.folder, c)
     m = dp.find_mapping(c, a.mapping, f["path"])
     if not m:
@@ -185,8 +213,9 @@ def cmd_task(a, prof):
         return 1
     name = a.name or dp.task_name_for(a.mapping)
     re_id = (prof.get("runtimeEnvironment") or {}).get("id")
-    if a.dry_run:
+    if dry:
         print("dry run: would ensure task %s -> mapping %s (%s) in %s (runtime %s)" % (name, m["id"], m["frsGuid"], f["path"], re_id))
+        print("(nothing sent: add --execute --expect-org <orgIdV3> to create or update it)")
         return 0
     with lock.live_lock("cli-task"):
         _print(dp.ensure_task(c, name, m["id"], re_id, f, a.description or ""))
@@ -195,8 +224,10 @@ def cmd_task(a, prof):
 
 def cmd_run(a, prof):
     from idmc_mapgen import deploy as dp, lock
+    dry = _dry(a)
     c = _client(prof)
     c.assert_org()
+    _guard(c, a)
     tid = a.task
     if not (len(tid) == 20 and tid.isalnum() and tid.upper() == tid):
         t = dp.find_task(c, tid, _folder(prof, a.folder, c)["path"])
@@ -204,8 +235,9 @@ def cmd_run(a, prof):
             print("no task %s in the folder" % tid)
             return 1
         tid = t["id"]
-    if a.dry_run:
+    if dry:
         print("dry run: would start task %s (jobs used so far: %d)" % (tid, lock.jobs_used()))
+        print("(nothing sent: add --execute --expect-org <orgIdV3> to start it)")
         return 0
     with lock.live_lock("cli-run"):
         r = dp.run_task(c, tid, owner="cli", task_name=a.task, quiet=(prof.get("guards") or {}).get("busyTaskPrefixes"),
@@ -216,8 +248,13 @@ def cmd_run(a, prof):
 
 def cmd_deploy(a, profile, default):
     from idmc_mapgen import deploy as dp
-    r = dp.deploy(a.spec, profile, run=a.run, dry_run=a.dry_run, mode=a.mode, allow_live=a.allow_live,
-                  force_lint=a.force_lint, owner="cli-deploy", default_profile=default)
+    dry = _dry(a)
+    r = dp.deploy(a.spec, profile, run=a.run, dry_run=dry, mode=a.mode, allow_live=a.allow_live,
+                  force_lint=a.force_lint, owner="cli-deploy", default_profile=default,
+                  expect_org=None if dry else a.expect_org)
+    if dry:
+        print("(dry run, nothing sent: add --execute --expect-org <orgIdV3> to import%s)" % (" and run" if a.run else ""),
+              file=sys.stderr)
     _print(r)
     run = r.get("run")
     return 0 if (run is None or run.get("state") == 1) else 1
@@ -250,14 +287,18 @@ def main(argv=None):
     sub.add_parser("whoami")
     p = sub.add_parser("resolve"); p.add_argument("--write", action="store_true")
     p = sub.add_parser("import"); p.add_argument("pkg"); p.add_argument("--mode", default="REUSE", choices=["REUSE", "OVERWRITE"])
-    p.add_argument("--no-sc", action="store_true"); p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--no-sc", action="store_true")
     p = sub.add_parser("task"); p.add_argument("mapping"); p.add_argument("--folder"); p.add_argument("--name")
-    p.add_argument("--description"); p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--description")
     p = sub.add_parser("run"); p.add_argument("task"); p.add_argument("--folder"); p.add_argument("--no-wait", action="store_true")
-    p.add_argument("--dry-run", action="store_true")
     p = sub.add_parser("deploy"); p.add_argument("spec"); p.add_argument("--run", action="store_true")
     p.add_argument("--mode", choices=["REUSE", "OVERWRITE"]); p.add_argument("--allow-live", action="store_true")
-    p.add_argument("--force-lint", "--force", dest="force_lint", action="store_true"); p.add_argument("--dry-run", action="store_true")
+    p.add_argument("--force-lint", "--force", dest="force_lint", action="store_true")
+    for name in ("import", "task", "run", "deploy"):       # the write gate (as toolkit/lib idmc_http.add_gate_args)
+        g = sub.choices[name].add_argument_group("write safety")
+        g.add_argument("--execute", action="store_true", help="really send the writes (default: dry run, nothing sent)")
+        g.add_argument("--dry-run", action="store_true", help="the default; wins over --execute if both are given")
+        g.add_argument("--expect-org", metavar="ORGIDV3", help="22-char v3 org id you intend to change; required with --execute")
     p = sub.add_parser("log"); p.add_argument("activity"); p.add_argument("--out")
     sub.add_parser("jobs")
     for sp in sub.choices.values():
@@ -278,6 +319,9 @@ def main(argv=None):
         return globals()["cmd_" + a.cmd](a, prof)
     except SystemExit:
         raise
+    except _Usage as e:
+        print("USAGE: %s" % e, file=sys.stderr)
+        return 2
     except Exception as e:
         name = type(e).__name__
         if name in ("SpecError",):

@@ -8,14 +8,18 @@ have something to move. Optionally it also calls the CAI real-time processes the
   python infra/traffic.py --forever --interval 10        # until Ctrl-C
   python infra/traffic.py --count 1 --kind signup --cai  # one sign-up, then POST it to rdf_cai_customer_to_crm
 
---cai needs CAI_RT_BASE in the toolkit .env (the runtime base printed by idmc/05_cai.py). Calls fail open with a
-6 s timeout, like the original application did: the database write is never blocked by CAI.
+--cai needs CAI_RT_BASE in the toolkit .env (the runtime base printed by idmc/05_cai.py url) and, for the default
+authenticated processes, RDF_CAI_USER / RDF_CAI_PASS (an IDMC user listed in config.json cai.allowedUsers), sent with
+Basic Authentication over https only. Calls fail open with a 6 s timeout, like the original application did: the
+database write is never blocked by CAI.
 """
 import argparse
+import base64
 import json
 import random
 import sys
 import time
+import urllib.parse
 import urllib.request
 from pathlib import Path
 
@@ -84,11 +88,22 @@ def call_cai(process, payload, timeout=6):
     if not base:
         print("   (CAI skipped: CAI_RT_BASE not set)")
         return None
+    u = urllib.parse.urlsplit(base)
+    if u.scheme != "https" or not (u.hostname or "").endswith(".informaticacloud.com"):
+        print("   (CAI skipped: CAI_RT_BASE must be https://<pod>-cai.<domain>.informaticacloud.com/...)")
+        return None
+    headers = {"Content-Type": "application/json", "Accept": "application/json"}
+    if "/public/rt/" not in u.path:          # authenticated endpoint (the default): Basic Authentication
+        user, pw = C.env("RDF_CAI_USER"), C.env("RDF_CAI_PASS")
+        if not (user and pw):
+            print("   (CAI skipped: RDF_CAI_USER / RDF_CAI_PASS not set; the processes need Basic Authentication)")
+            return None
+        headers["Authorization"] = "Basic " + base64.b64encode(f"{user}:{pw}".encode()).decode()
     req = urllib.request.Request(base.rstrip("/") + "/" + process, data=json.dumps(payload).encode(), method="POST",
-                                 headers={"Content-Type": "application/json", "Accept": "application/json"})
+                                 headers=headers)
     t0 = time.time()
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with C.urlopen(req, timeout=timeout) as r:
             body = r.read().decode(errors="replace")
             print(f"   CAI {process}: HTTP {r.status} in {time.time() - t0:.2f}s {body[:200]}")
             return body

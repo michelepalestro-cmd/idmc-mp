@@ -1,72 +1,58 @@
 # README — IICS to IPUs KB
 
-Maintenance, sourcing, and governance notes for this knowledge base. **If you are an AI
-agent asked to improve the KB, read [`AGENTS.md`](AGENTS.md) — it is the contract.**
-This README covers *why* the rules exist and how to keep the KB trustworthy.
-
----
+Maintenance, sourcing and governance notes for this knowledge base. **If you are an AI agent asked
+to improve the KB, read [`AGENTS.md`](AGENTS.md); it is the contract.** To *use* the KB, open
+[`start-here.md`](start-here.md).
 
 ## What this KB is (and is not)
 
-**Is:** a customer-facing, end-to-end explanation of the move from **legacy IICS
-licensing** to the **IDMC IPU consumption model** — the licensing/commercial change and
-the product/capability differences, in one place.
+**Is:** a customer-facing, end-to-end explanation of the move from **legacy IICS licensing** to the
+**IDMC IPU consumption model**: the licensing and commercial change and the product and capability
+differences, in one place.
 
-**Is not:** a pricing quote, a contract, or an internal deal desk. It explains the
-*model*, not any customer's specific numbers.
-
----
+**Is not:** a pricing quote, a contract or a deal desk. It explains the *model*, not any customer's
+numbers.
 
 ## File map
 
-See [`AGENTS.md` §2](AGENTS.md) for the full map. In short:
+- [`sections/`](sections/00-executive-summary.md): 13 Markdown files, `00` to `12`. **The source of
+  truth and the thing you read.** Improve here.
+- [`sources/SOURCES.md`](sources/SOURCES.md): the citation registry every claim traces back to.
+- `build/build_kb.py`: joins the sections into one file, `iics-to-ipus-knowledge-base.md`, on demand
+  (Python 3.10+, standard library only). The joined file is generated and not shipped.
+- `build/build_pdf.py`: renders that joined file to `iics-to-ipus-knowledge-base.pdf` (needs
+  `markdown`, `pymdown-extensions`, `playwright` and a browser). The PDF is not shipped either.
+- [`CHANGELOG.md`](CHANGELOG.md): what changed, when, and by which role.
 
-- **`sections\*.md`** — the modular **source of truth**. Improve here.
-- **`IICS to IPUs — Knowledge Base.md`** — the **integrated** readable deliverable, built
-  from the sections. Don't hand-edit; re-integrate.
-- **`sources\SOURCES.md`** — the merged citation registry every claim traces back to.
+From the repo root:
 
----
+```bash
+cd knowledge/12-reference-library/iics-to-ipus-kb
+python3 build/build_kb.py      # -> iics-to-ipus-knowledge-base.md (generated, not committed)
+python3 build/build_pdf.py     # optional -> iics-to-ipus-knowledge-base.pdf
+```
 
-## Sourcing & citation governance
+## Sourcing and citation governance
 
-1. **Every non-obvious claim is cited.** Prefer authoritative Informatica sources
-   (`informatica.com`, `docs.informatica.com`, `knowledge.informatica.com`, official
-   pricing pages) over third-party blogs.
-2. **No fabricated specifics.** Per-IPU dollar prices, exact metering multipliers, and
-   discount percentages are only stated if a public source confirms them. Otherwise the
-   concept is described qualitatively and marked **`[verify]`**.
+1. **Every non-obvious claim is cited.** Prefer authoritative Informatica sources (`informatica.com`,
+   `docs.informatica.com`, `knowledge.informatica.com`, official pricing pages) over third-party blogs.
+2. **No fabricated specifics.** Per-IPU prices, exact metering multipliers and discount percentages
+   are stated only if a public source confirms them. Otherwise the concept is described
+   qualitatively and marked **`[verify]`**.
 3. **No internal commercial content.** Deal-specific discounting, volume-tier percentages, price
-   lists and confidential contract mechanics do **not** belong anywhere in this KB. They are handled
-   by Informatica per engagement and are kept out of it entirely.
-4. **Facts are dated.** Informatica changes packaging, metering, and pricing over time.
-   Citations note the source date/version so a future agent can tell what's stale.
-
----
+   lists and confidential contract mechanics do not belong anywhere in this KB.
+4. **Facts are dated.** Informatica changes packaging, metering and pricing over time. Citations note
+   the source date or version (rates are anchored on CPDS v39.1, effective 2026-06-05).
 
 ## Freshness policy
 
-Because the underlying facts move, treat the KB as **living**:
-
-- Re-verify pricing/metering/packaging claims periodically (see `CHANGELOG.md` for the
-  last verification pass).
-- When a claim is re-verified, update its citation date even if the fact didn't change.
-- Anything marked `[verify]` is a standing invitation for the next agent to confirm or
-  correct it against a live source.
-
----
-
-## How the deliverable is built
-
-The KB was bootstrapped by **five parallel research agents**, each owning a
-non-overlapping set of `sections\` files and doing its own live-web research, then
-**integrated** into `IICS to IPUs — Knowledge Base.md`. Ongoing improvement follows the
-same modular pattern — see [`AGENTS.md`](AGENTS.md). To rebuild the integrated file
-after editing sections, use the **Integrator** role in `AGENTS.md §6`.
-
----
+- Re-verify pricing, metering and packaging claims periodically (see `CHANGELOG.md` for the last
+  verification pass).
+- When a claim is re-verified, update its citation date even if the fact did not change.
+- Anything marked `[verify]` is a standing invitation for the next agent to confirm or correct it.
+- Before you finish, run `python3 toolkit/tools/secret_scan.py .` from the repo root (must print CLEAN).
 
 ## Provenance
 
-- Created: **2026-09-03**.
-- Change history: see [`CHANGELOG.md`](CHANGELOG.md).
+Created 2026-09-03 by five parallel research agents, each owning a non-overlapping set of section
+files. Change history: [`CHANGELOG.md`](CHANGELOG.md).

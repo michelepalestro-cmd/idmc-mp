@@ -10,7 +10,7 @@ apply before a write?
   and a receipt line, and spend waits for approval (L-METHOD-065).
 - One login per session through the shared session cache and its block file; never loop logins (L-AUTH-036,
   L-AUTH-041).
-- Credentials come from the environment or a 0600 file outside the KB, and scripts print key names, never values
+- Credentials come from the environment or a 0600 file outside the plugin (`~/.idmc_toolkit/IDMC_LOGIN.txt`), and scripts print key names, never values
   (L-METHOD-001, L-METHOD-087).
 - Read the body and read back every write: a 200 can be fake or silently reverted (L-METHOD-025, L-METHOD-030).
 - These scripts were not run against a live org in this form: re-verify each call in yours (L-METHOD-035).
@@ -35,26 +35,28 @@ in 2026-07..09 against production orgs, then sanitised and parameterised. **Re-v
 
 ## 1. Install and run
 
-- Python 3.8 or newer. **No third-party packages**: everything uses the standard library (`urllib`, `json`,
+- Python 3.10 or newer. **No third-party packages**: everything uses the standard library (`urllib`, `json`,
   `zipfile`, `hashlib`). `requests` is not needed.
 - Copy the whole folder: every script imports `idmc_http.py` and `idmc_session.py` from its own directory.
 - Check it: `python -m py_compile *.py` (all 15 files pass).
 - Every script has `-h`. Subcommands that only read are safe to run at once. Anything that changes the org
   prints its request and stops, unless you add `--execute --expect-org <orgIdV3>`.
 
-## 2. Credentials: one file, `IDMC_LOGIN.txt`
+## 2. Credentials: one file, `~/.idmc_toolkit/IDMC_LOGIN.txt`
 
-Fill in `IDMC_LOGIN.txt` (the toolkit root, three `KEY=value` lines: the first three keys below) and save; the library
-finds it by itself (`idmc_login.py` searches up from the script folder). An explicit source wins: environment
-variables first, then `IDMC_CREDS_FILE` (a per-org file outside the KB), then `IDMC_LOGIN.txt`. Never share or zip the folder while the file is filled in.
+Fill in `~/.idmc_toolkit/IDMC_LOGIN.txt` (three `KEY=value` lines: the first three keys below; `toolkit/check_login.py`
+creates it) and save; the library finds it by itself. Precedence: environment variables first, then `IDMC_CREDS_FILE`
+(a per-org file outside the plugin), then `~/.idmc_toolkit/IDMC_LOGIN.txt`, then a repo-root `IDMC_LOGIN.txt` (only as
+a git-clone legacy fallback; the home file always wins). Never share or commit a folder that holds a filled-in login
+file. Credentials are sent only over https to a `<domain>.informaticacloud.com` host.
 
 | Variable | Meaning |
 |---|---|
 | `IDMC_USER` | Full login name. A truncated name gives a false `IDS_085`. |
 | `IDMC_PASS` | Password. |
 | `IDMC_LOGIN_HOST` | The **domain** host `<domain>.informaticacloud.com` (for example the `dm-us` or `dmp-us` label). A pasted browser address or pod host is reduced to it (a pod host answers 404 on login). The wrong domain answers `IDS_085`, which looks like a bad password. |
-| `IDMC_CREDS_FILE` | Optional `KEY=value` file (for example one per org); its values win over `IDMC_LOGIN.txt`. It must live **outside** the KB; the scripts refuse a path inside it. Environment values win. |
-| `IDMC_CACHE_DIR` | Session caches, the login lock and the block file. The default is `~/.idmc_session` (0700; files 0600). It is refused inside the KB. |
+| `IDMC_CREDS_FILE` | Optional `KEY=value` file (for example one per org); its values win over `IDMC_LOGIN.txt`. It must live **outside** the plugin; the scripts refuse a path inside it. Environment values win. |
+| `IDMC_CACHE_DIR` | Session caches, the login lock, the block file and its HMAC key. The default is `~/.idmc_session` (0700; files 0600). It is refused inside the plugin. |
 | `IDMC_PROFILE` | The cache name. Use one per org. The default is a hash of user and login host. |
 | `IDMC_MCP_ENV_FILE` | Default `--env` for `idmc_mcp.py` (the 0600 OAuth file that `client-create` writes). |
 
@@ -62,9 +64,14 @@ Rules:
 
 - Never put a password on a command line: it lands in shell history and in transcripts.
 - Session ids, JWTs and OAuth tokens stay in memory or in 0600 cache files. They are redacted in all output and
-  logs (`redact()` masks by key name, and printed JSON answers are redacted too).
+  logs (`redact()` masks by key name, case-insensitively by substring: password, secret, token, api key, private key,
+  session id, cookie, credential, signature...; it also masks the `value`/`values` of `{"key": "<secret name>"}` pairs,
+  and printed JSON answers are redacted too).
+- Redirects are followed only to https on the same host, so session headers never leave it; `Session.call` refuses an
+  absolute URL outside the login's `<domain>.informaticacloud.com`.
 - Export packages can hold plaintext secrets. For example, a CAI app connection saved with `encrypted="false"`
-  carried an OAuth client secret into every later export. Keep packages outside the KB and out of any repo.
+  carried an OAuth client secret into every later export. Exports and edited packages are written 0600. Keep
+  packages outside the plugin and out of any repo.
 - An OAuth client secret is shown once. `idmc_mcp.py client-create` writes it straight to a new 0600 file and
   never prints it. If any part of a secret reaches a log, delete the client and create a new one.
 
@@ -86,12 +93,13 @@ Rules:
 5. **Lockout guard.** A few rejected logins lock an account (`IDS_086`), and every retry restarts the lock.
    - Logins are serialised by a file lock, and the cache is re-checked after the lock is taken.
    - Each run makes one attempt; there are no retry loops.
-   - A rejected login (4xx) writes a block file keyed by a fingerprint of the credentials. While the
-     fingerprint matches, no process logs in again. Fix the credentials, which changes the fingerprint, or have
+   - A rejected login (4xx) writes a block file keyed by a fingerprint of the credentials (HMAC-SHA256 under a
+     random per-machine key kept 0600 in `IDMC_CACHE_DIR`). While the fingerprint matches, no process logs in
+     again, `toolkit/mapgen` included (it logs in through this library). Fix the credentials, which changes the fingerprint, or have
      a human confirm them in a browser, then delete the block file.
    - 5xx, 429 and network errors stop the run without a block.
    - Sessions die about 30 min after grant, whatever the activity, so re-login happens at 24 min. An API 401
-     drops the cache and logs in exactly once more.
+     drops the cache and logs in once more, at most once per call and once per 5 minutes per session.
 6. **Idempotent where it matters.** Existing names are updated rather than duplicated. A name that exists twice
    is refused, because the same task name can live in unrelated folders: address tasks by id. Glossary items
    are tracked in a registry file.
@@ -104,11 +112,11 @@ documented or inferred only.
 
 | Script | Lines | What it is for | Writes? |
 |---|---|---|---|
-| `idmc_http.py` | 253 | Shared plumbing: HTTP that never raises, response verdicts, redaction, multipart, poll, diff, JSONL log, the `WriteGate`. | n/a (library) |
-| `idmc_session.py` | 368 | Guarded v2 + v3 login, pod hosts, plane headers, JWT mint, `whoami`, `require_org`. CLI `whoami`, `hosts`, `get`. | no |
+| `idmc_http.py` | 313 | Shared plumbing: HTTP that never raises, response verdicts, redaction, multipart, poll, diff, JSONL log, the `WriteGate`. | n/a (library) |
+| `idmc_session.py` | 426 | Guarded v2 + v3 login, pod hosts, plane headers, JWT mint, `whoami`, `require_org`. CLI `whoami`, `hosts`, `get`. | no |
 | `idmc_objects.py` | 197 | v3 object list/search/census, references, path lookup, v2 detail GETs, v2 <-> v3 id resolution. | no |
-| `idmc_export_import.py` | 203 | v3 export -> package; upload -> start -> poll -> per-object result -> log; REUSE / OVERWRITE with a NEW/EXISTS preview. | import |
-| `idmc_package_edit.py` | 258 | Offline package surgery: replace or regex-edit a file (nested zips too), drop objects, remap an id, and fix `exportMetadata.v2.json` and `exportPackage.chksum`. | local file only |
+| `idmc_export_import.py` | 202 | v3 export -> package; upload -> start -> poll -> per-object result -> log; REUSE / OVERWRITE with a NEW/EXISTS preview. | import |
+| `idmc_package_edit.py` | 260 | Offline package surgery: replace or regex-edit a file (nested zips too), drop objects, remap an id, and fix `exportMetadata.v2.json` and `exportPackage.chksum`. | local file only |
 | `idmc_mttask.py` | 254 | Mapping tasks: show, clone a template task (upsert by name), change `customQuery` safely, run via `/api/v2/job`, read logs. | yes |
 | `idmc_taskflow_schedule.py` | 225 | Linear taskflows and schedules: upsert, create or end schedules, bind/unbind (also task level), audit, snapshot/restore, run. | yes |
 | `idmc_runtime_selections.py` | 162 | Runtime-environment services and connectors: show, set with a diff and a "never select all" guard, restore. | yes |

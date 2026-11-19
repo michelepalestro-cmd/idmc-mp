@@ -16,7 +16,7 @@ STALE_S = 45 * 60          # a lock older than this is considered abandoned
 
 
 def _ensure():
-    os.makedirs(STATE_DIR, exist_ok=True)
+    os.makedirs(STATE_DIR, mode=0o700, exist_ok=True)
 
 
 @contextlib.contextmanager

@@ -13,8 +13,9 @@ to their IDMC org and the org is proven, with at most one login attempt.
      the browser address, the user name and the password (hidden while typing) and saves them.
    - **Or** open the file with the command the script printed, fill in the 3 lines, save, and run `/idmc-mp:connect`
      again.
-   Ask the user **not** to paste their password into the chat. If they do anyway, write it only to that file, confirm
-   with the key names and a masked password, never repeat the value, and suggest they change the password later.
+   Ask the user **not** to paste their password into the chat. If they do anyway, do not write it anywhere and never
+   repeat it: tell them it is now in the chat history, that they should change it in IDMC, and that they should enter the
+   new one with the `--setup` command in a terminal.
 3. If it says CONNECTED, report the org name, org id, pod and user from its summary in one short block, and suggest
    `/idmc-mp:health-check` next.
 4. If the login failed, do NOT run it again: wrong logins lock the account. Show the user the "WHAT THIS MEANS" part

@@ -18,6 +18,7 @@ from urllib.parse import unquote
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 PY = sys.executable
+sys.dont_write_bytecode = True                 # the in-process tests import toolkit modules: leave no __pycache__
 ENV = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
 TESTS = []
 SKILLS = ["idmc-mp", "idmc-secure-agent", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
@@ -45,11 +46,29 @@ def read(*parts):
         return f.read()
 
 
+# every child process gets a dead proxy, so a test that tried to reach IDMC (or anything) fails instead of connecting
+NO_NET = {k: "http://127.0.0.1:9" for k in ("HTTPS_PROXY", "HTTP_PROXY", "https_proxy", "http_proxy", "ALL_PROXY",
+                                              "all_proxy")}
+CRED_VARS = ("IDMC_CREDS_FILE", "IDMC_USER", "IDMC_PASS", "IDMC_LOGIN_HOST", "IDMC_LOGIN_URL", "IDMC_PROFILE",
+             "MAPGEN_ENV_FILE", "MAPGEN_PROFILE", "MAPGEN_STATE_DIR", "NO_PROXY", "no_proxy")
+
+
+def no_plugin_login_file():
+    """login_file() falls back to a repo-root (or toolkit/) IDMC_LOGIN.txt: with one present a test could log in."""
+    for f in (p("IDMC_LOGIN.txt"), p("toolkit", "IDMC_LOGIN.txt")):
+        assert not os.path.exists(f), "move %s to ~/.idmc_toolkit/ before running the tests (it would be used)" % f
+
+
 def run(args, cwd=ROOT, home=None):
-    env = dict(ENV)
+    env = dict(ENV, **NO_NET)
     if home:
+        no_plugin_login_file()
         env["HOME"] = home
-        env.pop("IDMC_CREDS_FILE", None)
+        env["USERPROFILE"] = home
+        for k in CRED_VARS:
+            env.pop(k, None)
+        env["IDMC_CACHE_DIR"] = os.path.join(home, ".idmc_session")
+        env["MAPGEN_STATE_DIR"] = os.path.join(home, ".idmc_mapgen")
     r = subprocess.run([PY] + args, cwd=cwd, env=env, capture_output=True, text=True, timeout=300)
     return r.returncode, r.stdout + r.stderr
 
@@ -234,6 +253,12 @@ def _():
     assert rc == 0, out.strip()
 
 
+@test("lessons: the lesson counts in the docs match lessons.jsonl")
+def _():
+    rc, out = run(["toolkit/tools/sync_lesson_counts.py", "--check"])
+    assert rc == 0, out.strip()[-800:]
+
+
 # ---------------------------------------------------------------- code and safety
 @test("code: every Python file compiles")
 def _():
@@ -268,6 +293,87 @@ def _():
     for d, dirs, fs in os.walk(ROOT):
         dirs[:] = [x for x in dirs if x != ".git"]
         assert "IDMC_LOGIN.txt" not in fs, "IDMC_LOGIN.txt inside the plugin: " + d
+
+
+@test("safety: redact() masks secret-ish keys by substring and {key, value(s)} pairs")
+def _():
+    sys.path.insert(0, p("toolkit", "lib"))
+    import idmc_http as H
+    d = {"Client Secret": "s3", "secretKey": "s4", "apiKey": "k", "api-key": "k", "Private Key Password": "z",
+         "passwd": "p", "pwd": "p", "IDS-SESSION-ID": "x", "session_id": "x", "Authorization": "Bearer y",
+         "Cookie": "c", "sas_token": "t", "signature": "g", "credentials": "c", "jwt": "j",
+         "host": "keep", "passthrough": "keep", "isAssigned": True, "name": "keep",
+         "options": [{"key": "IICS Password", "values": ["hunter2"]}, {"key": "host", "values": ["h"]},
+                     {"key": {"$t": "Secret Access Key"}, "value": "v"}]}
+    r = H.redact(d)
+    for k in d:
+        if k in ("host", "passthrough", "isAssigned", "name", "options"):
+            assert r[k] == d[k] or k == "options", "%s changed: %r" % (k, r[k])
+        else:
+            assert str(r[k]).startswith("<redacted:"), "%s not redacted: %r" % (k, r[k])
+    assert r["options"][0]["values"] == ["<redacted:7>"], r["options"][0]
+    assert r["options"][1]["values"] == ["h"], r["options"][1]
+    assert r["options"][2]["value"] == "<redacted:1>", r["options"][2]
+    assert "hunter2" not in json.dumps(r)
+
+
+@test("safety: redirects only to https on the same host; mapgen sends credentials only to *.informaticacloud.com")
+def _():
+    sys.path.insert(0, p("toolkit", "lib"))
+    sys.path.insert(0, p("toolkit", "mapgen"))
+    import urllib.request
+    import idmc_http as H
+    from idmc_mapgen.client import Client, LoginError
+    from idmc_mapgen.spec import SpecError, resolve_profile
+    h = H.SafeRedirect()
+    req = urllib.request.Request("https://usw5.dm-us.informaticacloud.com/saas/api/v2/org",
+                                 headers={"icSessionId": "x"})
+    for bad in ("https://evil.example.com/x", "http://usw5.dm-us.informaticacloud.com/x",
+                "https://usw5.dm-us.informaticacloud.com:8443/x"):
+        assert h.redirect_request(req, None, 302, "Found", {}, bad) is None, bad
+    ok = h.redirect_request(req, None, 302, "Found", {}, "https://usw5.dm-us.informaticacloud.com/saas/y")
+    assert ok is not None and ok.full_url.endswith("/saas/y")
+    for url in ("http://dm-us.informaticacloud.com", "https://evil.example.com", "https://informaticacloud.com.evil.io",
+                "https://u:p" + "@dm-us.informaticacloud.com", "https://dm-us.informaticacloud.com:8443"):
+        try:
+            Client.login_url(url)
+            raise AssertionError("login URL accepted: " + url)
+        except LoginError:
+            pass
+    assert Client.login_url("https://usw5.dm-us.informaticacloud.com/cloudUX/home") == "https://dm-us.informaticacloud.com"
+    c = Client({"auth": {"loginUrl": "https://collector.example.com"}},
+               env={"IDMC_USER": "u", "IDMC_PASS": "p", "MAPGEN_ENV_FILE": os.devnull})
+    try:
+        c.session()
+        raise AssertionError("a non-IDMC loginUrl reached the login")
+    except LoginError:
+        pass
+    try:
+        resolve_profile({"profile": {"auth": {"loginUrl": "https://x.informaticacloud.com"}}})
+        raise AssertionError("a spec's inline profile auth was accepted")
+    except SpecError:
+        pass
+
+
+@test("safety: mapgen writes are dry runs unless --execute --expect-org; --dry-run still accepted")
+def _():
+    home = tempfile.mkdtemp()
+    pkg = os.path.join(home, "x.pkg.zip")
+    import zipfile
+    with zipfile.ZipFile(pkg, "w") as z:
+        z.writestr("exportMetadata.v2.json", "{}")
+    prof = os.path.join(home, "profile.json")
+    with open(prof, "w", encoding="utf-8") as f:
+        f.write("{}")
+    mg = os.path.join("toolkit", "mapgen", "mapgen.py")
+    for extra in ([], ["--dry-run"], ["--dry-run", "--execute"]):
+        rc, out = run([mg, "--profile", prof, "import", pkg] + extra, home=home)
+        assert rc == 0 and "dry run: would import" in out, out[-400:]
+    rc, out = run([mg, "--profile", prof, "import", pkg, "--execute"], home=home)
+    assert rc == 2 and "--expect-org" in out, out[-400:]
+    for cmd in (["task", "m_x"], ["run", "mt_x"], ["deploy", "spec.json"]):
+        rc, out = run([mg, "--profile", prof] + cmd + ["--execute"], home=home)
+        assert rc == 2 and "--expect-org" in out, " ".join(cmd) + ": " + out[-400:]
 
 
 # ---------------------------------------------------------------- user stories (offline half)

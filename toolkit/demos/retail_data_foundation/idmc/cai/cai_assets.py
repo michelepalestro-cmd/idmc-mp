@@ -5,7 +5,9 @@ Three asset kinds, published in this order (unpublish in reverse):
                                     Upsert_Contact (PATCH /sobjects/Contact/<ExtId>/<id>: create-or-update, idempotent),
                                     Upsert_Record (PATCH any sObject by external id, JSON payload built in CAI)
   AI_CONNECTION         <conn>      Cloud Server connection holding the token URL, client id / secret, API version
-  PROCESS               processes   anonymous REST processes: token -> upsert; outputs sfdc_id / sfdc_created / sfdc_status
+  PROCESS               processes   REST processes restricted to allowed IDMC users / groups (Basic Authentication on
+                                    /active-bpel/rt/<process>); anonymous only as an explicit test opt-in
+                                    (config cai.anonymous). token -> upsert; outputs sfdc_id / sfdc_created / sfdc_status
 Why a custom service connector instead of the built-in Salesforce connector: the built-in one needs the
 ModifyMetadata permission, which breaks least privilege for an integration user.
 """
@@ -88,15 +90,16 @@ def service_connector(sc, sc_uuid, token_url_example, api_version, contact_ext, 
 </actions><objects/></businessConnector>"""
 
 
-def app_connection(conn, sc, sc_guid, sc_uuid, tag, token_url, client_id, client_secret, api_version):
-    """encrypted="false" is what the proven import used; it means the values travel in clear text inside every later
-    export package of this connection. Keep those packages out of any shared folder, or import with empty values
-    and type them into the connection in Application Integration (see BUILD.md Gotchas)."""
+def app_connection(conn, sc, sc_guid, sc_uuid, tag, token_url, api_version):
+    """The Connected App client id / secret are authored encrypted="true" with an EMPTY value (the shape IDMC exports
+    for a sensitive attribute, L-CAI-198), so the package never holds them. 05_cai.py set-secret then stores them
+    encrypted with PUT /active-bpel/asset/v1/update (L-CAI-132); an attribute authored encrypted="false" would be
+    stored and exported in plain text."""
     return f"""<connection xmlns="http://schemas.informatica.com/socrates/data-services/2014/04/avosConnections.xsd" displayName="{conn}" label="{conn}" name="{conn}">
 <description>[{tag}] Salesforce REST (Cloud Server, OAuth client credentials)</description><tags/><agent/>
 <attributes>
-<attribute name="SF_TOKEN_URL" value="{e(token_url)}"/><attribute encrypted="false" name="SF_CLIENT_ID" value="{e(client_id)}"/>
-<attribute encrypted="false" name="SF_CLIENT_SECRET" value="{e(client_secret)}"/><attribute name="SF_API_VERSION" value="{api_version}"/>
+<attribute name="SF_TOKEN_URL" value="{e(token_url)}"/><attribute encrypted="true" name="SF_CLIENT_ID" value=""/>
+<attribute encrypted="true" name="SF_CLIENT_SECRET" value=""/><attribute name="SF_API_VERSION" value="{e(api_version)}"/>
 </attributes>
 <businessConnector xmlns="http://schemas.informatica.com/appmodules/screenflow/2014/04/avosConnectors.xsd" agentOnly="false"
  connectorPath="project:/rt.connector/{sc}/{sc}_svcDef.xml" guid="{sc_guid}" name="{sc}" supportsConnectionTest="false" uuid="{sc_uuid}">
@@ -108,12 +111,19 @@ def fld(n, tag="field"):
     return f'<{tag} description="" name="{n}" type="string"><options><option name="required">false</option></options></{tag}>'
 
 
-def _deploy(anonymous):
-    return ('<deployment suspendOnFault="false" tracingLevel="none"><rest><allowAnonymousAccess/></rest></deployment>'
-            if anonymous else '<deployment suspendOnFault="false" tracingLevel="none"><rest/></deployment>')
+def _deploy(anonymous=False, users=(), groups=()):
+    """REST access of a process (L-CAI-181). Default: only the listed IDMC users / groups may call it, with Basic
+    Authentication on https://<pod>-cai.<domain>/active-bpel/rt/<process>. With neither listed the endpoint answers
+    403 to everyone (fails closed). anonymous=True is a test-only opt-in: anyone with the URL can call it."""
+    if anonymous:
+        acc = "<allowAnonymousAccess/>"
+    else:
+        acc = ("<allowedGroups>" + "".join(f"<group>{e(g)}</group>" for g in groups) + "</allowedGroups>" if groups else "") + \
+              ("<allowedUsers>" + "".join(f"<user>{e(u)}</user>" for u in users) + "</allowedUsers>" if users else "")
+    return f'<deployment suspendOnFault="false" tracingLevel="none"><rest>{acc}</rest></deployment>'
 
 
-def contact_process(name, guid, conn, conn_guid, tag, anonymous=True):
+def contact_process(name, guid, conn, conn_guid, tag, anonymous=False, users=(), groups=()):
     """Sign-up -> Contact. The light cleanse runs in CAI (XQuery): trimmed lower-case e-mail, digits-only phone,
     first / last name split at the last space (the batch golden record refines it on the next lane run).
     Every writer of a field must apply the same rule, or the batch undoes the real-time result."""
@@ -144,7 +154,7 @@ def contact_process(name, guid, conn, conn_guid, tag, anonymous=True):
 <tags>{'.anonymous' if anonymous else ''}</tags><generator>Informatica Process Designer 11</generator>
 <input>{''.join(fld(x, 'parameter') for x in ins)}</input><output>{''.join(fld(x) for x in ('sfdc_id', 'sfdc_created', 'sfdc_status'))}</output>
 <tempFields>{''.join(fld(x) for x in temps)}</tempFields><notes/>
-{_deploy(anonymous)}
+{_deploy(anonymous, users, groups)}
 <flow id="a"><start id="b"><link id="l1" targetId="c"/></start>
 <assignment id="c"><title>Cleanse</title>{ops}<link id="l2" targetId="d"/></assignment>
 <service id="d"><title>Get token</title><serviceName>{conn}:Get_Token</serviceName><serviceGUID>{conn_guid}</serviceGUID><serviceInput/>
@@ -193,7 +203,7 @@ def event_inputs(ev):
     return list(dict.fromkeys(names))
 
 
-def event_process(name, ev, guid, conn, conn_guid, tag, anonymous=True):
+def event_process(name, ev, guid, conn, conn_guid, tag, anonymous=False, users=(), groups=()):
     ins = "".join(fld(n, "parameter") for n in event_inputs(ev))
     outs = "".join(fld(n) for n in ("sfdc_id", "sfdc_created", "sfdc_status"))
     temps = "".join(fld(n) for n in ("access_token", "instance_url", "payload"))
@@ -202,7 +212,7 @@ def event_process(name, ev, guid, conn, conn_guid, tag, anonymous=True):
 <appliesTo/><description>[{tag}] Real time: upsert {ev['sobject']} on {ev['ext_field']} (parent links by external id).</description>
 <tags>{'.anonymous' if anonymous else ''}</tags><generator>Informatica Process Designer 11</generator>
 <input>{ins}</input><output>{outs}</output><tempFields>{temps}</tempFields><notes/>
-{_deploy(anonymous)}
+{_deploy(anonymous, users, groups)}
 <flow id="a"><start id="b"><link id="l1" targetId="c"/></start>
 <assignment id="c"><title>Build JSON</title><operation source="formula" to="temp.payload"><expression language="XQuery">{escape(payload_expr(ev))}</expression></operation><link id="l2" targetId="d"/></assignment>
 <service id="d"><title>Get token</title><serviceName>{conn}:Get_Token</serviceName><serviceGUID>{conn_guid}</serviceGUID><serviceInput/>

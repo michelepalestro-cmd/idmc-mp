@@ -3,6 +3,25 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.8.0 (2026-11-19): security and tidiness pass
+
+- **Security fixes from a full code review:** the mapping generator only sends credentials to an https
+  `*.informaticacloud.com` login and ignores `auth` in specs; its writes are dry runs until `--execute --expect-org`;
+  one lockout guard for every tool (HMAC-keyed block file); redirects never carry session headers to another host or to
+  http; wider secret redaction; export packages written 0600; session calls refuse non-IDMC URLs; at most one re-login
+  per call; tests can never reach the network.
+- **Demos:** CAI processes require Basic Authentication; no Salesforce secret inside packages; Postgres bound to
+  localhost; TLS on non-local connections; bound Snowflake parameters; no password on any command line.
+- **Content:** the identifiable case study removed; safe wording for the legacy agent form, VM backups (managed
+  identity, no secret over run-command), the Shell Service and curl logins; a vendor ticket key and a private roadmap
+  note removed; `/idmc-mp:connect` never handles a pasted password.
+- **CI:** least-privilege permissions, actions pinned to commit SHAs, no persisted token, Python 3.10 and 3.12,
+  Dependabot. `.gitignore` covers demo `config.json` / `state/` and the mapping generator's `profile.json`.
+- **Tidiness:** lesson counts are generated (`toolkit/tools/sync_lesson_counts.py`) and tested; stale docs rewritten;
+  reference library trimmed (generated and history-only files removed, POSIX paths); new CODE_OF_CONDUCT, issue forms,
+  pull-request checklist, `.editorconfig`, `toolkit/README.md`, `CLAUDE.md`; a maintainer contact; the secret scan
+  covers `lessons.jsonl` and masks what it prints.
+
 ## 1.7.0 (2026-11-19): a second pass over public IDMC code
 
 - **106 more lessons** (2,340 in total) from a second, file-by-file pass: every bug and change note of the best-maintained

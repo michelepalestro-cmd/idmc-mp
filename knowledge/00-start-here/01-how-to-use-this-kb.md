@@ -24,7 +24,7 @@ how sure is each claim, and how do I add what I learn?
 **Last verified:** 2026-11-10 (the evidence of the whole KB spans 2026-06-27 to 2026-11-10).
 
 > This KB tells a Claude session how Informatica IDMC really behaves when it is driven without the UI: exact routes,
-> hosts, headers, bodies, error codes, walls and the workarounds that beat them, plus more than 1,850 dated lessons.
+> hosts, headers, bodies, error codes, walls and the workarounds that beat them, plus more than 2,300 dated lessons.
 > Every folder (`00`–`14`) is generic and works in any org; deployment-specific material is kept outside this KB.
 
 ---
@@ -216,30 +216,17 @@ as superseded. A proof from one org or pod is evidence for that org or pod only.
 | **This KB** (folders `00`–`14`) | Generic IDMC knowledge: planes and hosts, routes, bodies, error codes, walls, processes, timings, limits, lessons, scripts | Names no customer, application, person, org, org id, agent or object id, VM, IP, internal host, cloud project or tracker key. Examples use the placeholders of §4. Numbers without names are fine |
 | **Kept outside it** | Deployment-specific material: which org is which, ids, hosts, agents, application names and status, tracker history, org-specific scripts and evidence | Never linked from here; nothing in this KB depends on it |
 
-The scope rule is enforced by a share gate script that is kept outside the KB (it names what it blocks, so it cannot
-live here). It scans every file under the KB root, Office documents, PDFs and file names included; run it before
-finishing any edit, and it must print CLEAN. Lesson provenance (which tracker issue, note or document proved a lesson)
-is kept with the deployment material, never in these folders.
+The scope rule is enforced by `toolkit/tools/secret_scan.py`, which runs in a pre-commit hook and in CI and must print
+CLEAN. Lesson provenance (which tracker issue, note or document proved a lesson) stays with your own deployment
+material, never in the plugin.
 
 ## 9. How to update the KB
 
-1. **Search first.** The fact may already be here, possibly as an overturned belief.
-2. **Generic knowledge** goes to the matching topic doc **and** to the domain's lessons file in `lessons`
-   as a new lesson (§10), with its kind, date and evidence (HTTP code, read-back, count or measured time). Use
-   placeholders; keep numbers, drop names. Allocate the new id at write time from the highest id in both the markdown
-   file and `lessons.jsonl`, write both in one pass, then check for duplicates: parallel sessions move ids under you
-   (L-METHOD-084).
-3. **An overturned belief** is never deleted. Move the old lesson to the file's "Superseded / overturned" section with
-   `Was believed: <date range> · Overturned by: <new id>`, add a row to
-   [Overturned Beliefs](../../lessons/overturned-beliefs.md), fix the topic doc's text and its
-   "Overturned beliefs" table, and check the [Capability Map](03-capability-map.md) and the
-   [Laws](02-the-laws-of-headless-idmc.md).
-4. **Deployment- or org-specific facts** (which org, which ids, which VM, application status) stay outside the KB,
-   together with the raw sources (provenance) of each new lesson. Write the lesson itself with placeholders.
-5. **Never write a secret.** Name a credential by where it lives, never by its value.
-6. **Before finishing,** run the share gate (it must print CLEAN, and it scans Office files, PDFs and file names too)
-   and a link check over the KB: no link may point outside the KB folder. Keep the opening block of every doc you
-   touched current, including its **Last verified** date.
+- **Using the plugin:** save what you learn with `/idmc-mp:save-lesson`. It goes to `~/.idmc_toolkit/lessons-local.jsonl`
+  on your computer, which the skills search next time; the plugin folder is replaced on every update, so never edit it.
+- **Contributing to the shared KB:** follow [CONTRIBUTING.md](../../CONTRIBUTING.md): search first, write the lesson
+  generically (placeholders, numbers without names, never a secret), keep overturned beliefs as superseded lessons, run
+  the tools it lists (counts, error index, tests, secret scan), and open a pull request or an issue.
 
 ## 10. The lesson ID scheme
 

@@ -44,6 +44,18 @@ def find_conn(S, name):
     return d if isinstance(d, dict) and d.get("id") else None
 
 
+LOOPBACK = {"localhost", "127.0.0.1", "::1", "[::1]"}
+
+
+def pg_tls(host):
+    """TLS with server-certificate validation for any ledger host except loopback. The loopback stand-in
+    (infra/docker-compose.yml, postgres:16-alpine without a server certificate, published on 127.0.0.1 only, the agent on
+    the same host) is the one case that keeps encryption off."""
+    if str(host).strip().lower() in LOOPBACK:
+        return {"encryptionMethod": "noEncryption"}
+    return {"encryptionMethod": "SSL", "tlsv1_2": "true", "validateServerCertificate": "true"}
+
+
 def conn_bodies(cfg):
     b, re_id = cfg["cdi_batch"], cfg["agent"]["runtime_environment_id"]
     pg, ora = b["postgres"], b["oracle"]
@@ -51,7 +63,7 @@ def conn_bodies(cfg):
                "runtimeEnvironmentId": re_id, "description": "Message Bus Replacement: ops ledger (read only, nightly batch)",
                "connParams": {"hostName": pg["host"], "port": str(pg["port"]), "database": pg["database"],
                               "userName": "mbr_batch_reader", "password": "<MBR_CDI_PG_PASSWORD>",
-                              "authenticationType": "UserIdPassword", "encryptionMethod": "noEncryption"}}
+                              "authenticationType": "UserIdPassword", **pg_tls(pg["host"])}}
     ora_body = {"@type": "connection", "name": b["oracle_connection"], "type": "Oracle", "runtimeEnvironmentId": re_id,
                 "description": "Message Bus Replacement: nightly batch target", "host": ora["host"], "port": int(ora["port"]),
                 "database": ora["service"], "schema": ora["schema"], "codepage": "UTF-8", "username": ora["schema"],

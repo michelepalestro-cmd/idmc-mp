@@ -1,9 +1,11 @@
 {
   "name": "idmc-mp",
-  "version": "1.7.0",
-  "description": "The Informatica IDMC / IICS co-pilot for Claude: understand, deploy, optimize and run IDMC headless (Secure Agent, CDI, CDC, CAI, data quality, governance, MDM, MCP, IPU), with 2,000+ field lessons, one skill per area, slash commands, a Python library and a mapping generator.",
+  "version": "1.8.0",
+  "description": "The Informatica IDMC / IICS co-pilot for Claude: understand, deploy, optimize and run IDMC headless (Secure Agent, CDI, CDC, CAI, data quality, governance, MDM, MCP, IPU), with 2,300+ field lessons, one skill per area, slash commands, a Python toolkit with a login lockout guard, and a mapping generator.",
   "author": {
-    "name": "IDMC MP contributors"
+    "name": "Michele Palestro",
+    "email": "michelepalestro@gmail.com",
+    "url": "https://github.com/michelepalestro-cmd/idmc-mp"
   },
   "homepage": "https://github.com/michelepalestro-cmd/idmc-mp",
   "repository": "https://github.com/michelepalestro-cmd/idmc-mp",

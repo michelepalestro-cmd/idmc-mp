@@ -5,7 +5,9 @@ build_master.py -- builds THE single master document.
     python build/build_master.py
 
 Reads every content/*.json in filename order and renders one .docx:
-    IDMC API & MCP Master Reference.docx
+    idmc-api-mcp-master-reference.docx   (generated on demand; not shipped in the repo)
+
+Needs the third-party package python-docx (pip install python-docx). Python 3.10+.
 
 This is the ONLY script that writes the .docx. Never hand-edit the .docx --
 edits there are destroyed on the next build. Edit content/*.json instead.
@@ -34,7 +36,7 @@ from docx.oxml import OxmlElement
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 CONTENT = os.path.join(ROOT, "content")
-OUT = os.path.join(ROOT, "IDMC API & MCP Master Reference.docx")
+OUT = os.path.join(ROOT, "idmc-api-mcp-master-reference.docx")
 
 NAVY = RGBColor(0x00, 0x27, 0x75)
 BRIGHT = RGBColor(0x00, 0xB3, 0xFF)

@@ -9,7 +9,7 @@
   "agent": {
     "name": "<Secure Agent name as shown in Administrator > Runtime Environments (CAI 'Run On' target)>",
     "runtime_environment": "<runtime environment (agent group) name, for the CDI tasks and connections>",
-    "runtime_environment_id": "<v2 id of that runtime environment, e.g. from: python "toolkit/lib/idmc_session.py" get v2 /api/v2/runtimeEnvironment>",
+    "runtime_environment_id": "<v2 id of that runtime environment, e.g. from: python 'toolkit/lib/idmc_session.py' get v2 /api/v2/runtimeEnvironment>",
     "process_engine_url": "http://127.0.0.1:7080/process-engine/public/rt"
   },
 

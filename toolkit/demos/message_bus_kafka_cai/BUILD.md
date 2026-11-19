@@ -239,7 +239,10 @@ the drain rate. Ask the org owner first: every ping is a CAI run.
    Oracle body (PROVEN): `{"@type":"connection","name":"mbr_oracle","type":"Oracle","runtimeEnvironmentId","host",
    "port":1521,"database":"FREEPDB1","schema":"MBR_BATCH","codepage":"UTF-8","username","password"}`. PostgreSQL:
    `type TOOLKIT_CCI`, `instanceName PostgreSQL`, `connParams` with `userName`; the accepted `authenticationType` drifts
-   by pod: copy a working connection's key set ([Connector Notes](../../../knowledge/02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md)).
+   by pod: copy a working connection's key set. Encryption: `noEncryption` only while the ledger host is loopback (the
+   stand-in on 127.0.0.1:15432, no server certificate); any other host gets `encryptionMethod SSL`, `tlsv1_2` and
+   `validateServerCertificate` `true` (`cdi_batch.pg_tls`). Kafka: `kafka.use_ssl` false is accepted only for loopback
+   brokers ([Connector Notes](../../../knowledge/02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md)).
 2. Template task (**UI-only wall if your org has none**): Data Integration > New > Mapping Task > mapping
    `dsst__copy_data_new_tgt` (Add-On Bundles) > any source / target > Save. Put its v2 id in
    `cdi_batch.template_task_id`.

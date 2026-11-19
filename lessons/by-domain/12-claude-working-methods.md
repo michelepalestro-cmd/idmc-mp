@@ -1,5 +1,6 @@
 # Lessons: Claude Working Methods
-148 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+171 lessons: 163 current (14 of the current ones are general, not IDMC-specific), 0 disputed, 8 superseded; evidence dated 2026-07-04 to 2026-11-19.
+IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [How Claude reaches and drives IDMC](../../knowledge/14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) · [Evidence discipline](../../knowledge/14-claude-working-methods/02-evidence-discipline.md) · [Multi-agent coordination](../../knowledge/14-claude-working-methods/03-multi-agent-coordination.md) · [Secrets hygiene](../../knowledge/14-claude-working-methods/06-secrets-hygiene.md) · [Environment & Ops lessons](13-environment-ops.md) · [UI Automation lessons](14-ui-automation.md)
 

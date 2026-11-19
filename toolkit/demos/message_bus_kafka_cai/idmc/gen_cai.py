@@ -155,6 +155,11 @@ def connectors():
 # ------------------------------------------------------------------ listener connections
 def kafka_conns(enabled):
     k, t, gr = CONF["kafka"], CONF["kafka"]["topics"], CONF["kafka"]["groups"]
+    # plain-text Kafka only for the loopback stand-in (infra/docker-compose.yml publishes it on 127.0.0.1, the agent is on
+    # the same host); any other broker must use TLS (kafka.use_ssl), so messages never cross a network unencrypted
+    hosts = [k["host"]] + [h.rsplit(":", 1)[0] for h in str(k.get("additional_brokers") or "").split(",") if h.strip()]
+    if not k.get("use_ssl") and any(h.strip().strip("[]").lower() not in ("127.0.0.1", "localhost", "::1") for h in hosts):
+        sys.exit("kafka.use_ssl is false but a broker is not on loopback: set use_ssl true for a networked broker")
     agent = CONF["agent"]["name"]
     o, op, pp = k["consumer_options"], k["perf_consumer_options"], k["producer_options"]
     main = C.kafka_connection(

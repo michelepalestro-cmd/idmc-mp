@@ -12,10 +12,17 @@ computes the expected answer.
 | Assertions | 29: keyed row-by-row comparisons, violation checks and row counts |
 | IDMC jobs per full pass | 10 (one task run per scenario) |
 
+> **Not included in this repository:** the `suite/` harness (`make_specs.py`, `seed.sql`, `seed_guards.sql`,
+> `targets.sql`, `ref/*.sql`, `suite.json`, `check.py`, `profile.vars.example.json`). Only the 10 specs in
+> `examples/retail/` ship here. The harness parts below are kept as a record of how the specs were proven; to repeat
+> the proof, write your own seed and reference queries (or ask for the harness), and deploy the specs with mapgen.
+
 The rest of this page covers the files, how to run the suite, what each scenario proves, the coverage, the planted
 edge cases, how the comparison works, the rules every spec follows, and what a failure probably means.
 
 ## Files
+
+Only `examples/retail/m_ex_*.json` is in this repository; every `suite/` path is **not included**.
 
 | Path | What it is |
 |---|---|
@@ -30,6 +37,9 @@ edge cases, how the comparison works, the rules every spec follows, and what a f
 | `suite/profile.vars.example.json` | The two values you supply: `BQ_PROJECT`, `DATASET` |
 
 ## Running it on your org
+
+The `python suite/check.py ...` commands below need the harness, which is **not included in this repository**; only
+the `mapgen.py deploy` line works with what ships here.
 
 Prerequisites:
 - A BigQuery V2 connection in IDMC (Simple mode) whose service account can create tables in the dataset you choose.
@@ -52,7 +62,7 @@ Steps:
    would leave old rows behind.
    ```
    python suite/check.py prepare S01 --vars vars.json
-   python mapgen.py --profile <your profile> deploy examples/retail/m_ex_customer_cleanse.json --run
+   python mapgen.py --profile <your profile> deploy examples/retail/m_ex_customer_cleanse.json --run --execute --expect-org <orgIdV3>
    python suite/check.py check S01 --vars vars.json
    ```
 

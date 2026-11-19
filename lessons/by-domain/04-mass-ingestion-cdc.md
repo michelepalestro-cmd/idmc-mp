@@ -1,5 +1,5 @@
 # Lessons: Mass Ingestion & CDC
-66 current lessons (1 of them disputed) and 5 superseded, IDs L-DBMI-###; evidence dated 2026-07-04 to 2026-10-12. Every lesson is generic; its sources are mapped outside the generic zone.
+71 lessons: 65 current, 1 disputed, 5 superseded; evidence dated 2026-07-04 to 2026-11-19. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [DBMI over REST](../../knowledge/04-cdc-mass-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) · [CDC from PostgreSQL](../../knowledge/04-cdc-mass-ingestion/02-cdc-from-postgresql.md) · [DBMI Targets & Drivers](../../knowledge/04-cdc-mass-ingestion/03-dbmi-targets-drivers.md)
 
 ## Current

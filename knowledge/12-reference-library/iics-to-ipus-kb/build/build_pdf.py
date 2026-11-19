@@ -3,7 +3,7 @@
 build_pdf.py — render the generated master KB (Markdown) to a clean, customer-facing PDF.
 
 Pipeline:
-  1. read  "IICS to IPUs — Knowledge Base.md"  (the shareable deliverable built by build_kb.py)
+  1. read  iics-to-ipus-knowledge-base.md  (the single-file KB built by build_kb.py; run that first)
   2. convert Markdown -> HTML (tables, fenced code, GitHub-style heading anchors so the
      in-document Contents links resolve)
   3. wrap in a print stylesheet (Arial, Informatica blue, zebra tables, per-section page breaks)
@@ -12,11 +12,14 @@ Pipeline:
 Shareability: this renders ONLY the generated deliverable, which is built from sections/ (no
 prices, no discount schedules). Do not point it at any other file.
 
-Requires:  pip install markdown pymdown-extensions playwright   (msedge channel present on Windows)
-Run:       python build/build_pdf.py
+Requires:  Python 3.10+, pip install markdown pymdown-extensions playwright, and the msedge
+           browser channel (Windows; on other systems change channel= to a browser you have).
+Run:       python3 build/build_kb.py && python3 build/build_pdf.py
+Output:    iics-to-ipus-knowledge-base.pdf at the KB root (generated; not shipped in the repo).
 """
 
 import os
+import pathlib
 import re
 import datetime
 import markdown
@@ -25,9 +28,9 @@ from playwright.sync_api import sync_playwright
 
 BUILD_DIR = os.path.dirname(os.path.abspath(__file__))
 KB_ROOT = os.path.dirname(BUILD_DIR)
-SRC_MD = os.path.join(KB_ROOT, "IICS to IPUs — Knowledge Base.md")
-OUT_HTML = os.path.join(BUILD_DIR, "_kb_render.html")   # intermediate (scratch)
-OUT_PDF = os.path.join(KB_ROOT, "IICS to IPUs — Knowledge Base.pdf")
+SRC_MD = os.path.join(KB_ROOT, "iics-to-ipus-knowledge-base.md")
+OUT_HTML = os.path.join(BUILD_DIR, "_kb_render.html")   # intermediate (scratch; git-ignored)
+OUT_PDF = os.path.join(KB_ROOT, "iics-to-ipus-knowledge-base.pdf")
 
 
 def github_slugify(value, separator):
@@ -118,7 +121,7 @@ def main():
     with sync_playwright() as p:
         b = p.chromium.launch(channel="msedge")
         pg = b.new_page()
-        pg.goto("file:///" + OUT_HTML.replace("\\", "/"))
+        pg.goto(pathlib.Path(OUT_HTML).as_uri())
         pg.emulate_media(media="print")
         pg.pdf(
             path=OUT_PDF, format="Letter", print_background=True,

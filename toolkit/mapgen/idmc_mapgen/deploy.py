@@ -1,11 +1,13 @@
 """The live half: import a package, find the mapping, ensure its mapping task, run it, read the logs.
 
     from idmc_mapgen.deploy import deploy
-    rec = deploy("examples/retail/m_rdf_customer_cleanse.json", profile="profile.local.json", run=True)
+    rec = deploy("examples/retail/m_rdf_customer_cleanse.json", profile="profile.local.json", dry_run=True)
+    rec = deploy(..., run=True, expect_org="<22-char v3 org id>")     # a live deploy: needs expect_org
 
 Steps of ``deploy`` (each is also a function you can call alone):
   lint (when idmc_mapgen.lint is present)  ->  guards  ->  build the IMF  ->  package (a trial on a copy: a build or
-  package SpecError costs no IDMC session)  ->  assert the org  ->  find the existing mapping  ->  package
+  package SpecError costs no IDMC session)  ->  assert the org (profile org.v2Id, then expect_org: the live v3 org id
+  proven by idmc_session's require_org; a live deploy without expect_org raises DeployError)  ->  find the existing mapping  ->  package
   ->  import_package (REUSE the first time; OVERWRITE under the SAME guid once the mapping exists in the folder)
   ->  find_mapping (by name INSIDE the folder, never by name alone)  ->  ensure_task (reuse or create + move)
   ->  run_task (optional; POST /api/v2/job, poll the activity log by runId).
@@ -327,7 +329,15 @@ def find_mapplet(client, name, folder_path):
     return {"frsGuid": hits[0]["id"], "name": name, "path": hits[0]["path"]} if hits else None
 
 
-def _deploy_mapplet(s, prof, rec, fpath, dry_run, mode, client, owner, use_sc, sc_cfg, log):
+def _prove_org(client, prof, rec, expect_org):
+    """Before the first write: profile org.v2Id (assert_org), then the live v3 org id (require_org)."""
+    client = client or Client(prof)
+    rec["org"] = client.assert_org()["id"]
+    client.require_org(expect_org)
+    return client
+
+
+def _deploy_mapplet(s, prof, rec, fpath, dry_run, mode, client, owner, use_sc, sc_cfg, log, expect_org=None):
     """A spec with documentType DMAPPLET: build -> DMAPPLET package -> import. No task: a mapplet only runs inside a mapping
     (reference it from a mapping's "mapplet" node with the frsGuid printed here, plus an "assets" entry)."""
     from . import compile as compiler
@@ -340,8 +350,7 @@ def _deploy_mapplet(s, prof, rec, fpath, dry_run, mode, client, owner, use_sc, s
     existing = None
     if not dry_run:
         mapplet_package_bytes(copy.deepcopy(s), imf, guid=s.get("guid"))   # first: a package SpecError costs no session
-        client = client or Client(prof)
-        rec["org"] = client.assert_org()["id"]
+        client = _prove_org(client, prof, rec, expect_org)
         existing = find_mapplet(client, s["name"], fpath)
         if existing:
             s["guid"] = existing["frsGuid"]
@@ -380,12 +389,15 @@ def _deploy_mapplet(s, prof, rec, fpath, dry_run, mode, client, owner, use_sc, s
 
 
 def deploy(spec, profile=None, run=False, dry_run=False, mode=None, allow_live=False, force_lint=False,
-           owner="mapgen", client=None, log=print, source_control=None, vars=None, default_profile=None):
+           owner="mapgen", client=None, log=print, source_control=None, vars=None, default_profile=None, expect_org=None):
     """lint -> build -> package -> (import -> task -> run). ``spec``: path or dict. Returns the run record.
 
     The profile is chosen as spec.load_spec chooses it: ``profile`` (path or non-empty dict), else the spec's own
     "profile" key, else ``default_profile``. That one profile (and ``vars``) feeds the package, lint, the guards,
-    the workDir and the client, so they always agree."""
+    the workDir and the client, so they always agree. A live deploy (dry_run=False) needs ``expect_org``, the 22-char
+    v3 org id it means to change, checked against the live org before the first write."""
+    if not dry_run and not expect_org:
+        raise DeployError("a live deploy needs expect_org=<22-char v3 org id> (CLI: --execute --expect-org <orgIdV3>)")
     from . import compile as compiler, package as packager, spec as specmod
     s, prof = specmod.load_spec_and_profile(spec, profile=profile, vars=vars, default_profile=default_profile)
     fpath = folder_path_of(s)
@@ -427,13 +439,12 @@ def deploy(spec, profile=None, run=False, dry_run=False, mode=None, allow_live=F
     sc_cfg = prof.get("sourceControl") or {}
     use_sc = sc_cfg.get("enabled", True) if source_control is None else source_control
     if s.get("documentType") == "DMAPPLET":
-        return _deploy_mapplet(s, prof, rec, fpath, dry_run, mode, client, owner, use_sc, sc_cfg, log)
+        return _deploy_mapplet(s, prof, rec, fpath, dry_run, mode, client, owner, use_sc, sc_cfg, log, expect_org)
     imf = compiler.build(s)
     existing = None
     if not dry_run:
         packager.package_bytes(copy.deepcopy(s), imf)   # first: a package SpecError (an unreadable folderJson ...) costs no session
-        client = client or Client(prof)
-        rec["org"] = client.assert_org()["id"]
+        client = _prove_org(client, prof, rec, expect_org)
         existing = find_mapping(client, s["name"], fpath)
         if existing:
             if s.get("guid") and s["guid"] != existing["frsGuid"]:

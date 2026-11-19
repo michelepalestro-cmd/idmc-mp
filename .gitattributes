@@ -9,3 +9,8 @@
 *.docx binary
 *.xlsx binary
 *.pptx binary
+
+# Generated files: collapsed in GitHub diffs and left out of language stats
+knowledge/playbook/06-lessons-field.md linguist-generated=true
+knowledge/12-reference-library/idmc-api-mcp-reference/claude-idmc-how-to/idmc-endpoint-dictionary.md linguist-generated=true
+knowledge/12-reference-library/idmc-api-mcp-reference/claude-idmc-how-to/csv-every-endpoint/*.csv linguist-generated=true

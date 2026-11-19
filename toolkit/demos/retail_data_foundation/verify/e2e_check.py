@@ -6,7 +6,7 @@
 
 Steps (with --execute):
   1. insert one uniquely named, deliberately messy customer into the source DB      (infra/pgexec.py)
-  2. --cai: POST it to rdf_cai_customer_to_crm, time the real-time Contact upsert    (CAI_RT_BASE)
+  2. --cai: POST it to rdf_cai_customer_to_crm, time the real-time Contact upsert    (CAI_RT_BASE + RDF_CAI_USER/PASS)
   3. run the sign-up lane tf_rdf_customer (3 jobs: ingest -> golden -> CRM sync)       (core taskflow run; costs jobs)
      --no-lane skips it and waits for the scheduled tf_rdf_full instead
   4. warehouse: the golden row exists, cleansed (Title Case name, lower-case e-mail, E.164 phone), dq_valid = 1
@@ -47,12 +47,12 @@ def sf_query(soql, api):
     login = C.env("SF_LOGIN_URL", required=True).rstrip("/")
     form = urllib.parse.urlencode({"grant_type": "client_credentials", "client_id": C.env("SF_CLIENT_ID", required=True),
                                    "client_secret": C.env("SF_CLIENT_SECRET", required=True)}).encode()
-    with urllib.request.urlopen(urllib.request.Request(login + "/services/oauth2/token", data=form, method="POST",
+    with C.urlopen(urllib.request.Request(login + "/services/oauth2/token", data=form, method="POST",
                                                        headers={"Content-Type": "application/x-www-form-urlencoded"}),
                                 timeout=30) as r:
         tok = json.loads(r.read())
     url = f"{tok['instance_url']}/services/data/v{api}/query?q=" + urllib.parse.quote(soql)
-    with urllib.request.urlopen(urllib.request.Request(url, headers={"Authorization": "Bearer " + tok["access_token"]}),
+    with C.urlopen(urllib.request.Request(url, headers={"Authorization": "Bearer " + tok["access_token"]}),
                                 timeout=30) as r:
         return json.loads(r.read()).get("records", [])
 
@@ -102,7 +102,7 @@ def main():
             print("  " + p)
         print("needs:", ", ".join(f"{k}={v}" for k, v in C.env_status(
             ["IDMC_USER", "IDMC_PASS", "IDMC_LOGIN_HOST", "BQ_PROJECT", "SF_LOGIN_URL", "SF_CLIENT_ID", "SF_CLIENT_SECRET"]
-            + (["CAI_RT_BASE"] if a.cai else []))))
+            + (["CAI_RT_BASE", "RDF_CAI_USER", "RDF_CAI_PASS"] if a.cai else []))))
         return 0
     C.offline_session_guard(a)
     from pgexec import q, run_sql

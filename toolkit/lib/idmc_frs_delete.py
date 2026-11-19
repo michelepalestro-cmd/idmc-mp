@@ -16,7 +16,7 @@ production org cleanup of 80+ objects):
   DELETE /api/v2/<resource>/<id> (icSessionId) -> 200; read-back 403/404 = gone; a deleted SCHEDULE's GET is an
        empty 200 shell, so it is checked in the list instead. A mapping deletes only when its tasks[] is empty.
 Order that worked (whole-app removal, both orgs): back up first (idmc_export_import.py export, keep the zip outside
-  the KB) -> CAI unpublish (processes -> app connections -> connectors) -> FRS delete CAI assets -> tasks (v2 id via
+  the plugin) -> CAI unpublish (processes -> app connections -> connectors) -> FRS delete CAI assets -> tasks (v2 id via
   frsGuid, never by name) -> mappings -> DQ assets / profiles (FRS) -> connections (after a used-by check) ->
   agents / runtime environments -> schedules -> empty folders and projects. Undo = re-import the backup with REUSE,
   then republish CAI. Never delete while another session imports; tell the migration lead before each batch.

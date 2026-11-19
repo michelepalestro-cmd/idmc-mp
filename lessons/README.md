@@ -45,43 +45,45 @@ Counts are the `### L-` headings in each file.
 
 | File | Id prefixes | Lessons | Current | Superseded | Disputed | Evidence dates |
 |---|---|---|---|---|---|---|
-| [01 Access & Auth](by-domain/01-access-auth.md) | `AUTH` | 136 | 124 | 11 | 1 | 2026-06-27 to 2026-11-10 |
-| [02 Secure Agent & Connections](by-domain/02-secure-agent-connections.md) | `AGENT` (123), `CONN` (141) | 294 | 268 | 23 | 3 | 2026-06-27 to 2026-11-05 |
-| [03 Data Integration (CDI)](by-domain/03-data-integration-cdi.md) | `CDI` | 330 | 306 | 21 | 3 | 2026-06-27 to 2026-11-12 |
-| [04 Mass Ingestion & CDC](by-domain/04-mass-ingestion-cdc.md) | `DBMI` | 71 | 65 | 5 | 1 | 2026-07-04 to 2026-11-02 |
-| [05 Application Integration (CAI)](by-domain/05-application-integration-cai.md) | `CAI` | 214 | 197 | 16 | 1 | 2026-07-01 to 2026-11-01 |
-| [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.md) | `DQ` | 168 | 150 | 14 | 4 | 2026-06-27 to 2026-11-12 |
-| [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-cdgc.md) | `CDGC` | 266 | 238 | 26 | 2 | 2026-06-27 to 2026-11-01 |
-| [08 MDM](by-domain/08-mdm.md) | `MDM` | 120 | 107 | 11 | 2 | 2026-07-04 to 2026-11-12 |
+| [01 Access & Auth](by-domain/01-access-auth.md) | `AUTH` | 136 | 124 | 11 | 1 | 2026-06-27 to 2026-11-19 |
+| [02 Secure Agent & Connections](by-domain/02-secure-agent-connections.md) | `AGENT` (142), `CONN` (152) | 294 | 268 | 23 | 3 | 2026-06-27 to 2026-11-19 |
+| [03 Data Integration (CDI)](by-domain/03-data-integration-cdi.md) | `CDI` | 330 | 306 | 21 | 3 | 2026-06-27 to 2026-11-19 |
+| [04 Mass Ingestion & CDC](by-domain/04-mass-ingestion-cdc.md) | `DBMI` | 71 | 65 | 5 | 1 | 2026-07-04 to 2026-11-19 |
+| [05 Application Integration (CAI)](by-domain/05-application-integration-cai.md) | `CAI` | 214 | 197 | 16 | 1 | 2026-07-01 to 2026-11-19 |
+| [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.md) | `DQ` | 172 | 154 | 14 | 4 | 2026-06-27 to 2026-11-19 |
+| [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-cdgc.md) | `CDGC` | 266 | 238 | 26 | 2 | 2026-06-27 to 2026-11-19 |
+| [08 MDM](by-domain/08-mdm.md) | `MDM` | 120 | 107 | 11 | 2 | 2026-07-04 to 2026-11-19 |
 | [09 CLAIRE & MCP](by-domain/09-claire-mcp.md) | `MCP` | 149 | 133 | 14 | 2 | 2026-07-04 to 2026-11-19 |
-| [10 Migration & Org Management](by-domain/10-migration-org-management.md) | `MIG` (100), `CLEAN` (36) | 167 | 149 | 17 | 1 | 2026-07-04 to 2026-11-02 |
-| [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing.md) | `IPU` | 68 | 59 | 7 | 2 | 2026-06-28 to 2026-11-12 |
-| [12 Claude Working Methods](by-domain/12-claude-working-methods.md) | `METHOD` | 170 | 162 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-13 |
-| [13 Environment & Ops](by-domain/13-environment-ops.md) | `ENV` | 144 | 141 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-12 |
+| [10 Migration & Org Management](by-domain/10-migration-org-management.md) | `CLEAN` (37), `MIG` (131) | 168 | 150 | 17 | 1 | 2026-07-04 to 2026-11-19 |
+| [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing.md) | `IPU` | 68 | 59 | 7 | 2 | 2026-06-28 to 2026-11-19 |
+| [12 Claude Working Methods](by-domain/12-claude-working-methods.md) | `METHOD` | 171 | 163 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-19 |
+| [13 Environment & Ops](by-domain/13-environment-ops.md) | `ENV` | 144 | 141 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-19 |
 | [14 UI Automation](by-domain/14-ui-automation.md) | `UI` | 37 | 30 | 6 | 1 | 2026-07-06 to 2026-10-26 |
-| **Total** | 16 prefixes | **2,055** | **1,855** | **181** | **19** | 2026-06-27 to 2026-10-26 |
+| **Total** | 16 prefixes | **2,340** | **2,135** | **182** | **23** | 2026-06-27 to 2026-11-19 |
 
-A machine-readable copy of the same lessons, one JSON object per line, is [lessons.jsonl](lessons.jsonl) in this
-folder, with the fields `id`, `domain`, `kind`, `title`, `text`, `evidence`, `date`, `status` and `supersedes_id`
-(1,665 lines, the same ids as the headings). For a current or disputed lesson every field equals its heading, meta line and body (`text` is the body with its lines joined by spaces); for a superseded lesson `text` is the body followed by 'Was believed <dates>; overturned by <id>.', and `kind`, `evidence` and `date` keep the values the belief had.
+The source of truth is [lessons.jsonl](lessons.jsonl), one JSON object per line, in this folder; the `by-domain/` files
+are the readable view. Each line has the fields `id`, `domain`, `kind`, `title`, `text`, `evidence`, `date`, `status` and `supersedes_id`
+(one line per lesson, the same ids as the headings). For a current or disputed lesson every field equals its heading, meta line and body (`text` is the body with its lines joined by spaces); for a superseded lesson `text` is the body followed by 'Was believed <dates>; overturned by <id>.', and `kind`, `evidence` and `date` keep the values the belief had.
 
 ## 3. Kinds
 
 | Kind | Means | Count |
 |---|---|---|
-| `GOTCHA` | a trap: something that looks like one thing and is another | 563 |
-| `RECIPE` | a proven multi-step procedure | 228 |
-| `LAW` | a rule that holds across orgs and changes outcomes | 137 |
-| `WALL` | something that is not headless, dated (many walls are superseded) | 132 |
-| `PROCESS` | an end-to-end way of working | 136 |
-| `OVERTURNED` | the newer lesson that replaced an older belief; its partner is a superseded lesson | 125 |
-| `ROUTE` | an exact verb, host, path, headers and body with the success signal and read-back | 111 |
-| `ERROR` | an error signature and what it really means | 56 |
-| `DECISION` | a choice made, with its reasons | 41 |
-| `PERF` | a measured performance fact | 44 |
-| `SECURITY` | a rule about secrets, access or exposure | 41 |
-| `WORKAROUND` | a way around a wall | 17 |
-| `PATTERN`, `WORKS`, `FACT`, `PROBE`, `FIX` | kinds used by lessons added after the rebuild (a reusable pattern, a confirmed working path, a fact, a probe result, a fix) | 20, 3, 4, 1, 1 |
+| `GOTCHA` | a trap: something that looks like one thing and is another | 805 |
+| `RECIPE` | a proven multi-step procedure | 320 |
+| `ROUTE` | an exact verb, host, path, headers and body with the success signal and read-back | 209 |
+| `PROCESS` | an end-to-end way of working | 158 |
+| `WALL` | something that is not headless, dated (many walls are superseded) | 142 |
+| `LAW` | a rule that holds across orgs and changes outcomes | 141 |
+| `OVERTURNED` | the newer lesson that replaced an older belief; its partner is a superseded lesson | 130 |
+| `FACT` | a fact worth knowing, with its source | 96 |
+| `PATTERN` | a reusable way to do something | 79 |
+| `ERROR` | an error signature and what it really means | 77 |
+| `PERF` | a measured performance fact | 58 |
+| `SECURITY` | a rule about secrets, access or exposure | 54 |
+| `DECISION` | a choice made, with its reasons | 45 |
+| `WORKAROUND` | a way around a wall | 18 |
+| `WORKS`, `FIX`, `LIMIT`, `PROBE`, `TRIAGE` | rarer kinds | 4, 1, 1, 1, 1 |
 
 ## 4. Status values
 
@@ -95,20 +97,20 @@ folder, with the fields `id`, `domain`, `kind`, `title`, `text`, `evidence`, `da
 
 | Prefix | Domain key | File |
 |---|---|---|
-| `AUTH` | `auth` | 0 |
-| `AGENT`, `CONN` | `agent`, `connections` | 02 |
-| `CDI` | `cdi` | 0 |
-| `DBMI` | `dbmi-cdc` | 0 |
-| `CAI` | `cai` | 0 |
-| `DQ` | `dq-profiling` | 0 |
-| `CDGC` | `cdgc` | 0 |
-| `MDM` | `mdm` | 0 |
-| `MCP` | `claire-mcp` | 0 |
-| `MIG`, `CLEAN` | `migration`, `org-cleanup` | 10 |
-| `IPU` | `ipu-licensing` | 0 |
-| `METHOD` | `claude-method` | 0 |
-| `ENV` | `environment-ops` | 0 |
-| `UI` | `ui-automation` | 0 |
+| `AUTH` | `auth` | [01-access-auth.md](by-domain/01-access-auth.md) |
+| `AGENT`, `CONN` | `agent`, `connections` | [02-secure-agent-connections.md](by-domain/02-secure-agent-connections.md) |
+| `CDI` | `cdi` | [03-data-integration-cdi.md](by-domain/03-data-integration-cdi.md) |
+| `DBMI` | `dbmi-cdc` | [04-mass-ingestion-cdc.md](by-domain/04-mass-ingestion-cdc.md) |
+| `CAI` | `cai` | [05-application-integration-cai.md](by-domain/05-application-integration-cai.md) |
+| `DQ` | `dq-profiling` | [06-data-quality-profiling.md](by-domain/06-data-quality-profiling.md) |
+| `CDGC` | `cdgc` | [07-catalog-governance-cdgc.md](by-domain/07-catalog-governance-cdgc.md) |
+| `MDM` | `mdm` | [08-mdm.md](by-domain/08-mdm.md) |
+| `MCP` | `claire-mcp` | [09-claire-mcp.md](by-domain/09-claire-mcp.md) |
+| `CLEAN`, `MIG` | `migration`, `org-cleanup` | [10-migration-org-management.md](by-domain/10-migration-org-management.md) |
+| `IPU` | `ipu-licensing` | [11-ipu-metering-licensing.md](by-domain/11-ipu-metering-licensing.md) |
+| `METHOD` | `claude-method` | [12-claude-working-methods.md](by-domain/12-claude-working-methods.md) |
+| `ENV` | `environment-ops` | [13-environment-ops.md](by-domain/13-environment-ops.md) |
+| `UI` | `ui-automation` | [14-ui-automation.md](by-domain/14-ui-automation.md) |
 
 Ids are stable. At the rebuild, the current lessons of each prefix were numbered first and its superseded beliefs
 last (for example `L-AUTH-077` to `L-AUTH-087`). A lesson added later takes the next free number of its prefix, so from
@@ -118,32 +120,10 @@ pricing) leaves a gap in its prefix; its id stays retired.
 
 ## 6. How to add a lesson
 
-1. **Search first.** Grep this folder for the path, the error code or the key phrase: the lesson may exist, perhaps as
-   a superseded belief that your evidence brings back.
-2. **Pick the file and the prefix**, and take the next free number for that prefix (for example the next `L-CDI-`
-   after the highest one in `03`).
-3. **Write it** in the `## Current` section, under the subject it belongs to, in the shape shown in section 1: a short
-   declarative title, the kind, the date it was proven, the evidence (an HTTP code, a read-back, a count or a measured
-   time), and generic text with placeholders (`<pod>`, `<domain>`, `<orgIdV3>`, `<reId>`, `<connId>`, `<taskId>`).
-   Keep numbers, drop names: no customer, app, person, org, id, host or tracker key belongs here.
-4. **Keep the evidence state honest:** "proven <date>", "documented", "rejected (<code>)" or "untested". Never upgrade
-   a documented claim to proven.
-5. **If it overturns an older lesson,** give the new lesson the kind `OVERTURNED`; move the old one to the
-   `## Superseded / overturned` section with `**Was believed:** <date range> · **Overturned by:** <new id>` and
-   ", overturned <date>" on its heading; add a row to [Overturned Beliefs](overturned-beliefs.md); then fix the topic
-   doc (its text and its overturned-beliefs table) and, if they are affected, the
-   [Capability Map](../knowledge/00-start-here/03-capability-map.md) and the
-   [Laws](../knowledge/00-start-here/02-the-laws-of-headless-idmc.md).
-6. **Update the counts** in the file's summary line and in the table in section 2.
-7. **Add the JSON line** to `lessons.jsonl` with the same id, and record its raw sources in the provenance file
-   kept outside this KB.
-8. **Run the zone gate** on the KB root; it must print CLEAN.
+Follow [CONTRIBUTING.md](../CONTRIBUTING.md). In short: search first; add the lesson to `lessons.jsonl` and to its
+`by-domain/` file under `## Current`, with the next free id of its prefix; keep evidence states honest (proven, documented,
+reported, rejected, untested) and never upgrade one; for an overturned belief use the kind `OVERTURNED` and move the old
+lesson to `## Superseded / overturned` with a row in [Overturned Beliefs](overturned-beliefs.md). Then run
+`python3 toolkit/tools/sync_lesson_counts.py` (rebuilds every count in this folder), `python3 toolkit/tools/build_skill_field_lessons.py`,
+`python3 tests/run_tests.py` and `python3 toolkit/tools/secret_scan.py`.
 
-A superseded entry looks like this:
-
-```
-### L-CDI-190  Swapping a mapping's target connection to another warehouse later is a quick change, overturned 2026-07-04
-**Was believed:** 2026-06-27 (a plan) · **Overturned by:** L-CDI-050, L-CDI-031
-Cross-connector retargets of tasks silently reverted, and target changes on tasks over real mappings are no-ops.
-Retargeting means changing the mapping.
-```

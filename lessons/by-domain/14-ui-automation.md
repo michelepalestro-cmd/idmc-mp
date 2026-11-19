@@ -1,5 +1,5 @@
 # Lessons: UI Automation
-31 current lessons (1 disputed), 6 superseded; evidence dates 2026-07-06 to 2026-10-07. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+37 lessons: 30 current, 1 disputed, 6 superseded; evidence dated 2026-07-06 to 2026-10-26. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [UI automation with Playwright](../../knowledge/14-claude-working-methods/04-ui-automation-with-playwright.md) · [Evidence discipline](../../knowledge/14-claude-working-methods/02-evidence-discipline.md) · [Claude Working Methods lessons](12-claude-working-methods.md) · [Environment & Ops lessons](13-environment-ops.md)
 

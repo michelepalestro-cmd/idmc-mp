@@ -2,13 +2,14 @@
 """idmc_session.py - org-aware IDMC session: guarded v2 + v3 login, pod hosts, plane headers, JWT,
 live org proof (whoami) and the --expect-org guard. stdlib only.
 
-CONFIGURATION (fill in IDMC_LOGIN.txt at the KB root; environment > IDMC_CREDS_FILE > IDMC_LOGIN.txt)
+CONFIGURATION (fill in ~/.idmc_toolkit/IDMC_LOGIN.txt; environment > IDMC_CREDS_FILE > ~/.idmc_toolkit/IDMC_LOGIN.txt
+  > a repo-root IDMC_LOGIN.txt, the last only as a git-clone legacy fallback)
   IDMC_USER        full login name (a truncated name gives a false IDS_085)
   IDMC_PASS        password
   IDMC_LOGIN_HOST  the DOMAIN host <domain>.informaticacloud.com (e.g. dm-us / dmp-us); a pasted browser address
                    or pod host is reduced to it (a pod host 404s on login)
-  IDMC_CREDS_FILE  optional KEY=value file outside the KB (e.g. one per org); its values win over IDMC_LOGIN.txt
-  IDMC_CACHE_DIR   session caches, login lock and block file (default ~/.idmc_session, outside the KB)
+  IDMC_CREDS_FILE  optional KEY=value file outside the plugin (e.g. one per org); its values win over IDMC_LOGIN.txt
+  IDMC_CACHE_DIR   session caches, login lock, block file and its HMAC key (default ~/.idmc_session, outside the plugin)
   IDMC_PROFILE     cache name; use one per org (default: a hash of user + login host)
 
 PLANES (every host is computed from the login answer; header values are session ids)
@@ -31,9 +32,14 @@ EVIDENCE  PROVEN 2026-09 against production orgs: the v2 login (icSessionId, ser
 
 LOCKOUT GUARD  A few rejected logins lock the account (IDS_086) and each retry restarts the lock. So: one attempt
   per run; logins serialised by a file lock with the cache re-checked under the lock; a rejected login (4xx) writes
-  a block file keyed by a fingerprint of the credentials, and while it matches no process logs in again. Fix the
+  a block file keyed by a fingerprint of the credentials (HMAC-SHA256 under a random per-machine key kept 0600 in
+  IDMC_CACHE_DIR, so the file is no offline password verifier), and while it matches no process logs in again.
+  toolkit/mapgen logs in through this class too, so there is one guard. Credentials are sent only over https to a
+  <domain>.informaticacloud.com host; redirects are followed only to https on the same host (idmc_http.SafeRedirect). Fix the
   credentials (the fingerprint changes) or have a human confirm them before deleting the block file. 5xx, 429 and
   network errors stop the run without a block. Sessions die ~30 min after grant, so re-login happens at 24 min.
+  A 401 forces at most one re-login per call, and at most one per Session every RELOGIN_GAP_S seconds.
+  Session.call refuses an absolute URL that is not https on the login's own <domain>.informaticacloud.com.
 
 CLI  python idmc_session.py whoami [--expect-org <orgIdV3>] [--no-v3] | hosts | get <plane> <path> [--full]
 """
@@ -41,6 +47,7 @@ from __future__ import annotations
 
 import argparse
 import hashlib
+import hmac
 import json
 import os
 import re
@@ -54,6 +61,8 @@ import idmc_http as H  # noqa: E402
 import idmc_login as L  # noqa: E402
 
 MAX_AGE, JWT_AGE = 24 * 60, 20 * 60
+RELOGIN_GAP_S = 5 * 60                                 # forced re-logins after a 401: at most one per this window
+BLOCK_FORMAT = 2                                       # block files of another format are ignored (never a crash)
 KB_ROOT = Path(__file__).resolve().parents[2]          # toolkit/lib -> toolkit -> the plugin root
 PLANE_HOST = {"v2": "base", "v3": "base", "frs": "pod", "runtime": "pod", "session": "pod", "dbmi": "ing",
               "cai": "cai", "cdgc": "cdgc", "d360": "d360", "hdm": "hdm", "profiling": "dqprofile", "login": "login"}
@@ -72,17 +81,20 @@ def load_config():
     cfg, f = L.login_values(), os.environ.get("IDMC_CREDS_FILE")
     if f and Path(f).expanduser().resolve() != L.login_file():
         if _inside_kb(f):
-            H.die("IDMC_CREDS_FILE points inside the KB; keep credentials outside it")
+            H.die("IDMC_CREDS_FILE points inside the idmc-mp plugin; keep credentials outside it")
         cfg.update(L.read_kv(f))
     for k in L.KEYS:
         if os.environ.get(k):
             cfg[k] = os.environ[k]
     miss = [k for k in L.KEYS if not cfg.get(k)]
     if miss:
-        where = L.login_file() or f"{L.FILE_NAME} at the toolkit root"
+        where = L.login_file() or f"{L.HOME_FILE}"
         H.die("missing " + ", ".join(miss) + f": fill in {where}, save, and run again")
-    host = L.normalize_host(cfg["IDMC_LOGIN_HOST"])
-    if not host.endswith(".informaticacloud.com") or host.count(".") != 2:
+    raw = cfg["IDMC_LOGIN_HOST"].strip()
+    if "//" in raw and not raw.lower().startswith("https://"):
+        H.die(f"IDMC_LOGIN_HOST must be an https address, got '{raw}': credentials are never sent over plain http")
+    host = L.normalize_host(raw)
+    if not L.is_login_host(host):
         H.die(f"IDMC_LOGIN_HOST must be <domain>.informaticacloud.com, got '{host}' (a pod host 404s on login; "
               "the wrong domain answers IDS_085, which looks like a bad password)")
     cfg["IDMC_LOGIN_HOST"] = host
@@ -133,16 +145,40 @@ class Session:
         self.host = self.cfg["IDMC_LOGIN_HOST"]
         d = Path(os.environ.get("IDMC_CACHE_DIR") or (Path.home() / ".idmc_session")).expanduser()
         if _inside_kb(d):
-            H.die("IDMC_CACHE_DIR points inside the KB; session caches hold live session ids")
+            H.die("IDMC_CACHE_DIR points inside the idmc-mp plugin; session caches hold live session ids")
         d.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.prof = os.environ.get("IDMC_PROFILE") or hashlib.sha256(
             f"{self.cfg['IDMC_USER']}|{self.host}".encode()).hexdigest()[:10]
         self.dir, self.lock, self.block = d, d / f"{self.prof}.lock", d / f"{self.prof}.block.json"
-        self._s, self._jwt = {}, {}
+        self._s, self._jwt, self._relogin_at = {}, {}, 0.0
+        if not L.is_login_host(self.host):         # cfg passed in directly (e.g. by toolkit/mapgen): check it here too
+            raise LoginError(f"login host '{self.host}' is not <domain>.informaticacloud.com; credentials not sent")
+
+    def _fp_key(self):
+        """A random per-machine HMAC key, created once 0600 in the cache dir."""
+        kf = self.dir / "fingerprint.key"
+        for _ in range(20):
+            try:
+                k = kf.read_bytes().strip()
+                if len(k) >= 32:
+                    return k
+            except OSError:
+                pass
+            try:
+                fd = os.open(str(kf), os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
+            except FileExistsError:
+                time.sleep(0.05)                    # another process is writing it
+                continue
+            k = os.urandom(32).hex().encode()
+            with os.fdopen(fd, "wb") as f:
+                f.write(k)
+            return k
+        raise LoginError(f"cannot read the fingerprint key {kf}")
 
     def _fp(self):
         c = self.cfg
-        return hashlib.sha256("\0".join((c["IDMC_USER"], c["IDMC_PASS"], self.host)).encode()).hexdigest()[:16]
+        msg = "\0".join((c["IDMC_USER"], c["IDMC_PASS"], self.host)).encode()
+        return hmac.new(self._fp_key(), msg, hashlib.sha256).hexdigest()
 
     def _file(self, kind):
         return self.dir / f"{self.prof}.{kind}.json"
@@ -171,9 +207,16 @@ class Session:
             b = json.loads(self.block.read_text(encoding="utf-8"))
         except (OSError, ValueError):
             return
-        if b.get("fp") == self._fp():
+        if not isinstance(b, dict) or b.get("format") != BLOCK_FORMAT:
+            return                                  # an older (unsalted) or unknown block file: ignored
+        if hmac.compare_digest(str(b.get("fp", "")), self._fp()):
             raise LoginError(f"login BLOCKED since {b.get('at')} ({b.get('why')}). Fix the credentials, or have a human "
                              f"confirm them in a browser, then delete {self.block}. Not retrying.")
+
+    def write_block(self, why):
+        """Record a rejected login: no process logs in again with these credentials until they change."""
+        H.save_json(str(self.block), {"format": BLOCK_FORMAT, "at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                      "fp": self._fp(), "why": why})
 
     def _login(self, kind):
         s = self._cached(kind)
@@ -196,8 +239,7 @@ class Session:
                     raise LoginError(why + " (transient: not blocked, not retried)")
                 if r.status == 404:
                     raise LoginError(why + " (wrong login host?)")
-                H.save_json(str(self.block), {"at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-                                              "fp": self._fp(), "why": why})
+                self.write_block(why)
                 raise LoginError(why + " -> REJECTED, block file written, not retrying "
                                  "(IDS_085 = bad credentials or wrong domain; IDS_086 = account locked)")
             j = r.json({}) or {}
@@ -270,6 +312,8 @@ class Session:
     def call(self, plane, method, path, body=None, raw=None, ctype=None, headers=None, timeout=H.TIMEOUT):
         if not path.startswith("http") and plane == "public":
             raise ValueError("the public plane needs a full URL")
+        if path.startswith("http") and plane != "public":
+            self.check_url(path)
         url = path if path.startswith("http") else self.hosts()[PLANE_HOST[plane]] + path
         r = None
         for attempt in (1, 2):
@@ -278,10 +322,23 @@ class Session:
             r = H.request(method, url, h, body=body, raw=raw, ctype=ctype, timeout=timeout)
             if r.status != 401 or attempt == 2 or plane == "public":
                 return r
+            if time.time() - self._relogin_at < RELOGIN_GAP_S:
+                return r                                       # re-logged in moments ago: a 401 now is not an expiry
+            self._relogin_at = time.time()
             self._jwt.clear()                                  # cdgc/d360: usually an expired JWT
             if plane not in ("cdgc", "d360"):
                 self.drop("v3" if plane in ("hdm", "profiling") else "v2")   # revoked early: log in once more
         return r
+
+    def check_url(self, url):
+        """An absolute URL may carry the session only if it is https on this login's IDMC domain."""
+        from urllib.parse import urlsplit
+        u = urlsplit(url)
+        host, dom = (u.hostname or "").lower(), self.host
+        if u.scheme.lower() != "https" or not (host == dom or host.endswith("." + dom)):
+            raise ValueError(f"refusing to send the IDMC session to {u.scheme}://{host}: only https hosts under "
+                             f"{dom} get it (use plane 'public' for an anonymous call)")
+        return url
 
     def get(self, plane, path, **kw):
         return self.call(plane, "GET", path, **kw)

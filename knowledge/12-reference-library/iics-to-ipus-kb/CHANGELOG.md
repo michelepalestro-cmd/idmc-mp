@@ -13,6 +13,15 @@ Entry format:
 
 ---
 
+## 2026-11-19 — Editor — DONE (repo cleanup)
+- Stopped shipping the generated single-file `iics-to-ipus-knowledge-base.md` (a concatenation of
+  `sections/`) and the scratch `build/_kb_render.html`; `sections/` is now what readers open. Renamed
+  the build outputs to `iics-to-ipus-knowledge-base.md` / `.pdf`, made `build_kb.py` accept
+  `NN-*.md` links without a `./` prefix (its output again matches the last shipped file apart from
+  the build date), and rewrote `README.md`, `start-here.md` and `AGENTS.md` to the POSIX paths.
+- Files: `README.md`, `start-here.md`, `AGENTS.md`, this changelog, `build/build_kb.py`,
+  `build/build_pdf.py`.
+
 ## 2026-10-03 — Editor — DONE (share sanitization)
 - Removed the internal pricing and deal-notes material and the internal capability-comparison workbook
   from the KB (they are kept outside the shared KB) and every reference to them; reworded the

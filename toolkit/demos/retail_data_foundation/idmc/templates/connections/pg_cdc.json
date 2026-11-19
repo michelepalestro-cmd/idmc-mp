@@ -11,9 +11,9 @@
   "database": "${PG_DB}",
   "userName": "${PG_CDC_USER}",
   "authenticationType": "UserIdPassword",
-  "encryptionMethod": "noEncryption",
-  "tlsv1_2": "false",
+  "encryptionMethod": "${PG_ENCRYPTION}",
+  "tlsv1_2": "${PG_TLS12}",
   "sslv3": "false",
-  "validateServerCertificate": "false"
+  "validateServerCertificate": "${PG_VALIDATE_CERT}"
  }
 }

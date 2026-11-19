@@ -82,15 +82,14 @@ def cmd_export(S, a):
     r = S.get("v3", f"/public/core/v3/export/{jid}/package", headers={"Accept": "application/zip"}, timeout=600)
     if r.status != 200 or r.raw[:2] != b"PK":
         H.die(f"package download HTTP {r.status}, not a zip: {r.head(200)}")
-    with open(a.out, "wb") as f:
-        f.write(r.raw)
+    H.write_private(a.out, r.raw)            # 0600: packages can hold plaintext secrets
     objs, names = package_objects(r.raw)
     by = {}
     for o in objs:
         by[o.get("objectType")] = by.get(o.get("objectType"), 0) + 1
     print(f"saved {a.out}: {len(r.raw)} bytes, {len(names)} files, {len(objs)} objects {by} (export id {jid})")
     print("NOTE: packages can hold plaintext secrets (e.g. CAI connections saved with encrypted=false): keep them "
-          "outside the KB and out of any repo.")
+          "outside the plugin and out of any repo.")
 
 
 def preview_import(S, objs, mode, include):

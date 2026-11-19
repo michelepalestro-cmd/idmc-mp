@@ -13,6 +13,8 @@
     "_comment": "The Postgres stand-in in infra/. host/port/db/users come from .env (PG_*), because the Secure Agent may reach it on a different host than your laptop.",
     "schema": "public",
     "activationSchema": "activation",
+    "_tls": "IDMC PostgreSQL connections: auto = TLS on (encryptionMethod SSL, TLS 1.2, server certificate validated) for any PG_HOST except loopback; TLS off only for the loopback stand-in in infra/docker-compose.yml (plain postgres image, no server certificate, published on 127.0.0.1 only). on = TLS always.",
+    "tls": "auto",
     "tables": ["stores", "products", "customers", "memberships", "orders", "order_lines", "payments", "visits"]
   },
   "warehouse": {
@@ -88,7 +90,10 @@
     "serviceConnector": "rdf_sfdc_rest",
     "appConnection": "rdf_sfdc_rest_conn",
     "processes": ["rdf_cai_customer_to_crm", "rdf_cai_membership_to_crm"],
-    "anonymous": true
+    "_access": "Who may call the processes (Basic Authentication on https://<pod>-cai.<domain>/active-bpel/rt/<process>): IDMC user names and/or user group names. anonymous=true removes all authentication (anyone with the URL can write to the CRM): throwaway test orgs only.",
+    "allowedUsers": ["<IDMC user that calls the processes = RDF_CAI_USER>"],
+    "allowedGroups": [],
+    "anonymous": false
   },
   "dq": {
     "_comment": "Rule specifications are org assets (see BUILD step 7). Put the frsId of each one you have (or imported) here; leave empty to skip that binding.",

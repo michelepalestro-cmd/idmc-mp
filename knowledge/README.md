@@ -1,9 +1,7 @@
-# Master IDMC KB
+# IDMC MP knowledge base
 
-> **Plugin install:** your login lives in `~/.idmc_toolkit/IDMC_LOGIN.txt` (run `python3 toolkit/check_login.py`
-> from the plugin root once to create it), not in the plugin. Where the docs below say "IDMC_LOGIN.txt at the toolkit
-> root", that home file is what is read (a copy in `toolkit/` still works when you run from a git clone).
-> Paths in inline code (`knowledge/...`, `lessons/...`, `toolkit/...`) are relative to the plugin root.
+> Setup (install, connect, troubleshooting) is in the root [README](../README.md). Paths in inline code
+> (`knowledge/...`, `lessons/...`, `toolkit/...`) are relative to the plugin root.
 
 **Answers:** What is this knowledge base, how should a Claude session read it, how do its placeholders map onto your own
 IDMC org, which safety rules apply to every session, and where is each kind of question answered?
@@ -50,7 +48,7 @@ your own way. Your systems, your naming and your order of work are always the ri
 |---|---|---|
 | 1. Install | Install the `idmc-mp` plugin in Claude Code (the repo README), or clone the repository and run `git config core.hooksPath toolkit/tools/git-hooks` once so no commit can carry a secret. You need Python 3.10+ (standard library only) and Claude Code | `python3 toolkit/setup/check_setup.py` checks the PC offline ([toolkit/setup/SETUP.md](../toolkit/setup/SETUP.md)) |
 | 2. Point Claude at it | With the plugin installed, the `idmc-mp` skills load on their own for IDMC work (`skills/`); the rules for any session are in [RULES.md](RULES.md) | [Claude Working Methods](14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) |
-| 3. Sign in | Fill in `IDMC_LOGIN.txt` (three lines), or keep the same three lines in a private file outside this folder and point `IDMC_CREDS_FILE` at it. Then `python3 toolkit/check_login.py`: one login, it prints your org | §0 below |
+| 3. Sign in | `/idmc-mp:connect`, then `python3 toolkit/check_login.py --setup` in a terminal (three questions; the password stays hidden). One login, it prints your org | the root [README](../README.md#setup-in-3-steps-about-10-minutes) |
 | 4. Build | Ask Claude for what you need, in your own words: "create a connection to <system>", "build a nightly pipeline from <source> to <target>", "add a data quality rule", "scan this source into the catalog and show lineage" | the table below; [New Pipeline Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md) for a whole pipeline |
 
 ### Create any IDMC asset: where to start
@@ -86,15 +84,15 @@ your own way. Your systems, your naming and your order of work are always the ri
 A knowledge base about Informatica IDMC (Intelligent Data Management Cloud), written for Claude sessions and the people
 who work with them. It explains how IDMC really behaves when it is driven without its UI: the routes, hosts, headers,
 bodies and error codes; what each wall turned into when it was tested; how mappings, pipelines, CDC, CAI, data quality,
-catalog, MDM and MCP work are built and operated; and more than 1,850 dated lessons, each with its evidence. It is
+catalog, MDM and MCP work are built and operated; and more than 2,300 dated lessons, each with its evidence. It is
 **generic**: nothing in it belongs to one org, so it works in yours once you map its placeholders to your own values.
 
 Use it as a Claude project's knowledge base or as a folder the session can read. If you build IDMC skills or agents of
 your own, make each one start by reading this KB: a skill built from an older snapshot does not carry later lessons
 (L-METHOD-084).
 
-It is also a working kit: the same folder holds the Python library the KB describes, a headless mapping generator, a
-Claude Code skill and three ready-to-rebuild demo blueprints, so a new PC can go from `git clone` to a live org in one sitting.
+It is also a working kit: the plugin holds the Python library the KB describes, a headless mapping generator, the
+Claude Code skills and three ready-to-rebuild demo blueprints.
 
 > **The goal:** help you deploy IDMC end to end, with every capability you ask for, on the systems you already have.
 > Two rules every Claude session using this KB follows:
@@ -121,26 +119,19 @@ Claude Code skill and three ready-to-rebuild demo blueprints, so a new PC can go
 > Secure Agent / runtime, (2) identify the connections, (3) identify or create the folder and list the assets that go
 > in it, then the data contract, the mapping, the task, the first run and its proof, DQ, orchestration and governance.
 
-## 0. Connect to your IDMC org: one file
+## 0. Connect to your IDMC org
 
-Open **`~/.idmc_toolkit/IDMC_LOGIN.txt`** (the first `check_login.py` run creates it), fill in the three lines, save:
-
-```
-IDMC_USER=jane.doe@example.com
-IDMC_PASS=<your IDMC password>
-IDMC_LOGIN_HOST=https://usw5.dm-us.informaticacloud.com/cloudUX/home    <- paste your browser's address bar
-```
-
-Then run `python3 toolkit/check_login.py`: it logs in once and prints your org name, `orgIdV3` and pod. No org id to look up, no
-environment variable to set. Never share or re-zip the folder while that file is filled in (`python toolkit/tools/secret_scan.py`
-fails until you empty it).
+Follow the 3 steps in the root [README](../README.md#setup-in-3-steps-about-10-minutes): install the plugin, run
+`/idmc-mp:connect`, answer three questions with `python3 toolkit/check_login.py --setup`. Your login lives in
+`~/.idmc_toolkit/IDMC_LOGIN.txt`, outside the plugin, readable only by you. Every login message is explained in the
+README's [troubleshooting table](../README.md#if-the-login-doesnt-work).
 
 ### What else is in the folder
 
 | Path | What it is |
 |---|---|
 | `knowledge/00-start-here` ... `knowledge/14-claude-working-methods` | The knowledge base (the map is in §5) |
-| [`lessons/`](../lessons/README.md) | Every field lesson: `lessons.jsonl` (the source), `by-domain/` (readable), `overturned-beliefs.md`, `case-studies/` |
+| [`lessons/`](../lessons/README.md) | Every field lesson: `lessons.jsonl` (the source), `by-domain/` (readable), `overturned-beliefs.md` |
 | `~/.idmc_toolkit/IDMC_LOGIN.txt`, `toolkit/check_login.py` | **Your IDMC login** (the only file you fill in to connect) and the one-command login check |
 | [`toolkit/lib/`](../toolkit/lib/README.md) | The Python library (stdlib only): login with lockout guard, org proof, objects, export/import, package edits, mapping tasks, taskflows and schedules, CDC (Database Ingestion), CAI publish, catalog, MCP |
 | [`toolkit/mapgen/`](../toolkit/mapgen/README.md) | The headless mapping generator: a mapping spec (JSON / Python) -> IDMC mapping -> importable package (stdlib only) |
@@ -168,18 +159,18 @@ Each step in each `BUILD.md` is marked **PROVEN** (worked end to end in a real o
 
 ### The rebuild path
 
-1. **Set up the PC**: fill in `IDMC_LOGIN.txt`, then follow [`toolkit/setup/SETUP.md`](../toolkit/setup/SETUP.md) (install the skill,
-   `python toolkit/setup/check_setup.py` until READY).
+1. **Set up the PC**: connect (§0), then follow [`toolkit/setup/SETUP.md`](../toolkit/setup/SETUP.md) §5 for the demos
+   (`python3 toolkit/setup/check_setup.py --demo <name>` until READY).
 2. **Read the laws**: [The Laws of Headless IDMC](00-start-here/02-the-laws-of-headless-idmc.md): thirty rules that
    override REST instincts (a 200 can be fake, logins are scarce, read back every write).
 3. **Prove the org**: `python3 toolkit/check_login.py` (one login; note the `orgIdV3`).
 4. **Pick a blueprint**: `python toolkit/setup/check_setup.py --demo <name>`, copy its `config.example.json` to `config.json`,
    fill it in, then work through its `BUILD.md`. Every write is a dry run until `--execute --expect-org <orgIdV3>`.
 5. **When something fails**: [Error Triage](00-start-here/04-error-triage.md), then
-   `grep -ril "<error code or object>" "lessons"`.
+   `grep -i "<error code or object>" lessons/lessons.jsonl`.
 
-With Claude Code: open it in this folder and ask, for example, *"set up this PC, then rebuild the message bus blueprint
-in my org, dry run first"*. `CLAUDE.md` and the skill make it follow the same rules. **Cost:** building is free; every
+With Claude Code and the plugin installed, ask, for example, *"set up this PC, then rebuild the message bus blueprint
+in my org, dry run first"*. The skills and [RULES.md](RULES.md) make it follow the same rules. **Cost:** building is free; every
 task or taskflow run, catalog scan and profile run is a job and uses IPUs. The blueprints never start a run, a schedule
 or a loop unless you ask.
 
@@ -208,12 +199,12 @@ environment), `<connId>` (a connection), `<agent_home>`, `<cloud-project>`, `<wa
 values live from your org at run time, keep them in private run notes outside the KB, and never copy an id from one org
 into another.
 
-1. Fill in `IDMC_LOGIN.txt` (§0), which the [Script Library](../toolkit/lib/README.md)
-   reads by itself (`IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST` = your domain host or the browser address). To work in
-   several orgs, keep one 0600 file per org outside the KB and point `IDMC_CREDS_FILE` at it: it wins over the file.
+1. Connect (§0). The [toolkit library](../toolkit/lib/README.md) reads `~/.idmc_toolkit/IDMC_LOGIN.txt` by itself
+   (`IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST` = your browser address). To work in several orgs, keep one 0600 file
+   per org outside the plugin and point `IDMC_CREDS_FILE` at it: it wins over the default file.
 2. Run `python3 toolkit/check_login.py` (= `idmc_session.py whoami`): it logs in once and prints the org name, both org id
    shapes, the pod, the domain label and the base URL.
-3. Read the agents, runtime environments and connections: `python idmc_session.py get v2 /api/v2/agent`, then
+3. Read the agents, runtime environments and connections: `python3 toolkit/lib/idmc_session.py get v2 /api/v2/agent`, then
    `/api/v2/runtimeEnvironment` and `/api/v2/connection`.
 4. Fill the rest from your own estate: the agent host, its OS user and install root, the cloud project, the warehouse
    datasets.
@@ -274,21 +265,19 @@ The full placeholder table, with the other spellings you may meet, is in
 | [`knowledge/09-claire-mcp`](09-claire-mcp/) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP, the plugin and community-tool ecosystem |
 | [`knowledge/10-migration-org-management`](10-migration-org-management/) | v3 export/import, editing packages, clone-authoring, **org-to-org migration and cutover**, headless deletes and org cleanup |
 | [`knowledge/11-ipu-metering-licensing`](11-ipu-metering-licensing/) | the IPU model and how consumption is metered, metering exports, entitlement vs licence, job caps and budgets |
-| [`knowledge/12-reference-library`](12-reference-library/) | the generated API & MCP endpoint reference, the IICS→IPU KB, Informatica dictionaries/guides, the REST verb matrix |
-| [`lessons`](../lessons/) | every lesson by domain (current and **overturned**), plus the corrections log, with stable IDs `L-<DOM>-###` |
+| [`knowledge/12-reference-library`](12-reference-library/) | the generated API & MCP endpoint reference, the IICS→IPU KB, and the [community code index](12-reference-library/community-code-index.md) |
+| [`lessons`](../lessons/) | every lesson by domain (current and **overturned**), with stable IDs `L-<DOM>-###` |
 | [`knowledge/14-claude-working-methods`](14-claude-working-methods/) | how Claude reaches and drives IDMC, evidence discipline, multi-agent coordination, UI automation, environment traps, secrets hygiene, and the **Script Library** |
 
 ## 6. Scope: generic by design
 
 | What | Rule |
 |---|---|
-| **In this KB (folders `00`–`14`, plus `core`, `demos`, `claude`, `setup`, `tools`)** | Generic IDMC knowledge that works in *any* org: planes, hosts, routes, bodies, error codes, walls, timings, limits, workarounds, lessons and the scripts that apply them. No customer, application, person, org or object id, host, IP, cloud project or tracker key appears here. Numbers without names stay ("a 62-task linear taskflow took 21 min"): the timings and limits are the point |
+| **In this plugin (`knowledge/`, `lessons/`, `skills/`, `commands/`, `toolkit/`)** | Generic IDMC knowledge that works in *any* org: planes, hosts, routes, bodies, error codes, walls, timings, limits, workarounds, lessons and the scripts that apply them. No customer, application, person, org or object id, host, IP, cloud project or tracker key appears here. Numbers without names stay ("a 62-task linear taskflow took 21 min"): the timings and limits are the point |
 | **Kept outside this KB** | Deployment-specific material: which org is which, their ids, hosts and VMs, application names and status, migrations, tracker history, evidence, org-specific scripts, and the raw provenance of each lesson. Nothing in this KB links to it or depends on it |
 
-The one exception is `IDMC_LOGIN.txt`, which holds the reader's own login: it ships empty and must be emptied before the
-folder is shared again. The rule is enforced by a share gate script kept outside the KB (it names what it blocks, so it cannot live here). It
-scans every file under this folder (text, Office documents, PDFs and file names), and it must report CLEAN before the
-KB is shared or an edit is finished.
+Your own login never lives in the plugin: it is in `~/.idmc_toolkit/IDMC_LOGIN.txt`. The rule is enforced by
+`toolkit/tools/secret_scan.py`, which runs in a pre-commit hook and in CI and must print CLEAN.
 
 ## 7. Conventions
 
@@ -297,24 +286,23 @@ KB is shared or an edit is finished.
   *Untested* means unknown, not unsupported.
 - **Latest dated evidence wins.** Older beliefs are kept, marked superseded, in `lessons`, so nobody
   re-learns them.
-- **Lesson IDs** (`L-CDI-012`) are stable. Each lesson's text stands on its own; its raw sources are tracked in a
-  provenance file kept outside the KB.
-- **No secrets anywhere.** Credentials come from `IDMC_LOGIN.txt` (your own copy only, shipped empty), environment
-  variables or files outside this KB.
+- **Lesson IDs** (`L-CDI-012`) are stable. Each lesson's text stands on its own.
+- **No secrets anywhere.** Credentials come from `~/.idmc_toolkit/IDMC_LOGIN.txt`, environment variables or files
+  outside the plugin.
 
 ## 8. Keeping it current
 
 - New **generic** knowledge goes to the matching topic doc *and* as a new lesson in `lessons`, with a date
   and evidence. When a belief is overturned, move it to the "Superseded / overturned" section; never delete it.
 - New **deployment- or org-specific** facts (which org, ids, hosts, application status) stay outside the KB.
-- Run the share gate and a link check before finishing: the gate must report CLEAN, and no link may point outside this
-  folder. The steps are in [How to use this KB](00-start-here/01-how-to-use-this-kb.md) §9.
+- Before finishing, run `python3 toolkit/tools/secret_scan.py` (must print CLEAN) and `python3 tests/run_tests.py`
+  (checks every link and path; must print ALL PASSED). How to contribute: [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ## 9. History
 
 - **2026-09-22:** first consolidation of scattered IDMC notes, scripts and references into 13 topic buckets.
 - **2026-09-29:** full rebuild: generic topic folders written from about 2,200 pooled lessons (deduplicated to 1,335),
-  vendor references moved to `knowledge/12-reference-library\`, deployment-specific material and secret-bearing files moved
+  vendor references moved to `knowledge/12-reference-library/`, deployment-specific material and secret-bearing files moved
   out, every move reversible from its undo log.
 - **2026-10-03:** share-readiness pass (every doc genericized to placeholders, every link kept inside the KB) and a
   currency update (about 190 new field candidates checked against the KB; full pushdown and the remaining transformation
@@ -342,3 +330,6 @@ KB is shared or an edit is finished.
   warehouse (backups, host failures, DQ gates that proved nothing, live-database profiling, inherited builds, many
   sessions on one estate, cost), and [What Went Wrong](00-start-here/09-what-went-wrong-production-deployment-post-mortem.md), the post-mortem that turns
   them into checks. See the [Changelog](00-start-here/06-changelog.md).
+- **2026-11-19:** the `idmc-mp` plugin layout throughout, all 23 managed MCP servers, an ecosystem guide, about 300
+  lessons mined from public IDMC code (Reported, with a [community code index](12-reference-library/community-code-index.md)),
+  a plain-language setup, and a security and tidiness pass. See the [Changelog](00-start-here/06-changelog.md).

@@ -390,7 +390,8 @@ One rule for `load_spec`, `compile_file`, `lint`, `deploy` and `mapgen.py build 
    mean "not given"). A relative path is relative to the current directory, even when a file of that name sits
    next to the spec.
 2. The spec's own `profile` key: a path relative to the spec file's folder (never the current directory; a spec
-   file's own `baseDir` does not change that), or an inline object. For a spec given as a dict, a relative path is
+   file's own `baseDir` does not change that), or an inline object (an inline object may not hold `auth`: that
+   is a SpecError, because a spec never decides where credentials are sent). For a spec given as a dict, a relative path is
    relative to its `baseDir` when that is a non-empty string (a relative `baseDir` is itself relative to the
    current directory), else to the current directory. A missing file is a SpecError, never a fall-through to the
    next step.

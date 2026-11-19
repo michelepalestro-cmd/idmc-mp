@@ -4,7 +4,7 @@ IDMC SharePoint Online connection, the write-permission check, and the target fo
 
     python sharepoint_setup.py consent-url             # the admin-consent URL + click path (an Entra admin does it once)
     python sharepoint_setup.py token-url               # the sign-in URL that returns an authorization code
-    python sharepoint_setup.py redeem --code <code> --out <file outside the toolkit>   # code -> refresh token (0600 file)
+    python sharepoint_setup.py redeem --out <file outside the toolkit>   # paste the code at the hidden prompt -> refresh token (0600 file)
     python sharepoint_setup.py check                   # scopes the token REALLY carries + effective permissions on the site
     python sharepoint_setup.py mkdirs [--execute]      # <library>/<root_folder>/<agency> - <solicitation> folders
 
@@ -21,6 +21,7 @@ Credentials: ENTRA_TENANT_ID, ENTRA_CLIENT_ID, ENTRA_CLIENT_SECRET, SHAREPOINT_R
 from __future__ import annotations
 
 import base64
+import getpass
 import json
 import os
 import sys
@@ -42,7 +43,7 @@ def tenant_host(cfg):
 def http(method, url, data=None, headers=None):
     req = urllib.request.Request(url, data=data, method=method, headers=headers or {})
     try:
-        with urllib.request.urlopen(req, timeout=120) as r:
+        with C.urlopen(req, timeout=120) as r:
             return r.status, json.loads(r.read() or b"{}")
     except urllib.error.HTTPError as e:
         try:
@@ -70,7 +71,8 @@ def claims(jwt):
 def main():
     ap = C.parser(__doc__)
     ap.add_argument("cmd", choices=["consent-url", "token-url", "redeem", "check", "mkdirs"])
-    ap.add_argument("--code")
+    # the authorization code is never a command-line argument (shell history, process list): it is read from the
+    # environment (SHAREPOINT_AUTH_CODE) or typed at a hidden prompt
     ap.add_argument("--out", help="redeem: write the refresh token here (outside the toolkit, 0600)")
     a = ap.parse_args()
     C.H.safe_console()
@@ -90,12 +92,21 @@ def main():
               "&scope=" + urllib.parse.quote("https://%s/.default offline_access" % tenant_host(cfg), safe="") + "&prompt=consent")
         return
     if a.cmd == "redeem":
-        if not a.code or not a.out:
-            C.H.die("redeem needs --code and --out")
+        if not a.out:
+            C.H.die("redeem needs --out <file outside the toolkit>")
         if Path(a.out).resolve().is_relative_to(C.TOOLKIT.resolve()):
             C.H.die("--out must be outside the toolkit")
+        code = os.environ.get("SHAREPOINT_AUTH_CODE") or ""
+        if not code:
+            if not sys.stdin.isatty():
+                code = sys.stdin.readline()
+            else:
+                code = getpass.getpass("authorization code (the 'code' parameter, not shown): ")
+        code = code.strip()
+        if not code:
+            C.H.die("no authorization code: paste it at the prompt, pipe it on stdin, or set SHAREPOINT_AUTH_CODE")
         body = urllib.parse.urlencode({"grant_type": "authorization_code", "client_id": C.env("ENTRA_CLIENT_ID"),
-                                       "client_secret": C.env("ENTRA_CLIENT_SECRET"), "code": a.code, "redirect_uri": REDIRECT,
+                                       "client_secret": C.env("ENTRA_CLIENT_SECRET"), "code": code, "redirect_uri": REDIRECT,
                                        "scope": "https://%s/.default offline_access" % tenant_host(cfg)}).encode()
         st, d = http("POST", "https://login.microsoftonline.com/%s/oauth2/v2.0/token" % C.env("ENTRA_TENANT_ID"), body,
                      {"Content-Type": "application/x-www-form-urlencoded"})

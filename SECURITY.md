@@ -25,7 +25,7 @@
 
 Please do not open a public issue for a security problem. Use GitHub's private
 [Report a vulnerability](https://github.com/michelepalestro-cmd/idmc-mp/security/advisories/new) form on this
-repository. Include what you found, how to reproduce it, and what it could expose. You will get an answer as soon as
-possible.
+repository, or e-mail the maintainer at michelepalestro@gmail.com. Include what you found, how to reproduce it, and what it could
+expose. You will get an answer as soon as possible.
 
 For problems in Informatica's own products, contact Informatica.

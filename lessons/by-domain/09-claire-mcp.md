@@ -1,5 +1,5 @@
 # Lessons: CLAIRE & MCP
-134 current lessons (2 of them disputed), 14 superseded; evidence dated 2026-07-04 to 2026-11-19.
+149 lessons: 133 current, 2 disputed, 14 superseded; evidence dated 2026-07-04 to 2026-11-19.
 
 Topic docs: [Managed MCP Servers](../../knowledge/09-claire-mcp/01-managed-mcp-servers-catalog-access.md) · [MCP Auth & OAuth Clients](../../knowledge/09-claire-mcp/02-mcp-auth-oauth-clients.md) · [CLAIRE GPT - Prompting Rules & Patterns](../../knowledge/09-claire-mcp/03-claire-gpt-prompting-rules-patterns.md) · [Agent-Style MCP & Custom Shims](../../knowledge/09-claire-mcp/04-agent-style-mcp-async-orchestration-custom-shims.md) · [MCP vs REST](../../knowledge/09-claire-mcp/05-mcp-vs-rest-when-to-use-which.md) · [Ecosystem: plugins, registries, community tools](../../knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md) · [Overturned Beliefs](../overturned-beliefs.md)
 

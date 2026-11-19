@@ -46,7 +46,7 @@ Developer Edition org who wants the retail demo's IDMC layer in their own enviro
 | Database Ingestion (CDC) | `dbmi_rdf_cdc_hot` + `dbmi_rdf_cdc_cold`, PostgreSQL pgoutput -> BigQuery, own slot + publication each | `idmc/02_cdc.py` |
 | Data Integration (CDI) | 6 consolidated mappings generated headless (spec -> IMF -> package -> import), 6 mapping tasks | `idmc/03_mappings.py` |
 | Taskflows + schedules | `tf_rdf_full` (6 tasks, every 4 h), `tf_rdf_customer` (sign-up lane), `sch_rdf_every_4h` | `idmc/04_taskflows.py` |
-| Application Integration (CAI) | service connector `rdf_sfdc_rest`, app connection `rdf_sfdc_rest_conn`, 2 processes | `idmc/05_cai.py` |
+| Application Integration (CAI) | service connector `rdf_sfdc_rest`, app connection `rdf_sfdc_rest_conn`, 2 processes (authenticated REST: allowed users / groups, Basic Authentication; see BUILD step 8) | `idmc/05_cai.py` |
 | Data Quality / Data Profiling | 3 profiles with rule-spec bindings; warehouse scorecard in a mapping; address verification | `idmc/06_dq.py` |
 | Catalog (CDGC) | 3 catalog sources, scans (metadata, profiling, classification, lineage), glossary + links | `idmc/07_catalog.py` |
 
@@ -76,7 +76,8 @@ Scripts read them at run time and print key names only. Details and where to get
 | `SF_LOGIN_URL` | Salesforce My Domain URL |
 | `SF_CLIENT_ID`, `SF_CLIENT_SECRET` | Connected App (client-credentials flow) used by CAI and by verify/ |
 | `SF_USERNAME`, `SF_PASSWORD`, `SF_SECURITY_TOKEN` | API-only integration user for the CDI Salesforce connection |
-| `CAI_RT_BASE` | optional, printed by `idmc/05_cai.py url` after publishing |
+| `CAI_RT_BASE` | optional, printed by `idmc/05_cai.py url` after publishing (`https://<pod>-cai.<domain>/active-bpel/rt`) |
+| `RDF_CAI_USER`, `RDF_CAI_PASS` | optional: the IDMC user (listed in `config.json` `cai.allowedUsers`) that calls the CAI processes with Basic Authentication |
 
 ## How long a rebuild takes
 

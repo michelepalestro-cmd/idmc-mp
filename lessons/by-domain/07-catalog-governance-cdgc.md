@@ -1,6 +1,6 @@
 # Lessons: Catalog & Governance (CDGC)
 
-241 current lessons (2 disputed), 25 superseded; evidence dates 2026-06-27 to 2026-10-28. Domain docs: [knowledge/07-catalog-governance-cdgc](../../knowledge/07-catalog-governance-cdgc/01-cdgc-apis-auth.md). Where each lesson came from (raw sources, org and app context) is kept in a provenance file outside this KB, not here.
+266 lessons: 238 current, 2 disputed, 26 superseded; evidence dated 2026-06-27 to 2026-11-19. Domain docs: [knowledge/07-catalog-governance-cdgc](../../knowledge/07-catalog-governance-cdgc/01-cdgc-apis-auth.md). Where each lesson came from (raw sources, org and app context) is kept in a provenance file outside this KB, not here.
 
 Kinds: LAW, ROUTE, RECIPE, GOTCHA, ERROR, WALL, WORKAROUND, OVERTURNED (a current lesson that replaced an older belief), PROCESS, DECISION, PERF, SECURITY.
 

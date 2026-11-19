@@ -39,7 +39,7 @@ to, and only open the long docs when a row here says so.
 
 ## 1. The ten commands
 
-Run them from the KB root. Every command except `run` is free. `run` starts a job that counts against the org's job
+Run them from the plugin root. Every command except `run` is free. `run` starts a job that counts against the org's job
 budget and IPUs, so ask the user before you run.
 
 | # | Do | Command / detail |

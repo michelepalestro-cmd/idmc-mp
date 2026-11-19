@@ -428,11 +428,18 @@ delete, prune or move anything there.
 Host edits of `pmrdtm.cfg` / `tomcat.cfg` are lost on every DIS version roll. The durable place for a DTM heap, a DTM pool
 size or any other engine property is the agent's **System / Custom Configuration** in the cloud. There is **no REST verb**
 for it. The Administrator shell iframes a legacy Struts form, and that form can be driven directly (L-AGENT-088, proven
-2026-09-29):
+2026-09-29).
 
-1. **Read:** `GET https://<pod>.<domain>.informaticacloud.com/runtime/app/agent.do?actionMethod=displayUpdate&iframeWorkspaceId=SecureAgentDetailsWS&id=<agentId>`
-   with the UI session cookies (`USER_SESSION` / IDS session plus the runtime `JSESSIONID`; the REST `icSessionId` is
-   untested here). The page holds ONE form, `AgentForm` (~1,550 fields), plus a `csrfToken`.
+> **Before you use it.** This form is undocumented and can change without notice; prefer the UI or a REST route for
+> anything else. Never copy session cookies out of a browser: authenticate with your own REST login (step 1). Saving
+> rewrites the agent's whole engine configuration and **restarts the Data Integration Server, killing every running job
+> on that agent** (L-AGENT-121), so drain the agent first, save a copy of the form you read, and change one value at a
+> time.
+
+1. **Read:** `GET https://<pod>.<domain>.informaticacloud.com/runtime/app/agent.do?actionMethod=displayUpdate&iframeWorkspaceId=SecureAgentDetailsWS&id=<agentId>`.
+   Authenticate with the session from your own REST login, sent as the `USER_SESSION` cookie together with a random
+   `XSRF_TOKEN` cookie that matches the form's `csrfToken` (L-AGENT-126). The page holds ONE form, `AgentForm`
+   (~1,550 fields), plus a `csrfToken`. **Keep a copy of what you read**: it is your undo.
 2. **Engine properties are parallel arrays**, one entry per row: `engineConfigKey`
    (`<Engine><major.minor><TYPE><name>`, e.g. `Data_Integration_Server<ver>PMRDTM_CFGJVMOption1`), `engineConfigValue`,
    `engineConfigDefault` and `engineConfigOverriden`. To change one, set its value and `engineConfigOverriden=true`. To

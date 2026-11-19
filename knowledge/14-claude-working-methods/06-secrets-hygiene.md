@@ -16,8 +16,8 @@ a container or a remote host; after an exposure; before sharing a transcript, do
   (L-UI-002, L-MCP-124).
 - Rotate in one coordinated window with every consumer listed, and scrub every git ref, not just the branch
   (L-ENV-049, L-ENV-045).
-- A share gate scans every format and every file name, fails on the private build, passes on the clean one, and is
-  never weakened to pass (L-METHOD-090, L-METHOD-084).
+- A secret scan (`toolkit/tools/secret_scan.py`, run by the pre-commit hook and CI) must pass before anything is
+  shared, and is never weakened to make it pass (L-METHOD-090, L-METHOD-084).
 
 **Related:** [01 How Claude Reaches and Drives IDMC](01-how-claude-reaches-and-drives-idmc.md) · [03 Multi-Agent Coordination](03-multi-agent-coordination.md) · [04 UI Automation with Playwright](04-ui-automation-with-playwright.md) · [Agent-Style MCP & Custom Shims](../09-claire-mcp/04-agent-style-mcp-async-orchestration-custom-shims.md) · [Lessons: Environment & Ops](../../lessons/by-domain/13-environment-ops.md)
 

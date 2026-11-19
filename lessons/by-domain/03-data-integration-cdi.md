@@ -1,5 +1,5 @@
 # Lessons: Data Integration (CDI)
-293 current lessons (including 18 that overturned earlier beliefs), 21 superseded, 3 disputed; evidence dated 2026-06-27 to 2026-11-12. Topic docs: [knowledge/03-cdi-data-integration](../../knowledge/03-cdi-data-integration/).
+330 lessons: 306 current, 3 disputed, 21 superseded; evidence dated 2026-06-27 to 2026-11-19. Topic docs: [knowledge/03-cdi-data-integration](../../knowledge/03-cdi-data-integration/).
 
 ## Current
 

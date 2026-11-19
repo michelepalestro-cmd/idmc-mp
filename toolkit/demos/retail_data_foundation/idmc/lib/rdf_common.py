@@ -118,7 +118,23 @@ def template_vars(cfg, offline=False):
         "CRM_COUNT_GATE": cfg["crm"]["countGate"], "TEST_ID_REGEX": cfg["crm"]["testIdentityRegex"],
         "CDC_GCS_DIR": cfg["cdc"]["gcsDirectory"],
     }
+    v.update(pg_tls_vars(cfg, v["PG_HOST"]))
     return v
+
+
+LOOPBACK = {"localhost", "127.0.0.1", "::1", "[::1]"}
+
+
+def pg_tls_vars(cfg, host):
+    """TLS settings of the IDMC PostgreSQL connections. TLS with certificate validation everywhere, except the loopback
+    stand-in of infra/docker-compose.yml (plain postgres image without a server certificate, published on 127.0.0.1
+    only, so the Secure Agent on the same host never sends the login over a network). source.tls = "on" forces TLS."""
+    mode = str(cfg["source"].get("tls", "auto")).lower()
+    if mode not in ("auto", "on"):
+        die('config.json source.tls must be "auto" or "on"')
+    if mode == "auto" and str(host).strip().lower() in LOOPBACK:
+        return {"PG_ENCRYPTION": "noEncryption", "PG_TLS12": "false", "PG_VALIDATE_CERT": "false"}
+    return {"PG_ENCRYPTION": "SSL", "PG_TLS12": "true", "PG_VALIDATE_CERT": "true"}
 
 
 # ---------------------------------------------------------------- state
@@ -205,3 +221,39 @@ def frs_move(S, gate, frs_guid, folder_guid, name):
         if r is None or r.status != 404:
             return r
     return r
+
+
+# ---------------------------------------------------------------- HTTP: redirects never carry credentials elsewhere
+import urllib.error as _ue  # noqa: E402
+import urllib.parse as _up  # noqa: E402
+import urllib.request as _ur  # noqa: E402
+
+_SENSITIVE = {"authorization", "cookie", "x-tableau-auth", "icsessionid", "infa-session-id", "ids-session-id",
+              "x-snowflake-authorization-token-type"}
+
+
+class SafeRedirect(_ur.HTTPRedirectHandler):
+    """urllib's default handler re-sends every header (Authorization, Cookie, session ids) to whatever Location a
+    3xx names. This one refuses an https -> http downgrade and drops credential headers when the redirect leaves the
+    original scheme + host + port (a pre-signed download URL on another host still works)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is None:
+            return None
+        o, n = _up.urlsplit(req.full_url), _up.urlsplit(new.full_url)
+        if o.scheme == "https" and n.scheme != "https":
+            raise _ue.HTTPError(req.full_url, code, "refused redirect from https to " + n.scheme, headers, fp)
+        if (o.scheme, o.hostname, o.port) != (n.scheme, n.hostname, n.port):
+            for d in (new.headers, new.unredirected_hdrs):
+                for k in [k for k in d if k.lower() in _SENSITIVE]:
+                    del d[k]
+        return new
+
+
+_OPENER = _ur.build_opener(SafeRedirect)
+
+
+def urlopen(req, timeout=60):
+    """urllib.request.urlopen with SafeRedirect (use it for every request that carries a credential)."""
+    return _OPENER.open(req, timeout=timeout)

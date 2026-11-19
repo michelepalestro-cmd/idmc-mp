@@ -248,3 +248,39 @@ def H_quote(s):
 def pod_host(ctx):
     """https://<pod>.<domain>.informaticacloud.com (offline: a placeholder)"""
     return "https://<pod>.<domain>.informaticacloud.com" if ctx.offline else ctx.S.hosts()["pod"]
+
+
+# ---------------------------------------------------------------- HTTP: redirects never carry credentials elsewhere
+import urllib.error as _ue  # noqa: E402
+import urllib.parse as _up  # noqa: E402
+import urllib.request as _ur  # noqa: E402
+
+_SENSITIVE = {"authorization", "cookie", "x-tableau-auth", "icsessionid", "infa-session-id", "ids-session-id",
+              "x-snowflake-authorization-token-type"}
+
+
+class SafeRedirect(_ur.HTTPRedirectHandler):
+    """urllib's default handler re-sends every header (Authorization, Cookie, session ids) to whatever Location a
+    3xx names. This one refuses an https -> http downgrade and drops credential headers when the redirect leaves the
+    original scheme + host + port (a pre-signed download URL on another host still works)."""
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new is None:
+            return None
+        o, n = _up.urlsplit(req.full_url), _up.urlsplit(new.full_url)
+        if o.scheme == "https" and n.scheme != "https":
+            raise _ue.HTTPError(req.full_url, code, "refused redirect from https to " + n.scheme, headers, fp)
+        if (o.scheme, o.hostname, o.port) != (n.scheme, n.hostname, n.port):
+            for d in (new.headers, new.unredirected_hdrs):
+                for k in [k for k in d if k.lower() in _SENSITIVE]:
+                    del d[k]
+        return new
+
+
+_OPENER = _ur.build_opener(SafeRedirect)
+
+
+def urlopen(req, timeout=60):
+    """urllib.request.urlopen with SafeRedirect (use it for every request that carries a credential)."""
+    return _OPENER.open(req, timeout=timeout)

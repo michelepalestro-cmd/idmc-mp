@@ -13,7 +13,8 @@ Which profile (the same answer for load_spec, compile, lint, deploy and mapgen.p
 - the ``profile`` argument (CLI --profile) when it is a path or a non-empty dict (None, {} and "" mean "not given");
   a relative path resolves against the current directory;
 - else the spec's own "profile" key: a path relative to the spec file's folder (never the cwd; for a dict spec, its
-  "baseDir" when it is a non-empty string, else the cwd) or an inline object;
+  "baseDir" when it is a non-empty string, else the cwd) or an inline object (an inline object holding "auth" is
+  refused with a SpecError: a spec never decides where credentials go);
 - else ``default_profile`` (mapgen.py passes its fallbacks: $MAPGEN_PROFILE, ./profile.json, local/profile.local.json);
 - else none.
 
@@ -230,6 +231,11 @@ def resolve_profile(spec, profile=None, base_dir=None, default=None):
     if _given(own):
         if not (isinstance(own, dict) or _is_path(own)):
             return {}, None                      # shape_problems() reports the bad "profile" value
+        if isinstance(own, dict) and own.get("auth") is not None:
+            # a spec may come from anyone: it must never say where (or with which variables) credentials are sent
+            raise SpecError("the spec's inline \"profile\" object may not hold \"auth\": login settings come only from "
+                            "a profile file (--profile, $MAPGEN_PROFILE, ./profile.json, local/profile.local.json, or "
+                            "a profile file the spec names) and the login file ~/.idmc_toolkit/IDMC_LOGIN.txt")
         return _open_profile(own, base_dir, "the spec's \"profile\" key")
     if _given(default):
         return _open_profile(default, None, "the default profile")

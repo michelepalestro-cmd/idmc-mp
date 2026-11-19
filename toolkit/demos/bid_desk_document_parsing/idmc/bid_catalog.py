@@ -233,12 +233,10 @@ def main():
         if a.cmd == "feed":
             sys.path.insert(0, str(C.BP / "infra"))
             import snowflake_sql as SQ
-            esc = lambda s: str(s or "").replace("'", "''")  # noqa: E731
             now = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-            vals = ",\n".join("('%s','%s',%d,'%s','%s','%s','%s','%s','%s')" % ((now, esc(r[0]), r[1]) + tuple(esc(x) for x in r[2:]))
-                              for r in rows)
-            sql = "INSERT INTO BID_LINEAGE VALUES\n" + vals
-            print("[DRY-RUN] " + sql[:400]) if not (ctx.execute and rows) else print("Snowflake", SQ.run(cfg, sql)[0])
+            # values read back from the catalog travel as SQL API bind variables, never inside the SQL text
+            SQ.insert_rows(cfg, "BID_LINEAGE", [(now, str(r[0] or ""), int(r[1])) + tuple(str(x or "") for x in r[2:])
+                                                for r in rows], ctx.execute)
     if not ctx.offline and (ctx.execute or a.cmd == "show"):
         C.save_state(st)
 

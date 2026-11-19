@@ -39,7 +39,6 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | Business 360 modeling and match-merge | `knowledge/08-mdm/03-business-360-modeling-match-merge.md` |
 | P360 vs MDM SaaS, licensing | `knowledge/08-mdm/04-p360-vs-mdm-saas-licensing-notes.md` |
 | Mastering a table: repeatable playbook | `knowledge/08-mdm/05-mastering-a-table-repeatable-playbook.md` |
-| Worked case (profiling, DQ, mastering) | `lessons/case-studies/property-data-platform.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_session.py`: MDM calls go through the org-aware session

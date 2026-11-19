@@ -124,7 +124,7 @@ class Tab:
             h["X-Tableau-Auth"] = self.tok
         rq = urllib.request.Request(self.server + path, data=body, method=method, headers=h)
         try:
-            with urllib.request.urlopen(rq, timeout=180) as r:
+            with C.urlopen(rq, timeout=180) as r:
                 return r.status, json.loads(r.read() or b"{}")
         except urllib.error.HTTPError as e:
             raw = e.read()

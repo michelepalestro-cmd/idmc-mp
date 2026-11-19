@@ -109,10 +109,12 @@ class Pkg:
 
     def write(self, out):
         chk = self.new_chksum()
-        with zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as w:
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as w:
             for n, info in self.infos.items():
                 if n in self.data:
                     w.writestr(info, chk if n == CHK else self.data[n])
+        H.write_private(out, buf.getvalue())    # 0600: packages can hold plaintext secrets
 
 
 def edit_inner(outer, member, fn):

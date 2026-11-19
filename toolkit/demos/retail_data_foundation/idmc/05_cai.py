@@ -3,11 +3,17 @@
 
   python idmc/05_cai.py build --offline                       # build the package with stand-in folder files, inspect only
   python idmc/05_cai.py harvest --execute --expect-org <id>   # export one task of the folder -> folder/project JSON
-  python idmc/05_cai.py build                                 # the real package (secrets from .env, file is 0600)
+  python idmc/05_cai.py build                                 # the real package (holds NO secret; file is 0600)
   python idmc/05_cai.py import  --execute --expect-org <orgIdV3>
+  python idmc/05_cai.py set-secret --execute --expect-org <orgIdV3>  # Connected App id/secret, stored encrypted
   python idmc/05_cai.py publish --execute --expect-org <orgIdV3>   # waves: connector -> connection -> processes
   python idmc/05_cai.py url                                   # print CAI_RT_BASE for the .env and the process URLs
-  python idmc/05_cai.py purge                                 # delete the built package (it holds the client secret)
+  python idmc/05_cai.py purge                                 # delete the built package
+
+Access (config.json "cai"): the processes are REST endpoints restricted to cai.allowedUsers / cai.allowedGroups
+(IDMC users / groups), called with Basic Authentication on https://<pod>-cai.<domain>/active-bpel/rt/<process>.
+cai.anonymous = true publishes them with NO authentication (anyone with the URL can write to the CRM): test orgs only.
+The Connected App client id / secret are packaged encrypted with empty values and set by 'set-secret' (L-CAI-132).
 
 Package layout (PROVEN 2026-09: 9/9 assets imported + published in a migration, Contact upsert 0.2-2 s end to end):
   Explore/<project>/<folder>/<name>.<TYPE>.xml   one per asset, each wrapped in the repository getResponse/Item
@@ -70,28 +76,87 @@ def folder_files(cfg, offline):
     return stub, stub, objs, "OFFLINE", "offline"
 
 
-def build_package(cfg, st, offline, with_secrets=True):
+def _names(v):
+    """Configured user / group names, without the '<...>' placeholders of config.example.json."""
+    return [str(x).strip() for x in (v or []) if str(x).strip() and not str(x).strip().startswith("<")]
+
+
+def access(cfg, offline=False):
+    """(anonymous, users, groups) for the processes' REST deployment. Secure by default: anonymous only when
+    cai.anonymous is literally true; otherwise at least one allowed user or group is required (offline builds only warn)."""
+    c = cfg["cai"]
+    anon = c.get("anonymous", False) is True
+    users, groups = _names(c.get("allowedUsers")), _names(c.get("allowedGroups"))
+    if anon:
+        print("WARNING: cai.anonymous = true: the CRM-sync processes accept calls with NO authentication from anyone "
+              "who has the URL. Use it only in a throwaway test org.", file=sys.stderr)
+        return True, [], []
+    if not users and not groups:
+        msg = ("cai.allowedUsers / cai.allowedGroups name no IDMC user or group: the processes would answer 403 to "
+               "every caller. Put the IDMC user that calls them (RDF_CAI_USER) in cai.allowedUsers")
+        if not offline:
+            C.die(msg)
+        print("note (offline): " + msg, file=sys.stderr)
+    return False, users, groups
+
+
+def v3_objects(S, q):
+    import urllib.parse
+    r = S.get("v3", "/public/core/v3/objects?limit=200&q=" + urllib.parse.quote(q, safe="=()'"))
+    return (r.json({}) or {}).get("objects", []) if r.ok else []
+
+
+def set_secret(a, cfg, st):
+    """Store SF_CLIENT_ID / SF_CLIENT_SECRET encrypted in the imported app connection (L-CAI-132). Values never printed."""
+    C.offline_session_guard(a)
+    from idmc_session import Session
+    import idmc_http as H
+    conn = cfg["cai"]["appConnection"]
+    cid, csec = C.env("SF_CLIENT_ID", required=True), C.env("SF_CLIENT_SECRET", required=True)
+    S = Session()
+    gate = H.WriteGate(a, S)
+    objs = [o for o in v3_objects(S, "type=='AI_CONNECTION'")
+            if o.get("name") == conn or str(o.get("path", "")).endswith("/" + conn)]
+    oid = objs[0]["id"] if objs else ((st.get("cai") or {}).get("guids") or {}).get(conn)
+    if not oid:
+        C.die(f"app connection {conn} not found: import the package first")
+    print(f"set-secret: app connection {conn} ({oid}); attributes SF_CLIENT_ID, SF_CLIENT_SECRET (values from the .env, "
+          "not shown)")
+    if not gate.execute:
+        print("[DRY-RUN] PUT cai:/active-bpel/asset/v1/update?assetType=AppConnection  body: {connections:[{guid, attributes:[***]}]}")
+        return 0
+    gate.guard()
+    body = {"connections": [{"guid": {"$t": oid}, "attributes": [{"key": {"$t": "SF_CLIENT_ID"}, "value": {"$t": cid}},
+                                                                {"key": {"$t": "SF_CLIENT_SECRET"}, "value": {"$t": csec}}]}]}
+    r = S.call("cai", "PUT", "/active-bpel/asset/v1/update?assetType=AppConnection", body=body,
+               headers={"Content-Type": "application/json", "Accept": "application/json"}, timeout=120)
+    status = ((r.json({}) or {}).get("status") or {}).get("$t") if r.ok else None
+    print(f"    -> HTTP {r.status} status {status}")     # the answer is not printed: it could echo attributes
+    if status != "SUCCESS":
+        C.die("asset/v1/update did not answer SUCCESS; nothing else changed")
+    print("    (re)publish the connection, then the processes: 05_cai.py publish --execute --expect-org <orgIdV3>")
+    return 0
+
+
+def build_package(cfg, st, offline):
     c, tag = cfg["cai"], cfg["idmc"]["tag"]
     sc, conn = c["serviceConnector"], c["appConnection"]
     p_contact, p_member = c["processes"]
     gd, sc_uuid = guids(st, [sc, conn, p_contact, p_member])
     login = C.env("SF_LOGIN_URL") or "https://<my-domain>.my.salesforce.com"
     token_url = login.rstrip("/") + "/services/oauth2/token"
-    if offline or not with_secrets:
-        cid = csec = ""
-    else:
-        cid, csec = C.env("SF_CLIENT_ID", required=True), C.env("SF_CLIENT_SECRET", required=True)
+    anon, users, groups = access(cfg, offline)
     api = cfg["crm"]["apiVersion"]
     fields = ["FirstName", "LastName", "Email", "Phone", "Rdf_Tier__c", "Rdf_Signup_Channel__c"]
     assets = [
         (sc, "AI_SERVICE_CONNECTOR", "application/xml+businesssconnector",
          A.service_connector(sc, sc_uuid, token_url, api, cfg["crm"]["contactExternalId"], tag, fields), []),
         (conn, "AI_CONNECTION", "application/xml+connection",
-         A.app_connection(conn, sc, gd[sc], sc_uuid, tag, token_url, cid, csec, api), [gd[sc]]),
+         A.app_connection(conn, sc, gd[sc], sc_uuid, tag, token_url, api), [gd[sc]]),
         (p_contact, "PROCESS", "application/xml+process",
-         A.contact_process(p_contact, gd[p_contact], conn, gd[conn], tag, c.get("anonymous", True)), [gd[conn]]),
+         A.contact_process(p_contact, gd[p_contact], conn, gd[conn], tag, anon, users, groups), [gd[conn]]),
         (p_member, "PROCESS", "application/xml+process",
-         A.event_process(p_member, A.membership_event(cfg), gd[p_member], conn, gd[conn], tag, c.get("anonymous", True)),
+         A.event_process(p_member, A.membership_event(cfg), gd[p_member], conn, gd[conn], tag, anon, users, groups),
          [gd[conn]]),
     ]
     proj, fold = cfg["idmc"]["project"], cfg["idmc"]["folder"]
@@ -137,19 +202,17 @@ def asset_paths(cfg):
 
 def main():
     ap = C.add_common_args(argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter))
-    ap.add_argument("cmd", choices=["build", "harvest", "import", "publish", "unpublish", "url", "purge"])
+    ap.add_argument("cmd", choices=["build", "harvest", "import", "set-secret", "publish", "unpublish", "url", "purge"])
     ap.add_argument("--offline", action="store_true")
-    ap.add_argument("--no-secrets", action="store_true", help="package the app connection with EMPTY client id/secret "
-                                                                "(type them in Application Integration afterwards)")
+    ap.add_argument("--no-secrets", action="store_true", help=argparse.SUPPRESS)   # kept for old scripts: now always so
     ap.add_argument("--from-task", help="harvest: v3 id of any object already in the project folder")
     a = ap.parse_args()
     cfg, st = C.load_config(a.config), C.load_state()
     if a.cmd == "build":
-        assets, gd = build_package(cfg, st, a.offline, with_secrets=not a.no_secrets)
+        assets, gd = build_package(cfg, st, a.offline)
         for n, t, *_ in assets:
             print(f"  {t:22} {n:30} guid {gd[n]}")
-        print(f"package -> {PKG.relative_to(C.BLUEPRINT)} (0600; holds the Connected App secret unless --no-secrets/--offline: "
-              "run 'purge' after the import)")
+        print(f"package -> {PKG.relative_to(C.BLUEPRINT)} (0600; no secret inside: after the import run 'set-secret')")
         if not a.offline:
             C.save_state(st)
         return 0
@@ -181,6 +244,8 @@ def main():
         for g in gd.values():
             args += ["--include", g]
         return C.core_cli("idmc_export_import.py", args + C.gate_args(a))
+    if a.cmd == "set-secret":
+        return set_secret(a, cfg, st)
     if a.cmd in ("publish", "unpublish"):
         args = [a.cmd]
         for p in asset_paths(cfg):
@@ -192,11 +257,14 @@ def main():
         h = S.hosts()
         base = (h.get("cai") or "").rstrip("/")
         org = S.v2().get("orgUuid")
-        rt = f"{base}/active-bpel/public/rt/{org}"
+        anon, users, groups = access(cfg, offline=True)
+        rt = f"{base}/active-bpel/public/rt/{org}" if anon else f"{base}/active-bpel/rt"
         print("CAI_RT_BASE (put it in the toolkit .env; it is not a secret, but it is org-specific):")
         print("  " + rt)
+        how = ("NO authentication (test opt-in)" if anon else
+               "Basic Authentication as RDF_CAI_USER / RDF_CAI_PASS; allowed: " + ", ".join(users + [f"group {g}" for g in groups]))
         for p in cfg["cai"]["processes"]:
-            print(f"  POST {rt}/{p}   (JSON body; anonymous={cfg['cai'].get('anonymous', True)})")
+            print(f"  POST {rt}/{p}   (JSON body; {how})")
         return 0
     if a.cmd == "purge":
         if PKG.exists():

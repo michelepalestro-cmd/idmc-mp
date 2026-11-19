@@ -1,5 +1,5 @@
 # Lessons: Access & Auth
-125 current lessons (1 disputed), 11 superseded; evidence dated 2026-06-27 to 2026-11-10.
+136 lessons: 124 current, 1 disputed, 11 superseded; evidence dated 2026-06-27 to 2026-11-19.
 
 Last verified: 2026-06-27 to 2026-10-02.
 
