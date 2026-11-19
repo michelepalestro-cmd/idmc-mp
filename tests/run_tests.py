@@ -21,7 +21,7 @@ PY = sys.executable
 sys.dont_write_bytecode = True                 # the in-process tests import toolkit modules: leave no __pycache__
 ENV = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
 TESTS = []
-SKILLS = ["idmc-mp", "idmc-secure-agent", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
+SKILLS = ["idmc-mp", "idmc-secure-agent", "idmc-connections", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
           "idmc-governance", "idmc-mdm", "idmc-claire-mcp", "idmc-deploy", "idmc-ipu"]
 COMMANDS = ["connect", "health-check", "new-pipeline", "fix-error", "save-lesson", "tune-agent", "optimize",
             "promote", "add-dq", "catalog", "ipu-report", "clean-data"]

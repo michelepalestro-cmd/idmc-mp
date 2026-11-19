@@ -35,6 +35,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/07-app-integration/README.md` |
 | Asset lifecycle | `knowledge/07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md` |
 | Runtime: invoke, URLs, control | `knowledge/07-app-integration/02-cai-runtime-invoke-urls-control.md` |
 | Connections and connectors | `knowledge/07-app-integration/03-cai-connections-connectors-salesforce-oauth.md` |

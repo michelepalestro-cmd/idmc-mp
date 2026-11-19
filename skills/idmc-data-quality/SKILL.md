@@ -36,6 +36,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/08-data-quality/README.md` |
 | DQ assets: rule specs, cleanse, dictionaries, verifiers | `knowledge/08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md` |
 | Profiling: what is headless | `knowledge/08-data-quality/02-profiling-what-is-headless.md` |
 | CLAIRE DQ agent | `knowledge/08-data-quality/03-claire-dq-agent-file-based-profiling-cleansing.md` |

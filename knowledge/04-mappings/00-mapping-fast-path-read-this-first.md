@@ -50,9 +50,9 @@ budget and IPUs, so ask the user before you run.
 | 4 | Pick an example | §4 lists which example shows which pattern. Copy it, rename `name` / `taskName`, keep the shape |
 | 5 | Declare the fields | Query the source and target catalogs (`INFORMATION_SCHEMA`, Salesforce describe) and write each field as `[name, TYPE, precision, nativeType, scale]` (§2 gives the native types) |
 | 6 | Lint | `python toolkit/mapgen/mapgen.py --profile profile.json lint <spec>.json`. Fix every ERROR. `WARN CONN_KIND ... Known kinds: BQ, PG, JDBC, FF, SF` is expected for every other connector (Snowflake, Databricks, SharePoint, Oracle, SQL Server...: they use the generic TOOLKIT adapter). `WARN CONN_KIND_MISSING` is not: set the connection's `kind` |
-| 7 | Dry run | `... deploy <spec>.json --dry-run` prints what it would import and create |
-| 8 | Deploy | `... deploy <spec>.json`: build → package → v3 import (REUSE for a new mapping; it finds an existing mapping by name in the folder and rebuilds it under that id, OVERWRITE) → create or reuse the mapping task `taskName`, born in `Default`, moved into the folder. Protected folders and targets in the profile's `guards` are refused unless `--allow-live` |
-| 9 | Run | `... deploy <spec>.json --run`, or `... run "<task name>" --folder "<project>/<folder>"`. It polls the activity log for this run's `runId` and prints per-target rows |
+| 7 | Dry run | `... deploy <spec>.json` (a dry run by default) prints what it would import and create |
+| 8 | Deploy | `... deploy <spec>.json --execute --expect-org <orgIdV3>`: build → package → v3 import (REUSE for a new mapping; it finds an existing mapping by name in the folder and rebuilds it under that id, OVERWRITE) → create or reuse the mapping task `taskName`, born in `Default`, moved into the folder. Protected folders and targets in the profile's `guards` are refused unless `--allow-live` |
+| 9 | Run | `... deploy <spec>.json --run --execute --expect-org <orgIdV3>`, or `... run "<task name>" --folder "<project>/<folder>" --execute --expect-org <orgIdV3>`. It polls the activity log for this run's `runId` and prints per-target rows |
 | 10 | Prove the output | Count rows in the target and compare with the source or the old pipeline (two-way diff = 0). On a failure: `... log <task>` and read the FIRST `[ERROR]` line (§5) |
 
 A taskflow over several tasks: [04 Taskflows & Schedules](../05-taskflows-schedules/01-taskflows-schedules.md). Linear taskflows are headless;
@@ -206,7 +206,7 @@ template to the package so it is there next time."*
    attributes, and anything else through the node's `set` / `advanced` escape hatches (SPEC_REFERENCE §6) or a
    `generic` node with the exemplar's class (SPEC_REFERENCE §5.6). If the shape is hard to reproduce, package-clone the
    exemplar mapping itself and edit it (route 3 in [02](02-how-claude-builds-mappings-headless.md) §5).
-6. **Prove it:** lint, `deploy --dry-run`, deploy, then (with the user's approval) one run, and check the rows.
+6. **Prove it:** lint, `deploy` (dry run), `deploy --execute --expect-org <orgIdV3>`, then (with the user's approval) one run, and check the rows.
 7. **Enrich the package, so the learning persists:** add the connector's row to §2 of this page (object path, native
    types, full-reload setting, must-know), save a placeholder-only example spec in `toolkit/mapgen/examples/connectors/`
    (`m_ex_<source>_to_<target>.json`; never the exemplar zip or your org's ids), add a dated lesson in

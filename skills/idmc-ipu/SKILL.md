@@ -34,6 +34,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/13-ipu-cost/README.md` |
 | IPU model | `knowledge/13-ipu-cost/01-ipu-model-mechanics.md` |
 | Metering and consumption exports | `knowledge/13-ipu-cost/02-metering-consumption-exports.md` |
 | Entitlement, licences, job caps | `knowledge/13-ipu-cost/03-entitlement-licenses-job-caps.md` |

@@ -20,6 +20,12 @@ The library needs only the standard library (Python 3.10+).
    each rung showed and the nearest working path. The KB is not an allow-list. **Native IDMC first; Python only as a
    bridge.**
 
+## Where everything is
+One folder per job under `knowledge/` (`01-login-and-orgs` ... `14-working-with-claude`). Each starts with a one-page
+`README.md` cheat sheet (what works, what doesn't, the fastest safe path, the top traps with lesson ids) and holds that
+job's guides and its `lessons.md`. The router is `knowledge/00-start-here/README.md` ("I want to..." -> command, cheat
+sheet, tool). Open the cheat sheet first; open a long guide only when the cheat sheet points there.
+
 ## Before any IDMC call
 - **Search the lessons first (Law 1):** `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"`
   (one JSON lesson per line: `id` `L-<DOMAIN>-###`, `domain`, `kind`, `title`, `text`, `evidence`, `status`
@@ -50,7 +56,8 @@ the home file is filled in, it is already connected: run `check_login.py`, don't
 | Get going: first hour, what to ask, top lessons | this one | `knowledge/00-start-here/10-quick-start-your-first-hour-with-idmc-and-claude.md` |
 | Deploy IDMC end to end (13 stages) | `idmc-deploy` | `knowledge/00-start-here/07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md` |
 | A new pipeline, any source to any target | `idmc-cdi` | `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` |
-| Install, run, tune a Secure Agent; runtime; connections | `idmc-secure-agent` | `knowledge/02-secure-agent/` |
+| Install, run, tune a Secure Agent; runtime environments | `idmc-secure-agent` | `knowledge/02-secure-agent/` |
+| Connections to any system: create, test, fix | `idmc-connections` | `knowledge/03-connections/` |
 | Mappings, tasks, taskflows, schedules, CDI speed and cost | `idmc-cdi` | `knowledge/04-mappings/00-mapping-fast-path-read-this-first.md` |
 | Mass ingestion / CDC | `idmc-cdc` | `knowledge/06-cdc-ingestion/` |
 | CAI processes, publish, events | `idmc-cai` | `knowledge/07-app-integration/` |

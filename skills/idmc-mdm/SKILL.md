@@ -34,6 +34,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/10-mdm/README.md` |
 | Runtime vs design | `knowledge/10-mdm/01-mdm-saas-runtime-vs-design.md` |
 | Records: ingest, search, export, cleanup | `knowledge/10-mdm/02-mdm-records-ingest-search-export-cleanup.md` |
 | Business 360 modeling and match-merge | `knowledge/10-mdm/03-business-360-modeling-match-merge.md` |

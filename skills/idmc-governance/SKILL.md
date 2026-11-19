@@ -35,6 +35,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/09-catalog-lineage/README.md` |
 | APIs and auth | `knowledge/09-catalog-lineage/01-cdgc-apis-auth.md` |
 | Catalog sources: create, scan, update, purge | `knowledge/09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md` |
 | Glossary, links, classification | `knowledge/09-catalog-lineage/03-glossary-links-classification.md` |

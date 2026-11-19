@@ -70,11 +70,26 @@ def scan_file(p, shown, rules, explain):
     return hits
 
 
+def git_files(root):
+    """Files git would commit under root (tracked and untracked, minus ignored), or None outside a git work tree."""
+    import subprocess
+    try:
+        r = subprocess.run(["git", "-C", str(root), "ls-files", "-co", "--exclude-standard", "-z"],
+                           capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.SubprocessError):
+        return None
+    if r.returncode != 0:
+        return None
+    return [x for x in r.stdout.split("\0") if x]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("root", nargs="?", default=str(ROOT))
     ap.add_argument("--files", nargs="+", metavar="FILE", help="scan only these files (paths as given)")
     ap.add_argument("--explain", action="store_true")
+    ap.add_argument("--all", action="store_true",
+                    help="scan every file under root, including git-ignored ones (use before zipping a folder to share)")
     a = ap.parse_args()
     rules = list(RULES)
     extra = HERE / "secret_scan_extra.txt"
@@ -87,6 +102,11 @@ def main():
             p = Path(name)
             if p.is_file():
                 hits += scan_file(p, name, rules, a.explain)
+    elif not a.all and git_files(a.root) is not None:
+        for rel in git_files(a.root):            # what git would commit: tracked + untracked, minus .gitignore
+            p = Path(a.root) / rel
+            if p.is_file() and not any(part in SKIP_DIRS for part in Path(rel).parts):
+                hits += scan_file(p, Path(rel), rules, a.explain)
     else:
         for dp, dn, fn in os.walk(a.root):
             dn[:] = [d for d in dn if d not in SKIP_DIRS]

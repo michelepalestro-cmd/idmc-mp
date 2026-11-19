@@ -36,6 +36,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/12-deploy-migrate/README.md` |
 | Export and import (v3 migration API) | `knowledge/12-deploy-migrate/01-export-import-v3-migration-api.md` |
 | Editing packages safely | `knowledge/12-deploy-migrate/02-editing-packages-safely.md` |
 | Migration-clone authoring | `knowledge/12-deploy-migrate/03-migration-clone-authoring.md` |

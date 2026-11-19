@@ -36,6 +36,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/11-mcp-claire/README.md` |
 | Managed MCP servers: catalog and access | `knowledge/11-mcp-claire/01-managed-mcp-servers-catalog-access.md` |
 | MCP auth and OAuth clients | `knowledge/11-mcp-claire/02-mcp-auth-oauth-clients.md` |
 | CLAIRE GPT prompting | `knowledge/11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md` |

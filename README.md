@@ -1,7 +1,7 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
 [![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.8.0-blue)](CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.9.0-blue)](CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP turns Claude Code into a helper for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS).
@@ -150,7 +150,8 @@ All commands start with `/idmc-mp:`.
 | Area | Skill (loads on its own) | Commands |
 |---|---|---|
 | Rules, login, routing, errors | `idmc-mp` | `connect`, `health-check`, `fix-error`, `save-lesson` |
-| Secure Agent, runtime, connections | `idmc-secure-agent` | `tune-agent` |
+| Secure Agent, runtime environments | `idmc-secure-agent` | `tune-agent` |
+| Connections to any system | `idmc-connections` | |
 | Data Integration (CDI) | `idmc-cdi` | `new-pipeline`, `optimize` |
 | Mass ingestion, CDC | `idmc-cdc` | |
 | Application Integration (CAI) | `idmc-cai` | |

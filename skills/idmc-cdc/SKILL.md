@@ -35,6 +35,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/06-cdc-ingestion/README.md` |
 | DBMI over REST: create, deploy, run, stop | `knowledge/06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md` |
 | CDC from PostgreSQL | `knowledge/06-cdc-ingestion/02-cdc-from-postgresql.md` |
 | Targets and drivers | `knowledge/06-cdc-ingestion/03-dbmi-targets-drivers.md` |

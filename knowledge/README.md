@@ -251,23 +251,28 @@ The full placeholder table, with the other spellings you may meet, is in
 
 ## 5. The map
 
+One folder per job, in the order you usually build. Each folder starts with a one-page `README.md` cheat sheet and
+holds that job's guides and its `lessons.md`. The "I want to..." router is [00-start-here](00-start-here/README.md).
+
 | Folder | Read it when you need to… |
 |---|---|
-| [`knowledge/00-start-here`](00-start-here/) | orient yourself: how to use this KB, **the laws of headless IDMC**, the capability map ("can I do X headless?"), error triage, the glossary, the changelog, the **end-to-end playbook** and **what went wrong** in a production deployment |
-| [`knowledge/01-login-and-orgs`](01-login-and-orgs/) | log in, pick the right host and header for a service, handle session expiry, lockouts and the JWT change, prove which org you are in before writing, manage users, roles and entitlement reads |
-| [`knowledge/02-secure-agent`](02-secure-agent/) | install, size, tune, resize or reboot a Secure Agent, enable services and connectors headless, create/test/update connections, fix "the connection is broken" |
-| [`knowledge/04-mappings`](04-mappings/) | understand mappings vs mapping tasks vs templates, **build mappings and whole pipelines headless** (including pushdown), run and monitor jobs, taskflows, schedules, consolidation, performance and job caps, and **serve outputs to BI and apps** ([10 Serving Outputs to BI and Apps](04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md)) |
-| [`knowledge/06-cdc-ingestion`](06-cdc-ingestion/) | create/deploy/run DBMI tasks over REST, set up PostgreSQL CDC, measure CDC latency |
-| [`knowledge/07-app-integration`](07-app-integration/) | author, publish, unpublish and invoke CAI processes, run a Process Server on an agent, split work between CAI and an API gateway |
-| [`knowledge/08-data-quality`](08-data-quality/) | DQ assets, profiling, the CLAIRE DQ agent's file-based route, DQ scorecards |
-| [`knowledge/09-catalog-lineage`](09-catalog-lineage/) | catalog sources and scans, glossary, links, classification, search, lineage, marketplace |
-| [`knowledge/10-mdm`](10-mdm/) | MDM SaaS runtime vs design, records, Business 360; the repeatable playbook for mastering any table |
-| [`knowledge/11-mcp-claire`](11-mcp-claire/) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP, the plugin and community-tool ecosystem |
-| [`knowledge/12-deploy-migrate`](12-deploy-migrate/) | v3 export/import, editing packages, clone-authoring, **org-to-org migration and cutover**, headless deletes and org cleanup |
-| [`knowledge/13-ipu-cost`](13-ipu-cost/) | the IPU model and how consumption is metered, metering exports, entitlement vs licence, job caps and budgets |
-| [`knowledge/reference`](reference/) | the generated API & MCP endpoint reference, the IICS→IPU KB, and the [community code index](reference/community-code-index.md) |
-| [`lessons`](../lessons/) | every lesson by domain (current and **overturned**), with stable IDs `L-<DOM>-###` |
-| [`knowledge/14-working-with-claude`](14-working-with-claude/) | how Claude reaches and drives IDMC, evidence discipline, multi-agent coordination, UI automation, environment traps, secrets hygiene, and the **Script Library** |
+| [`00-start-here`](00-start-here/README.md) | orient yourself: the router, **the laws of headless IDMC**, the capability map, error triage, glossary, quick start, end-to-end playbook, new-pipeline milestones, what went wrong in production |
+| [`01-login-and-orgs`](01-login-and-orgs/README.md) | log in, pick the right host and header, handle sessions, lockouts and the JWT change, prove the org before writing, users and roles |
+| [`02-secure-agent`](02-secure-agent/README.md) | install, size, tune, resize or reboot a Secure Agent; enable services and connectors on a runtime environment |
+| [`03-connections`](03-connections/README.md) | create, test, update and delete connections to any system; per-connector settings; fix "the connection is broken" (the four gates) |
+| [`04-mappings`](04-mappings/README.md) | **build mappings and whole pipelines headless** (start with the Fast Path), mapping tasks, consolidation, pushdown, performance and job caps, changing pipelines safely, serving outputs to BI and apps |
+| [`05-taskflows-schedules`](05-taskflows-schedules/README.md) | linear and advanced taskflows, schedules, run and monitor them |
+| [`06-cdc-ingestion`](06-cdc-ingestion/README.md) | database ingestion and CDC over REST, PostgreSQL CDC, targets and drivers, file ingestion |
+| [`07-app-integration`](07-app-integration/README.md) | author, publish and invoke CAI processes, connections and connectors, Process Server on an agent, event listeners |
+| [`08-data-quality`](08-data-quality/README.md) | DQ assets, profiling, the CLAIRE DQ agent, scorecards, cleaning a large dataset with mappings |
+| [`09-catalog-lineage`](09-catalog-lineage/README.md) | catalog sources and scans, glossary, links, classification, search, lineage, marketplace |
+| [`10-mdm`](10-mdm/README.md) | MDM SaaS runtime vs design, records, Business 360 modeling, match and merge, mastering any table |
+| [`11-mcp-claire`](11-mcp-claire/README.md) | Informatica's managed MCP servers, MCP OAuth clients, CLAIRE GPT, agent-style MCP, plugins and community tools |
+| [`12-deploy-migrate`](12-deploy-migrate/README.md) | v3 export and import, editing packages, clone-authoring, org-to-org migration and cutover, headless deletes and cleanup |
+| [`13-ipu-cost`](13-ipu-cost/README.md) | the IPU model, metering exports, entitlement vs licence, job caps and budgets |
+| [`14-working-with-claude`](14-working-with-claude/README.md) | how Claude reaches and drives IDMC, evidence discipline, multi-agent work, UI automation, environment traps, secrets hygiene |
+| [`reference`](reference/README.md) | the endpoint-level API and MCP reference, the IICS-to-IPU KB, the compact playbook, the [community code index](reference/community-code-index.md) |
+| [`../lessons`](../lessons/README.md) | every lesson in one searchable file (`lessons.jsonl`), the counts, and every overturned belief |
 
 ## 6. Scope: generic by design
 

@@ -38,6 +38,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/04-mappings/README.md` |
+| **Start here:** the cheat sheet (what works, what doesn't, fastest path, traps) | `knowledge/05-taskflows-schedules/README.md` |
 | Mapping Fast Path (start here) | `knowledge/04-mappings/00-mapping-fast-path-read-this-first.md` |
 | Object model | `knowledge/04-mappings/01-cdi-object-model.md` |
 | How mappings are built headless | `knowledge/04-mappings/02-how-claude-builds-mappings-headless.md` |

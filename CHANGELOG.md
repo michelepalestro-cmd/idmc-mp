@@ -3,6 +3,23 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.9.0 (2026-11-19): one folder per job, with a cheat sheet for each
+
+- **New layout:** `knowledge/01-login-and-orgs` ... `14-working-with-claude`, in the order you build. Each job folder
+  holds a one-page `README.md` cheat sheet, its guides and its `lessons.md`. Secure Agent and connections, and mappings
+  and taskflows, now have their own folders. Reference material and the compact playbook are in `knowledge/reference/`.
+  `lessons/lessons.jsonl` still holds every lesson in one searchable file.
+- **14 cheat sheets:** what works (exact routes, tools, commands), what doesn't and the workaround, the fastest safe
+  path with the read-back for each step, and the top traps, every row citing its lesson. Lessons that came from other
+  people's code and are not yet proven live are marked **(reported)**.
+- **Router:** `knowledge/00-start-here/README.md` maps "I want to..." to the command, cheat sheet and tool.
+- **New skill `idmc-connections`** for connections to any system; `idmc-secure-agent` now covers the agent and its
+  runtime environment. Every skill opens its cheat sheet first.
+- **Project-neutral lessons:** methods kept, dataset sizes, geography and source details replaced by orders of
+  magnitude.
+- The mapping Fast Path shows `--execute --expect-org` on every write; the secret scan checks what git would commit
+  (`--all` for a whole folder).
+
 ## 1.8.0 (2026-11-19): security and tidiness pass
 
 - **Security fixes from a full code review:** the mapping generator only sends credentials to an https
