@@ -8,7 +8,7 @@ Table: $ARGUMENTS
 
 1. Prove the org (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`).
 2. Profile the table on the user's own connection (paths in
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md`) and summarize nulls,
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/08-data-quality/02-profiling-what-is-headless.md`) and summarize nulls,
    distincts, patterns and outliers per column.
 3. Propose rules (completeness, validity, consistency, uniqueness) with the column, the rule and why; grep the lessons
    (`"domain": "dq-profiling"`) for each rule type.

@@ -188,7 +188,7 @@ creates go to `state/ids.json`. Do not share `config.json`, `state/` or `build/`
 
 The source build also ran these on the same ledger; each has a KB topic and core script:
 CDC (Database Ingestion) from the Postgres ledger to a warehouse (`toolkit/lib/idmc_dbmi.py`; Postgres already runs with
-`wal_level=logical`; KB `knowledge/04-cdc-mass-ingestion`), a bronze / silver / gold medallion with pushdown (KB
-`knowledge/03-cdi-data-integration`), Data Quality rules and profiling (KB `06`), catalog lineage and a glossary
+`wal_level=logical`; KB `knowledge/06-cdc-ingestion`), a bronze / silver / gold medallion with pushdown (KB
+`knowledge/04-mappings`), Data Quality rules and profiling (KB `06`), catalog lineage and a glossary
 (`toolkit/lib/idmc_cdgc.py`, KB `07`). If the target is used for analytics, run quality and lineage on it directly; if
 it is operational, copy it with CDC first.

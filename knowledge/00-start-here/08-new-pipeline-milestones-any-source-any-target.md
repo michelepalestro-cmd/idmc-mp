@@ -23,9 +23,9 @@ or go straight to one asset whenever the user wants to.
 
 **Related:** [End-to-End Playbook](07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md) (the same order for a
 whole deployment) · [The Laws of Headless IDMC](02-the-laws-of-headless-idmc.md) ·
-[Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) ·
-[Runtime Environments](../02-secure-agent-connections/02-runtime-environments-services-connectors.md) ·
-[Connections](../02-secure-agent-connections/03-connections-create-test-update-delete.md) ·
+[Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) ·
+[Runtime Environments](../02-secure-agent/02-runtime-environments-services-connectors.md) ·
+[Connections](../03-connections/01-connections-create-test-update-delete.md) ·
 [Error Triage](04-error-triage.md)
 
 **Last verified:** 2026-11-03.
@@ -66,9 +66,9 @@ rung 7 (Python) is only for when none of them works.
 | 1 | Search the evidence | `grep -ril "<thing>" "lessons"`, the [Capability Map](03-capability-map.md), [Overturned Beliefs](../../lessons/overturned-beliefs.md). A wall is a dated verdict; many walls were later overturned | Law 9 |
 | 2 | Re-probe in this org | the right host and header for the plane, a bogus twin, the item status inside a 200; another release or org may differ | Laws 2-8 |
 | 3 | Another plane or API version | v2, v3, FRS, the service's own host (`-ing`, CAI, catalog, MDM), managed MCP | Laws 2, 22 |
-| 4 | Clone instead of create | have the object made once in the UI (or find one), export it as a v3 package, edit and re-import it; that is how mappings, mapplets, taskflows, CAI processes and DQ assets are built headless. Example: profiling a database over JDBC V2 was recorded as blocked, then worked by cloning a working profile body (L-DQ-128) | Law 16, [Editing Packages Safely](../10-migration-org-management/02-editing-packages-safely.md) |
-| 5 | Capture the UI's own call | record the browser's request (HAR / Playwright) and replay it with the session header | Law 19, [UI Automation](../14-claude-working-methods/04-ui-automation-with-playwright.md) §8 |
-| 6 | Another IDMC component | no native connector: REST V2 / a generic JDBC or ODBC connector, a CAI process calling the system's API, a flat file staged where a file connection reads it; a missing transformation: an expression pattern, a mapplet, a SQL query in the source, a second mapping | [Capability Map](03-capability-map.md), [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) §7 |
+| 4 | Clone instead of create | have the object made once in the UI (or find one), export it as a v3 package, edit and re-import it; that is how mappings, mapplets, taskflows, CAI processes and DQ assets are built headless. Example: profiling a database over JDBC V2 was recorded as blocked, then worked by cloning a working profile body (L-DQ-128) | Law 16, [Editing Packages Safely](../12-deploy-migrate/02-editing-packages-safely.md) |
+| 5 | Capture the UI's own call | record the browser's request (HAR / Playwright) and replay it with the session header | Law 19, [UI Automation](../14-working-with-claude/04-ui-automation-with-playwright.md) §8 |
+| 6 | Another IDMC component | no native connector: REST V2 / a generic JDBC or ODBC connector, a CAI process calling the system's API, a flat file staged where a file connection reads it; a missing transformation: an expression pattern, a mapplet, a SQL query in the source, a second mapping | [Capability Map](03-capability-map.md), [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) §7 |
 | 7 | A Python bridge (only when rungs 1-6 found no IDMC path) | a small script on the agent host as a pre/post step, or a stand-in that fetches, converts or stages data for an IDMC connector, while the integration logic itself stays in IDMC | [Script Library](../../toolkit/lib/README.md) |
 | 8 | One residual click | the single step that truly has no API, done once by the user from a written instruction, with everything before and after it headless | Law 17 |
 
@@ -93,7 +93,7 @@ That broke both rules. The right process took a few minutes and stayed inside ID
 Run the same milestones; only the connector-specific facts are new, and you collect them as you go. Three things to
 know up front:
 - **Find what the KB already holds on it:** `grep -ril "<connector>" .` across the whole KB, including the vendor
-  connector guides in `knowledge/12-reference-library` and the runtime-selection tables in `knowledge/02-secure-agent-connections`.
+  connector guides in `knowledge/reference` and the runtime-selection tables in `knowledge/02-secure-agent`.
   A connector named only there is still covered by the same method.
 - **Expect up to one UI step the first time** a connector type is used in an org: creating its first connection, or
   one exemplar mapping to export (L-CONN-005, rung 4). Tell the user at the start; everything after it is headless.
@@ -133,7 +133,7 @@ When your system is not in the KB:
 2. Read the connector's own definition from the org (`GET /api/v2/connector`, then the connector's metadata) and its
    Informatica guide; build one small object and prove it with rows.
 3. If the generator or a recipe does not know the connector, have one example made once in the UI, export it, and copy
-   its shape (L-CDI-036, L-CDI-204; [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) §7).
+   its shape (L-CDI-036, L-CDI-204; [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) §7).
 4. Record what you proved as a new lesson (generic, dated) so the next pipeline starts further ahead.
 
 Lessons are dated evidence from particular orgs and releases. Your own org's live answer wins over any lesson; when they
@@ -252,7 +252,7 @@ of this pipeline will stay in `Default`.
 1. Read the fields from each system's own catalog (`INFORMATION_SCHEMA`, a describe call, the file header) right before
    the build, not from connection field browse (L-CONN-096, L-CDI-197).
 2. Write each field with its type, precision and scale as the target connector wants them. Each connector has its own
-   native types and quirks: look for its row in the [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) §2,
+   native types and quirks: look for its row in the [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) §2,
    and when it has none, take them from the connector's metadata in your org.
 3. Decide the keys and the load mode: full reload, upsert on a key, or incremental by a watermark.
 
@@ -261,8 +261,8 @@ of this pipeline will stay in `Default`.
 ## Milestone 5. Build the mapping(s)
 
 1. Pick the route: a template task for a straight copy, the generator in `toolkit/mapgen` for real transformations
-   (L-CDI-033; [How Claude Builds Mappings Headless](../03-cdi-data-integration/02-how-claude-builds-mappings-headless.md) §1).
-2. Follow the [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md): start from the example
+   (L-CDI-033; [How Claude Builds Mappings Headless](../04-mappings/02-how-claude-builds-mappings-headless.md) §1).
+2. Follow the [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md): start from the example
    closest in **shape** (passthrough, join, aggregate, upsert, incremental), then change the connections, objects and
    fields to yours. The example's systems do not matter; its shape does.
 3. A source or target with no template in the generator (no row in the Fast Path §2): the **exemplar route** (Fast
@@ -302,14 +302,14 @@ Ask the user before the first run: it is a job and uses IPUs.
 
 Rules run inside the pipeline as rule-specification transformations or DQ assets; profiling measures them. Copy each
 rule's input precision and scale, or the mapping turns invalid (L-DQ-113). Read the results back per row, not only a
-pass flag ([DQ Assets](../06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md)).
+pass flag ([DQ Assets](../08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md)).
 
 **Done when:** each rule's result is visible per row in the target and the scores are read back.
 
 ## Milestone 9. Orchestrate and schedule
 
 1. Chain the tasks: linear taskflows are fully headless; an advanced taskflow made by API imports but cannot be
-   published headless (L-CDI-070; [Taskflows & Schedules](../03-cdi-data-integration/04-taskflows-schedules.md)).
+   published headless (L-CDI-070; [Taskflows & Schedules](../05-taskflows-schedules/01-taskflows-schedules.md)).
 2. Poll a taskflow with its taskId and runId (L-CDI-252).
 3. Count the jobs a schedule will start per month against the org's job budget, and keep a ledger from the first lane
    (L-IPU-041, L-IPU-043).
@@ -321,7 +321,7 @@ pass flag ([DQ Assets](../06-data-quality-profiling/01-dq-assets-rule-specs-clea
 1. Make sure the catalog source's scope includes your project and folder (and that no task stayed in `Default`), then
    check lineage from source to target: every root should be the system of record and nothing unexpected should join
    in (L-CDGC-157, L-CDGC-229, L-CDGC-232;
-   [Catalog Sources](../07-catalog-governance-cdgc/02-catalog-sources-create-scan-update-purge.md)).
+   [Catalog Sources](../09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md)).
 2. Write a short runbook: what runs, when, on which runtime, how to re-run, how to roll back.
 3. Add every new fact you proved as a generic lesson in `lessons`, especially for a connector the KB did
    not cover.

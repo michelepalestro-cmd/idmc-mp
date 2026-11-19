@@ -4,9 +4,9 @@
     python3 toolkit/tools/sync_lesson_counts.py           # rewrite the counts in place
     python3 toolkit/tools/sync_lesson_counts.py --check   # exit 1 (and list the files) if any count is stale
 
-Rewrites: the summary line of each lessons/by-domain/*.md file, the summary, the files table, the kinds table and the
-id-prefix table of lessons/README.md, and the lesson total in the root README.md. lessons.jsonl is the source of truth;
-each by-domain file is matched to its lessons by the `### L-...` headings it holds. Standard library only, offline.
+Rewrites: the summary line of each job folder's lessons file (knowledge/<job>/lessons*.md), the summary, the files
+table, the kinds table and the id-prefix table of lessons/README.md, and the lesson total in the root README.md.
+lessons.jsonl is the source of truth; each lessons file is matched to its lessons by the `### L-...` headings it holds. Standard library only, offline.
 """
 import argparse
 import collections
@@ -17,6 +17,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 LESSONS = ROOT / "lessons"
+KNOWLEDGE = ROOT / "knowledge"
+
+
+def lesson_files():
+    return sorted(KNOWLEDGE.glob("*/lessons*.md"))
 KIND_MEANING = {
     "GOTCHA": "a trap: something that looks like one thing and is another",
     "RECIPE": "a proven multi-step procedure",
@@ -42,12 +47,13 @@ def n(x):
 def load():
     rows = [json.loads(l) for l in (LESSONS / "lessons.jsonl").read_text(encoding="utf-8").splitlines() if l.strip()]
     by_file, general = {}, collections.Counter()
-    for p in sorted((LESSONS / "by-domain").glob("*.md")):
+    for p in lesson_files():
         t = p.read_text(encoding="utf-8")
-        by_file[p.name] = re.findall(r"^### (L-[A-Z]+-\d+)\s", t, re.M)
+        key = str(p.relative_to(KNOWLEDGE))
+        by_file[key] = re.findall(r"^### (L-[A-Z]+-\d+)\s", t, re.M)
         g = re.split(r"^## Other general lessons.*$", t, flags=re.M)
         if len(g) > 1:
-            general[p.name] = len(re.findall(r"^### L-", re.split(r"^## ", g[1], flags=re.M)[0], re.M))
+            general[key] = len(re.findall(r"^### L-", re.split(r"^## ", g[1], flags=re.M)[0], re.M))
     return rows, by_file, general
 
 
@@ -70,7 +76,7 @@ def summary_line(s, g):
 def sync_by_domain(rows, by_file, general):
     out = {}
     for name, ids in by_file.items():
-        p = LESSONS / "by-domain" / name
+        p = KNOWLEDGE / name
         t = p.read_text(encoding="utf-8")
         new = summary_line(stats(rows, ids), general.get(name))
         # the summary is the first sentence after the title that states the counts, up to its evidence date range
@@ -98,12 +104,12 @@ def sync_readme(rows, by_file, general):
              "|---|---|---|---|---|---|---|"]
     for name, ids in by_file.items():
         s = stats(rows, ids)
-        title = re.search(r"^# Lessons: (.+)$", (LESSONS / "by-domain" / name).read_text(encoding="utf-8"), re.M)
+        title = re.search(r"^# Lessons: (.+)$", (KNOWLEDGE / name).read_text(encoding="utf-8"), re.M)
         label = f"{name[:2]} {title.group(1).strip() if title else name}"
         pf = s["prefixes"]
         pref = ", ".join(f"`{k}` ({pf[k]})" for k in sorted(pf)) if len(pf) > 1 else ", ".join(f"`{k}`" for k in pf)
         cur = n(s["current"]) + (f" ({general[name]} general)" if general.get(name) else "")
-        lines.append(f"| [{label}](by-domain/{name}) | {pref} | {n(s['total'])} | {cur} | {s['superseded']} | "
+        lines.append(f"| [{label}](../knowledge/{name}) | {pref} | {n(s['total'])} | {cur} | {s['superseded']} | "
                      f"{s['disputed']} | {s['first']} to {s['last']} |")
     lines.append(f"| **Total** | {len(allst['prefixes'])} prefixes | **{n(allst['total'])}** | **{n(allst['current'])}** | "
                  f"**{allst['superseded']}** | **{allst['disputed']}** | {allst['first']} to {allst['last']} |")
@@ -121,7 +127,7 @@ def sync_readme(rows, by_file, general):
     for name, ids in by_file.items():
         s = stats(rows, ids)
         pl.append("| " + ", ".join(f"`{k}`" for k in sorted(s["prefixes"])) + " | " +
-                  ", ".join(f"`{d}`" for d in s["domains"]) + f" | [{name}](by-domain/{name}) |")
+                  ", ".join(f"`{d}`" for d in s["domains"]) + f" | [{name}](../knowledge/{name}) |")
     t = re.sub(r"\| Prefix \| Domain key \| File \|.*?\n(?:\|.*\n)+", "\n".join(pl) + "\n", t, count=1)
     out = {p: t}
     rp = ROOT / "README.md"
@@ -137,7 +143,7 @@ def main():
     rows, by_file, general = load()
     missing = {r["id"] for r in rows} - {i for ids in by_file.values() for i in ids}
     if missing:
-        print("lessons.jsonl ids with no by-domain heading: " + ", ".join(sorted(missing)[:10]))
+        print("lessons.jsonl ids with no heading in any knowledge/<job>/lessons*.md file: " + ", ".join(sorted(missing)[:10]))
         return 1
     new = {**sync_by_domain(rows, by_file, general), **sync_readme(rows, by_file, general)}
     stale = [p for p, t in new.items() if p.read_text(encoding="utf-8") != t]

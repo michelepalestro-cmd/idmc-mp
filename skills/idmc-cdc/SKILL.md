@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "dbmi-cdc"`),
-  then `lessons/by-domain/04-mass-ingestion-cdc.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/06-cdc-ingestion/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Land a database in the user's target with initial load plus CDC.
@@ -35,9 +35,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| DBMI over REST: create, deploy, run, stop | `knowledge/04-cdc-mass-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md` |
-| CDC from PostgreSQL | `knowledge/04-cdc-mass-ingestion/02-cdc-from-postgresql.md` |
-| Targets and drivers | `knowledge/04-cdc-mass-ingestion/03-dbmi-targets-drivers.md` |
+| DBMI over REST: create, deploy, run, stop | `knowledge/06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md` |
+| CDC from PostgreSQL | `knowledge/06-cdc-ingestion/02-cdc-from-postgresql.md` |
+| Targets and drivers | `knowledge/06-cdc-ingestion/03-dbmi-targets-drivers.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_dbmi.py`: DBMI / CDC tasks on the ingestion plane

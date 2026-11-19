@@ -38,18 +38,18 @@ recommendations.
 
 | You want to | Ask Claude | Where it works from |
 |---|---|---|
-| Load a table from A to B | "build a mapping from my `<source>` `<table>` to `<target>`, run it and show me the row counts" | [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md), `toolkit/mapgen/` |
+| Load a table from A to B | "build a mapping from my `<source>` `<table>` to `<target>`, run it and show me the row counts" | [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md), `toolkit/mapgen/` |
 | A whole pipeline | "plan and build a pipeline from `<sources>` to `<target>`; tell me each milestone as you finish it" | [New Pipeline Milestones](08-new-pipeline-milestones-any-source-any-target.md) |
-| Schedule it | "put these mapping tasks in a taskflow and schedule it daily at 02:00 my time" | [Taskflows & Schedules](../03-cdi-data-integration/04-taskflows-schedules.md) |
-| Keep a target in sync (CDC) | "set up CDC from my `<database>` to `<target>`" | [knowledge/04-cdc-mass-ingestion](../04-cdc-mass-ingestion/) |
-| A connection | "create a `<type>` connection on my Secure Agent and test it with a real query" | [knowledge/02-secure-agent-connections](../02-secure-agent-connections/) |
-| Real-time / API | "publish a CAI process that `<does X>` when `<event>` and show me its endpoint" | [knowledge/05-cai-application-integration](../05-cai-application-integration/) |
-| Data quality | "profile `<table>`, suggest DQ rules, and add them to the pipeline" | [knowledge/06-data-quality-profiling](../06-data-quality-profiling/) |
-| Catalog and lineage | "scan `<source>` into the catalog and show lineage from source to report" | [knowledge/07-catalog-governance-cdgc](../07-catalog-governance-cdgc/) |
-| Golden records | "match and merge `<entity>` across `<sources>` and show me the golden records" | [knowledge/08-mdm](../08-mdm/) |
-| Use IDMC from Claude over MCP | "connect Claude to IDMC's MCP servers" | [knowledge/09-claire-mcp](../09-claire-mcp/) |
-| Move assets between orgs | "export project `<name>` and import it into my other org" | [knowledge/10-migration-org-management](../10-migration-org-management/) |
-| Know the cost | "how many IPUs did we use this month, and by what" | [knowledge/11-ipu-metering-licensing](../11-ipu-metering-licensing/) |
+| Schedule it | "put these mapping tasks in a taskflow and schedule it daily at 02:00 my time" | [Taskflows & Schedules](../05-taskflows-schedules/01-taskflows-schedules.md) |
+| Keep a target in sync (CDC) | "set up CDC from my `<database>` to `<target>`" | [knowledge/06-cdc-ingestion](../06-cdc-ingestion/) |
+| A connection | "create a `<type>` connection on my Secure Agent and test it with a real query" | [knowledge/02-secure-agent](../02-secure-agent/) |
+| Real-time / API | "publish a CAI process that `<does X>` when `<event>` and show me its endpoint" | [knowledge/07-app-integration](../07-app-integration/) |
+| Data quality | "profile `<table>`, suggest DQ rules, and add them to the pipeline" | [knowledge/08-data-quality](../08-data-quality/) |
+| Catalog and lineage | "scan `<source>` into the catalog and show lineage from source to report" | [knowledge/09-catalog-lineage](../09-catalog-lineage/) |
+| Golden records | "match and merge `<entity>` across `<sources>` and show me the golden records" | [knowledge/10-mdm](../10-mdm/) |
+| Use IDMC from Claude over MCP | "connect Claude to IDMC's MCP servers" | [knowledge/11-mcp-claire](../11-mcp-claire/) |
+| Move assets between orgs | "export project `<name>` and import it into my other org" | [knowledge/12-deploy-migrate](../12-deploy-migrate/) |
+| Know the cost | "how many IPUs did we use this month, and by what" | [knowledge/13-ipu-cost](../13-ipu-cost/) |
 | Fix an error | paste the error: "why does this fail: `<message>`" | [Error Triage](04-error-triage.md), `lessons/` |
 | See it end to end first | "deploy the `<demo>` blueprint into my org" | `demos/` (start at `BLUEPRINT_CONVENTIONS.md`) |
 
@@ -100,4 +100,4 @@ Each one cost a real project hours or days. The id leads to the full lesson in `
 - Deploy to production and run day 2: [End-to-End Playbook](07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md).
 - What went wrong in a real production deployment, and how to avoid it: [What Went Wrong](09-what-went-wrong-production-deployment-post-mortem.md).
 - The laws behind every answer: [The Laws of Headless IDMC](02-the-laws-of-headless-idmc.md).
-- Every endpoint and verb: `knowledge/12-reference-library/`.
+- Every endpoint and verb: `knowledge/reference/`.

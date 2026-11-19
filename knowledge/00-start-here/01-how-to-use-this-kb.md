@@ -65,7 +65,7 @@ how sure is each claim, and how do I add what I learn?
 **First ten minutes in a new org:**
 
 1. Log in once at the org's own domain host, and derive the pod, both org ids and the base URL from the answer
-   ([Identify the Org Before You Write](../01-access-auth-orgs/03-identify-the-org-before-you-write.md)).
+   ([Identify the Org Before You Write](../01-login-and-orgs/03-identify-the-org-before-you-write.md)).
 2. Read the agents and their `agentEngines[]`; ignore the login `products[]` list.
 3. Look up what you are about to do in the [Capability Map](03-capability-map.md), then open its doc.
 4. Before the first write: a backup, a dry run, an org assertion, and a plan for the read-back.
@@ -78,44 +78,44 @@ Open the first doc; read the second when the first sends you there. Scripts are 
 
 | Your task | Go straight to | Then | Script |
 |---|---|---|---|
-| Build a new pipeline, any source to any target | [New Pipeline Milestones](08-new-pipeline-milestones-any-source-any-target.md) | [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) | `check_login.py`, `toolkit/mapgen/mapgen.py` |
+| Build a new pipeline, any source to any target | [New Pipeline Milestones](08-new-pipeline-milestones-any-source-any-target.md) | [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) | `check_login.py`, `toolkit/mapgen/mapgen.py` |
 | Avoid the failures of a production deployment (backups, gates, host, many sessions) | [What Went Wrong](09-what-went-wrong-production-deployment-post-mortem.md) | the lesson each row cites | (none) |
 | Stand up or extend a deployment end to end | [End-to-End Playbook](07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md) | the doc each stage names | (per stage) |
-| Log in, pick the right host and header, avoid a lockout | [Login, Sessions & Tokens](../01-access-auth-orgs/02-login-sessions-tokens.md) | [Pods, Hosts & Service Planes](../01-access-auth-orgs/01-pods-hosts-service-planes.md) | `idmc_session.py whoami` |
-| Prove which org you are in before writing | [Identify the Org Before You Write](../01-access-auth-orgs/03-identify-the-org-before-you-write.md) | [Users, Roles & Permissions](../01-access-auth-orgs/04-users-roles-permissions.md) | `idmc_session.py whoami --expect-org` |
-| Users, roles, entitlement ("is it licensed?"), trial orgs | [Users, Roles & Permissions](../01-access-auth-orgs/04-users-roles-permissions.md) | [Entitlement, Licenses & Job Caps](../11-ipu-metering-licensing/03-entitlement-licenses-job-caps.md) | `idmc_session.py get` |
-| Install, size, tune, resize or reboot a Secure Agent; two agents on one host | [Secure Agent - Install, Run & Tune](../02-secure-agent-connections/01-secure-agent-install-run-tune.md) | [Runtime Environments - Services & Connectors](../02-secure-agent-connections/02-runtime-environments-services-connectors.md) | `idmc_runtime_selections.py` |
-| Jobs queue, or concurrency never passes 2 | [Secure Agent](../02-secure-agent-connections/01-secure-agent-install-run-tune.md) §6.2 (the DTM pool) | [Performance, Concurrency & Job Caps](../03-cdi-data-integration/07-performance-concurrency-job-caps.md) §6 | (none) |
-| A connection fails (test or run) | [Troubleshooting - the Four Gates](../02-secure-agent-connections/05-troubleshooting-the-four-gates.md) | [Connections](../02-secure-agent-connections/03-connections-create-test-update-delete.md), [Connector Notes](../02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md) | `idmc_session.py get` |
+| Log in, pick the right host and header, avoid a lockout | [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) | [Pods, Hosts & Service Planes](../01-login-and-orgs/01-pods-hosts-service-planes.md) | `idmc_session.py whoami` |
+| Prove which org you are in before writing | [Identify the Org Before You Write](../01-login-and-orgs/03-identify-the-org-before-you-write.md) | [Users, Roles & Permissions](../01-login-and-orgs/04-users-roles-permissions.md) | `idmc_session.py whoami --expect-org` |
+| Users, roles, entitlement ("is it licensed?"), trial orgs | [Users, Roles & Permissions](../01-login-and-orgs/04-users-roles-permissions.md) | [Entitlement, Licenses & Job Caps](../13-ipu-cost/03-entitlement-licenses-job-caps.md) | `idmc_session.py get` |
+| Install, size, tune, resize or reboot a Secure Agent; two agents on one host | [Secure Agent - Install, Run & Tune](../02-secure-agent/01-secure-agent-install-run-tune.md) | [Runtime Environments - Services & Connectors](../02-secure-agent/02-runtime-environments-services-connectors.md) | `idmc_runtime_selections.py` |
+| Jobs queue, or concurrency never passes 2 | [Secure Agent](../02-secure-agent/01-secure-agent-install-run-tune.md) §6.2 (the DTM pool) | [Performance, Concurrency & Job Caps](../04-mappings/06-performance-concurrency-job-caps.md) §6 | (none) |
+| A connection fails (test or run) | [Troubleshooting - the Four Gates](../03-connections/03-troubleshooting-the-four-gates.md) | [Connections](../03-connections/01-connections-create-test-update-delete.md), [Connector Notes](../03-connections/02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md) | `idmc_session.py get` |
 | Can IDMC do X headless? | [Capability Map](03-capability-map.md) | the service folder, then [Overturned Beliefs](../../lessons/overturned-beliefs.md) | `idmc_probe.py` |
-| A call returns an error code or a suspicious 200 | [Error Triage](04-error-triage.md) | [Evidence Discipline](../14-claude-working-methods/02-evidence-discipline.md) | `idmc_probe.py twin` |
-| Build or change one mapping, fast | [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) | `toolkit/mapgen/docs/SPEC_REFERENCE.md`, `toolkit/mapgen/examples/` | `toolkit/mapgen/mapgen.py` |
-| Build a pipeline (mappings, mapping tasks, lanes), turn on pushdown | [How Claude Builds Mappings Headless](../03-cdi-data-integration/02-how-claude-builds-mappings-headless.md) | [The Pipeline-Generation Pattern](../03-cdi-data-integration/05-the-pipeline-generation-pattern.md), [Mapping Design & Consolidation](../03-cdi-data-integration/06-mapping-design-consolidation.md) | `idmc_mttask.py`, `idmc_package_edit.py` |
-| Run, schedule and monitor jobs | [Mapping Tasks](../03-cdi-data-integration/03-mapping-tasks-create-update-run-monitor.md), [Taskflows & Schedules](../03-cdi-data-integration/04-taskflows-schedules.md) | [Performance, Concurrency & Job Caps](../03-cdi-data-integration/07-performance-concurrency-job-caps.md) | `idmc_mttask.py run`, `idmc_taskflow_schedule.py` |
-| Promise or measure a latency (per hop, per record) | [Performance, Concurrency & Job Caps](../03-cdi-data-integration/07-performance-concurrency-job-caps.md) §8 | [CDC from PostgreSQL](../04-cdc-mass-ingestion/02-cdc-from-postgresql.md) §3, [Evidence Discipline](../14-claude-working-methods/02-evidence-discipline.md) §9 | (none) |
-| Change a live pipeline | [Changing Pipelines Safely](../03-cdi-data-integration/08-changing-pipelines-safely.md) | [Editing Packages Safely](../10-migration-org-management/02-editing-packages-safely.md) | `idmc_mttask.py set-query` |
-| Serve outputs to BI tools, CRM analytics or apps; reverse ETL | [Serving Outputs to BI and Apps](../03-cdi-data-integration/10-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) | [Source & Target Gotchas](../03-cdi-data-integration/09-source-target-gotchas.md), [Connector Notes](../02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md) §3 | (none) |
-| CDC or database ingestion | [DBMI over REST](../04-cdc-mass-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) | [CDC from PostgreSQL](../04-cdc-mass-ingestion/02-cdc-from-postgresql.md), [DBMI Targets & Drivers](../04-cdc-mass-ingestion/03-dbmi-targets-drivers.md) | `idmc_dbmi.py` |
-| Author, publish or invoke a CAI process | [CAI Asset Lifecycle](../05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md) | [CAI Runtime](../05-cai-application-integration/02-cai-runtime-invoke-urls-control.md), [CAI Troubleshooting](../05-cai-application-integration/05-cai-troubleshooting-stuck-assets.md) | `idmc_cai_publish.py` |
-| Listen to Kafka or a JMS broker (AMQP) with CAI; bridge JMS to Kafka; windowed or late subscribers | [CAI Event Listeners](../05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md) | [CAI Asset Lifecycle](../05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md), [Process Server on a Secure Agent](../05-cai-application-integration/04-process-server-on-a-secure-agent.md) | (none) |
-| Decide whether a flow belongs to IDMC or an API gateway; front APIs with a gateway | [CAI Runtime](../05-cai-application-integration/02-cai-runtime-invoke-urls-control.md) §10.7-10.8 | [Capability Map](03-capability-map.md) ("Which layer owns which edge") | (none) |
-| DQ rules, profiling, scorecards | [Profiling - What Is Headless](../06-data-quality-profiling/02-profiling-what-is-headless.md) | [DQ Assets](../06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md), [DQ Scorecards](../06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md), [CLAIRE DQ Agent](../06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md) | (none yet) |
-| Register and scan a catalog source | [Catalog Sources](../07-catalog-governance-cdgc/02-catalog-sources-create-scan-update-purge.md) | [CDGC APIs & Auth](../07-catalog-governance-cdgc/01-cdgc-apis-auth.md), [CDGC Gaps & Gotchas](../07-catalog-governance-cdgc/05-cdgc-gaps-gotchas.md) | `idmc_cdgc.py` |
-| Glossary, term links, classification, lineage | [Glossary, Links & Classification](../07-catalog-governance-cdgc/03-glossary-links-classification.md) | [Search, Lineage & Marketplace](../07-catalog-governance-cdgc/04-search-lineage-marketplace.md) | `idmc_cdgc.py` |
-| MDM records, search, models | [MDM SaaS - Runtime vs Design](../08-mdm/01-mdm-saas-runtime-vs-design.md) | [MDM Records](../08-mdm/02-mdm-records-ingest-search-export-cleanup.md), [Business 360 Modeling](../08-mdm/03-business-360-modeling-match-merge.md) | (none yet) |
-| Master a table (dedupe, match, survivorship, golden-record gates) for any kind of dataset | [Mastering a Table - Repeatable Playbook](../08-mdm/05-mastering-a-table-repeatable-playbook.md) | [Business 360 Modeling](../08-mdm/03-business-360-modeling-match-merge.md) (native MDM and the CDI-mapping pipeline), [DQ Assets](../06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) | (none) |
-| MCP servers, OAuth clients, agent-style MCP | [Managed MCP Servers](../09-claire-mcp/01-managed-mcp-servers-catalog-access.md) | [MCP Auth & OAuth Clients](../09-claire-mcp/02-mcp-auth-oauth-clients.md), [MCP vs REST](../09-claire-mcp/05-mcp-vs-rest-when-to-use-which.md), [Ecosystem](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md) | `idmc_mcp.py` |
-| A CLAIRE GPT demo or prompt set | [CLAIRE GPT - Prompting Rules & Patterns](../09-claire-mcp/03-claire-gpt-prompting-rules-patterns.md) | [Glossary, Links & Classification](../07-catalog-governance-cdgc/03-glossary-links-classification.md) section 10 | (UI harness) |
-| IPUs, metering, licences, job caps and job budgets | [IPU Model](../11-ipu-metering-licensing/01-ipu-model-mechanics.md) | [Entitlement, Licenses & Job Caps](../11-ipu-metering-licensing/03-entitlement-licenses-job-caps.md), [Metering & Consumption Exports](../11-ipu-metering-licensing/02-metering-consumption-exports.md) | (none yet) |
-| Migrate an estate to another org | [Org-to-Org Migration Runbook](../10-migration-org-management/04-org-to-org-migration-runbook.md) | [Export & Import](../10-migration-org-management/01-export-import-v3-migration-api.md), [Cutover & Rollback](../10-migration-org-management/05-cutover-rollback.md) | `idmc_export_import.py` |
-| Clean an org, delete objects | [Headless Deletes & Org Cleanup](../10-migration-org-management/06-headless-deletes-org-cleanup.md) | [Identify the Org Before You Write](../01-access-auth-orgs/03-identify-the-org-before-you-write.md) | `idmc_frs_delete.py` |
-| A step still looks UI-only | [UI Automation with Playwright](../14-claude-working-methods/04-ui-automation-with-playwright.md) (section 8: capture the UI's own call) | [The Laws](02-the-laws-of-headless-idmc.md) (law 17: the residual clicks) | (Playwright skeleton in the doc) |
-| Reach the agent host (SSH, IAP hop, run-command) | [How Claude Reaches and Drives IDMC](../14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) §7 | [Environment Traps](../14-claude-working-methods/05-environment-traps-windows-git-bash-az-gcloud-docker.md) | (none) |
-| Several sessions on one program; an action was denied; what needs the human | [Multi-Agent Coordination](../14-claude-working-methods/03-multi-agent-coordination.md) | [How Claude Reaches and Drives IDMC](../14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) | (none) |
-| A secret, a key or an exposure | [Secrets Hygiene](../14-claude-working-methods/06-secrets-hygiene.md) | [Environment Traps](../14-claude-working-methods/05-environment-traps-windows-git-bash-az-gcloud-docker.md) | (none) |
+| A call returns an error code or a suspicious 200 | [Error Triage](04-error-triage.md) | [Evidence Discipline](../14-working-with-claude/02-evidence-discipline.md) | `idmc_probe.py twin` |
+| Build or change one mapping, fast | [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) | `toolkit/mapgen/docs/SPEC_REFERENCE.md`, `toolkit/mapgen/examples/` | `toolkit/mapgen/mapgen.py` |
+| Build a pipeline (mappings, mapping tasks, lanes), turn on pushdown | [How Claude Builds Mappings Headless](../04-mappings/02-how-claude-builds-mappings-headless.md) | [The Pipeline-Generation Pattern](../04-mappings/04-the-pipeline-generation-pattern.md), [Mapping Design & Consolidation](../04-mappings/05-mapping-design-consolidation.md) | `idmc_mttask.py`, `idmc_package_edit.py` |
+| Run, schedule and monitor jobs | [Mapping Tasks](../04-mappings/03-mapping-tasks-create-update-run-monitor.md), [Taskflows & Schedules](../05-taskflows-schedules/01-taskflows-schedules.md) | [Performance, Concurrency & Job Caps](../04-mappings/06-performance-concurrency-job-caps.md) | `idmc_mttask.py run`, `idmc_taskflow_schedule.py` |
+| Promise or measure a latency (per hop, per record) | [Performance, Concurrency & Job Caps](../04-mappings/06-performance-concurrency-job-caps.md) §8 | [CDC from PostgreSQL](../06-cdc-ingestion/02-cdc-from-postgresql.md) §3, [Evidence Discipline](../14-working-with-claude/02-evidence-discipline.md) §9 | (none) |
+| Change a live pipeline | [Changing Pipelines Safely](../04-mappings/07-changing-pipelines-safely.md) | [Editing Packages Safely](../12-deploy-migrate/02-editing-packages-safely.md) | `idmc_mttask.py set-query` |
+| Serve outputs to BI tools, CRM analytics or apps; reverse ETL | [Serving Outputs to BI and Apps](../04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) | [Source & Target Gotchas](../04-mappings/08-source-target-gotchas.md), [Connector Notes](../03-connections/02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md) §3 | (none) |
+| CDC or database ingestion | [DBMI over REST](../06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) | [CDC from PostgreSQL](../06-cdc-ingestion/02-cdc-from-postgresql.md), [DBMI Targets & Drivers](../06-cdc-ingestion/03-dbmi-targets-drivers.md) | `idmc_dbmi.py` |
+| Author, publish or invoke a CAI process | [CAI Asset Lifecycle](../07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md) | [CAI Runtime](../07-app-integration/02-cai-runtime-invoke-urls-control.md), [CAI Troubleshooting](../07-app-integration/05-cai-troubleshooting-stuck-assets.md) | `idmc_cai_publish.py` |
+| Listen to Kafka or a JMS broker (AMQP) with CAI; bridge JMS to Kafka; windowed or late subscribers | [CAI Event Listeners](../07-app-integration/06-cai-event-listeners-kafka-amqp-jms.md) | [CAI Asset Lifecycle](../07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md), [Process Server on a Secure Agent](../07-app-integration/04-process-server-on-a-secure-agent.md) | (none) |
+| Decide whether a flow belongs to IDMC or an API gateway; front APIs with a gateway | [CAI Runtime](../07-app-integration/02-cai-runtime-invoke-urls-control.md) §10.7-10.8 | [Capability Map](03-capability-map.md) ("Which layer owns which edge") | (none) |
+| DQ rules, profiling, scorecards | [Profiling - What Is Headless](../08-data-quality/02-profiling-what-is-headless.md) | [DQ Assets](../08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md), [DQ Scorecards](../08-data-quality/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md), [CLAIRE DQ Agent](../08-data-quality/03-claire-dq-agent-file-based-profiling-cleansing.md) | (none yet) |
+| Register and scan a catalog source | [Catalog Sources](../09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md) | [CDGC APIs & Auth](../09-catalog-lineage/01-cdgc-apis-auth.md), [CDGC Gaps & Gotchas](../09-catalog-lineage/05-cdgc-gaps-gotchas.md) | `idmc_cdgc.py` |
+| Glossary, term links, classification, lineage | [Glossary, Links & Classification](../09-catalog-lineage/03-glossary-links-classification.md) | [Search, Lineage & Marketplace](../09-catalog-lineage/04-search-lineage-marketplace.md) | `idmc_cdgc.py` |
+| MDM records, search, models | [MDM SaaS - Runtime vs Design](../10-mdm/01-mdm-saas-runtime-vs-design.md) | [MDM Records](../10-mdm/02-mdm-records-ingest-search-export-cleanup.md), [Business 360 Modeling](../10-mdm/03-business-360-modeling-match-merge.md) | (none yet) |
+| Master a table (dedupe, match, survivorship, golden-record gates) for any kind of dataset | [Mastering a Table - Repeatable Playbook](../10-mdm/05-mastering-a-table-repeatable-playbook.md) | [Business 360 Modeling](../10-mdm/03-business-360-modeling-match-merge.md) (native MDM and the CDI-mapping pipeline), [DQ Assets](../08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) | (none) |
+| MCP servers, OAuth clients, agent-style MCP | [Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md) | [MCP Auth & OAuth Clients](../11-mcp-claire/02-mcp-auth-oauth-clients.md), [MCP vs REST](../11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md), [Ecosystem](../11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md) | `idmc_mcp.py` |
+| A CLAIRE GPT demo or prompt set | [CLAIRE GPT - Prompting Rules & Patterns](../11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) | [Glossary, Links & Classification](../09-catalog-lineage/03-glossary-links-classification.md) section 10 | (UI harness) |
+| IPUs, metering, licences, job caps and job budgets | [IPU Model](../13-ipu-cost/01-ipu-model-mechanics.md) | [Entitlement, Licenses & Job Caps](../13-ipu-cost/03-entitlement-licenses-job-caps.md), [Metering & Consumption Exports](../13-ipu-cost/02-metering-consumption-exports.md) | (none yet) |
+| Migrate an estate to another org | [Org-to-Org Migration Runbook](../12-deploy-migrate/04-org-to-org-migration-runbook.md) | [Export & Import](../12-deploy-migrate/01-export-import-v3-migration-api.md), [Cutover & Rollback](../12-deploy-migrate/05-cutover-rollback.md) | `idmc_export_import.py` |
+| Clean an org, delete objects | [Headless Deletes & Org Cleanup](../12-deploy-migrate/06-headless-deletes-org-cleanup.md) | [Identify the Org Before You Write](../01-login-and-orgs/03-identify-the-org-before-you-write.md) | `idmc_frs_delete.py` |
+| A step still looks UI-only | [UI Automation with Playwright](../14-working-with-claude/04-ui-automation-with-playwright.md) (section 8: capture the UI's own call) | [The Laws](02-the-laws-of-headless-idmc.md) (law 17: the residual clicks) | (Playwright skeleton in the doc) |
+| Reach the agent host (SSH, IAP hop, run-command) | [How Claude Reaches and Drives IDMC](../14-working-with-claude/01-how-claude-reaches-and-drives-idmc.md) §7 | [Environment Traps](../14-working-with-claude/05-environment-traps-windows-git-bash-az-gcloud-docker.md) | (none) |
+| Several sessions on one program; an action was denied; what needs the human | [Multi-Agent Coordination](../14-working-with-claude/03-multi-agent-coordination.md) | [How Claude Reaches and Drives IDMC](../14-working-with-claude/01-how-claude-reaches-and-drives-idmc.md) | (none) |
+| A secret, a key or an exposure | [Secrets Hygiene](../14-working-with-claude/06-secrets-hygiene.md) | [Environment Traps](../14-working-with-claude/05-environment-traps-windows-git-bash-az-gcloud-docker.md) | (none) |
 
 When nothing fits: search the KB for the exact error string or path first (a grep over `*.md` and
-`lessons` is the fastest route to an answer), then the [Reference Library](../12-reference-library/README.md)
+`lessons` is the fastest route to an answer), then the [Reference Library](../reference/README.md)
 for endpoint-level rows and vendor text.
 
 ## 4. Map the placeholders to your org
@@ -160,16 +160,16 @@ environment files outside the KB (0600), never in it, and never copy an id from 
 
 | # | Rule | Where it is argued |
 |---|---|---|
-| 1 | Prove the org from a live read before anything else; assert it in code before every write | Law 1, law 25; [Identify the Org](../01-access-auth-orgs/03-identify-the-org-before-you-write.md) |
-| 2 | Take every host and header from the login answer and the plane map | Laws 2 and 3; [Pods, Hosts & Service Planes](../01-access-auth-orgs/01-pods-hosts-service-planes.md) |
+| 1 | Prove the org from a live read before anything else; assert it in code before every write | Law 1, law 25; [Identify the Org](../01-login-and-orgs/03-identify-the-org-before-you-write.md) |
+| 2 | Take every host and header from the login answer and the plane map | Laws 2 and 3; [Pods, Hosts & Service Planes](../01-login-and-orgs/01-pods-hosts-service-planes.md) |
 | 3 | Read the body, bogus-twin anything surprising, read back every write | Laws 4, 5 and 12 |
-| 4 | One designated session, one login attempt, a shared cache, a block file per org | Law 24; [Login, Sessions & Tokens](../01-access-auth-orgs/02-login-sessions-tokens.md) §7 |
-| 5 | Dry run by default; destructive calls take an explicit id list, a backup and a receipt line | Law 25; [Headless Deletes](../10-migration-org-management/06-headless-deletes-org-cleanup.md) |
+| 4 | One designated session, one login attempt, a shared cache, a block file per org | Law 24; [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) §7 |
+| 5 | Dry run by default; destructive calls take an explicit id list, a backup and a receipt line | Law 25; [Headless Deletes](../12-deploy-migrate/06-headless-deletes-org-cleanup.md) |
 | 6 | Runs, previews, scans and profiles are spend; get approval; count jobs yourself | Laws 26 and 29 |
-| 7 | A permission denial covers the outcome: never route around it; ask once, naming the action and its rollback | Law 25; [Multi-Agent Coordination](../14-claude-working-methods/03-multi-agent-coordination.md) §4 |
-| 8 | Never empty-POST an id-bearing action route, never prune an agent's `downloads/`, never drop a live replication slot | Laws 8 and 23; [Secure Agent](../02-secure-agent-connections/01-secure-agent-install-run-tune.md) §6; [CDC from PostgreSQL](../04-cdc-mass-ingestion/02-cdc-from-postgresql.md) §4 |
-| 9 | Change live pipelines side by side, behind a swap gate | Law 28; [Changing Pipelines Safely](../03-cdi-data-integration/08-changing-pipelines-safely.md) |
-| 10 | Secrets are read at run time, printed by name only, and rotated once exposed | Law 30; [Secrets Hygiene](../14-claude-working-methods/06-secrets-hygiene.md) |
+| 7 | A permission denial covers the outcome: never route around it; ask once, naming the action and its rollback | Law 25; [Multi-Agent Coordination](../14-working-with-claude/03-multi-agent-coordination.md) §4 |
+| 8 | Never empty-POST an id-bearing action route, never prune an agent's `downloads/`, never drop a live replication slot | Laws 8 and 23; [Secure Agent](../02-secure-agent/01-secure-agent-install-run-tune.md) §6; [CDC from PostgreSQL](../06-cdc-ingestion/02-cdc-from-postgresql.md) §4 |
+| 9 | Change live pipelines side by side, behind a swap gate | Law 28; [Changing Pipelines Safely](../04-mappings/07-changing-pipelines-safely.md) |
+| 10 | Secrets are read at run time, printed by name only, and rotated once exposed | Law 30; [Secrets Hygiene](../14-working-with-claude/06-secrets-hygiene.md) |
 
 ## 6. How every doc is built, and how to read it
 
@@ -204,7 +204,7 @@ Two more labels appear: **disputed** (two dated records disagree; the doc says w
 (an older belief kept only so nobody re-learns it). For "can this run headless?" the docs also use six verdicts:
 HEADLESS, HEADLESS-DOC, NEEDS SHELL (no browser, but a host shell), UI-ONLY (entitled and working; a human clicks),
 UNTESTED, WRONG-HOST RISK (recorded absent, but the host family was never swept). UI-ONLY is never a GAP: it is one
-click in something the org already owns. Details: [Evidence Discipline](../14-claude-working-methods/02-evidence-discipline.md).
+click in something the org already owns. Details: [Evidence Discipline](../14-working-with-claude/02-evidence-discipline.md).
 
 **Latest dated evidence wins.** When two lessons disagree, the newer proven one is current and the older one is kept
 as superseded. A proof from one org or pod is evidence for that org or pod only.
@@ -235,20 +235,20 @@ number of its prefix, whichever section it lands in.
 
 | Prefix | Domain | Lessons file |
 |---|---|---|
-| `AUTH` | planes, hosts, logins, sessions, org identity, users and roles | [01 Access & Auth](../../lessons/by-domain/01-access-auth.md) |
-| `AGENT`, `CONN` | Secure Agent and runtime environments; connections and connectors | [02 Secure Agent & Connections](../../lessons/by-domain/02-secure-agent-connections.md) |
-| `CDI` | mappings, mapping tasks, taskflows, schedules, pipelines | [03 Data Integration (CDI)](../../lessons/by-domain/03-data-integration-cdi.md) |
-| `DBMI` | Database Ingestion and CDC | [04 Mass Ingestion & CDC](../../lessons/by-domain/04-mass-ingestion-cdc.md) |
-| `CAI` | Application Integration | [05 Application Integration (CAI)](../../lessons/by-domain/05-application-integration-cai.md) |
-| `DQ` | Data Quality and profiling | [06 Data Quality & Profiling](../../lessons/by-domain/06-data-quality-profiling.md) |
-| `CDGC` | catalog, governance, marketplace | [07 Catalog & Governance (CDGC)](../../lessons/by-domain/07-catalog-governance-cdgc.md) |
-| `MDM` | MDM SaaS, Business 360, P360 | [08 MDM](../../lessons/by-domain/08-mdm.md) |
-| `MCP` | CLAIRE, CLAIRE GPT, managed and custom MCP | [09 CLAIRE & MCP](../../lessons/by-domain/09-claire-mcp.md) |
-| `MIG`, `CLEAN` | export/import, packages, org-to-org migration; deletes and org cleanup | [10 Migration & Org Management](../../lessons/by-domain/10-migration-org-management.md) |
-| `IPU` | IPUs, metering, licences, entitlement, job caps | [11 IPU, Metering & Licensing](../../lessons/by-domain/11-ipu-metering-licensing.md) |
-| `METHOD` | how Claude works: evidence, coordination, gates | [12 Claude Working Methods](../../lessons/by-domain/12-claude-working-methods.md) |
-| `ENV` | workstation, shells, cloud CLIs, hosts, Docker, and the BI and gateway tools next to IDMC | [13 Environment & Ops](../../lessons/by-domain/13-environment-ops.md) |
-| `UI` | browser automation of the IDMC console | [14 UI Automation](../../lessons/by-domain/14-ui-automation.md) |
+| `AUTH` | planes, hosts, logins, sessions, org identity, users and roles | [01 Access & Auth](../01-login-and-orgs/lessons.md) |
+| `AGENT`, `CONN` | Secure Agent and runtime environments; connections and connectors | [02 Secure Agent & Connections](../03-connections/lessons.md) |
+| `CDI` | mappings, mapping tasks, taskflows, schedules, pipelines | [03 Data Integration (CDI)](../04-mappings/lessons.md) |
+| `DBMI` | Database Ingestion and CDC | [04 Mass Ingestion & CDC](../06-cdc-ingestion/lessons.md) |
+| `CAI` | Application Integration | [05 Application Integration (CAI)](../07-app-integration/lessons.md) |
+| `DQ` | Data Quality and profiling | [06 Data Quality & Profiling](../08-data-quality/lessons.md) |
+| `CDGC` | catalog, governance, marketplace | [07 Catalog & Governance (CDGC)](../09-catalog-lineage/lessons.md) |
+| `MDM` | MDM SaaS, Business 360, P360 | [08 MDM](../10-mdm/lessons.md) |
+| `MCP` | CLAIRE, CLAIRE GPT, managed and custom MCP | [09 CLAIRE & MCP](../11-mcp-claire/lessons.md) |
+| `MIG`, `CLEAN` | export/import, packages, org-to-org migration; deletes and org cleanup | [10 Migration & Org Management](../12-deploy-migrate/lessons.md) |
+| `IPU` | IPUs, metering, licences, entitlement, job caps | [11 IPU, Metering & Licensing](../13-ipu-cost/lessons.md) |
+| `METHOD` | how Claude works: evidence, coordination, gates | [12 Claude Working Methods](../14-working-with-claude/lessons.md) |
+| `ENV` | workstation, shells, cloud CLIs, hosts, Docker, and the BI and gateway tools next to IDMC | [13 Environment & Ops](../14-working-with-claude/lessons-environment-ops.md) |
+| `UI` | browser automation of the IDMC console | [14 UI Automation](../14-working-with-claude/lessons-ui-automation.md) |
 
 Each lesson has a kind (LAW, GOTCHA, RECIPE, ROUTE, ERROR, WALL, WORKAROUND, OVERTURNED, PROCESS, DECISION, PERF,
 PATTERN, SECURITY; a few older lessons carry WORKS, FACT, PROBE or FIX) and a status (current, superseded, disputed).

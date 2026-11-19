@@ -47,7 +47,7 @@ your own way. Your systems, your naming and your order of work are always the ri
 | Step | Do | Detail |
 |---|---|---|
 | 1. Install | Install the `idmc-mp` plugin in Claude Code (the repo README), or clone the repository and run `git config core.hooksPath toolkit/tools/git-hooks` once so no commit can carry a secret. You need Python 3.10+ (standard library only) and Claude Code | `python3 toolkit/setup/check_setup.py` checks the PC offline ([toolkit/setup/SETUP.md](../toolkit/setup/SETUP.md)) |
-| 2. Point Claude at it | With the plugin installed, the `idmc-mp` skills load on their own for IDMC work (`skills/`); the rules for any session are in [RULES.md](RULES.md) | [Claude Working Methods](14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) |
+| 2. Point Claude at it | With the plugin installed, the `idmc-mp` skills load on their own for IDMC work (`skills/`); the rules for any session are in [RULES.md](RULES.md) | [Claude Working Methods](14-working-with-claude/01-how-claude-reaches-and-drives-idmc.md) |
 | 3. Sign in | `/idmc-mp:connect`, then `python3 toolkit/check_login.py --setup` in a terminal (three questions; the password stays hidden). One login, it prints your org | the root [README](../README.md#setup-in-3-steps-about-10-minutes) |
 | 4. Build | Ask Claude for what you need, in your own words: "create a connection to <system>", "build a nightly pipeline from <source> to <target>", "add a data quality rule", "scan this source into the catalog and show lineage" | the table below; [New Pipeline Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md) for a whole pipeline |
 
@@ -55,28 +55,28 @@ your own way. Your systems, your naming and your order of work are always the ri
 
 | You want to create | Start here | How it is done without the UI |
 |---|---|---|
-| A login session, and proof of which org you are in | [Login, Sessions & Tokens](01-access-auth-orgs/02-login-sessions-tokens.md), [Identify the Org](01-access-auth-orgs/03-identify-the-org-before-you-write.md) | `python3 toolkit/check_login.py` (one attempt, cached session, lockout guard) |
-| Users, roles, permissions | [Users, Roles & Permissions](01-access-auth-orgs/04-users-roles-permissions.md) | v3 users / roles, object permissions |
-| A Secure Agent, a runtime environment, its services and connectors | [Secure Agent](02-secure-agent-connections/01-secure-agent-install-run-tune.md), [Runtime Environments](02-secure-agent-connections/02-runtime-environments-services-connectors.md) | install token + `configureToken`; runtime selections (`idmc_runtime_selections.py`) |
-| A connection to any database, cloud, file store or application | [Connections](02-secure-agent-connections/03-connections-create-test-update-delete.md), [Connector Notes](02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md); a connector with no notes: [Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md) M2 | `POST /api/v2/connection` (`TOOLKIT_CCI` + the connector's `instanceName`), then a free `connection/test` |
+| A login session, and proof of which org you are in | [Login, Sessions & Tokens](01-login-and-orgs/02-login-sessions-tokens.md), [Identify the Org](01-login-and-orgs/03-identify-the-org-before-you-write.md) | `python3 toolkit/check_login.py` (one attempt, cached session, lockout guard) |
+| Users, roles, permissions | [Users, Roles & Permissions](01-login-and-orgs/04-users-roles-permissions.md) | v3 users / roles, object permissions |
+| A Secure Agent, a runtime environment, its services and connectors | [Secure Agent](02-secure-agent/01-secure-agent-install-run-tune.md), [Runtime Environments](02-secure-agent/02-runtime-environments-services-connectors.md) | install token + `configureToken`; runtime selections (`idmc_runtime_selections.py`) |
+| A connection to any database, cloud, file store or application | [Connections](03-connections/01-connections-create-test-update-delete.md), [Connector Notes](03-connections/02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md); a connector with no notes: [Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md) M2 | `POST /api/v2/connection` (`TOOLKIT_CCI` + the connector's `instanceName`), then a free `connection/test` |
 | A project or folder | [Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md) M3 | `POST /public/core/v3/projects`, then its folders; move assets with FRS `MoveEntities` |
-| A mapping, with any transformations | [Mapping Fast Path](03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) | a JSON spec → `toolkit/mapgen` lint → v3 import package |
-| A mapping task | [Mapping Tasks](03-cdi-data-integration/03-mapping-tasks-create-update-run-monitor.md) | the generator's `deploy`, or `POST /api/v2/mttask` |
-| A taskflow or a schedule | [Taskflows & Schedules](03-cdi-data-integration/04-taskflows-schedules.md) | `idmc_taskflow_schedule.py` |
-| A whole pipeline (many mappings, lanes, pushdown) | [How Claude Builds Mappings Headless](03-cdi-data-integration/02-how-claude-builds-mappings-headless.md), [The Pipeline-Generation Pattern](03-cdi-data-integration/05-the-pipeline-generation-pattern.md) | generated, consolidated mappings behind a swap gate |
-| A CDC / database ingestion task | [DBMI over REST](04-cdc-mass-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) | `idmc_dbmi.py` on the `-ing` service host |
-| A file ingestion task | [Mass Ingestion & CDC](04-cdc-mass-ingestion/) (lessons L-DBMI-060 to L-DBMI-062) | `POST /mftsaas/api/v1/mitasks`, then `job` |
-| A CAI process, app connection or service connector | [CAI Asset Lifecycle](05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md), [CAI Connections](05-cai-application-integration/03-cai-connections-connectors-e.g.-salesforce-oauth.md) | import package + publish (`idmc_cai_publish.py`) |
-| A Kafka or JMS event listener | [CAI Event Listeners](05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md) | listener + process, published |
-| A data quality rule, cleanse, dictionary or verifier | [DQ Assets](06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) | clone-authored assets, run inside a mapping |
-| Address verification and enrichment (verify, standardize, geocode, CASS) | [DQ Assets](06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) §6 | an on-agent Verifier asset in a mapping (the generator's `verifier` node), or the cloud Address Verification REST service (Certified mode for CASS) |
-| A data profile | [Profiling](06-data-quality-profiling/02-profiling-what-is-headless.md) | the profiling service REST API |
-| A catalog source and its scan | [Catalog Sources](07-catalog-governance-cdgc/02-catalog-sources-create-scan-update-purge.md) | `idmc_cdgc.py` |
-| Glossary terms, links, classifications | [Glossary, Links & Classification](07-catalog-governance-cdgc/03-glossary-links-classification.md) | CDGC content API |
-| Lineage (scanned and curated) | [Search, Lineage & Marketplace](07-catalog-governance-cdgc/04-search-lineage-marketplace.md) | catalog scans + curated edges |
-| MDM business entities, records, a mastered table | [Business 360 Modeling](08-mdm/03-business-360-modeling-match-merge.md), [MDM Records](08-mdm/02-mdm-records-ingest-search-export-cleanup.md), [Mastering a Table](08-mdm/05-mastering-a-table-repeatable-playbook.md) | MDM APIs, or CDI mappings that master a table |
-| MCP access, CLAIRE GPT prompts | [Managed MCP Servers](09-claire-mcp/01-managed-mcp-servers-catalog-access.md), [CLAIRE GPT](09-claire-mcp/03-claire-gpt-prompting-rules-patterns.md) | managed MCP + OAuth clients |
-| A copy, a move, an export / import, a clone of any asset | [Export & Import](10-migration-org-management/01-export-import-v3-migration-api.md), [Migration-Clone Authoring](10-migration-org-management/03-migration-clone-authoring.md) | v3 export / import packages; FRS `CopyEntities` / `MoveEntities` |
+| A mapping, with any transformations | [Mapping Fast Path](04-mappings/00-mapping-fast-path-read-this-first.md) | a JSON spec → `toolkit/mapgen` lint → v3 import package |
+| A mapping task | [Mapping Tasks](04-mappings/03-mapping-tasks-create-update-run-monitor.md) | the generator's `deploy`, or `POST /api/v2/mttask` |
+| A taskflow or a schedule | [Taskflows & Schedules](05-taskflows-schedules/01-taskflows-schedules.md) | `idmc_taskflow_schedule.py` |
+| A whole pipeline (many mappings, lanes, pushdown) | [How Claude Builds Mappings Headless](04-mappings/02-how-claude-builds-mappings-headless.md), [The Pipeline-Generation Pattern](04-mappings/04-the-pipeline-generation-pattern.md) | generated, consolidated mappings behind a swap gate |
+| A CDC / database ingestion task | [DBMI over REST](06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) | `idmc_dbmi.py` on the `-ing` service host |
+| A file ingestion task | [Mass Ingestion & CDC](06-cdc-ingestion/) (lessons L-DBMI-060 to L-DBMI-062) | `POST /mftsaas/api/v1/mitasks`, then `job` |
+| A CAI process, app connection or service connector | [CAI Asset Lifecycle](07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md), [CAI Connections](07-app-integration/03-cai-connections-connectors-salesforce-oauth.md) | import package + publish (`idmc_cai_publish.py`) |
+| A Kafka or JMS event listener | [CAI Event Listeners](07-app-integration/06-cai-event-listeners-kafka-amqp-jms.md) | listener + process, published |
+| A data quality rule, cleanse, dictionary or verifier | [DQ Assets](08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) | clone-authored assets, run inside a mapping |
+| Address verification and enrichment (verify, standardize, geocode, CASS) | [DQ Assets](08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) §6 | an on-agent Verifier asset in a mapping (the generator's `verifier` node), or the cloud Address Verification REST service (Certified mode for CASS) |
+| A data profile | [Profiling](08-data-quality/02-profiling-what-is-headless.md) | the profiling service REST API |
+| A catalog source and its scan | [Catalog Sources](09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md) | `idmc_cdgc.py` |
+| Glossary terms, links, classifications | [Glossary, Links & Classification](09-catalog-lineage/03-glossary-links-classification.md) | CDGC content API |
+| Lineage (scanned and curated) | [Search, Lineage & Marketplace](09-catalog-lineage/04-search-lineage-marketplace.md) | catalog scans + curated edges |
+| MDM business entities, records, a mastered table | [Business 360 Modeling](10-mdm/03-business-360-modeling-match-merge.md), [MDM Records](10-mdm/02-mdm-records-ingest-search-export-cleanup.md), [Mastering a Table](10-mdm/05-mastering-a-table-repeatable-playbook.md) | MDM APIs, or CDI mappings that master a table |
+| MCP access, CLAIRE GPT prompts | [Managed MCP Servers](11-mcp-claire/01-managed-mcp-servers-catalog-access.md), [CLAIRE GPT](11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) | managed MCP + OAuth clients |
+| A copy, a move, an export / import, a clone of any asset | [Export & Import](12-deploy-migrate/01-export-import-v3-migration-api.md), [Migration-Clone Authoring](12-deploy-migrate/03-migration-clone-authoring.md) | v3 export / import packages; FRS `CopyEntities` / `MoveEntities` |
 | **Anything not in this table** | [Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md): "A system or connector the KB has never seen" and the workaround ladder | the closest pattern here, adapted and proven in your org, then recorded as a lesson |
 
 ## About this knowledge base
@@ -130,13 +130,13 @@ README's [troubleshooting table](../README.md#if-the-login-doesnt-work).
 
 | Path | What it is |
 |---|---|
-| `knowledge/00-start-here` ... `knowledge/14-claude-working-methods` | The knowledge base (the map is in §5) |
-| [`lessons/`](../lessons/README.md) | Every field lesson: `lessons.jsonl` (the source), `by-domain/` (readable), `overturned-beliefs.md` |
+| `knowledge/00-start-here` ... `knowledge/14-working-with-claude` | The knowledge base (the map is in §5) |
+| [`lessons/`](../lessons/README.md) | Every field lesson: `lessons.jsonl` (every lesson, for searching; the readable copies sit in each job folder as `lessons.md`), `overturned-beliefs.md` |
 | `~/.idmc_toolkit/IDMC_LOGIN.txt`, `toolkit/check_login.py` | **Your IDMC login** (the only file you fill in to connect) and the one-command login check |
 | [`toolkit/lib/`](../toolkit/lib/README.md) | The Python library (stdlib only): login with lockout guard, org proof, objects, export/import, package edits, mapping tasks, taskflows and schedules, CDC (Database Ingestion), CAI publish, catalog, MCP |
 | [`toolkit/mapgen/`](../toolkit/mapgen/README.md) | The headless mapping generator: a mapping spec (JSON / Python) -> IDMC mapping -> importable package (stdlib only) |
 | [`toolkit/demos/`](../toolkit/demos/BLUEPRINT_CONVENTIONS.md) | Three blueprints; each has `README.md` (what and why) and `BUILD.md` (numbered rebuild, gotchas, UI-only walls) |
-| `skills/`, [`playbook/`](playbook/00-headless-playbook.md) | The Claude Code skills (`idmc-mp` core plus one per area) and the compact headless playbook |
+| `skills/`, [`playbook/`](reference/playbook/00-headless-playbook.md) | The Claude Code skills (`idmc-mp` core plus one per area) and the compact headless playbook |
 | [`toolkit/setup/`](../toolkit/setup/SETUP.md) | `SETUP.md` (new-PC guide), `.env.example` (the blueprints' other credential keys, no values), `check_setup.py` |
 | `toolkit/tools/secret_scan.py` | Run before you share your copy: must print CLEAN |
 | [`RULES.md`](RULES.md) | The rules any Claude session follows with this KB |
@@ -233,41 +233,41 @@ The full placeholder table, with the other spellings you may meet, is in
 |---|---|
 | Can IDMC do X without the UI? | [Capability Map](00-start-here/03-capability-map.md), then the service folder, then [Overturned Beliefs](../lessons/overturned-beliefs.md) |
 | I need a new pipeline: where do I start, and what must be done before I build? | [New Pipeline Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md): runtime, connections, folder and assets, then build, run, prove |
-| My source, target or connector is not in the KB | [New Pipeline Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md), "Using this KB as guidance"; [Mapping Fast Path](03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) §2 and §7 |
+| My source, target or connector is not in the KB | [New Pipeline Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md), "Using this KB as guidance"; [Mapping Fast Path](04-mappings/00-mapping-fast-path-read-this-first.md) §2 and §7 |
 | What goes wrong on a live production deployment, and how do I avoid it? | [What Went Wrong: a Production Deployment Post-Mortem](00-start-here/09-what-went-wrong-production-deployment-post-mortem.md) |
 | In which order do I stand up or extend a deployment? | [End-to-End Playbook](00-start-here/07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md) |
-| This call or run failed: why? | [Error Triage](00-start-here/04-error-triage.md); for agent and connection failures [the Four Gates](02-secure-agent-connections/05-troubleshooting-the-four-gates.md) |
-| Which host, header or login? | [Pods, Hosts & Service Planes](01-access-auth-orgs/01-pods-hosts-service-planes.md), [Login, Sessions & Tokens](01-access-auth-orgs/02-login-sessions-tokens.md) |
-| Install, size, tune, resize or reboot a Secure Agent | [Secure Agent - Install, Run & Tune](02-secure-agent-connections/01-secure-agent-install-run-tune.md) |
-| Build or change a mapping (start here) | [Mapping Fast Path](03-cdi-data-integration/00-mapping-fast-path-read-this-first.md): ten commands, per-connector settings, costly errors |
-| Build or change a pipeline | [How Claude Builds Mappings Headless](03-cdi-data-integration/02-how-claude-builds-mappings-headless.md), then [Changing Pipelines Safely](03-cdi-data-integration/08-changing-pipelines-safely.md) |
-| Speed, concurrency, latency, job caps | [Performance, Concurrency & Job Caps](03-cdi-data-integration/07-performance-concurrency-job-caps.md), [Entitlement, Licenses & Job Caps](11-ipu-metering-licensing/03-entitlement-licenses-job-caps.md) |
-| Serve outputs to BI tools, CRM analytics or apps | [Serving Outputs to BI and Apps](03-cdi-data-integration/10-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) |
-| Event-driven CAI: listen to Kafka or a JMS broker, bridge JMS to Kafka, windowed subscribers | [CAI Event Listeners](05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md) |
-| Which layer owns a flow: IDMC or an API gateway? | [CAI Runtime](05-cai-application-integration/02-cai-runtime-invoke-urls-control.md) §10.7 and the [Capability Map](00-start-here/03-capability-map.md) |
+| This call or run failed: why? | [Error Triage](00-start-here/04-error-triage.md); for agent and connection failures [the Four Gates](03-connections/03-troubleshooting-the-four-gates.md) |
+| Which host, header or login? | [Pods, Hosts & Service Planes](01-login-and-orgs/01-pods-hosts-service-planes.md), [Login, Sessions & Tokens](01-login-and-orgs/02-login-sessions-tokens.md) |
+| Install, size, tune, resize or reboot a Secure Agent | [Secure Agent - Install, Run & Tune](02-secure-agent/01-secure-agent-install-run-tune.md) |
+| Build or change a mapping (start here) | [Mapping Fast Path](04-mappings/00-mapping-fast-path-read-this-first.md): ten commands, per-connector settings, costly errors |
+| Build or change a pipeline | [How Claude Builds Mappings Headless](04-mappings/02-how-claude-builds-mappings-headless.md), then [Changing Pipelines Safely](04-mappings/07-changing-pipelines-safely.md) |
+| Speed, concurrency, latency, job caps | [Performance, Concurrency & Job Caps](04-mappings/06-performance-concurrency-job-caps.md), [Entitlement, Licenses & Job Caps](13-ipu-cost/03-entitlement-licenses-job-caps.md) |
+| Serve outputs to BI tools, CRM analytics or apps | [Serving Outputs to BI and Apps](04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) |
+| Event-driven CAI: listen to Kafka or a JMS broker, bridge JMS to Kafka, windowed subscribers | [CAI Event Listeners](07-app-integration/06-cai-event-listeners-kafka-amqp-jms.md) |
+| Which layer owns a flow: IDMC or an API gateway? | [CAI Runtime](07-app-integration/02-cai-runtime-invoke-urls-control.md) §10.7 and the [Capability Map](00-start-here/03-capability-map.md) |
 | What does this term mean? | [Glossary](00-start-here/05-glossary.md) |
 | What proved this claim, and when? | the lesson id in the text, in [Lessons Learned](../lessons/README.md) |
-| How should Claude sessions work on IDMC (evidence, coordination, approvals, secrets)? | [Claude Working Methods & Tooling](14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) |
+| How should Claude sessions work on IDMC (evidence, coordination, approvals, secrets)? | [Claude Working Methods & Tooling](14-working-with-claude/01-how-claude-reaches-and-drives-idmc.md) |
 
 ## 5. The map
 
 | Folder | Read it when you need to… |
 |---|---|
 | [`knowledge/00-start-here`](00-start-here/) | orient yourself: how to use this KB, **the laws of headless IDMC**, the capability map ("can I do X headless?"), error triage, the glossary, the changelog, the **end-to-end playbook** and **what went wrong** in a production deployment |
-| [`knowledge/01-access-auth-orgs`](01-access-auth-orgs/) | log in, pick the right host and header for a service, handle session expiry, lockouts and the JWT change, prove which org you are in before writing, manage users, roles and entitlement reads |
-| [`knowledge/02-secure-agent-connections`](02-secure-agent-connections/) | install, size, tune, resize or reboot a Secure Agent, enable services and connectors headless, create/test/update connections, fix "the connection is broken" |
-| [`knowledge/03-cdi-data-integration`](03-cdi-data-integration/) | understand mappings vs mapping tasks vs templates, **build mappings and whole pipelines headless** (including pushdown), run and monitor jobs, taskflows, schedules, consolidation, performance and job caps, and **serve outputs to BI and apps** ([10 Serving Outputs to BI and Apps](03-cdi-data-integration/10-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md)) |
-| [`knowledge/04-cdc-mass-ingestion`](04-cdc-mass-ingestion/) | create/deploy/run DBMI tasks over REST, set up PostgreSQL CDC, measure CDC latency |
-| [`knowledge/05-cai-application-integration`](05-cai-application-integration/) | author, publish, unpublish and invoke CAI processes, run a Process Server on an agent, split work between CAI and an API gateway |
-| [`knowledge/06-data-quality-profiling`](06-data-quality-profiling/) | DQ assets, profiling, the CLAIRE DQ agent's file-based route, DQ scorecards |
-| [`knowledge/07-catalog-governance-cdgc`](07-catalog-governance-cdgc/) | catalog sources and scans, glossary, links, classification, search, lineage, marketplace |
-| [`knowledge/08-mdm`](08-mdm/) | MDM SaaS runtime vs design, records, Business 360; the repeatable playbook for mastering any table |
-| [`knowledge/09-claire-mcp`](09-claire-mcp/) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP, the plugin and community-tool ecosystem |
-| [`knowledge/10-migration-org-management`](10-migration-org-management/) | v3 export/import, editing packages, clone-authoring, **org-to-org migration and cutover**, headless deletes and org cleanup |
-| [`knowledge/11-ipu-metering-licensing`](11-ipu-metering-licensing/) | the IPU model and how consumption is metered, metering exports, entitlement vs licence, job caps and budgets |
-| [`knowledge/12-reference-library`](12-reference-library/) | the generated API & MCP endpoint reference, the IICS→IPU KB, and the [community code index](12-reference-library/community-code-index.md) |
+| [`knowledge/01-login-and-orgs`](01-login-and-orgs/) | log in, pick the right host and header for a service, handle session expiry, lockouts and the JWT change, prove which org you are in before writing, manage users, roles and entitlement reads |
+| [`knowledge/02-secure-agent`](02-secure-agent/) | install, size, tune, resize or reboot a Secure Agent, enable services and connectors headless, create/test/update connections, fix "the connection is broken" |
+| [`knowledge/04-mappings`](04-mappings/) | understand mappings vs mapping tasks vs templates, **build mappings and whole pipelines headless** (including pushdown), run and monitor jobs, taskflows, schedules, consolidation, performance and job caps, and **serve outputs to BI and apps** ([10 Serving Outputs to BI and Apps](04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md)) |
+| [`knowledge/06-cdc-ingestion`](06-cdc-ingestion/) | create/deploy/run DBMI tasks over REST, set up PostgreSQL CDC, measure CDC latency |
+| [`knowledge/07-app-integration`](07-app-integration/) | author, publish, unpublish and invoke CAI processes, run a Process Server on an agent, split work between CAI and an API gateway |
+| [`knowledge/08-data-quality`](08-data-quality/) | DQ assets, profiling, the CLAIRE DQ agent's file-based route, DQ scorecards |
+| [`knowledge/09-catalog-lineage`](09-catalog-lineage/) | catalog sources and scans, glossary, links, classification, search, lineage, marketplace |
+| [`knowledge/10-mdm`](10-mdm/) | MDM SaaS runtime vs design, records, Business 360; the repeatable playbook for mastering any table |
+| [`knowledge/11-mcp-claire`](11-mcp-claire/) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP, the plugin and community-tool ecosystem |
+| [`knowledge/12-deploy-migrate`](12-deploy-migrate/) | v3 export/import, editing packages, clone-authoring, **org-to-org migration and cutover**, headless deletes and org cleanup |
+| [`knowledge/13-ipu-cost`](13-ipu-cost/) | the IPU model and how consumption is metered, metering exports, entitlement vs licence, job caps and budgets |
+| [`knowledge/reference`](reference/) | the generated API & MCP endpoint reference, the IICS→IPU KB, and the [community code index](reference/community-code-index.md) |
 | [`lessons`](../lessons/) | every lesson by domain (current and **overturned**), with stable IDs `L-<DOM>-###` |
-| [`knowledge/14-claude-working-methods`](14-claude-working-methods/) | how Claude reaches and drives IDMC, evidence discipline, multi-agent coordination, UI automation, environment traps, secrets hygiene, and the **Script Library** |
+| [`knowledge/14-working-with-claude`](14-working-with-claude/) | how Claude reaches and drives IDMC, evidence discipline, multi-agent coordination, UI automation, environment traps, secrets hygiene, and the **Script Library** |
 
 ## 6. Scope: generic by design
 
@@ -302,7 +302,7 @@ Your own login never lives in the plugin: it is in `~/.idmc_toolkit/IDMC_LOGIN.t
 
 - **2026-09-22:** first consolidation of scattered IDMC notes, scripts and references into 13 topic buckets.
 - **2026-09-29:** full rebuild: generic topic folders written from about 2,200 pooled lessons (deduplicated to 1,335),
-  vendor references moved to `knowledge/12-reference-library/`, deployment-specific material and secret-bearing files moved
+  vendor references moved to `knowledge/reference/`, deployment-specific material and secret-bearing files moved
   out, every move reversible from its undo log.
 - **2026-10-03:** share-readiness pass (every doc genericized to placeholders, every link kept inside the KB) and a
   currency update (about 190 new field candidates checked against the KB; full pushdown and the remaining transformation
@@ -312,7 +312,7 @@ Your own login never lives in the plugin: it is in `~/.idmc_toolkit/IDMC_LOGIN.t
 - **2026-10-23:** one combined Master IDMC KB: the IDMC Toolkit (mapping generator, three demo blueprints, Claude skill,
   setup) folded in, the Script Library as its one library, and `IDMC_LOGIN.txt` as the one file a reader fills in to
   connect.
-- **2026-10-26:** a [Mapping Fast Path](03-cdi-data-integration/00-mapping-fast-path-read-this-first.md) as the
+- **2026-10-26:** a [Mapping Fast Path](04-mappings/00-mapping-fast-path-read-this-first.md) as the
   first stop for any mapping work; the generator's spec reference and 28 proven example specs shipped in `toolkit/mapgen/`;
   54 new lessons (Hosted Agent limits, Databricks, Snowflake, SharePoint, moving an org). See the
   [Changelog](00-start-here/06-changelog.md).
@@ -331,5 +331,5 @@ Your own login never lives in the plugin: it is in `~/.idmc_toolkit/IDMC_LOGIN.t
   sessions on one estate, cost), and [What Went Wrong](00-start-here/09-what-went-wrong-production-deployment-post-mortem.md), the post-mortem that turns
   them into checks. See the [Changelog](00-start-here/06-changelog.md).
 - **2026-11-19:** the `idmc-mp` plugin layout throughout, all 23 managed MCP servers, an ecosystem guide, about 300
-  lessons mined from public IDMC code (Reported, with a [community code index](12-reference-library/community-code-index.md)),
+  lessons mined from public IDMC code (Reported, with a [community code index](reference/community-code-index.md)),
   a plain-language setup, and a security and tidiness pass. See the [Changelog](00-start-here/06-changelog.md).

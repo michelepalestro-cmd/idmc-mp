@@ -7,7 +7,7 @@ Use the idmc-mp and idmc-governance skills. On Windows, use `python` (or `py`) w
 Source: $ARGUMENTS
 
 1. Prove the org, then check CDGC access (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/lib/idmc_cdgc.py" --help`; auth in
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/07-catalog-governance-cdgc/01-cdgc-apis-auth.md`).
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/09-catalog-lineage/01-cdgc-apis-auth.md`).
 2. List existing catalog sources first; reuse one if it already covers the system.
 3. Create the catalog source by cloning a working definition, then scan and poll
    (`02-catalog-sources-create-scan-update-purge.md`). Ask before running a scan.

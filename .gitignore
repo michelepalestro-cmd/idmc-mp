@@ -37,9 +37,9 @@ mapgen_out/
 *.zip
 **/build/_kb_render.html
 # Reference-library outputs built on demand
-knowledge/12-reference-library/iics-to-ipus-kb/iics-to-ipus-knowledge-base.md
-knowledge/12-reference-library/iics-to-ipus-kb/iics-to-ipus-knowledge-base.pdf
-knowledge/12-reference-library/idmc-api-mcp-reference/idmc-api-mcp-master-reference.docx
+knowledge/reference/iics-to-ipus-kb/iics-to-ipus-knowledge-base.md
+knowledge/reference/iics-to-ipus-kb/iics-to-ipus-knowledge-base.pdf
+knowledge/reference/idmc-api-mcp-reference/idmc-api-mcp-master-reference.docx
 
 # OS / editor
 .DS_Store

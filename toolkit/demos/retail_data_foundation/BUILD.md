@@ -26,10 +26,10 @@ connectors, and the CRM needs the fields the sync writes.
    metadata / profiling services for steps 9-10. Change selections **between** runs: every change rolls services to
    the newest build and queues jobs for about 5 minutes. Never select every connector on a small host (one did,
    pulled about 18 GB and stalled the host). Tool: `python "../../lib/idmc_runtime_selections.py"`.
-   KB: [Runtime Environments - Services & Connectors](../../../knowledge/02-secure-agent-connections/02-runtime-environments-services-connectors.md).
+   KB: [Runtime Environments - Services & Connectors](../../../knowledge/02-secure-agent/02-runtime-environments-services-connectors.md).
 2. **Database Ingestion to BigQuery** needs the Simba BigQuery JDBC jars on the agent (copy the set into
    `<agent_home>/apps/Database_Ingestion/ext/connectors/thirdparty`), or the deploy fails with "Failed to load driver
-   class com.simba.googlebigquery.jdbc.Driver". KB: [DBMI Targets & Drivers](../../../knowledge/04-cdc-mass-ingestion/03-dbmi-targets-drivers.md).
+   class com.simba.googlebigquery.jdbc.Driver". KB: [DBMI Targets & Drivers](../../../knowledge/06-cdc-ingestion/03-dbmi-targets-drivers.md).
 3. **Google Cloud**: a project (`BQ_PROJECT`), a service account with `roles/bigquery.dataEditor` +
    `roles/bigquery.jobUser`, `roles/storage.objectAdmin` on a staging bucket (`GCS_STAGING_BUCKET`), and its JSON key
    saved **outside** the toolkit (`BQ_KEY_FILE`).
@@ -112,8 +112,8 @@ python idmc/00_resolve.py                                                     # 
 `test HTTP 200 OK` for each. **Verify.** `00_resolve.py` prints all five with a `guid` (the FRS `federatedId`).
 **Undo.** `python "../../lib/idmc_frs_delete.py" v2-delete connection <id>` (after everything that uses it).
 If BigQuery fails with "Invalid PKCS#8 data", cycle `--key-format noheader|stripped|pem|escaped` on that one
-connection and re-test (see Gotchas). KB: [Connections](../../../knowledge/02-secure-agent-connections/03-connections-create-test-update-delete.md),
-[Connector Notes](../../../knowledge/02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md).
+connection and re-test (see Gotchas). KB: [Connections](../../../knowledge/03-connections/01-connections-create-test-update-delete.md),
+[Connector Notes](../../../knowledge/03-connections/02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md).
 
 ## Step 5. CDC: PostgreSQL -> BigQuery in seconds  (PROVEN)
 
@@ -139,8 +139,8 @@ python idmc/02_cdc.py status --lane hot          # deployed -> running
 
 Repeat with `--lane cold`. **Verify.** Insert a row (`python infra/traffic.py --count 1 --kind signup`) and see it
 in `rdf_cdc.customers` within about 20 s. **Undo.** `teardown/teardown.py run --only cdc ...` then
-`teardown/pg_teardown.sql`. KB: [DBMI over REST](../../../knowledge/04-cdc-mass-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md),
-[CDC from PostgreSQL](../../../knowledge/04-cdc-mass-ingestion/02-cdc-from-postgresql.md).
+`teardown/pg_teardown.sql`. KB: [DBMI over REST](../../../knowledge/06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md),
+[CDC from PostgreSQL](../../../knowledge/06-cdc-ingestion/02-cdc-from-postgresql.md).
 
 ## Step 6. The consolidated CDI mappings  (generator, import, tasks: PROVEN; these six specs: ADAPTED)
 
@@ -164,9 +164,9 @@ row counts in `rdf_land`, `rdf_staging`, `rdf_gold`, `activation.customer_golden
 every Upsert target (`verify/e2e_check.py` does): a generated Upsert can run green and apply nothing.
 **Undo.** `teardown/teardown.py run --only tasks ...`. Change a mapping: edit `idmc/mappings/rdf_specs.py` or
 `idmc/sql/*.sql`, `build`, `import --mode OVERWRITE` (same guid, kept in `state/ids.json`).
-KB: [How Claude Builds Mappings Headless, route 5](../../../knowledge/03-cdi-data-integration/02-how-claude-builds-mappings-headless.md),
-[Mapping Design & Consolidation](../../../knowledge/03-cdi-data-integration/06-mapping-design-consolidation.md),
-[The Pipeline-Generation Pattern](../../../knowledge/03-cdi-data-integration/05-the-pipeline-generation-pattern.md).
+KB: [How Claude Builds Mappings Headless, route 5](../../../knowledge/04-mappings/02-how-claude-builds-mappings-headless.md),
+[Mapping Design & Consolidation](../../../knowledge/04-mappings/05-mapping-design-consolidation.md),
+[The Pipeline-Generation Pattern](../../../knowledge/04-mappings/04-the-pipeline-generation-pattern.md).
 
 | Mapping | Flow | Readers |
 |---|---|---|
@@ -180,7 +180,7 @@ KB: [How Claude Builds Mappings Headless, route 5](../../../knowledge/03-cdi-dat
 **Pushdown.** These mappings mix ecosystems (PostgreSQL and Salesforce targets) or are small, so they run in agent mode
 on purpose. Full SQL ELT applies only to BigQuery-to-BigQuery mappings and was measured slower for small multi-target
 ones; if you want to try it on `m_rdf_sales_facts`, follow
-[§9 of How Claude Builds Mappings Headless](../../../knowledge/03-cdi-data-integration/02-how-claude-builds-mappings-headless.md)
+[§9 of How Claude Builds Mappings Headless](../../../knowledge/04-mappings/02-how-claude-builds-mappings-headless.md)
 (three task keys, proof only in the session log).
 
 ## Step 7. Lanes: taskflows and the schedule  (PROVEN)
@@ -199,8 +199,8 @@ python idmc/04_taskflows.py audit
 **Expected.** `CREATE workflow 'tf_rdf_full' with 6 task(s)`, a schedule created unbound, then bound
 (`read-back scheduleId=... -> OK`). **Verify.** `audit` lists the binding; the first scheduled run appears in Monitor.
 **Undo.** `teardown/teardown.py run --only schedule,taskflows ...`.
-KB: [Taskflows & Schedules](../../../knowledge/03-cdi-data-integration/04-taskflows-schedules.md),
-[Performance, Concurrency & Job Caps](../../../knowledge/03-cdi-data-integration/07-performance-concurrency-job-caps.md).
+KB: [Taskflows & Schedules](../../../knowledge/05-taskflows-schedules/01-taskflows-schedules.md),
+[Performance, Concurrency & Job Caps](../../../knowledge/04-mappings/06-performance-concurrency-job-caps.md).
 
 **Optional: an external lane orchestrator.** The source demo also ran a small controller service that started lanes
 on events (a sign-up started the customer lane within seconds), coalesced bursts, ran independent tasks of a lane
@@ -249,8 +249,8 @@ Content-Type: application/json
 `/active-bpel/public/rt/<orgIdV3>/<process>`: anyone who learns the URL can then write Contacts into the CRM with the
 Connected App's rights. Never use it in a shared or customer org. Every writer of a Contact field must apply the same rule (the CAI process,
 the batch sync): otherwise the batch silently undoes the real-time result 2-3 minutes later.
-KB: [CAI Asset Lifecycle](../../../knowledge/05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md),
-[CAI Connections & Connectors](../../../knowledge/05-cai-application-integration/03-cai-connections-connectors-e.g.-salesforce-oauth.md).
+KB: [CAI Asset Lifecycle](../../../knowledge/07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md),
+[CAI Connections & Connectors](../../../knowledge/07-app-integration/03-cai-connections-connectors-salesforce-oauth.md).
 
 ## Step 9. Data Quality: profiles with rule specifications, address verification  (PROVEN; arg shape ADAPTED)
 
@@ -276,9 +276,9 @@ python idmc/06_dq.py address --args-json '<one address, shaped as the schema>' -
 Address verification is one address per MCP call: for a pipeline, read the pre-merge layer (`stg_customers`), queue on
 an address hash, cap calls per run (`dq.addressVerification.maxCallsPerRun`) and MERGE results into
 `rdf_gold.address_verification` with a first-checked timestamp that is set once.
-KB: [DQ Assets](../../../knowledge/06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md),
-[Profiling - What Is Headless](../../../knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md),
-[DQ Scorecards](../../../knowledge/06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md).
+KB: [DQ Assets](../../../knowledge/08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md),
+[Profiling - What Is Headless](../../../knowledge/08-data-quality/02-profiling-what-is-headless.md),
+[DQ Scorecards](../../../knowledge/08-data-quality/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md).
 
 ## Step 10. Catalog, classification, glossary, lineage  (PROVEN; link lookup ADAPTED)
 
@@ -300,8 +300,8 @@ items registered; up to 21 links. **Verify.** In Data Governance, search `custom
 Customer Record", PII classifications on e-mail and phone, and upstream lineage to `public.customers`.
 **Undo.** `python idmc/07_catalog.py undo-glossary --execute ...`; catalog sources are deleted in the UI.
 Classification comes from the scan's Data Classification capability (Auto Classification); promoting CLAIRE
-suggestions in bulk is UI. KB: [Catalog Sources](../../../knowledge/07-catalog-governance-cdgc/02-catalog-sources-create-scan-update-purge.md),
-[Glossary, Links & Classification](../../../knowledge/07-catalog-governance-cdgc/03-glossary-links-classification.md).
+suggestions in bulk is UI. KB: [Catalog Sources](../../../knowledge/09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md),
+[Glossary, Links & Classification](../../../knowledge/09-catalog-lineage/03-glossary-links-classification.md).
 
 ## Step 11. Verify end to end  (ADAPTED)
 

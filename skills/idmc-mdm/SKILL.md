@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "mdm"`),
-  then `lessons/by-domain/08-mdm.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/10-mdm/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Master a table into golden records.
@@ -34,11 +34,11 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| Runtime vs design | `knowledge/08-mdm/01-mdm-saas-runtime-vs-design.md` |
-| Records: ingest, search, export, cleanup | `knowledge/08-mdm/02-mdm-records-ingest-search-export-cleanup.md` |
-| Business 360 modeling and match-merge | `knowledge/08-mdm/03-business-360-modeling-match-merge.md` |
-| P360 vs MDM SaaS, licensing | `knowledge/08-mdm/04-p360-vs-mdm-saas-licensing-notes.md` |
-| Mastering a table: repeatable playbook | `knowledge/08-mdm/05-mastering-a-table-repeatable-playbook.md` |
+| Runtime vs design | `knowledge/10-mdm/01-mdm-saas-runtime-vs-design.md` |
+| Records: ingest, search, export, cleanup | `knowledge/10-mdm/02-mdm-records-ingest-search-export-cleanup.md` |
+| Business 360 modeling and match-merge | `knowledge/10-mdm/03-business-360-modeling-match-merge.md` |
+| P360 vs MDM SaaS, licensing | `knowledge/10-mdm/04-p360-vs-mdm-saas-licensing-notes.md` |
+| Mastering a table: repeatable playbook | `knowledge/10-mdm/05-mastering-a-table-repeatable-playbook.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_session.py`: MDM calls go through the org-aware session

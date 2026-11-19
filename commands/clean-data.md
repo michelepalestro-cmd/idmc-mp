@@ -6,7 +6,7 @@ argument-hint: "<connection> <table> [region or slice] [what to clean: duplicate
 Use the idmc-mp, idmc-data-quality and idmc-cdi skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Clean: $ARGUMENTS
 
-Follow `${CLAUDE_PLUGIN_ROOT}/knowledge/06-data-quality-profiling/05-cleaning-a-large-dataset-with-mappings.md`.
+Follow `${CLAUDE_PLUGIN_ROOT}/knowledge/08-data-quality/05-cleaning-a-large-dataset-with-mappings.md`.
 
 1. Prove the org (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`). Never retry a failed login.
 2. Measure before building: rows in the slice, how many are candidates (rows sharing a key, or failing a rule), and the

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """build_skill_field_lessons.py - regenerate the skill's error-signature index from the KB's own lessons.
 
-    python3 toolkit/tools/build_skill_field_lessons.py          # writes knowledge/playbook/06-lessons-field.md
+    python3 toolkit/tools/build_skill_field_lessons.py          # writes knowledge/reference/playbook/06-lessons-field.md
     python3 toolkit/tools/build_skill_field_lessons.py --check    # exit 1 if the file is out of date
 
 The skill's field-lessons file is the "grep this for your error string first" index. It is built ONLY from
@@ -20,7 +20,7 @@ import sys
 
 ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))  # the plugin root
 SRC = os.path.join(ROOT, "lessons", "lessons.jsonl")
-OUT = os.path.join(ROOT, "knowledge", "playbook", "06-lessons-field.md")
+OUT = os.path.join(ROOT, "knowledge", "reference", "playbook", "06-lessons-field.md")
 
 CODE = re.compile(r"\b(?:[A-Z][A-Za-z0-9]*_){1,3}\d{2,6}\b|\bXFER_\d{3}\b")
 HTTP = re.compile(r"\b(?:HTTP |status |answers? |returns? |returned |-> ?|→ ?)([45]\d\d)\b")

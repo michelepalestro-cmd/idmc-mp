@@ -51,7 +51,7 @@ Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 
 - **186 new lessons** (2,234 in total) mined from about 40 public IDMC repositories and the vendor's own Claude skill,
   each labelled Reported or Documented with a confidence note; nothing was run against an org.
-- **New:** [Community code index](knowledge/12-reference-library/community-code-index.md): which public file each
+- **New:** [Community code index](knowledge/reference/community-code-index.md): which public file each
   lesson came from. The ecosystem doc lists the newly found repositories, what to avoid, and the patterns worth copying.
 - Two lessons that public code contradicts now point to the reported alternative (L-AGENT-088, L-MIG-097).
 
@@ -60,14 +60,14 @@ Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 - **Managed MCP servers updated to the October 2026 release:** 23 servers (four were missing: Data Marketplace Order
   Management, Catalog Asset History, Data Access Management, IDMC Asset Documentation), the vendor's public registry
   (readable with no login), the October tool additions and platform changes.
-- **New doc:** [Ecosystem: plugins, registries, community tools](knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md):
+- **New doc:** [Ecosystem: plugins, registries, community tools](knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md):
   the vendor's own Claude plugin and how to use it alongside this one, where the servers are listed, the
   catalog-discovery and data-exploration tool contract, and a reviewed list of community tools with verdicts.
 - **Six lessons:** L-MCP-132 to L-MCP-137. The `idmc-claire-mcp` skill points to the new doc.
 
 ## 1.3.0 (2026-11-18): clean data with mappings
 
-- **New playbook:** [cleaning a large dataset with IDMC mappings](knowledge/06-data-quality-profiling/05-cleaning-a-large-dataset-with-mappings.md):
+- **New playbook:** [cleaning a large dataset with IDMC mappings](knowledge/08-data-quality/05-cleaning-a-large-dataset-with-mappings.md):
   when mappings and when SQL, the duplicate-record match as ten native steps, the SQL-twin proof, safe runs, and field
   results from two test datasets (every shared record agreed, every survivor the same).
 - **New command** `/idmc-mp:clean-data` (twelve in all); the `idmc-data-quality` skill points to both.

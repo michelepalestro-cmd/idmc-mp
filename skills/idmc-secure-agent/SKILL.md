@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "agent"`, `"domain": "connections"`),
-  then `lessons/by-domain/02-secure-agent-connections.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/02-secure-agent/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Stand up a Secure Agent on a VM and register it to the right org, headless.
@@ -40,13 +40,13 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| Install, service, tuning, two agents, memory | `knowledge/02-secure-agent-connections/01-secure-agent-install-run-tune.md` |
-| Services and connectors on a runtime environment | `knowledge/02-secure-agent-connections/02-runtime-environments-services-connectors.md` |
-| Connections: create, test, update, delete | `knowledge/02-secure-agent-connections/03-connections-create-test-update-delete.md` |
-| Per-connector settings that work | `knowledge/02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md` |
-| Troubleshooting: the four gates | `knowledge/02-secure-agent-connections/05-troubleshooting-the-four-gates.md` |
-| Zero to a running job (HOST -> ENGINE -> ADAPTER -> DRIVER) | `knowledge/playbook/03-bootstrap.md` |
-| Concurrency and the DTM pool | `knowledge/03-cdi-data-integration/07-performance-concurrency-job-caps.md` |
+| Install, service, tuning, two agents, memory | `knowledge/02-secure-agent/01-secure-agent-install-run-tune.md` |
+| Services and connectors on a runtime environment | `knowledge/02-secure-agent/02-runtime-environments-services-connectors.md` |
+| Connections: create, test, update, delete | `knowledge/03-connections/01-connections-create-test-update-delete.md` |
+| Per-connector settings that work | `knowledge/03-connections/02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md` |
+| Troubleshooting: the four gates | `knowledge/03-connections/03-troubleshooting-the-four-gates.md` |
+| Zero to a running job (HOST -> ENGINE -> ADAPTER -> DRIVER) | `knowledge/reference/playbook/03-bootstrap.md` |
+| Concurrency and the DTM pool | `knowledge/04-mappings/06-performance-concurrency-job-caps.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_session.py`: org-aware session: whoami, get/post on any plane

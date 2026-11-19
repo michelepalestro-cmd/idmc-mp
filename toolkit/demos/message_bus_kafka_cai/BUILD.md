@@ -5,9 +5,9 @@ you should see, how to verify, how to undo. Tags: **PROVEN** = the same calls / 
 an earlier (non-generic) form; **ADAPTED** = rewritten or combined here and not yet re-run in this form. Writes are dry
 runs until `--execute --expect-org <orgIdV3>` (the core library's guard). KB links are relative to this file.
 
-Read first: [CAI Event Listeners - Kafka & AMQP (JMS)](../../../knowledge/05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md),
-[CAI Asset Lifecycle](../../../knowledge/05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md),
-[Lessons: CAI](../../../lessons/by-domain/05-application-integration-cai.md).
+Read first: [CAI Event Listeners - Kafka & AMQP (JMS)](../../../knowledge/07-app-integration/06-cai-event-listeners-kafka-amqp-jms.md),
+[CAI Asset Lifecycle](../../../knowledge/07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md),
+[Lessons: CAI](../../../knowledge/07-app-integration/lessons.md).
 
 | # | Step | Tag |
 |---|---|---|
@@ -61,21 +61,21 @@ grammar and step 16 on proven calls.
 
 `python "../../lib/idmc_session.py" whoami --expect-org <orgIdV3>` -> your org name, v2 + v3 ids, the pod host.
 One login; on `IDS_085` / `IDS_086` stop and fix the password (never loop logins, never delete the block file
-without the user). [Access, Auth & Orgs](../../../knowledge/01-access-auth-orgs/).
+without the user). [Access, Auth & Orgs](../../../knowledge/01-login-and-orgs/).
 
 ## 3. Secure Agent with the Process Server (PROVEN route, KB)
 
 **Why:** Kafka and AMQP listeners run only on an agent's Process Server; the agent must sit next to the stand-ins.
 1. Install the agent on the Docker host headless: `GET /api/v2/agent/installerInfo/linux64` gives the download URL and
    an install token for this org; install as a non-root user
-   ([Secure Agent - Install, Run & Tune](../../../knowledge/02-secure-agent-connections/01-secure-agent-install-run-tune.md)).
+   ([Secure Agent - Install, Run & Tune](../../../knowledge/02-secure-agent/01-secure-agent-install-run-tune.md)).
 2. Enable the Process Server (Application Integration) on its runtime environment, and the Oracle + PostgreSQL
    connectors, at most a few at a time:
    `python "../../lib/idmc_runtime_selections.py" show <reId>` then
    `... set <reId> --enable "services:<Process Server item>" --execute --expect-org <orgIdV3>` (never select all: one
    host pulled about 18 GB and stalled).
 3. Wait until `GET /api/v2/agent/details/<agentId>` shows `process-engine` RUNNING
-   ([Process Server on a Secure Agent](../../../knowledge/05-cai-application-integration/04-process-server-on-a-secure-agent.md)).
+   ([Process Server on a Secure Agent](../../../knowledge/07-app-integration/04-process-server-on-a-secure-agent.md)).
 4. Put the agent name and the runtime environment id in `config.json`.
 **Verify:** `curl -s -o /dev/null -w '%{http_code}' http://127.0.0.1:7080/process-engine/public/rt/x` answers (404 for
 an unknown process is fine: the engine is up). **Undo:** `idmc_runtime_selections.py restore <backup>`.
@@ -242,7 +242,7 @@ the drain rate. Ask the org owner first: every ping is a CAI run.
    by pod: copy a working connection's key set. Encryption: `noEncryption` only while the ledger host is loopback (the
    stand-in on 127.0.0.1:15432, no server certificate); any other host gets `encryptionMethod SSL`, `tlsv1_2` and
    `validateServerCertificate` `true` (`cdi_batch.pg_tls`). Kafka: `kafka.use_ssl` false is accepted only for loopback
-   brokers ([Connector Notes](../../../knowledge/02-secure-agent-connections/04-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md)).
+   brokers ([Connector Notes](../../../knowledge/03-connections/02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md)).
 2. Template task (**UI-only wall if your org has none**): Data Integration > New > Mapping Task > mapping
    `dsst__copy_data_new_tgt` (Add-On Bundles) > any source / target > Save. Put its v2 id in
    `cdi_batch.template_task_id`.

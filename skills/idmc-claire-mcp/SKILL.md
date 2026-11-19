@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "claire-mcp"`),
-  then `lessons/by-domain/09-claire-mcp.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/11-mcp-claire/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Connect Claude to the org's managed MCP servers and call them.
@@ -36,14 +36,14 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| Managed MCP servers: catalog and access | `knowledge/09-claire-mcp/01-managed-mcp-servers-catalog-access.md` |
-| MCP auth and OAuth clients | `knowledge/09-claire-mcp/02-mcp-auth-oauth-clients.md` |
-| CLAIRE GPT prompting | `knowledge/09-claire-mcp/03-claire-gpt-prompting-rules-patterns.md` |
-| Agent-style MCP and shims | `knowledge/09-claire-mcp/04-agent-style-mcp-async-orchestration-custom-shims.md` |
-| MCP vs REST | `knowledge/09-claire-mcp/05-mcp-vs-rest-when-to-use-which.md` |
-| Vendor Claude plugin, MCP registries, community CLIs and MCP servers | `knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md` |
-| Someone else's public code for a route or pattern | `knowledge/12-reference-library/community-code-index.md` |
-| MCP servers, actions and calls | `knowledge/playbook/10-mcp.md` |
+| Managed MCP servers: catalog and access | `knowledge/11-mcp-claire/01-managed-mcp-servers-catalog-access.md` |
+| MCP auth and OAuth clients | `knowledge/11-mcp-claire/02-mcp-auth-oauth-clients.md` |
+| CLAIRE GPT prompting | `knowledge/11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md` |
+| Agent-style MCP and shims | `knowledge/11-mcp-claire/04-agent-style-mcp-async-orchestration-custom-shims.md` |
+| MCP vs REST | `knowledge/11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md` |
+| Vendor Claude plugin, MCP registries, community CLIs and MCP servers | `knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md` |
+| Someone else's public code for a route or pattern | `knowledge/reference/community-code-index.md` |
+| MCP servers, actions and calls | `knowledge/reference/playbook/10-mcp.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_mcp.py`: managed MCP servers: registry, tools, calls

@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "cdi"`),
-  then `lessons/by-domain/03-data-integration-cdi.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/04-mappings/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Build a mapping from the user's source to their target, run it and prove the row counts.
@@ -38,15 +38,15 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| Mapping Fast Path (start here) | `knowledge/03-cdi-data-integration/00-mapping-fast-path-read-this-first.md` |
-| Object model | `knowledge/03-cdi-data-integration/01-cdi-object-model.md` |
-| How mappings are built headless | `knowledge/03-cdi-data-integration/02-how-claude-builds-mappings-headless.md` |
-| Mapping tasks: create, update, run, monitor | `knowledge/03-cdi-data-integration/03-mapping-tasks-create-update-run-monitor.md` |
-| Taskflows and schedules | `knowledge/03-cdi-data-integration/04-taskflows-schedules.md` |
-| Performance, concurrency, job caps | `knowledge/03-cdi-data-integration/07-performance-concurrency-job-caps.md` |
-| Changing pipelines safely | `knowledge/03-cdi-data-integration/08-changing-pipelines-safely.md` |
-| Source and target gotchas | `knowledge/03-cdi-data-integration/09-source-target-gotchas.md` |
-| Serving outputs to BI and apps | `knowledge/03-cdi-data-integration/10-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md` |
+| Mapping Fast Path (start here) | `knowledge/04-mappings/00-mapping-fast-path-read-this-first.md` |
+| Object model | `knowledge/04-mappings/01-cdi-object-model.md` |
+| How mappings are built headless | `knowledge/04-mappings/02-how-claude-builds-mappings-headless.md` |
+| Mapping tasks: create, update, run, monitor | `knowledge/04-mappings/03-mapping-tasks-create-update-run-monitor.md` |
+| Taskflows and schedules | `knowledge/05-taskflows-schedules/01-taskflows-schedules.md` |
+| Performance, concurrency, job caps | `knowledge/04-mappings/06-performance-concurrency-job-caps.md` |
+| Changing pipelines safely | `knowledge/04-mappings/07-changing-pipelines-safely.md` |
+| Source and target gotchas | `knowledge/04-mappings/08-source-target-gotchas.md` |
+| Serving outputs to BI and apps | `knowledge/04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/mapgen/mapgen.py`: mapping generator: build, lint, import, task, run, deploy, log, jobs

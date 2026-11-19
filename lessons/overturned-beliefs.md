@@ -9,7 +9,7 @@ Last verified: 2026-11-03, against lessons.jsonl (overturn dates 2026-06-27 to 2
 
 Related: [Lessons Learned README](README.md) · [The Laws of Headless IDMC](../knowledge/00-start-here/02-the-laws-of-headless-idmc.md) ·
 [Capability Map](../knowledge/00-start-here/03-capability-map.md) · [Changelog](../knowledge/00-start-here/06-changelog.md) ·
-[Evidence Discipline](../knowledge/14-claude-working-methods/02-evidence-discipline.md)
+[Evidence Discipline](../knowledge/14-working-with-claude/02-evidence-discipline.md)
 
 ---
 
@@ -75,7 +75,7 @@ search this page for the path, the product or the error code.
 
 ## 01. Access, auth and orgs (11)
 
-Lessons file: [01 Access & Auth](by-domain/01-access-auth.md)
+Lessons file: [01 Access & Auth](../knowledge/01-login-and-orgs/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -93,7 +93,7 @@ Lessons file: [01 Access & Auth](by-domain/01-access-auth.md)
 
 ## 02. Secure Agent and connections (24)
 
-Lessons file: [02 Secure Agent & Connections](by-domain/02-secure-agent-connections.md)
+Lessons file: [02 Secure Agent & Connections](../knowledge/03-connections/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -124,7 +124,7 @@ Lessons file: [02 Secure Agent & Connections](by-domain/02-secure-agent-connecti
 
 ## 03. Data Integration (CDI) (21)
 
-Lessons file: [03 Data Integration (CDI)](by-domain/03-data-integration-cdi.md)
+Lessons file: [03 Data Integration (CDI)](../knowledge/04-mappings/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -152,7 +152,7 @@ Lessons file: [03 Data Integration (CDI)](by-domain/03-data-integration-cdi.md)
 
 ## 04. Mass Ingestion and CDC (5)
 
-Lessons file: [04 Mass Ingestion & CDC](by-domain/04-mass-ingestion-cdc.md)
+Lessons file: [04 Mass Ingestion & CDC](../knowledge/06-cdc-ingestion/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -164,7 +164,7 @@ Lessons file: [04 Mass Ingestion & CDC](by-domain/04-mass-ingestion-cdc.md)
 
 ## 05. Application Integration (CAI) (17)
 
-Lessons file: [05 Application Integration (CAI)](by-domain/05-application-integration-cai.md)
+Lessons file: [05 Application Integration (CAI)](../knowledge/07-app-integration/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -188,7 +188,7 @@ Lessons file: [05 Application Integration (CAI)](by-domain/05-application-integr
 
 ## 06. Data Quality and profiling (15)
 
-Lessons file: [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.md)
+Lessons file: [06 Data Quality & Profiling](../knowledge/08-data-quality/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -210,7 +210,7 @@ Lessons file: [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.
 
 ## 07. Catalog and governance (CDGC) (26)
 
-Lessons file: [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-cdgc.md)
+Lessons file: [07 Catalog & Governance (CDGC)](../knowledge/09-catalog-lineage/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -243,7 +243,7 @@ Lessons file: [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-c
 
 ## 08. MDM (11)
 
-Lessons file: [08 MDM](by-domain/08-mdm.md)
+Lessons file: [08 MDM](../knowledge/10-mdm/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -261,7 +261,7 @@ Lessons file: [08 MDM](by-domain/08-mdm.md)
 
 ## 09. CLAIRE and MCP (14)
 
-Lessons file: [09 CLAIRE & MCP](by-domain/09-claire-mcp.md)
+Lessons file: [09 CLAIRE & MCP](../knowledge/11-mcp-claire/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -282,7 +282,7 @@ Lessons file: [09 CLAIRE & MCP](by-domain/09-claire-mcp.md)
 
 ## 10. Migration and org management (17)
 
-Lessons file: [10 Migration & Org Management](by-domain/10-migration-org-management.md)
+Lessons file: [10 Migration & Org Management](../knowledge/12-deploy-migrate/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -306,7 +306,7 @@ Lessons file: [10 Migration & Org Management](by-domain/10-migration-org-managem
 
 ## 11. IPU, metering and licensing (7)
 
-Lessons file: [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing.md)
+Lessons file: [11 IPU, Metering & Licensing](../knowledge/13-ipu-cost/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -320,7 +320,7 @@ Lessons file: [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing
 
 ## 12. Claude working methods (8)
 
-Lessons file: [12 Claude Working Methods](by-domain/12-claude-working-methods.md)
+Lessons file: [12 Claude Working Methods](../knowledge/14-working-with-claude/lessons.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -335,7 +335,7 @@ Lessons file: [12 Claude Working Methods](by-domain/12-claude-working-methods.md
 
 ## 13. Environment and ops (3)
 
-Lessons file: [13 Environment & Ops](by-domain/13-environment-ops.md)
+Lessons file: [13 Environment & Ops](../knowledge/14-working-with-claude/lessons-environment-ops.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|
@@ -345,7 +345,7 @@ Lessons file: [13 Environment & Ops](by-domain/13-environment-ops.md)
 
 ## 14. UI automation (6)
 
-Lessons file: [14 UI Automation](by-domain/14-ui-automation.md)
+Lessons file: [14 UI Automation](../knowledge/14-working-with-claude/lessons-ui-automation.md)
 
 | Lesson | Old belief | Held | Overturned by | What to do now |
 |---|---|---|---|---|

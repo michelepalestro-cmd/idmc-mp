@@ -10,9 +10,9 @@ Promote: $ARGUMENTS
 2. Inventory and dependency closure in the source org, read-only (`toolkit/lib/idmc_objects.py`).
 3. Export (`toolkit/lib/idmc_export_import.py`), then edit the package offline for the target: connections, runtime
    environment, names (`toolkit/lib/idmc_package_edit.py`, rules in
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/10-migration-org-management/02-editing-packages-safely.md`).
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/12-deploy-migrate/02-editing-packages-safely.md`).
 4. Check the target has the foundation first (agent, runtime, services, connections and secrets), per
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/10-migration-org-management/04-org-to-org-migration-runbook.md`.
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/12-deploy-migrate/04-org-to-org-migration-runbook.md`.
 5. Dry-run, show the user what will change, and import only on their yes with `--expect-org <target orgIdV3>`.
 6. Validate in the target: objects present, connections test, one run with row counts. Keep the rollback kit
    (`05-cutover-rollback.md`) ready and report it.

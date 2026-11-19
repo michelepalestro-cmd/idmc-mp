@@ -19,7 +19,7 @@
 - Use a dedicated IDMC service user for Claude, with only the roles it needs, not your personal admin user.
 - Never paste a password into a chat or an issue. If you did, change the password.
 - Review any third-party IDMC tool before you run it: see
-  [Using a community tool safely](knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md#5-using-a-community-tool-safely).
+  [Using a community tool safely](knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md#5-using-a-community-tool-safely).
 
 ## Reporting a vulnerability
 

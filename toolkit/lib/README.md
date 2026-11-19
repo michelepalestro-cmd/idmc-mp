@@ -15,12 +15,12 @@ apply before a write?
 - Read the body and read back every write: a 200 can be fake or silently reverted (L-METHOD-025, L-METHOD-030).
 - These scripts were not run against a live org in this form: re-verify each call in yours (L-METHOD-035).
 
-**Related:** [Access, Auth & Orgs](../../knowledge/01-access-auth-orgs/) ·
-[Secure Agent & Connections](../../knowledge/02-secure-agent-connections/) ·
-[Data Integration (CDI)](../../knowledge/03-cdi-data-integration/) · [Mass Ingestion & CDC](../../knowledge/04-cdc-mass-ingestion/) ·
-[Application Integration (CAI)](../../knowledge/05-cai-application-integration/) ·
-[Catalog & Governance (CDGC)](../../knowledge/07-catalog-governance-cdgc/) · [CLAIRE & MCP](../../knowledge/09-claire-mcp/) ·
-[Migration & Org Management](../../knowledge/10-migration-org-management/) · [Lessons Learned](../../lessons/)
+**Related:** [Access, Auth & Orgs](../../knowledge/01-login-and-orgs/) ·
+[Secure Agent & Connections](../../knowledge/02-secure-agent/) ·
+[Data Integration (CDI)](../../knowledge/04-mappings/) · [Mass Ingestion & CDC](../../knowledge/06-cdc-ingestion/) ·
+[Application Integration (CAI)](../../knowledge/07-app-integration/) ·
+[Catalog & Governance (CDGC)](../../knowledge/09-catalog-lineage/) · [CLAIRE & MCP](../../knowledge/11-mcp-claire/) ·
+[Migration & Org Management](../../knowledge/12-deploy-migrate/) · [Lessons Learned](../../lessons/)
 
 **Last verified:** 2026-10-04 (structure). Source evidence 2026-07 to 2026-09; compile-checked and exercised offline
 with mocked HTTP on 2026-09-29; none of these scripts has been run against a live org in this form.

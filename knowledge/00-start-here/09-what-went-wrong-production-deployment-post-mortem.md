@@ -17,7 +17,7 @@ deployment "done".
 **Related:** [End-to-End Playbook](07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md) ·
 [New Pipeline Milestones](08-new-pipeline-milestones-any-source-any-target.md) ·
 [Error Triage](04-error-triage.md) · [Lessons Learned](../../lessons/README.md) ·
-[Multi-Agent Coordination](../14-claude-working-methods/03-multi-agent-coordination.md)
+[Multi-Agent Coordination](../14-working-with-claude/03-multi-agent-coordination.md)
 
 **Last verified:** 2026-11-10
 

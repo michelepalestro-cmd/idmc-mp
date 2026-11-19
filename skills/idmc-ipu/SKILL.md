@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "ipu-licensing"`),
-  then `lessons/by-domain/11-ipu-metering-licensing.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/13-ipu-cost/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - How many IPUs did we use this month, and on what?
@@ -34,10 +34,10 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| IPU model | `knowledge/11-ipu-metering-licensing/01-ipu-model-mechanics.md` |
-| Metering and consumption exports | `knowledge/11-ipu-metering-licensing/02-metering-consumption-exports.md` |
-| Entitlement, licences, job caps | `knowledge/11-ipu-metering-licensing/03-entitlement-licenses-job-caps.md` |
-| IICS to IPUs reference | `knowledge/12-reference-library/iics-to-ipus-kb/README.md` |
+| IPU model | `knowledge/13-ipu-cost/01-ipu-model-mechanics.md` |
+| Metering and consumption exports | `knowledge/13-ipu-cost/02-metering-consumption-exports.md` |
+| Entitlement, licences, job caps | `knowledge/13-ipu-cost/03-entitlement-licenses-job-caps.md` |
+| IICS to IPUs reference | `knowledge/reference/iics-to-ipus-kb/README.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_session.py`: metering and activity-log reads

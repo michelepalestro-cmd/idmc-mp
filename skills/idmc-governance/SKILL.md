@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "cdgc"`),
-  then `lessons/by-domain/07-catalog-governance-cdgc.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/09-catalog-lineage/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Scan the user's sources into the catalog and show lineage to the report.
@@ -35,11 +35,11 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| APIs and auth | `knowledge/07-catalog-governance-cdgc/01-cdgc-apis-auth.md` |
-| Catalog sources: create, scan, update, purge | `knowledge/07-catalog-governance-cdgc/02-catalog-sources-create-scan-update-purge.md` |
-| Glossary, links, classification | `knowledge/07-catalog-governance-cdgc/03-glossary-links-classification.md` |
-| Search, lineage, marketplace | `knowledge/07-catalog-governance-cdgc/04-search-lineage-marketplace.md` |
-| Gaps and gotchas | `knowledge/07-catalog-governance-cdgc/05-cdgc-gaps-gotchas.md` |
+| APIs and auth | `knowledge/09-catalog-lineage/01-cdgc-apis-auth.md` |
+| Catalog sources: create, scan, update, purge | `knowledge/09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md` |
+| Glossary, links, classification | `knowledge/09-catalog-lineage/03-glossary-links-classification.md` |
+| Search, lineage, marketplace | `knowledge/09-catalog-lineage/04-search-lineage-marketplace.md` |
+| Gaps and gotchas | `knowledge/09-catalog-lineage/05-cdgc-gaps-gotchas.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_cdgc.py`: CDGC: token check, catalog sources, scans, glossary, links, search

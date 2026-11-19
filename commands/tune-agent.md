@@ -11,8 +11,8 @@ Target: $ARGUMENTS (if empty, every runtime environment in the org).
    connectors (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/lib/idmc_runtime_selections.py" --help`). Grep the lessons
    (`"domain": "agent"`) for every warning you see.
 3. If the user can give host access, gather memory, heap, disk, DTM pool and concurrency per
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/02-secure-agent-connections/01-secure-agent-install-run-tune.md` (sections 5-6) and
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/03-cdi-data-integration/07-performance-concurrency-job-caps.md` (section 6.1).
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/02-secure-agent/01-secure-agent-install-run-tune.md` (sections 5-6) and
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/04-mappings/06-performance-concurrency-job-caps.md` (section 6.1).
 4. Report: one table per agent (status, engines, services selected but unused, risks), then the recommendations in
    order of impact, each with its lesson id and how to measure the gain.
 5. Change nothing until the user says yes; then change one thing at a time and re-measure.

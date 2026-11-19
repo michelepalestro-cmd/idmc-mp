@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "dq-profiling"`),
-  then `lessons/by-domain/06-data-quality-profiling.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/08-data-quality/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Profile a table and propose DQ rules for it.
@@ -36,11 +36,11 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| DQ assets: rule specs, cleanse, dictionaries, verifiers | `knowledge/06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md` |
-| Profiling: what is headless | `knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md` |
-| CLAIRE DQ agent | `knowledge/06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md` |
-| Scorecards | `knowledge/06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md` |
-| Clean a large table with mappings (match, survivors, twin proof) | `knowledge/06-data-quality-profiling/05-cleaning-a-large-dataset-with-mappings.md` |
+| DQ assets: rule specs, cleanse, dictionaries, verifiers | `knowledge/08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md` |
+| Profiling: what is headless | `knowledge/08-data-quality/02-profiling-what-is-headless.md` |
+| CLAIRE DQ agent | `knowledge/08-data-quality/03-claire-dq-agent-file-based-profiling-cleansing.md` |
+| Scorecards | `knowledge/08-data-quality/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md` |
+| Clean a large table with mappings (match, survivors, twin proof) | `knowledge/08-data-quality/05-cleaning-a-large-dataset-with-mappings.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/mapgen/mapgen.py`: rule specs run inside generated mappings

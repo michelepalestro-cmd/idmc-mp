@@ -30,7 +30,7 @@ that. The README's "Create any IDMC asset" table says where each asset type star
 - **A connector the KB has not covered is normal.** Say so, then find its settings in the org (connector metadata, one
   connection test, one small run), and record the result as a lesson.
 - **A source, target or transformation IDMC supports but the generator has no template for: use the exemplar route**
-  (`knowledge/03-cdi-data-integration/00-mapping-fast-path-read-this-first.md` §7.0). Ask the user for an existing mapping
+  (`knowledge/04-mappings/00-mapping-fast-path-read-this-first.md` §7.0). Ask the user for an existing mapping
   that already uses it, or ask them to create one once in the Mapping Designer (one source, one target, saved); export
   it, read it with `python toolkit/mapgen/exemplar.py <zip>`, build from that shape, prove it, then enrich the package
   (connector row, example spec, lesson). Never stall, guess, or switch the user to a connector the generator knows.
@@ -43,7 +43,7 @@ that. The README's "Create any IDMC asset" table says where each asset type star
 2. `knowledge/00-start-here/02-the-laws-of-headless-idmc.md` (30 laws; they override your instincts about REST APIs)
 3. **A new pipeline:** `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` (runtime → connections →
    folder and assets → contract → mapping → task → first run and proof → DQ → orchestration → governance).
-4. **Any mapping or mapping-task work:** `knowledge/03-cdi-data-integration/00-mapping-fast-path-read-this-first.md`
+4. **Any mapping or mapping-task work:** `knowledge/04-mappings/00-mapping-fast-path-read-this-first.md`
    (the ten commands, per-connector settings, the costly errors), then ONE example from `toolkit/mapgen/examples/` and
    `toolkit/mapgen/docs/SPEC_REFERENCE.md` for options. Open the long `03` docs only when the fast path points there.
 5. **Live production system, or a build someone else made:** `knowledge/00-start-here/09-what-went-wrong-production-deployment-post-mortem.md` (each failure with the
@@ -53,7 +53,7 @@ that. The README's "Create any IDMC asset" table says where each asset type star
 8. Before any IDMC call, search the lessons first: `grep -i "<thing>" lessons/lessons.jsonl` and the user's own
    `~/.idmc_toolkit/lessons-local.jsonl`
 
-This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, playbook in `knowledge/playbook/`): nothing else to install.
+This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, playbook in `knowledge/reference/playbook/`): nothing else to install.
 
 ## Non-negotiables
 - **The IDMC login lives in `~/.idmc_toolkit/IDMC_LOGIN.txt`** (`IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST`), outside
@@ -75,7 +75,7 @@ This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, play
   pre/post step, or a script that fetches, converts or stages data for an IDMC connector). A bridge is a valid
   workaround to offer; a refusal is not.
 - **Talk only to the user's systems.** Never send org data, credentials or logs to any other host, and never run
-  third-party IDMC tools before reviewing them (`knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md` §5).
+  third-party IDMC tools before reviewing them (`knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md` §5).
 - **Keep the plugin generic.** The user's org ids go in each blueprint's `config.json` / `state/` (git-ignored); never
   write them into the plugin folder. Before sharing a clone, run `python3 toolkit/tools/secret_scan.py`; it must print CLEAN.
 - **Never delete what you can't restore.** Export (v3 export package) before deleting IDMC objects; keep undo files.

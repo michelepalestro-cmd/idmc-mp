@@ -166,7 +166,7 @@ recommendations), and it works through the known workarounds in your org before 
 possible.
 
 Informatica also publishes its own Claude plugin (`informatica-for-claude-platform`, for catalog search and data
-questions). It installs alongside this one. The [ecosystem guide](knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md)
+questions). It installs alongside this one. The [ecosystem guide](knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md)
 covers it, all 23 managed MCP servers, and the community tools worth knowing.
 
 ---
@@ -204,8 +204,8 @@ Updates never touch your login or your own lessons: they live in `~/.idmc_toolki
 .claude-plugin/   marketplace.json (one plugin) and plugin.json
 skills/           idmc-mp (core: rules, login, routing) + one skill per IDMC area
 commands/         the twelve /idmc-mp:<name> slash commands
-knowledge/        the knowledge base: 00-start-here ... 14-claude-working-methods, playbook/, reference library
-lessons/          lessons.jsonl (the source of truth), by-domain/ (readable), overturned-beliefs.md
+knowledge/        one folder per job (01-login-and-orgs ... 14-working-with-claude): guides + lessons; reference/
+lessons/          lessons.jsonl (every lesson, one per line, for searching) and overturned-beliefs.md
 toolkit/          lib/ (Python library), mapgen/ (mapping generator), demos/, setup/, tools/, check_login.py
 tests/            run_tests.py (offline tests, run in CI) and USER_STORIES.md
 .github/          CI workflows, issue forms and the pull-request checklist

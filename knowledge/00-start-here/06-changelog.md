@@ -27,7 +27,7 @@ belief.
 ## 2026-11-19 (second pass): 106 more lessons from public IDMC code
 
 - A file-by-file pass over the repositories the first pass covered thinly or not at all: 106 new lessons (2,340 in
-  total), all **Reported**. The [Community code index](../12-reference-library/community-code-index.md) now maps 292
+  total), all **Reported**. The [Community code index](../reference/community-code-index.md) now maps 292
   lessons to their source files; repositories with security problems are not linked.
 - L-AUTH-108 (SAML mapping body) now points to a reported alternative, L-AUTH-129. Probe it.
 
@@ -43,19 +43,19 @@ belief.
   group configuration, MDM SaaS irreversible steps, and MCP tool design and monitoring patterns.
 - **Two contradictions flagged, not overturned:** agent-group configuration has a reported REST route (L-AGENT-132 next
   to L-AGENT-088), and compare is reported as a POST (L-MIG-110 next to L-MIG-097). Probe both.
-- **New:** [Community code index](../12-reference-library/community-code-index.md), from each lesson to the file it came
-  from. The [ecosystem doc](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md) gains the newly found
+- **New:** [Community code index](../reference/community-code-index.md), from each lesson to the file it came
+  from. The [ecosystem doc](../11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md) gains the newly found
   repositories and three warnings (a phone-home script, an unattended write-capable bot, a cookie-copying extractor).
 
 ## 2026-11-19: 23 managed MCP servers, and the ecosystem around them
 
-- **Managed servers brought to the October 2026 release** ([Managed MCP Servers](../09-claire-mcp/01-managed-mcp-servers-catalog-access.md)):
+- **Managed servers brought to the October 2026 release** ([Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md)):
   the public registry (no login) lists 23 servers; four were missing here (`ordermanagement`, `cdgccatalogassethistory`,
   `policymanagement`, `idmcassetdocumentation`), plus the October tool additions to connection management, catalog
   discovery and catalog enrichment, a release-by-release count, and the October platform changes (protocol 2026-07-28,
   renamed OAuth servers, scopes, resources, tool states, monitoring). No new server authors mappings, deploys CDC or
   publishes CAI.
-- **New doc** [Ecosystem: plugins, registries, community tools](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md):
+- **New doc** [Ecosystem: plugins, registries, community tools](../11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md):
   the vendor's Claude plugin and how it sits next to this one, every place the servers are listed, the catalog-discovery
   and data-exploration tool contract, and a reviewed list of community CLIs, MCP servers, skills and CI/CD templates with
   verdicts.
@@ -120,7 +120,7 @@ team deploy IDMC end to end, with every capability they ask for, on the systems 
   runtimes, projects, mappings, tasks, taskflows, CDC, file ingestion, CAI, DQ, profiles, catalog, glossary, lineage,
   MDM, MCP, copies and moves). `IDMC_LOGIN.txt` ships empty; a private file outside the folder through
   `IDMC_CREDS_FILE` works the same.
-- **The exemplar route** ([Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md)
+- **The exemplar route** ([Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md)
   §7.0, L-METHOD-129): a source, target or transformation that IDMC supports but the generator has no template for
   is learned from one mapping that already uses it (an existing one, or one made once in the Mapping Designer),
   exported and read offline with the new `toolkit/mapgen/exemplar.py`, then added to the package as a template. CLAUDE.md,
@@ -181,7 +181,7 @@ team deploy IDMC end to end, with every capability they ask for, on the systems 
 Why: "do MDM on this table" kept being re-planned from scratch, and the person/address recipe was being applied to
 registries, model registries and dictionaries where it does not fit.
 
-- New [Mastering a Table - Repeatable Playbook](../08-mdm/05-mastering-a-table-repeatable-playbook.md): five
+- New [Mastering a Table - Repeatable Playbook](../10-mdm/05-mastering-a-table-repeatable-playbook.md): five
   dataset archetypes (entity master, registry, versioned asset, definition, event), the same ten steps for all of
   them, a recipe per archetype, acceptance gates G1-G9 as copyable SQL, and a one-page spec to fill in per table.
 - Lessons L-MDM-077 to L-MDM-081: classify before matching (per-scope rows are the grain), the alias crosswalk for
@@ -194,7 +194,7 @@ registries, model registries and dictionaries where it does not fit.
 
 Why: sessions spent most of their time finding the right mapping facts among 1,700 lessons and five route descriptions.
 
-- **New entry point:** [Mapping Fast Path](../03-cdi-data-integration/00-mapping-fast-path-read-this-first.md):
+- **New entry point:** [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md):
   the ten commands from login to a proven run, the spec settings per connector (Snowflake, Databricks, Salesforce,
   SharePoint Online, Tableau V3, BigQuery, PostgreSQL, JDBC, flat file, Fabric), where writer attributes go, which
   runtime to pick, and the errors that cost the most time, each with its lesson id. `CLAUDE.md`, the README, How to use
@@ -227,7 +227,7 @@ Why: sessions spent most of their time finding the right mapping facts among 1,7
 Ten new lesson ids, all dated 2026-10-13, from one build that read documents from a CRM into a warehouse, parsed them with
 CLAIRE, scored them with data quality rules, cataloged the result and limited one user to that one project. In generic terms:
 
-- **Access (new section in [Users, Roles & Permissions](../01-access-auth-orgs/04-users-roles-permissions.md) §3a).**
+- **Access (new section in [Users, Roles & Permissions](../01-login-and-orgs/04-users-roles-permissions.md) §3a).**
   Object permissions are read, added and removed over v3 on projects, assets, connections and runtime environments
   (L-AUTH-089). Role, group and membership writes take `privileges`, `roles` and `users`, not the names the validator prints,
   and a user must keep one direct role (L-AUTH-090). The pattern that limits one user to one project without changing
@@ -274,7 +274,7 @@ targets on a Secure Agent, with CDC into a warehouse and a governed medallion be
   L-CDGC-085 moved to Superseded), and curated lineage edges are writable through the ccgf-contentv2 publish with
   `core.DataSetDataFlow` and `core.DirectionalDataFlow` (L-CDGC-179; the superseded 'silent no-op' belief is L-CDGC-180). The Laws (law
   17), the Capability Map and the topic docs changed in the same edit.
-- **CAI listeners (new doc [CAI Event Listeners](../05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md)).**
+- **CAI listeners (new doc [CAI Event Listeners](../07-app-integration/06-cai-event-listeners-kafka-amqp-jms.md)).**
   Event-bound process XML and the Kafka event shape (L-CAI-118); a safe first start (L-CAI-119); one process at a time per
   consumer (L-CAI-120); a stop resumes from the last offset auto-commit (L-CAI-121); restadmin `eventconnection` start and stop
   need `IDS-SESSION-ID` (L-CAI-122); the AMQP connector drops JMS property names that are not Java identifiers unless
@@ -406,7 +406,7 @@ and the topic docs were brought in line. In generic terms:
   samplers, repository copies of schedules, cron lines that run and do nothing).
 - **Orientation.** Every topic doc now opens with a Claude-friendly block (Answers, Read when, Key rules with their
   lesson ids, Related, Last verified). New: the [End-to-End Playbook](07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md)
-  and a CDI doc on [serving outputs to BI and apps](../03-cdi-data-integration/10-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md).
+  and a CDI doc on [serving outputs to BI and apps](../04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md).
   The Laws, Capability Map, Error Triage and Glossary were updated, and the README and
   [How to use this KB](01-how-to-use-this-kb.md) were rewritten as the entry point.
 

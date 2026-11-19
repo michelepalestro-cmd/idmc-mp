@@ -18,15 +18,15 @@ plugin, whose source is the repo root.
 
 | You are adding... | Put it in | Rule |
 |---|---|---|
-| A lesson (something IDMC did, with evidence) | `lessons/lessons.jsonl` (one JSON line, the source of truth) and the matching `lessons/by-domain/NN-*.md` | generic; see "A lesson" below |
-| An explanation, a procedure, a pattern | the topic folder in `knowledge/` (`00-start-here` ... `12-reference-library`, `14-claude-working-methods`) | cite the lesson ids it rests on |
-| A compact rule Claude must always apply | `knowledge/playbook/` or the core skill `skills/idmc-mp/SKILL.md` | short; link to the long doc |
+| A lesson (something IDMC did, with evidence) | `lessons/lessons.jsonl` (one JSON line, the source of truth) and the job folder's `knowledge/<job>/lessons.md` | generic; see "A lesson" below |
+| An explanation, a procedure, a pattern | the job folder in `knowledge/` (`01-login-and-orgs` ... `14-working-with-claude`), or `knowledge/reference/` for lookup material | cite the lesson ids it rests on |
+| A compact rule Claude must always apply | `knowledge/reference/playbook/` or the core skill `skills/idmc-mp/SKILL.md` | short; link to the long doc |
 | A workflow for one IDMC area | that area's `skills/idmc-*/SKILL.md` | "How to work", "Read", "Tools" sections |
 | A slash command | `commands/<name>.md` | names the skill(s) to use; paths start with `${CLAUDE_PLUGIN_ROOT}/` |
 | Python | `toolkit/lib/` (library), `toolkit/mapgen/` (generator), `toolkit/demos/<name>/` (a blueprint), `toolkit/tools/` (repo tools) | standard library only; `--help` must work without a login; writes are dry runs until `--execute --expect-org <orgIdV3>` |
 | A test or user story | `tests/run_tests.py`, `tests/USER_STORIES.md` | offline: no login, no network |
 
-The reference library (`knowledge/12-reference-library/`) also holds the build scripts that regenerate its reference
+The reference library (`knowledge/reference/`) also holds the build scripts that regenerate its reference
 files; some need extra packages, which their READMEs list. They are not part of the plugin's runtime.
 
 **Names.** New folders and Markdown docs: lowercase with hyphens (for example 06-cleaning-a-large-dataset.md). Python files:
@@ -36,7 +36,7 @@ code (`knowledge/...`, `lessons/...`, `toolkit/...`) are relative to the plugin 
 
 ## A lesson
 
-One line in `lessons/lessons.jsonl` with exactly these fields, and the same lesson as a block in its by-domain file:
+One line in `lessons/lessons.jsonl` with exactly these fields, and the same lesson as a block in its job folder's `knowledge/<job>/lessons.md`:
 
 ```json
 {"id": "L-CDI-331", "domain": "cdi", "kind": "ERROR", "title": "...", "text": "...", "evidence": "...", "date": "2026-11-19", "status": "current", "supersedes_id": ""}

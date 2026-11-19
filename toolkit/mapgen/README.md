@@ -5,13 +5,13 @@ field links) into a real IDMC Data Integration mapping and an importable v3 pack
 only. One module per transformation type under `idmc_mapgen/nodes/` (source, target, expression, filter, joiner, lookup, router,
 aggregator, sorter, rank, dedup, normalizer, cleanse, masking, rule spec, SQL, mapplet, sequence, ...).
 
-Background: `knowledge/03-cdi-data-integration/02 How Claude Builds Mappings Headless` and `05 The Pipeline-Generation
+Background: `knowledge/04-mappings/02 How Claude Builds Mappings Headless` and `05 The Pipeline-Generation
 Pattern` (route 5 = this generator). PROVEN in a real org in 2026-09 (parity with hand-built mappings, then complex
 scenarios); this copy differs only by generic comment wording and one renamed login-body variable. Synced 2026-10-26: Salesforce source `filter` / `sfObject`, rule-specification input scale.
 
 ## Start here
 
-- **Fast path:** `knowledge/03-cdi-data-integration/00-mapping-fast-path-read-this-first.md` (the ten commands, connector
+- **Fast path:** `knowledge/04-mappings/00-mapping-fast-path-read-this-first.md` (the ten commands, connector
   settings for Snowflake, Databricks, Salesforce, SharePoint, BigQuery, PostgreSQL, the errors that cost the most time).
 - **Every spec option:** `docs/SPEC_REFERENCE.md`. How the compiler works: `docs/HOW_IT_WORKS.md`. What was proven live: `docs/PROBES.md`, `docs/RETAIL_SUITE.md`.
 - **Templates:** `examples/` (retail scenarios, combos, fixes, probes: each built and run in a real org; `connectors/`:

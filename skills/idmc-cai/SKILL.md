@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "cai"`),
-  then `lessons/by-domain/05-application-integration-cai.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/07-app-integration/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Publish a process that does X when an event or API call arrives.
@@ -35,12 +35,12 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| Asset lifecycle | `knowledge/05-cai-application-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md` |
-| Runtime: invoke, URLs, control | `knowledge/05-cai-application-integration/02-cai-runtime-invoke-urls-control.md` |
-| Connections and connectors | `knowledge/05-cai-application-integration/03-cai-connections-connectors-e.g.-salesforce-oauth.md` |
-| Process Server on a Secure Agent | `knowledge/05-cai-application-integration/04-process-server-on-a-secure-agent.md` |
-| Troubleshooting and stuck assets | `knowledge/05-cai-application-integration/05-cai-troubleshooting-stuck-assets.md` |
-| Event listeners: Kafka, AMQP, JMS | `knowledge/05-cai-application-integration/06-cai-event-listeners-kafka-amqp-jms.md` |
+| Asset lifecycle | `knowledge/07-app-integration/01-cai-asset-lifecycle-author-publish-unpublish-delete.md` |
+| Runtime: invoke, URLs, control | `knowledge/07-app-integration/02-cai-runtime-invoke-urls-control.md` |
+| Connections and connectors | `knowledge/07-app-integration/03-cai-connections-connectors-salesforce-oauth.md` |
+| Process Server on a Secure Agent | `knowledge/07-app-integration/04-process-server-on-a-secure-agent.md` |
+| Troubleshooting and stuck assets | `knowledge/07-app-integration/05-cai-troubleshooting-stuck-assets.md` |
+| Event listeners: Kafka, AMQP, JMS | `knowledge/07-app-integration/06-cai-event-listeners-kafka-amqp-jms.md` |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_cai_publish.py`: publish / unpublish CAI assets

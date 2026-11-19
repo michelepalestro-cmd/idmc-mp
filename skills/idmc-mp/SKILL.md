@@ -23,11 +23,11 @@ The library needs only the standard library (Python 3.10+).
 ## Before any IDMC call
 - **Search the lessons first (Law 1):** `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"`
   (one JSON lesson per line: `id` `L-<DOMAIN>-###`, `domain`, `kind`, `title`, `text`, `evidence`, `status`
-  current / disputed / superseded). Then the readable versions in `lessons/by-domain/`, what flipped in
-  `lessons/overturned-beliefs.md`, the error-signature index `knowledge/playbook/06-lessons-field.md`, and the
+  current / disputed / superseded). Then the readable versions in each job folder's `knowledge/<job>/lessons.md`, what flipped in
+  `lessons/overturned-beliefs.md`, the error-signature index `knowledge/reference/playbook/06-lessons-field.md`, and the
   user's own `~/.idmc_toolkit/lessons-local.jsonl` if it exists.
 - **Establish the org (Law 0):** log in, take `products[].baseApiUrl` as the base, never hand-build the pod host.
-- **Read the playbook** `knowledge/playbook/00-headless-playbook.md` for Laws 0-7, error triage, per-service gotchas
+- **Read the playbook** `knowledge/reference/playbook/00-headless-playbook.md` for Laws 0-7, error triage, per-service gotchas
   and the preflight. Key facts: a 200 can be fake (probe a bogus twin); 404 = wrong path, not unlicensed;
   entitlement comes from `agentEngines[]`, never `products[]`; no HEAD/OPTIONS (probe with an empty POST); read and run
   are headless, authoring/publish/deploy usually go through packages, clones or the UI's own call; MCP never replaces
@@ -50,20 +50,20 @@ the home file is filled in, it is already connected: run `check_login.py`, don't
 | Get going: first hour, what to ask, top lessons | this one | `knowledge/00-start-here/10-quick-start-your-first-hour-with-idmc-and-claude.md` |
 | Deploy IDMC end to end (13 stages) | `idmc-deploy` | `knowledge/00-start-here/07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md` |
 | A new pipeline, any source to any target | `idmc-cdi` | `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` |
-| Install, run, tune a Secure Agent; runtime; connections | `idmc-secure-agent` | `knowledge/02-secure-agent-connections/` |
-| Mappings, tasks, taskflows, schedules, CDI speed and cost | `idmc-cdi` | `knowledge/03-cdi-data-integration/00-mapping-fast-path-read-this-first.md` |
-| Mass ingestion / CDC | `idmc-cdc` | `knowledge/04-cdc-mass-ingestion/` |
-| CAI processes, publish, events | `idmc-cai` | `knowledge/05-cai-application-integration/` |
-| Profiling, DQ rules, scorecards | `idmc-data-quality` | `knowledge/06-data-quality-profiling/` |
-| Catalog, glossary, lineage (data governance) | `idmc-governance` | `knowledge/07-catalog-governance-cdgc/` |
-| MDM, golden records | `idmc-mdm` | `knowledge/08-mdm/` |
-| CLAIRE, MCP servers | `idmc-claire-mcp` | `knowledge/09-claire-mcp/`, `knowledge/playbook/10-mcp.md` |
-| Promote dev to prod, org-to-org migration, cleanup | `idmc-deploy` | `knowledge/10-migration-org-management/` |
-| IPU, metering, job caps, cost | `idmc-ipu` | `knowledge/11-ipu-metering-licensing/` |
-| Login, orgs, pods, sessions, users and roles | this one | `knowledge/01-access-auth-orgs/` |
+| Install, run, tune a Secure Agent; runtime; connections | `idmc-secure-agent` | `knowledge/02-secure-agent/` |
+| Mappings, tasks, taskflows, schedules, CDI speed and cost | `idmc-cdi` | `knowledge/04-mappings/00-mapping-fast-path-read-this-first.md` |
+| Mass ingestion / CDC | `idmc-cdc` | `knowledge/06-cdc-ingestion/` |
+| CAI processes, publish, events | `idmc-cai` | `knowledge/07-app-integration/` |
+| Profiling, DQ rules, scorecards | `idmc-data-quality` | `knowledge/08-data-quality/` |
+| Catalog, glossary, lineage (data governance) | `idmc-governance` | `knowledge/09-catalog-lineage/` |
+| MDM, golden records | `idmc-mdm` | `knowledge/10-mdm/` |
+| CLAIRE, MCP servers | `idmc-claire-mcp` | `knowledge/11-mcp-claire/`, `knowledge/reference/playbook/10-mcp.md` |
+| Promote dev to prod, org-to-org migration, cleanup | `idmc-deploy` | `knowledge/12-deploy-migrate/` |
+| IPU, metering, job caps, cost | `idmc-ipu` | `knowledge/13-ipu-cost/` |
+| Login, orgs, pods, sessions, users and roles | this one | `knowledge/01-login-and-orgs/` |
 | Something failed | this one | `/idmc-mp:fix-error`, `knowledge/00-start-here/04-error-triage.md` |
 | Any single asset type | this one | `knowledge/README.md` ("Create any IDMC asset" table) |
-| Endpoints and verbs per service; documented caps | this one | `knowledge/playbook/05-endpoints-by-service.md`, `knowledge/12-reference-library/` |
+| Endpoints and verbs per service; documented caps | this one | `knowledge/reference/playbook/05-endpoints-by-service.md`, `knowledge/reference/` |
 | Python helpers (session, lockout guard, CDGC, jobs) | this one | `toolkit/lib/README.md` |
 | Rebuildable demos (CDC, CDI, CAI, CDQ, CDGC) | this one | `toolkit/demos/BLUEPRINT_CONVENTIONS.md` |
 

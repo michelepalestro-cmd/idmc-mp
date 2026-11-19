@@ -10,10 +10,10 @@ Pipeline: $ARGUMENTS
    recent runs read-only (`toolkit/lib/idmc_objects.py`, `toolkit/mapgen/mapgen.py jobs`/`log`).
 2. Measure before proposing: wall time per step, the ~20 s floor per task, queueing vs running, rows per run, jobs per
    day against the monthly job cap, and IPU use if readable
-   (`${CLAUDE_PLUGIN_ROOT}/knowledge/03-cdi-data-integration/07-performance-concurrency-job-caps.md`,
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/11-ipu-metering-licensing/02-metering-consumption-exports.md`).
+   (`${CLAUDE_PLUGIN_ROOT}/knowledge/04-mappings/06-performance-concurrency-job-caps.md`,
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/13-ipu-cost/02-metering-consumption-exports.md`).
 3. Grep the lessons (`"domain": "cdi"`, `"domain": "ipu-licensing"`) for each bottleneck you find.
 4. Propose fixes ranked by measured gain: consolidate tasks, DAG / staged fan-out instead of linear, concurrency within
    the DTM pool, fewer and larger jobs, pushdown. Give the expected effect and how to prove it.
 5. Apply only on the user's yes, using the safe-change rules in
-   `${CLAUDE_PLUGIN_ROOT}/knowledge/03-cdi-data-integration/08-changing-pipelines-safely.md`, then re-measure.
+   `${CLAUDE_PLUGIN_ROOT}/knowledge/04-mappings/07-changing-pipelines-safely.md`, then re-measure.

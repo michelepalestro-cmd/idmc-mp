@@ -199,7 +199,7 @@ def _():
     for d, dirs, fs in os.walk(ROOT):
         dirs[:] = [x for x in dirs if x != ".git"]
         rel = os.path.relpath(d, ROOT)
-        if rel.startswith(os.path.join("knowledge", "12-reference-library")) or rel.startswith(os.path.join("toolkit", "demos")):
+        if rel.startswith(os.path.join("knowledge", "reference")) or rel.startswith(os.path.join("toolkit", "demos")):
             continue
         for x in dirs + fs:
             if re.search(r"[ &(),']", x):
@@ -233,7 +233,7 @@ def _():
     assert not errs, "\n    ".join(errs[:15])
 
 
-@test("lessons: every area skill's domain has current lessons and a readable by-domain file")
+@test("lessons: every area skill's domain has current lessons and a lessons file in its job folder")
 def _():
     rows = [r for _, r in lessons() if r["status"] == "current"]
     for s in SKILLS[1:]:
@@ -243,8 +243,8 @@ def _():
         for d in doms:
             assert d in DOMAINS, "%s: unknown domain %s" % (s, d)
             assert sum(1 for r in rows if r["domain"] == d) >= 10, "%s: fewer than 10 current %s lessons" % (s, d)
-        md = re.search(r"lessons/by-domain/([\w.-]+\.md)", t)
-        assert md and os.path.exists(p("lessons", "by-domain", md.group(1))), s + ": by-domain file missing"
+        md = re.search(r"(knowledge/[\w.-]+/lessons[\w.-]*\.md)", t)
+        assert md and os.path.exists(p(*md.group(1).split("/"))), s + ": its lessons file is missing"
 
 
 @test("lessons: the error-signature index is up to date")

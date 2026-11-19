@@ -11,7 +11,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Ground rules (from the core `idmc-mp` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/lessons/lessons.jsonl"` (this area: `"domain": "migration"`, `"domain": "org-cleanup"`),
-  then `lessons/by-domain/10-migration-org-management.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
+  then `knowledge/12-deploy-migrate/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
 - **Prove the org first.** `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"` (one login attempt per run: retries
   lock the account). Take every host from `products[].baseApiUrl`; never hand-build a pod URL.
 - **The user's systems are the right systems.** Never steer to another technology; ask if none is named.
@@ -19,7 +19,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   `knowledge/00-start-here/08-new-pipeline-milestones-any-source-any-target.md` is worked in this org.
 - **Writes are dry runs** until the org guard passes (`--execute --expect-org <orgIdV3>`); say what will change first.
 - **Evidence, not claims:** finish with ids, row counts, job states or the API answer that proves the result
-  (`knowledge/14-claude-working-methods/02-evidence-discipline.md`).
+  (`knowledge/14-working-with-claude/02-evidence-discipline.md`).
 
 ## What users ask for
 - Promote a project from dev to prod, repeatably.
@@ -36,12 +36,12 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Read (in this order when unsure)
 | Need | File |
 |---|---|
-| Export and import (v3 migration API) | `knowledge/10-migration-org-management/01-export-import-v3-migration-api.md` |
-| Editing packages safely | `knowledge/10-migration-org-management/02-editing-packages-safely.md` |
-| Migration-clone authoring | `knowledge/10-migration-org-management/03-migration-clone-authoring.md` |
-| Org-to-org migration runbook | `knowledge/10-migration-org-management/04-org-to-org-migration-runbook.md` |
-| Cutover and rollback | `knowledge/10-migration-org-management/05-cutover-rollback.md` |
-| Headless deletes and org cleanup | `knowledge/10-migration-org-management/06-headless-deletes-org-cleanup.md` |
+| Export and import (v3 migration API) | `knowledge/12-deploy-migrate/01-export-import-v3-migration-api.md` |
+| Editing packages safely | `knowledge/12-deploy-migrate/02-editing-packages-safely.md` |
+| Migration-clone authoring | `knowledge/12-deploy-migrate/03-migration-clone-authoring.md` |
+| Org-to-org migration runbook | `knowledge/12-deploy-migrate/04-org-to-org-migration-runbook.md` |
+| Cutover and rollback | `knowledge/12-deploy-migrate/05-cutover-rollback.md` |
+| Headless deletes and org cleanup | `knowledge/12-deploy-migrate/06-headless-deletes-org-cleanup.md` |
 | End-to-end playbook (13 stages) | `knowledge/00-start-here/07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md` |
 | Production post-mortem: checks that catch each failure | `knowledge/00-start-here/09-what-went-wrong-production-deployment-post-mortem.md` |
 
