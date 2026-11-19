@@ -466,6 +466,14 @@ def _():
     assert rc == 0 and "ALL CHECKS PASSED" in out, out[-600:]
 
 
+@test("US-20 customer CSV: messy CSV -> cleaned, mastered customers with ids, as a real IDMC mapping (offline)")
+def _():
+    rc, out = run(["check.py"], cwd=p("toolkit", "demos", "customer_master_csv"), home=tempfile.mkdtemp())
+    assert rc == 0 and "ALL CHECKS PASSED" in out, out[-800:]
+    q = json.loads(re.search(r"match quality: (\{.*\})", out).group(1))
+    assert q["precision"] == 1.0 and q["recall"] >= 0.95, q
+
+
 @test("US-18 updates keep user data: nothing tells Claude to write inside the plugin")
 def _():
     for s in SKILLS:

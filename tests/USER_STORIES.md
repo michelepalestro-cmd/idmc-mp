@@ -30,6 +30,7 @@ Record each live run in the table at the bottom (date, org type, result, notes).
 | US-17 | presales / learner | a demo blueprint rebuilt end to end | I can show the pattern on real systems | `toolkit/demos/*/BUILD.md` |
 | US-18 | any user | updates that never touch my login or my lessons | updating is always safe | `/plugin update idmc-mp@idmc-mp` |
 | US-19 | data steward | duplicates and bad values in a large table cleaned with IDMC mappings, proven before anything changes | the data gets cleaner without slowing every rebuild | `/idmc-mp:clean-data` |
+| US-20 | new user | a messy customer CSV cleaned, de-duplicated and given customer ids by IDMC on my own Secure Agent, timed from zero | I see real value in under an hour without a DQ or MDM licence | `toolkit/demos/customer_master_csv/` (`check.py`, `BUILD.md`) |
 
 ## Live checklists
 
@@ -102,6 +103,12 @@ Run in a new Claude Code session after installing the plugin. "Pass" means every
 - Measures the slice first and reuses the org's Cleanse / dictionary / rule assets; writes only a stage table.
 - After one job: agreement with the SQL twin per record (decision, survivor), the extra finds with examples, run time.
 - Nothing applied to the real table without a yes on the merge list.
+
+**US-20 customer CSV, timed from zero**
+- Offline: `python3 toolkit/demos/customer_master_csv/check.py` passes (precision 1.00, recall at least 0.95).
+- Live, following `BUILD.md` with its timing log filled in: agent installed and Data Integration RUNNING; flat-file
+  connection tested; mapping and task deployed with `--execute --expect-org`; one run SUCCESS; `check.py --compare`
+  says the live output matches the twin. Target: about 20-40 minutes the first time.
 
 **US-18 update**
 - After `/plugin update`, `~/.idmc_toolkit/` is unchanged and `/idmc-mp:connect` still logs straight in.

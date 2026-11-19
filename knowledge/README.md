@@ -92,7 +92,7 @@ your own, make each one start by reading this KB: a skill built from an older sn
 (L-METHOD-084).
 
 It is also a working kit: the plugin holds the Python library the KB describes, a headless mapping generator, the
-Claude Code skills and three ready-to-rebuild demo blueprints.
+Claude Code skills and four ready-to-rebuild demo blueprints.
 
 > **The goal:** help you deploy IDMC end to end, with every capability you ask for, on the systems you already have.
 > Two rules every Claude session using this KB follows:
@@ -141,10 +141,11 @@ README's [troubleshooting table](../README.md#if-the-login-doesnt-work).
 | `toolkit/tools/secret_scan.py` | Run before you share your copy: must print CLEAN |
 | [`RULES.md`](RULES.md) | The rules any Claude session follows with this KB |
 
-### The three blueprints
+### The blueprints
 
 | Blueprint | What it shows | IDMC services | Rebuild |
 |---|---|---|---|
+| [`customer_master_csv`](../toolkit/demos/customer_master_csv/README.md) | A messy customer CSV cleaned, de-duplicated and given stable customer ids, written back as CSV files; proven offline in under a second by `check.py`, with a timed live run | CDI on a Secure Agent (flat files), native transformations only | 20-40 min first time |
 | [`retail_data_foundation`](../toolkit/demos/retail_data_foundation/README.md) (`rdf_`) | A multi-store retailer's whole data layer: Postgres -> CDC -> BigQuery, consolidated mappings to a golden customer record, DQ scorecard, reverse ETL to Postgres and Salesforce (batch and real time), catalog with glossary, classification and lineage | CDC (Database Ingestion), CDI, CAI, CDQ / Profiling, CDGC, address verification | 2-3 h first time |
 | [`bid_desk_document_parsing`](../toolkit/demos/bid_desk_document_parsing/README.md) (`bid_`) | Bid documents attached in the CRM -> SharePoint -> CLAIRE document parsing -> DQ rules -> a bid-readiness decision -> Snowflake -> one Tableau workbook (6 tabs); Run / What-if / Reset loop | CDI, CLAIRE parsing (Structure Parser), CDQ, CDGC, taskflows | about half a day |
 | [`message_bus_kafka_cai`](../toolkit/demos/message_bus_kafka_cai/README.md) (`mbr_`) | A legacy JMS retail integration bus replaced by Kafka + CAI: subscribers, validate / transform / route, retry with backoff, error queue, dead-letter and replay, JMS-to-Kafka bridge, nightly CDI batch to Oracle | CAI (Kafka / AMQP listeners, processes), CDI | 2-3 h |

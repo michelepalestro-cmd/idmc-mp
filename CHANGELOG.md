@@ -3,6 +3,18 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.10.0 (2026-11-19): user story: a messy customer CSV, mastered by IDMC
+
+- **New blueprint `toolkit/demos/customer_master_csv/`:** a messy customer CSV is standardized, de-duplicated and given
+  stable `CUST-######` ids by one IDMC mapping on a Secure Agent, built from native transformations only (no DQ or MDM
+  licence): name + ZIP blocks, a new customer only when a known e-mail or phone conflicts, the most complete and most
+  recent record as survivor, and a source-to-customer cross-reference.
+- **Proven offline in under a second** (`check.py`): sample with an answer key, lint and build of the real IDMC
+  package, a Python twin of the same rules, checks and a match score (precision 1.00; recall 1.00 on the default
+  sample, 0.99 on 2,000 people). `check.py --compare` diffs a live run against the twin.
+- **Timed live run** in `BUILD.md` (agent, flat-file connection, deploy, run, compare) with targets from the lessons and
+  a timing log; new test US-20 and a router entry.
+
 ## 1.9.0 (2026-11-19): one folder per job, with a cheat sheet for each
 
 - **New layout:** `knowledge/01-login-and-orgs` ... `14-working-with-claude`, in the order you build. Each job folder

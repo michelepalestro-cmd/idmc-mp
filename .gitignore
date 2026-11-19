@@ -29,6 +29,8 @@ toolkit/demos/*/state/*
 !toolkit/demos/*/state/.gitignore
 toolkit/demos/*/build/
 toolkit/mapgen/profile.json
+toolkit/demos/customer_master_csv/data/
+toolkit/demos/customer_master_csv/expected/
 
 # Run output
 _output/
