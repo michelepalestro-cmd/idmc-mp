@@ -8,6 +8,9 @@ they require?
 for your own agents; a composite server or tool connection will not save or answers 401.
 
 **Key rules:**
+- For the vendor's current catalog, read the public registry first: no login needed.
+  `GET https://hdm.<domain>.informaticacloud.com/mcp-registry/v0.1/servers?limit=100` listed **23 servers** on
+  2026-11-19 (L-MCP-132). Calling any server still needs an org credential (401 without one).
 - Enumerate the org registry before declaring a wall:
   `GET https://hdm.<domain>.informaticacloud.com/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED` with
   `IDS-SESSION-ID`, then `tools/list` per server (L-MCP-001).
@@ -23,13 +26,14 @@ for your own agents; a composite server or tool connection will not save or answ
 **Related:** [02 MCP Auth & OAuth Clients](02-mcp-auth-oauth-clients.md) ·
 [04 Agent-Style MCP & Custom Shims](04-agent-style-mcp-async-orchestration-custom-shims.md) ·
 [05 MCP vs REST](05-mcp-vs-rest-when-to-use-which.md) ·
+[07 Ecosystem: plugins, registries, community tools](07-ecosystem-plugins-registries-community-tools.md) ·
 [MCP catalog reference](../12-reference-library/idmc-api-mcp-reference/content/30-mcp-servers.json) · [Lessons: CLAIRE & MCP](../../lessons/by-domain/09-claire-mcp.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-19 (public registry read live; October 2026 server pages read)
 
 > **Summary.** The MCP asset-management service lists each server's `id`, `name`, `serverEndpointUrl` and `context`. One
-> full org's registry exposed **19 servers with about 140 tools**, and the vendor guide documents 20 shared servers
-> (L-MCP-001, L-MCP-119). Two verdicts built only on the servers wired into one Claude session were wrong the same day,
+> full org's registry exposed **19 servers with about 140 tools**, the September 2026 guide documented 20 shared servers,
+> and the October 2026 release brought the public registry to **23** (L-MCP-001, L-MCP-119, L-MCP-132). Two verdicts built only on the servers wired into one Claude session were wrong the same day,
 > which is why enumeration comes first. File-based DQ agent: [CLAIRE DQ Agent](../06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md);
 > operating reference: [56-mcp-operating.json](../12-reference-library/idmc-api-mcp-reference/content/56-mcp-operating.json).
 
@@ -41,12 +45,40 @@ Three different things get called "IDMC MCP servers" (L-MCP-005):
 
 | Class | What it is | Where it appears | Count |
 |---|---|---|---|
-| **1. Informatica-managed servers** | Servers Informatica hosts over its own service APIs: jobs, connections, agents, catalog, DQ, MDM, marketplace, ops | the org registry on the `hdm` host; the AI Agent Engineering → MCP Servers page | **5** servers / 11 actions in the April 2026 guide; **19** servers / ~140 tools in one org's registry; **20** shared servers in the September 2026 guide (L-MCP-119) |
+| **1. Informatica-managed servers** | Servers Informatica hosts over its own service APIs: jobs, connections, agents, catalog, DQ, MDM, marketplace, policies, ops | the public registry and the org registry on the `hdm` host; the AI Agent Engineering → MCP Servers page | **5** servers / 11 actions in the April 2026 guide; **19** servers / ~140 tools in one org's registry; **20** shared servers in the September 2026 guide (L-MCP-119); **23** in the October 2026 release and the public registry (L-MCP-132) |
 | **2. CLAIRE / AI-agent servers** | The conversational CLAIRE orchestrator, reached on the CLAIRE API host at `<claire_api_url>/claire-orchestrator-ai-agent/api/v1/mcp` | as tools in your **host app**, not in the org registry | 4 tools (`new_conversation`, `OrchestratorSkill`, `MdmOrchestratorSkill`, `working`); can list 0 for an org ([04](04-agent-style-mcp-async-orchestration-custom-shims.md)) |
 | **3. Custom fleets** | Your own (or a colleague's) MCP servers wrapping the same REST APIs | wherever you register them (`claude mcp add`, IDE config) | unbounded; one reference fleet had 9 servers / ~110 tools |
 
-The managed catalog grows release by release (5 servers in the April 2026 guide, 19-20 later). Quote a number only with
-its class, its release and when you enumerated it.
+The managed catalog grows release by release. Quote a number only with its class, its release and when you enumerated
+it:
+
+| Release | Servers added | Running total |
+|---|---|---|
+| April 2026 | Address Verification, CDGC Metadata Search, Customer Identification, Data Provisioning, Job Management | 5 |
+| July 2026 | Catalog Discovery, Catalog Enrichment | 7 |
+| August 2026 | nine, including Connection, Secure Agent, User, IPU, Log and Audit Management, Asset Promotion, CDGC Data Quality Score and the Troubleshooting preview | 16 |
+| September 2026 | CLAIRE Data Exploration Agent, CLAIRE Data Quality Agent, CLAIRE Orchestrator, Data Marketplace Order Management | 20 |
+| October 2026 (published 2026-11-10) | Catalog Asset History, Data Access Management, IDMC Asset Documentation | **23** |
+
+(Release-by-release split from the vendor What's New pages, read 2026-11-19; L-MCP-132.)
+
+---
+
+## 1a. The public registry: the vendor's catalog without a login (L-MCP-132)
+
+```
+GET https://hdm.<domain>.informaticacloud.com/mcp-registry/v0.1/servers?limit=100
+```
+
+- **No IDMC login.** It follows the official MCP registry standard (`GET /v0.1/servers`). On `dm-us` it answered 200
+  with `metadata.count: 23` on 2026-11-19. Each entry is named `com.informatica.idmc/<context>`, has a `title`, a
+  `version` (most `1.0.0`; Connection Management `2.2.2`, Catalog Enrichment `1.0.3`, Catalog Discovery `1.0.2`), and one
+  `streamable-http` remote at `https://mcp.<domain>.informaticacloud.com/mcp-servers/public/<context>` that accepts
+  either an `IDS-SESSION-ID` header or `Authorization: Bearer <token>`.
+- **What it does not tell you:** which servers *your org* exposes, or the tool list. An unauthenticated `initialize`
+  answers 401. For those, use the org registry (§2) and `tools/list` with a credential.
+- **`status: active` is the registry's lifecycle field, not GA.** Troubleshooting is listed `active` but is still a
+  preview in the docs.
 
 ---
 
@@ -80,24 +112,26 @@ the overturned L-MCP-075).
 
 ---
 
-## 3. The managed servers: what each can and cannot do (one org's registry)
+## 3. The managed servers: what each can and cannot do
 
-Tool counts come from one first-hand `tools/list` per server. The per-server counts recorded sum to about 120; the
+The first 19 rows come from one org's registry (September 2026). The last four rows, and the tools marked **(Oct)**, come
+from the October 2026 vendor server pages (documented, read 2026-11-19, not yet called live; L-MCP-132). Tool counts in the
+first 19 rows come from one first-hand `tools/list` per server. The per-server counts recorded sum to about 120; the
 enumeration summary said "~140 tools". Re-list on your org, because exposure is per org.
 
 | Server (`context`) | Tools | Key tools | Can | Cannot / notes |
 |---|---|---|---|---|
 | `jobmanagement` | 19 | `run_mapping_task`, `run_synchronization_task`, `run_linear_taskflow`, `run_published_taskflow`, `run_replication_task`, `run_powercenter_task`, `run_dynamic_mapping_task` (listed, not exercised; a DMT is read at `/batch-mapping/api/v1/dynamictask/<id>`, L-CDI-289), `run_masking_task`, resume/stop/terminate, `get_*_status`, `search_completed_jobs`, `search_task_asset` | run, monitor and stop **already deployed or published** tasks and taskflows | no authoring, deploying or publishing. It stops CDI jobs, not CAI process instances. |
-| `connectionmanagement` | 12 | `create_connection`, `update_connection`, `test_connection`, `test_connection_by_id`, schema/type reads | **create, update and test connections** (a headless write); a connection test through it passed where a v2 POST test returned APP_21000 | same connector rules as REST (types, key formats) |
+| `connectionmanagement` | 12 (18 documented Oct) | `create_connection`, `update_connection`, `delete_connection`, `get_connection(_by_name)`, `list_connections`, `test_connection`, `test_connection_by_id`; **(Oct)** `browse_objects`, `get_objects(_by_name)`, `get_related_objects`, `get_object_metadata` (+ `_with_dataformat`, `_with_flatfile_attrs`), `preview_object_data` (+ the same two variants) | **create, update and test connections** (a headless write); a connection test through it passed where a v2 POST test returned APP_21000; **(Oct)** browse a connection's objects, read their metadata and preview rows | same connector rules as REST (types, key formats) |
 | `secureagentmanagement` | 15 | list/get agents and runtime environments, **`update_runtime_environment_selections`**, start/stop service | enable or disable **services and connectors** on a runtime environment | each selection change rolls engines (minutes of queueing); the REST twin is `GET/PUT.../runtime/api/v2/runtimeEnvironment/<reId>/selections/ui` |
 | `diassetpromotion` | 7 | `rest_export_start`, `rest_import_start`, export/import status and log, `search_assets` (FIQL) | v3 **export/import** of asset definitions: the clone-authoring path | an import lands *definitions* only; it does not deploy DBMI or publish CAI |
-| `cdgccatalogenrichment` | 3 | glossary, classification and business-metadata writes | **glossary and classification writes** | needs a populated catalog |
-| `cdgccatalogdiscovery` | 2 | `search_assets`, `get_asset_details` | natural-language asset discovery | read-only |
+| `cdgccatalogenrichment` | 3 (7 documented Oct) | `update_asset_business_metadata`, `edit_data_asset_business_glossaries`, `edit_data_asset_data_classifications`; **(Oct)** `edit_asset_certification`, `edit_asset_rating`, `manage_asset_groups`, `manage_asset_stakeholders` | **glossary, classification, certification, rating, group and stakeholder writes** | needs a populated catalog |
+| `cdgccatalogdiscovery` | 2 (3 documented Oct) | `search_assets`, `get_asset_details`, **(Oct)** `get_asset_lineage` | natural-language and keyword asset discovery; argument contract in [07](07-ecosystem-plugins-registries-community-tools.md) §3 (L-MCP-134) | read-only; the server the vendor's Claude plugin uses |
 | `cdgcsearchmetadata` | 2 | `search_metadata` (`knowledgeQuery`), `get_asset_details` (`id`, `scheme`) | NL catalog search; asset detail **including lineage and profile**. The `/data360/lineage/*` graph paths 404, but REST reads the same hops from the asset read's `lineage` segment (L-CDGC-181) | read-only; semantic results, so asset ids are not stable handles |
 | `cdgcdataqualityscore` | 1 | `get_asset_score` | read catalog DQ scores | untested in these sources |
 | `dataqualityagent` | 7 | `data_profiling`, `data_quality_analysis`, `data_quality_cleansing`, `data_quality_rule_generation`, `data_quality_rule_recommendation`, `request_upload_url`, `get_skill_execution_updates` | CLAIRE DQ agent: **file-based profiling and cleansing** with no catalog; catalog-keyed skills on cataloged assets | asynchronous; nested envelope; saves no console asset. See [CLAIRE DQ Agent](../06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md) |
 | `dqverifyaddress` | 1 | `verify_address` (Interactive mode) | verify, standardize and geocode one address per call; persists nothing | not an IDMC job; batch REST does 1,000 per call |
-| `searchcustomer` | 3 | fuzzy master-record match, golden record, related records | MDM customer identification (fuzzy match; no public REST search exists) | needs MDM |
+| `searchcustomer` | 3 | `search_master_record` (fuzzy match), `get_master_record_details` (golden record), `get_related_records` | MDM customer identification (fuzzy match; no public REST search exists) | needs MDM |
 | `dataprovisioning` | 3 | `list_data_collections`, `list_delivery_targets` (returns collection detail, not targets), `checkout_data_order` | raise a governed Data Marketplace access request | the order is a request, not delivery |
 | `usermanagement` | 9 | `create_user`, add/remove roles and groups (includes deletes) | **user and role administration** | treat as a privileged write surface |
 | `ipumanagement` | 5 | IPU metering exports | cost visibility | see [IPU, Metering & Licensing](../11-ipu-metering-licensing/) |
@@ -106,6 +140,10 @@ enumeration summary said "~140 tools". Re-list on your org, because exposure is 
 | `logmanagement` | 3 | activity, error and session logs | read | read-only |
 | `datamanagementorchestrator` | 4 | **`orchestrate`**, **`orchestrate_master_data_analysis`** | one NL prompt routed across catalog, DQ, profiling, exploration and integration (plus an MDM twin): the CLAIRE orchestrator as a managed server; the same answers as the CLAIRE GPT UI in 28-80 s (L-MCP-111) | agent-style asynchronous contract with a nested envelope ([04](04-agent-style-mcp-async-orchestration-custom-shims.md), L-MCP-112); plans come back for approval rather than executing |
 | `dataexplorationagent` | 4 | `data_explore`, `master_data_explore` | preview rows, values and quality with generated SQL; `data_explore` requires `prompt`, `name` and `external_id` (L-MCP-119) | agent-style; same answers as the UI (L-MCP-111); SELECT-only |
+| `ordermanagement` (Data Marketplace Order Management; Sept) | 8 | `create_order`, `get_order`, `list_orders`, `approve_order`, `reject_order`, `fulfill_order`, `cancel_order`, `delete_order` | the full Data Marketplace order lifecycle, including the approver's side that `dataprovisioning` lacks | needs Data Marketplace; `fulfill_order` marks an order fulfilled, it does not move data |
+| `cdgccatalogassethistory` (Catalog Asset History; Oct) | 1 | `get_asset_history` | read who changed what on a catalog asset, and when | read-only |
+| `policymanagement` (Data Access Management; Oct) | 32 | e.g. `create_data_access_control`, `create_data_filter`, `create_data_deidentification`, `publish_data_access_asset`, `search_policy_reference_assets`, `list_user_groups` | author and publish data-access policies, row filters, de-identification and protection rules, precedence tiers and usage types | the context name does not match the title; a privileged write surface, like `usermanagement`; needs Data Access Management |
+| `idmcassetdocumentation` (IDMC Asset Documentation; Oct) | 35 | read-only `idmc_*` tools over agents, connections, ingestion, mappings, mapplets, mapping task templates, objects, runtimes, source control and taskflows; its server page also names a skill, `idmc-document-project` | generate documentation of a project's assets: the first managed server that reads mapping internals for documentation | read-only: it does **not** author or change mappings (§5 still holds) |
 
 Mapping to the April 2026 vendor names:
 
@@ -157,7 +195,8 @@ Documented platform facts from the same guide:
 
 ## 5. The narrow wall: what no MCP verb does (L-MCP-003)
 
-Across all 19 servers, including `datamanagementorchestrator.orchestrate`, **no verb**:
+Across all 19 servers of the September registry, including `datamanagementorchestrator.orchestrate`, **no verb**
+(still true of the 23 documented in October 2026: `idmcassetdocumentation` reads mappings, it does not write them; L-MCP-132):
 
 | Missing verb | REST route that does it | Where it is documented |
 |---|---|---|
@@ -193,6 +232,25 @@ the agent; run, monitor and stop; asset export and import; glossary and classifi
   - asset privileges **MCP Server** and **Deployed MCP Server**, for *composite* servers you build.
 
   Admin and Designer hold them by default. Operator can run but cannot create or set permissions on composite servers.
+
+---
+
+## 6a. October 2026 platform changes (documented, L-MCP-133)
+
+From the vendor's October 2026 What's New (published 2026-11-10), read 2026-11-19; none of this was exercised yet.
+
+| Change | What it means for you |
+|---|---|
+| **Protocol 2026-07-28** (stateless MCP) over streamable HTTP, in dual-era mode | clients on 2025-06-18 keep working; MCP Python SDK v2 is supported |
+| **OAuth renames**: the OAuth 2.1 server is now "Informatica OAuth Server (Authorization Code Grant)", the OAuth 2.0 one "Informatica OAuth Server (Client Credentials Grant)"; clients are "Authorization Code" and "Client Credentials" clients | the same two flows as [02](02-mcp-auth-oauth-clients.md), new labels in the UI |
+| **OAuth scopes** for Authorization Code clients: `mcp:tools:read`, `mcp:tools:write`, `mcp:tools:execute`, and `mcp:resources:read` for resources | give a human-in-the-loop client only the scopes it needs; clients created before the release inherit all three tool scopes |
+| **MCP resources**: read-only API, File or Zip resources (for example skill files) on a new Resources tab | check a server's Resources tab for vendor skill files before you write your own |
+| **Tool lifecycle states** (Preview, Active, Deprecated) per server and per tool; the Actions tab is now **Tools**; a Configuration tab holds connection snippets | check a tool's state before you build on it |
+| **MCP Monitoring**: invocations, error rate, average/P95/P99 duration, connected clients, CSV export, 90 days kept; needs the "View MCP Monitoring" privilege | the first vendor-side view of what your agents call |
+| **More marketplaces**: the shared servers are also offered through Databricks Marketplace and MuleSoft Anypoint Exchange ("not all servers on all marketplaces") | see [07](07-ecosystem-plugins-registries-community-tools.md) §2 for every place they are listed |
+
+Not confirmed in any official page read on 2026-11-19: A2A support (announced in May 2026 for the "Fall 2026 release"),
+GA of external MCP tool connections, and an MCP-specific meter (the metering page answered 404).
 
 ---
 
@@ -283,7 +341,12 @@ CLAIRE GPT in the browser is covered in [03](03-claire-gpt-prompting-rules-patte
 
 ## 11. Open questions
 
-- Is the ~140 tool figure right? The recorded per-server counts sum to ~120.
+- Is the ~140 tool figure right? The recorded per-server counts sum to ~120. The October 2026 server pages add four
+  servers and about 85 tools (32 in `policymanagement`, 35 in `idmcassetdocumentation`), so a 23-server org could expose
+  well over 200: re-list before you quote a number.
+- The Job Management page mentions `resume_taskflow_fault_retry` and the Connection Management page mentions
+  `list_connector_types`, `get_connector_schema`, `list_connection_runtime_environments` and `resolve_dynamic_attributes`,
+  none of which is in their documented tool lists. Check `tools/list`.
 - Does `cdgcdataqualityscore.get_asset_score` return Data Profiling scorecard values, or only catalog scores?
 - What do the write tools in `cdgccatalogenrichment` and `usermanagement` require (bodies, roles)? They were listed, not
   exercised, in these sources.

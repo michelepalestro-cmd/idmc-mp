@@ -24,10 +24,12 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## What users ask for
 - Connect Claude to the org's managed MCP servers and call them.
 - Decide whether a task should go through MCP or REST.
+- "Is there an official plugin, MCP server or CLI for IDMC?" and "is this community tool safe to use?"
 - Use CLAIRE GPT well.
 
 ## How to work
-1. List the org's MCP registry and auth (docs 01-02) with `toolkit/lib/idmc_mcp.py`.
+1. For the vendor's current catalog, read the public registry (no login, doc 01 §1a); then list the org's MCP registry
+   and auth (docs 01-02) with `toolkit/lib/idmc_mcp.py`.
 2. Pick MCP or REST per doc 05; MCP never replaces the Secure Agent.
 3. Long-running work: the async orchestration pattern (doc 04).
 
@@ -39,6 +41,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | CLAIRE GPT prompting | `knowledge/09-claire-mcp/03-claire-gpt-prompting-rules-patterns.md` |
 | Agent-style MCP and shims | `knowledge/09-claire-mcp/04-agent-style-mcp-async-orchestration-custom-shims.md` |
 | MCP vs REST | `knowledge/09-claire-mcp/05-mcp-vs-rest-when-to-use-which.md` |
+| Vendor Claude plugin, MCP registries, community CLIs and MCP servers | `knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md` |
 | MCP servers, actions and calls | `knowledge/playbook/10-mcp.md` |
 
 ## Tools (`--help` on each)

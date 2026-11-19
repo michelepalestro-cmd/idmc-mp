@@ -15,7 +15,7 @@ belief.
 [Overturned Beliefs](../../lessons/overturned-beliefs.md) · [Lessons Learned](../../lessons/README.md) ·
 [KB README](../README.md)
 
-**Last verified:** 2026-11-10.
+**Last verified:** 2026-11-19.
 
 > In July the KB said "read almost everything, run almost everything, design almost nothing"; by late September most
 > design, publish, deploy and delete steps had been proven headless, and the KB was rebuilt around dated lessons so that
@@ -23,6 +23,20 @@ belief.
 > the operating detail (agent tuning, job budgets, latency, serving to BI).
 
 ---
+
+## 2026-11-19: 23 managed MCP servers, and the ecosystem around them
+
+- **Managed servers brought to the October 2026 release** ([Managed MCP Servers](../09-claire-mcp/01-managed-mcp-servers-catalog-access.md)):
+  the public registry (no login) lists 23 servers; four were missing here (`ordermanagement`, `cdgccatalogassethistory`,
+  `policymanagement`, `idmcassetdocumentation`), plus the October tool additions to connection management, catalog
+  discovery and catalog enrichment, a release-by-release count, and the October platform changes (protocol 2026-07-28,
+  renamed OAuth servers, scopes, resources, tool states, monitoring). No new server authors mappings, deploys CDC or
+  publishes CAI.
+- **New doc** [Ecosystem: plugins, registries, community tools](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md):
+  the vendor's Claude plugin and how it sits next to this one, every place the servers are listed, the catalog-discovery
+  and data-exploration tool contract, and a reviewed list of community CLIs, MCP servers, skills and CI/CD templates with
+  verdicts.
+- **6 new lessons (2,048 in total):** L-MCP-132 to L-MCP-137.
 
 ## 2026-11-17: a Quick Start, and the last two weeks of field work
 

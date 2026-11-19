@@ -5,7 +5,7 @@ A Claude Code plugin that makes Claude an IDMC co-pilot: it understands Informat
 promote, tune Secure Agents, build and speed up CDI pipelines, set up CDC, publish CAI processes, add data quality,
 scan into the catalog, master data, and read IPU use, on the systems you already have.
 
-Inside: 2,042 field lessons (error signature -> cause -> fix), one skill per IDMC area, twelve slash commands, a
+Inside: 2,048 field lessons (error signature -> cause -> fix), one skill per IDMC area, twelve slash commands, a
 13-stage deploy-and-operate playbook, a Python library with a login lockout guard, a mapping generator, three
 rebuildable demo blueprints, and an endpoint-level API and MCP reference.
 
@@ -49,6 +49,10 @@ The full guide is the [Quick Start](knowledge/00-start-here/10-quick-start-your-
 | CLAIRE, MCP | `idmc-claire-mcp` | | "connect to our managed MCP servers" |
 | Deploy, promote, migrate | `idmc-deploy` | `promote` | "promote project `<X>` from dev to prod" |
 | IPU, metering, job caps | `idmc-ipu` | `ipu-report` | "how many IPUs did we use this month, and on what" |
+
+Informatica also publishes its own Claude plugin (`informatica-for-claude-platform`, catalog discovery and data
+questions). It installs alongside this one; the [ecosystem guide](knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md)
+covers it, all 23 managed MCP servers and the community tools worth knowing.
 
 All commands are `/idmc-mp:<name>`. Two rules hold throughout: Claude builds with the systems you name (the examples
 in the knowledge base are not recommendations), and it works the workaround ladder in your org before ever saying

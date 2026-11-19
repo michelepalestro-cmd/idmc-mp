@@ -271,7 +271,7 @@ The full placeholder table, with the other spellings you may meet, is in
 | [`knowledge/06-data-quality-profiling`](06-data-quality-profiling/) | DQ assets, profiling, the CLAIRE DQ agent's file-based route, DQ scorecards |
 | [`knowledge/07-catalog-governance-cdgc`](07-catalog-governance-cdgc/) | catalog sources and scans, glossary, links, classification, search, lineage, marketplace |
 | [`knowledge/08-mdm`](08-mdm/) | MDM SaaS runtime vs design, records, Business 360; the repeatable playbook for mastering any table |
-| [`knowledge/09-claire-mcp`](09-claire-mcp/) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP |
+| [`knowledge/09-claire-mcp`](09-claire-mcp/) | the managed MCP servers, MCP OAuth clients, CLAIRE GPT prompting, agent-style MCP, the plugin and community-tool ecosystem |
 | [`knowledge/10-migration-org-management`](10-migration-org-management/) | v3 export/import, editing packages, clone-authoring, **org-to-org migration and cutover**, headless deletes and org cleanup |
 | [`knowledge/11-ipu-metering-licensing`](11-ipu-metering-licensing/) | the IPU model and how consumption is metered, metering exports, entitlement vs licence, job caps and budgets |
 | [`knowledge/12-reference-library`](12-reference-library/) | the generated API & MCP endpoint reference, the IICS→IPU KB, Informatica dictionaries/guides, the REST verb matrix |

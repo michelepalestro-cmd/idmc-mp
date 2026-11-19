@@ -3,6 +3,16 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.4.0 (2026-11-19): all 23 managed MCP servers, and the ecosystem
+
+- **Managed MCP servers updated to the October 2026 release:** 23 servers (four were missing: Data Marketplace Order
+  Management, Catalog Asset History, Data Access Management, IDMC Asset Documentation), the vendor's public registry
+  (readable with no login), the October tool additions and platform changes.
+- **New doc:** [Ecosystem: plugins, registries, community tools](knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md):
+  the vendor's own Claude plugin and how to use it alongside this one, where the servers are listed, the
+  catalog-discovery and data-exploration tool contract, and a reviewed list of community tools with verdicts.
+- **Six lessons:** L-MCP-132 to L-MCP-137. The `idmc-claire-mcp` skill points to the new doc.
+
 ## 1.3.0 (2026-11-18): clean data with mappings
 
 - **New playbook:** [cleaning a large dataset with IDMC mappings](knowledge/06-data-quality-profiling/05-cleaning-a-large-dataset-with-mappings.md):

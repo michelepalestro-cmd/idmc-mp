@@ -397,6 +397,7 @@ address entities by runtime id (for example `c360.person`), never by design GUID
 
 | Operation | Status | Route | See |
 |---|---|---|---|
+| Read the vendor's public MCP registry (all shared servers, no login) | P 2026-11-19 | `GET https://hdm.<domain>.informaticacloud.com/mcp-registry/v0.1/servers?limit=100` (23 servers) | [Managed MCP Servers](../09-claire-mcp/01-managed-mcp-servers-catalog-access.md) §1a · L-MCP-132 |
 | Read the org's MCP registry | P 2026-09-23/28 | `GET https://hdm.<domain>.informaticacloud.com/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED` (v3 session in `IDS-SESSION-ID`) | [Managed MCP Servers](../09-claire-mcp/01-managed-mcp-servers-catalog-access.md) · L-MCP-001 |
 | Create an OAuth client | P 2026-09-28 | `POST.../a2e-mcp-asset-mgmt-svc/api/v1/oauth2clients` → 201; the secret is shown once | [MCP Auth & OAuth Clients](../09-claire-mcp/02-mcp-auth-oauth-clients.md) · L-MCP-018 |
 | List or delete OAuth clients | P (recorded) · U (the library's delete helper) | `GET.../oauth2clients?type=IDMC_MCP&...`, `DELETE.../oauth2clients/<clientId>` | L-MCP-018 |

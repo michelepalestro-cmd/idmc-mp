@@ -1,11 +1,11 @@
 # Lessons Learned
 
-> **Summary.** Every lesson this KB rests on: **2,042 lessons** in 14 domain files, each with a stable id
+> **Summary.** Every lesson this KB rests on: **2,048 lessons** in 14 domain files, each with a stable id
 > (`L-<DOM>-<NNN>`), a kind, a date, the evidence that proved it and one to six sentences of generic, placeholder-only
-> text. 1,837 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
+> text. 1,843 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
 > these ids; [Overturned Beliefs](overturned-beliefs.md) lists every belief that fell and what replaced it.
 
-Last verified: 2026-11-18, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-13 across all files).
+Last verified: 2026-11-19, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-19 across all files).
 
 Related: [How to use this KB](../knowledge/00-start-here/01-how-to-use-this-kb.md) ·
 [Overturned Beliefs](overturned-beliefs.md) · [The Laws of Headless IDMC](../knowledge/00-start-here/02-the-laws-of-headless-idmc.md) ·
@@ -53,7 +53,7 @@ Counts are the `### L-` headings in each file.
 | [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.md) | `DQ` | 163 | 145 | 14 | 4 | 2026-06-27 to 2026-11-12 |
 | [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-cdgc.md) | `CDGC` | 226 | 198 | 26 | 2 | 2026-06-27 to 2026-11-01 |
 | [08 MDM](by-domain/08-mdm.md) | `MDM` | 90 | 77 | 11 | 2 | 2026-07-04 to 2026-11-12 |
-| [09 CLAIRE & MCP](by-domain/09-claire-mcp.md) | `MCP` | 131 | 115 | 14 | 2 | 2026-07-04 to 2026-11-13 |
+| [09 CLAIRE & MCP](by-domain/09-claire-mcp.md) | `MCP` | 137 | 121 | 14 | 2 | 2026-07-04 to 2026-11-19 |
 | [10 Migration & Org Management](by-domain/10-migration-org-management.md) | `MIG` (100), `CLEAN` (36) | 136 | 118 | 17 | 1 | 2026-07-04 to 2026-11-02 |
 | [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing.md) | `IPU` | 60 | 51 | 7 | 2 | 2026-06-28 to 2026-11-12 |
 | [12 Claude Working Methods](by-domain/12-claude-working-methods.md) | `METHOD` | 160 | 152 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-13 |
