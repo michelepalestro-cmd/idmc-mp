@@ -34,7 +34,7 @@ import hashlib
 import io
 import json
 import os
-import random
+import secrets
 import string
 import time
 import unicodedata
@@ -298,7 +298,7 @@ def static_problems(spec):
 def new_guid():
     """A fresh 22-character FRS guid (letters and digits)."""
     a = string.ascii_letters + string.digits
-    return "".join(random.choice(a) for _ in range(22))
+    return "".join(secrets.choice(a) for _ in range(22))
 
 
 ZIP_YEARS = (1980, 2107)    # the years a ZIP entry date can hold (DOS date: 1980 + a 7-bit year)

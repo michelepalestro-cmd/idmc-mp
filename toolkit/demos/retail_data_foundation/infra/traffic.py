@@ -44,7 +44,7 @@ def signup(rnd, tag):
     rec = {"full_name": full, "email": email, "phone": phone, "tier": rnd.choice(["Bronze", "silver ", "GOLD", ""]),
            "channel": rnd.choice(["web", "mobile", "store"]), "store": store,
            "address": f"{rnd.randint(1, 999)} Example St", "city": "Springfield", "state": "IL", "zip": "62701"}
-    sql = ("INSERT INTO public.customers (full_name, email, phone, address, city, state, zip, tier, signup_channel, "
+    sql = ("INSERT INTO public.customers (full_name, email, phone, address, city, state, zip, tier, signup_channel, "  # nosec B608  # synthetic values quoted by q()
            f"home_store_code) VALUES ({q(rec['full_name'])}, {q(email)}, {q(phone)}, {q(rec['address'])}, "
            f"{q(rec['city'])}, {q(rec['state'])}, {q(rec['zip'])}, {q(rec['tier'])}, {q(rec['channel'])}, {q(store)}) "
            "RETURNING customer_id;")
@@ -54,7 +54,7 @@ def signup(rnd, tag):
 def order(rnd):
     amt = round(rnd.uniform(5, 220), 2)
     store = rnd.choice(STORES)
-    return ("WITH c AS (SELECT customer_id FROM public.customers ORDER BY random() LIMIT 1), "
+    return ("WITH c AS (SELECT customer_id FROM public.customers ORDER BY random() LIMIT 1), "  # nosec B608  # synthetic values quoted by q()
             "p AS (SELECT product_id, unit_price FROM public.products ORDER BY random() LIMIT 1), "
             "o AS (INSERT INTO public.orders (customer_id, store_code, channel, status, list_amount, discount, amount) "
             f"SELECT c.customer_id, {q(store)}, 'store', 'paid', {amt}, 0, {amt} FROM c RETURNING order_id, customer_id), "
@@ -66,7 +66,7 @@ def order(rnd):
 
 
 def visit(rnd):
-    return ("WITH c AS (SELECT customer_id FROM public.customers ORDER BY random() LIMIT 1) "
+    return ("WITH c AS (SELECT customer_id FROM public.customers ORDER BY random() LIMIT 1) "  # nosec B608  # synthetic values quoted by q()
             f"INSERT INTO public.visits (customer_id, store_code) SELECT customer_id, {q(rnd.choice(STORES))} FROM c "
             "RETURNING visit_id;"
             " UPDATE public.visits SET check_out_at = now(), status = 'closed' "
@@ -75,7 +75,7 @@ def visit(rnd):
 
 def membership(rnd):
     tier, price = rnd.choice([("Bronze", 19), ("Silver", 39), ("Gold", 79)])
-    return ("WITH c AS (SELECT customer_id FROM public.customers c WHERE NOT EXISTS (SELECT 1 FROM public.memberships m "
+    return ("WITH c AS (SELECT customer_id FROM public.customers c WHERE NOT EXISTS (SELECT 1 FROM public.memberships m "  # nosec B608  # synthetic values quoted by q()
             "WHERE m.customer_id = c.customer_id) ORDER BY random() LIMIT 1), "
             "m AS (INSERT INTO public.memberships (customer_id, tier, status, monthly_price, started_at) "
             f"SELECT customer_id, {q(tier)}, 'active', {price}, now() FROM c RETURNING membership_id, customer_id, monthly_price) "
@@ -123,7 +123,7 @@ def main():
     ap.add_argument("--psql", help="psql command to use instead of docker compose exec")
     ap.add_argument("--seed", type=int)
     a = ap.parse_args()
-    rnd = random.Random(a.seed)
+    rnd = random.Random(a.seed)  # nosec B311  # seeded synthetic test data, not crypto
     n = 0
     try:
         while a.forever or n < a.count:

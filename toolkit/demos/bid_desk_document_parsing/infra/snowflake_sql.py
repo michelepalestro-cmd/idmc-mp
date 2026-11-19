@@ -92,7 +92,7 @@ def insert_sql(table, rows):
     if any(len(r) != width for r in rows):
         raise ValueError("rows of different widths")
     ph = "(" + ", ".join("?" * width) + ")"
-    stmt = "INSERT INTO %s VALUES\n" % ident(table.upper()) + ",\n".join(ph for _ in rows)
+    stmt = "INSERT INTO %s VALUES\n" % ident(table.upper()) + ",\n".join(ph for _ in rows)  # nosec B608  # validated table; values bound
     flat = [v for r in rows for v in r]
     return stmt, {str(i): _bind(v) for i, v in enumerate(flat, 1)}
 

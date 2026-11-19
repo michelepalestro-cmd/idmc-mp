@@ -29,6 +29,33 @@ if str(CORE) not in sys.path:
 import idmc_login as L  # noqa: E402
 
 
+_IDENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*$")
+_GCP_PROJECT = re.compile(r"^(?:[a-z0-9.-]+:)?[a-z][a-z0-9-]{4,28}[a-z0-9]$")
+
+
+def ident(name):
+    """A plain SQL / SOQL identifier from config (schema, dataset, field): returned unchanged if it is one, else refused."""
+    if not isinstance(name, str) or not _IDENT.match(name):
+        raise ValueError(f"not a plain identifier: {name!r}")
+    return name
+
+
+def gcp_project(name):
+    """A Google Cloud project id (lower-case letters, digits, hyphens), safe inside a BigQuery `backtick` path."""
+    if not isinstance(name, str) or not _GCP_PROJECT.match(name):
+        raise ValueError(f"not a Google Cloud project id: {name!r}")
+    return name
+
+
+def safe_xml_bytes(data):
+    """Refuse XML that declares a DTD or entities (XXE / entity expansion); returns the bytes unchanged."""
+    raw = data.encode("utf-8") if isinstance(data, str) else bytes(data)
+    low = raw.lower()
+    if b"<!doctype" in low or b"<!entity" in low:
+        raise ValueError("XML with a DTD or entity declaration is refused")
+    return raw
+
+
 def die(msg, code=2):
     print("ERROR: " + msg, file=sys.stderr)
     sys.exit(code)

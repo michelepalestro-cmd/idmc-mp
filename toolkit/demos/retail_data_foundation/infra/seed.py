@@ -47,11 +47,11 @@ def dirty_phone(p, rnd):
 
 
 def build(n_customers, seed):
-    rnd = random.Random(seed)
+    rnd = random.Random(seed)  # nosec B311  # seeded synthetic test data, not crypto
     now = datetime(2026, 1, 1, tzinfo=timezone.utc) + timedelta(days=rnd.randint(0, 200))
     out = ["BEGIN;"]
     for code, name, city, st in STORES:
-        out.append(f"INSERT INTO public.stores (store_code, name, city, state, opened_at) VALUES "
+        out.append(f"INSERT INTO public.stores (store_code, name, city, state, opened_at) VALUES "  # nosec B608  # synthetic values quoted by q()
                    f"({q(code)}, {q(name + ' Store')}, {q(city)}, {q(st)}, {q((now - timedelta(days=900)).isoformat())});")
     pid = 0
     prices = {}
@@ -60,7 +60,7 @@ def build(n_customers, seed):
             pid += 1
             price = round(rnd.uniform(lo, hi), 2)
             prices[pid] = price
-            out.append(f"INSERT INTO public.products (sku, name, category, unit_price) VALUES "
+            out.append(f"INSERT INTO public.products (sku, name, category, unit_price) VALUES "  # nosec B608  # synthetic values quoted by q()
                        f"({q('SKU-%04d' % pid)}, {q(cat + ' item ' + str(i + 1))}, {q(cat)}, {price});")
     cid = mid = oid = 0
     people = []
@@ -89,7 +89,7 @@ def build(n_customers, seed):
             people.append(dup)
     for rec in people:
         cid += 1
-        out.append("INSERT INTO public.customers (full_name, email, phone, address, city, state, zip, tier, signup_channel, "
+        out.append("INSERT INTO public.customers (full_name, email, phone, address, city, state, zip, tier, signup_channel, "  # nosec B608  # synthetic values quoted by q()
                    "home_store_code, created_at, updated_at) VALUES "
                    f"({q(rec['full'])}, {q(rec['email'])}, {q(rec['phone'])}, {q(rec['addr'])}, {q(rec['city'])}, "
                    f"{q(rec['state'])}, {q(rec['zip'])}, {q(rec['tier'])}, {q(rec['ch'])}, {q(rec['store'])}, "
@@ -100,10 +100,10 @@ def build(n_customers, seed):
             tier_pick, price = rnd.choice(TIERS)
             status = rnd.choice(["active", "active", "active", "cancelled"])
             started = rec["created"] + timedelta(days=1)
-            out.append("INSERT INTO public.memberships (customer_id, tier, status, monthly_price, started_at, cancelled_at) "
+            out.append("INSERT INTO public.memberships (customer_id, tier, status, monthly_price, started_at, cancelled_at) "  # nosec B608  # synthetic values quoted by q()
                        f"VALUES ({cid}, {q(tier_pick)}, {q(status)}, {price}, {q(started.isoformat())}, "
                        f"{q((started + timedelta(days=60)).isoformat()) if status == 'cancelled' else 'NULL'});")
-            out.append("INSERT INTO public.payments (customer_id, membership_id, kind, amount, status, processor, paid_at) "
+            out.append("INSERT INTO public.payments (customer_id, membership_id, kind, amount, status, processor, paid_at) "  # nosec B608  # synthetic values quoted by q()
                        f"VALUES ({cid}, {mid}, 'membership', {price}, 'settled', 'card', {q(started.isoformat())});")
         for _ in range(rnd.randint(0, 5)):
             oid += 1
@@ -113,18 +113,18 @@ def build(n_customers, seed):
             list_amt = round(sum(prices[p] * qn for p, qn in lines), 2)
             disc = round(list_amt * {"Bronze": 0.05, "Silver": 0.10, "Gold": 0.20}.get(tier_pick, 0), 2)
             status = rnd.choice(["paid", "paid", "paid", "placed", "refunded"])
-            out.append("INSERT INTO public.orders (customer_id, store_code, channel, status, list_amount, discount, amount, "
+            out.append("INSERT INTO public.orders (customer_id, store_code, channel, status, list_amount, discount, amount, "  # nosec B608  # synthetic values quoted by q()
                        f"ordered_at) VALUES ({cid}, {q(store)}, {q(rnd.choice(['web', 'mobile', 'store']))}, {q(status)}, "
                        f"{list_amt}, {disc}, {round(list_amt - disc, 2)}, {q(ts.isoformat())});")
             for p, qn in lines:
-                out.append("INSERT INTO public.order_lines (order_id, product_id, qty, unit_price, line_amount) VALUES "
+                out.append("INSERT INTO public.order_lines (order_id, product_id, qty, unit_price, line_amount) VALUES "  # nosec B608  # synthetic values quoted by q()
                            f"({oid}, {p}, {qn}, {prices[p]}, {round(prices[p] * qn, 2)});")
             pst = None if rnd.random() < 0.02 else ("refunded" if status == "refunded" else "settled")
             proc = None if rnd.random() < 0.02 else rnd.choice(["card", "wallet", "cash"])
-            out.append("INSERT INTO public.payments (customer_id, order_id, kind, amount, status, processor, paid_at) VALUES "
+            out.append("INSERT INTO public.payments (customer_id, order_id, kind, amount, status, processor, paid_at) VALUES "  # nosec B608  # synthetic values quoted by q()
                        f"({cid}, {oid}, 'order', {round(list_amt - disc, 2)}, {q(pst)}, {q(proc)}, {q(ts.isoformat())});")
             if rnd.random() < 0.6:
-                out.append("INSERT INTO public.visits (customer_id, store_code, check_in_at, check_out_at, status) VALUES "
+                out.append("INSERT INTO public.visits (customer_id, store_code, check_in_at, check_out_at, status) VALUES "  # nosec B608  # synthetic values quoted by q()
                            f"({cid}, {q(store)}, {q(ts.isoformat())}, {q((ts + timedelta(minutes=rnd.randint(5, 140))).isoformat())}, 'closed');")
     out.append("COMMIT;")
     return "\n".join(out) + "\n", {"customers": cid, "memberships": mid, "orders": oid}

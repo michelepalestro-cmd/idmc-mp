@@ -38,10 +38,11 @@ API = "/profiling-service/api/v1"
 
 def pg_fields(cfg, table, psql=None):
     from pgexec import run_sql
+    from pgexec import q
     sch = cfg["source"]["schema"]
     rows = run_sql("select column_name, data_type, coalesce(character_maximum_length,0), coalesce(numeric_precision,0), "
                    "coalesce(numeric_scale,0), ordinal_position from information_schema.columns "
-                   f"where table_schema='{sch}' and table_name='{table}' order by ordinal_position;", psql)
+                   f"where table_schema={q(sch)} and table_name={q(table)} order by ordinal_position;", psql)  # nosec B608  # values quoted by q()
     out = []
     for line in rows:
         n, t, clen, np_, ns, pos = line.split("\t")

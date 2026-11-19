@@ -3,6 +3,17 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.11.0 (2026-11-19): passes enterprise security scanners
+
+- **Clean under bandit, Semgrep (python, security-audit, secrets, github-actions), detect-secrets, ShellCheck and
+  actionlint**, and the full git history scanned for secrets (863 file versions: none).
+- **Fixes:** XML parsing refuses DTDs and entities; URL opens allow https only (http only to localhost); explicit
+  verified TLS context; uuid4; MD5 only where Salesforce requires it, marked not for security; GUIDs from `secrets`;
+  three demo SQL builders that lacked escaping now escape or validate; a CDC template renamed `.json.tmpl`; the customer
+  CSV check calls the generator in-process.
+- **New CI:** CodeQL (security-extended, weekly too) and a security-scan workflow (bandit, detect-secrets against an
+  audited `.secrets.baseline`, the repository secret scan), read-only and SHA-pinned.
+
 ## 1.10.0 (2026-11-19): user story: a messy customer CSV, mastered by IDMC
 
 - **New blueprint `toolkit/demos/customer_master_csv/`:** a messy customer CSV is standardized, de-duplicated and given

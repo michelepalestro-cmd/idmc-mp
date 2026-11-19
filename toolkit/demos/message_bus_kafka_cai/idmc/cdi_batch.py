@@ -62,12 +62,12 @@ def conn_bodies(cfg):
     pg_body = {"@type": "connection", "name": b["postgres_connection"], "type": "TOOLKIT_CCI", "instanceName": "PostgreSQL",
                "runtimeEnvironmentId": re_id, "description": "Message Bus Replacement: ops ledger (read only, nightly batch)",
                "connParams": {"hostName": pg["host"], "port": str(pg["port"]), "database": pg["database"],
-                              "userName": "mbr_batch_reader", "password": "<MBR_CDI_PG_PASSWORD>",
+                              "userName": "mbr_batch_reader", "password": "<MBR_CDI_PG_PASSWORD>",  # nosec B105  # placeholder text, not a secret
                               "authenticationType": "UserIdPassword", **pg_tls(pg["host"])}}
     ora_body = {"@type": "connection", "name": b["oracle_connection"], "type": "Oracle", "runtimeEnvironmentId": re_id,
                 "description": "Message Bus Replacement: nightly batch target", "host": ora["host"], "port": int(ora["port"]),
                 "database": ora["service"], "schema": ora["schema"], "codepage": "UTF-8", "username": ora["schema"],
-                "password": "<MBR_ORACLE_BATCH_PASSWORD>"}
+                "password": "<MBR_ORACLE_BATCH_PASSWORD>"}  # nosec B105  # placeholder text, not a secret
     return [(pg_body, "MBR_CDI_PG_PASSWORD"), (ora_body, "MBR_ORACLE_BATCH_PASSWORD")]
 
 

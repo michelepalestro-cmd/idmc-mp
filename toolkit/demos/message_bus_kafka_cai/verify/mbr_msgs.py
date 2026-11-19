@@ -43,7 +43,7 @@ def new_id(prefix="m"):
 # ------------------------------------------------------------------ business payloads
 def upc(seed=None):
     """A 12-digit UPC-A with a valid check digit (the CAI validation recomputes it)."""
-    r = random.Random(seed)
+    r = random.Random(seed)  # nosec B311  # test UPC digits, not crypto
     d = [r.randint(0, 9) for _ in range(11)]
     s = 3 * sum(d[0::2]) + sum(d[1::2])
     return "".join(map(str, d)) + str((10 - s % 10) % 10)
@@ -180,13 +180,24 @@ def _read_frame(s):
 
 
 # ------------------------------------------------------------------ ledger API (PostgREST)
+LOCAL_HOSTS = {"localhost", "127.0.0.1", "::1"}
+
+
+def checked_url(url):
+    """Allow https anywhere and plain http only to this host; refuse file:, ftp: and every other scheme."""
+    u = urllib.parse.urlsplit(url)
+    if u.scheme == "https" or (u.scheme == "http" and u.hostname in LOCAL_HOSTS):
+        return url
+    raise ValueError(f"refusing URL {url!r}: https required (http only for localhost)")
+
+
 def api(cfg, path, body=None, method=None):
-    url = cfg["ledger_api"]["base_url"].rstrip("/") + path
+    url = checked_url(cfg["ledger_api"]["base_url"].rstrip("/") + path)
     data = None if body is None else json.dumps(body).encode()
     req = urllib.request.Request(url, data=data, method=method or ("POST" if data is not None else "GET"),
                                  headers={"Content-Type": "application/json", "Accept": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=60) as r:
+        with urllib.request.urlopen(req, timeout=60) as r:  # nosec B310  # scheme checked by checked_url  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             return r.status, json.loads(r.read() or b"null")
     except urllib.error.HTTPError as e:
         raw = e.read()
@@ -225,11 +236,11 @@ def show(ev):
 
 def agent_post(cfg, process, body, timeout=120):
     """POST to an anonymous process on the agent (run this on the agent host: the engine port is local)."""
-    url = cfg["agent"]["process_engine_url"].rstrip("/") + "/" + process
+    url = checked_url(cfg["agent"]["process_engine_url"].rstrip("/") + "/" + process)
     req = urllib.request.Request(url, data=json.dumps(body).encode(), method="POST",
                                  headers={"Content-Type": "application/json", "Accept": "application/json"})
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with urllib.request.urlopen(req, timeout=timeout) as r:  # nosec B310  # scheme checked by checked_url  # nosemgrep: python.lang.security.audit.dynamic-urllib-use-detected.dynamic-urllib-use-detected
             return r.status, r.read().decode(errors="replace")
     except urllib.error.HTTPError as e:
         return e.code, e.read().decode(errors="replace")

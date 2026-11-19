@@ -24,7 +24,7 @@ import secrets
 import string
 import uuid
 import zipfile
-from xml.dom import minidom
+from xml.dom import minidom  # nosec B408  # parses only safe_xml_bytes-checked XML  # nosemgrep: python.lang.security.use-defused-xml.use-defused-xml
 
 E = lambda s: html.escape(str(s), quote=True)  # noqa: E731
 
@@ -38,6 +38,15 @@ NS_REPO = "http://schemas.active-endpoints.com/appmodules/repository/2010/10/avr
 # vendor connector type ids (the same in every org; from genuine exports, KB L-CAI-116)
 KAFKA_UUID = "c5d3f9bc-95ba-48e6-99df-5bca133b44b3"
 AMQP_UUID = "59b13626-0180-4d48-a749-38f8f33f7b18"
+
+
+def safe_xml_bytes(data):
+    """Refuse XML that declares a DTD or entities (XXE / entity expansion); returns the bytes unchanged."""
+    raw = data.encode("utf-8") if isinstance(data, str) else bytes(data)
+    low = raw.lower()
+    if b"<!doctype" in low or b"<!entity" in low:
+        raise ValueError("XML with a DTD or entity declaration is refused")
+    return raw
 
 
 # ------------------------------------------------------------------ GUID store
@@ -298,7 +307,8 @@ def package(g: Guids, pkg_name, project, frs, assets, org_id_v3, org_name, out_d
     for folder, name, typ, desc, entry, refs in assets:
         gid = g.guid(f"{typ}:{name}")
         body = item(name, typ, desc, gid, entry).encode("utf-8")
-        minidom.parseString(body)                 # well-formed or raise
+        # well-formed or raise; guarded by safe_xml_bytes: no DTD or entities
+        minidom.parseString(safe_xml_bytes(body))  # nosec B318
         if b"\x08" in body:                        # a shell heredoc once turned \b into a backspace byte
             raise SystemExit(f"control byte 0x08 in {name}")
         base = f"Explore/{project}/{folder}"

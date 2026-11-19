@@ -109,11 +109,11 @@ def data(cfg):
     counts = {"BID_BRZ_SF_DOCUMENT": 2, "BID_BRZ_BID_PACKET": 1, "BID_BRZ_SIGNATURE_PAGE": 1, "BID_SLV_BID_LINES": 8,
               "BID_SLV_REQUIRED_FIELDS": 20, "BID_GLD_READINESS": 2, "BID_DQ_SCORECARD": 1, "BID_LINEAGE": 1, "BID_GLOSSARY": 1}
     for t, low in counts.items():
-        n = int(SQ.rows(cfg, "SELECT COUNT(*) AS N FROM %s" % t)[0]["N"])
+        n = int(SQ.rows(cfg, "SELECT COUNT(*) AS N FROM %s" % t)[0]["N"])  # nosec B608  # table names are code constants
         check(n >= low, "%s has rows (%d, expect >= %d)" % (t, n, low))
     for v in ("BID_V_BI_DECISIONS", "BID_V_BI_BID_LINES", "BID_V_BI_FIELDS", "BID_V_BI_DQ", "BID_V_BI_LINEAGE", "BID_V_BI_GLOSSARY",
               "BID_V_BI_PIPELINE", "BID_V_BI_PARSING"):
-        n = int(SQ.rows(cfg, "SELECT COUNT(*) AS N FROM %s" % v)[0]["N"])
+        n = int(SQ.rows(cfg, "SELECT COUNT(*) AS N FROM %s" % v)[0]["N"])  # nosec B608  # view names are code constants
         check(n > 0, "Tableau view %s is not blank (%d rows)" % (v, n))
     got = {r["SOLICITATION_NO"]: r["DECISION"] for r in SQ.rows(cfg, "SELECT SOLICITATION_NO, DECISION FROM BID_GLD_READINESS")}
     phase = next((k for k, want in cfg["expected"].items() if all(got.get(s) == d for s, d in want.items())), None)

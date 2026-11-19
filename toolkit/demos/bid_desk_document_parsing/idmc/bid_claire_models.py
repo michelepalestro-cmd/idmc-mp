@@ -34,6 +34,7 @@ import http.client
 import json
 import mimetypes
 import re
+import ssl
 import sys
 import time
 import urllib.parse
@@ -120,7 +121,8 @@ class SDClient:
             self.extra["X-CSRF-TOKEN"] = self.jar["XSRF-TOKEN"]
         h.update(self.extra)
         h.update(headers or {})
-        c = http.client.HTTPSConnection(self.host, timeout=timeout)
+        # certificate and hostname verification on (system CA store)
+        c = http.client.HTTPSConnection(self.host, timeout=timeout, context=ssl.create_default_context())  # nosemgrep: python.lang.security.audit.httpsconnection-detected.httpsconnection-detected
         c.request(method, path, body=body, headers=h)
         r = c.getresponse()
         data = r.read()

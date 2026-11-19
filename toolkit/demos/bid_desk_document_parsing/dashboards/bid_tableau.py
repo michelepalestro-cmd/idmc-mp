@@ -34,7 +34,7 @@ import urllib.parse
 import urllib.request
 import uuid
 from pathlib import Path
-from xml.sax.saxutils import quoteattr
+from xml.sax.saxutils import quoteattr  # nosec B406  # escaping only, no parsing  # nosemgrep: python.lang.security.use-defused-xml.use-defused-xml
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "idmc" / "lib"))
 import bid_common as C  # noqa: E402

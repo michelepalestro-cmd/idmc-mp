@@ -161,11 +161,12 @@ def build_package(cfg, st, offline):
     ]
     proj, fold = cfg["idmc"]["project"], cfg["idmc"]["folder"]
     pj, fj, fobjs, src_org, src_name = folder_files(cfg, offline)
-    import xml.dom.minidom
+    import xml.dom.minidom  # nosec B408  # parses only safe_xml_bytes-checked XML  # nosemgrep: python.lang.security.use-defused-xml.use-defused-xml
     files, objs = {}, list(fobjs)
     for name, typ, mime, entry, refs in assets:
         x = A.item(name, mime, f"[{tag}] real-time CRM sync", gd[name], entry).encode()
-        xml.dom.minidom.parseString(x)               # every asset must be well-formed XML before it is packaged
+        # every asset must be well-formed XML before it is packaged; guarded by safe_xml_bytes: no DTD or entities
+        xml.dom.minidom.parseString(C.safe_xml_bytes(x))  # nosec B318
         files[f"Explore/{proj}/{fold}/{name}.{typ}.xml"] = x
         objs.append({"objectGuid": gd[name], "objectName": name, "objectType": typ, "path": f"/Explore/{proj}/{fold}",
                      "providerName": None, "metadata": {"modelVersion": {"major": 1, "minor": 0}, "repoInfo": None,

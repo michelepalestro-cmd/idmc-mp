@@ -39,7 +39,7 @@ def render_sources(cfg, st, offline):
     v["RE_ID"] = (st.get("runtimeEnvironment") or {}).get("id") or "<runtime environment id>"
     v["IDMC_LOGIN_HOST"] = C.env("IDMC_LOGIN_HOST") or "<IDMC_LOGIN_HOST>"
     v["IICS_USER"] = "<IDMC_USER, injected at send>"
-    v["IICS_PASSWORD_INJECTED_AT_SEND"] = "<IDMC_PASS, injected at send>"
+    v["IICS_PASSWORD_INJECTED_AT_SEND"] = "<IDMC_PASS, injected at send>"  # nosec B105  # placeholder text, not a secret
     out = {}
     for name, sc in cfg["catalog"]["sources"].items():
         vv = dict(v, NAME=name)

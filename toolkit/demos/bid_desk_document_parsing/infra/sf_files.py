@@ -119,23 +119,24 @@ class SF:
 
 
 def q(vals):
-    return ", ".join("'%s'" % v.replace("'", "\\'") for v in vals)
+    """SOQL string literals: backslash first, then the single quote (SOQL escapes with a backslash)."""
+    return ", ".join("'%s'" % v.replace("\\", "\\\\").replace("'", "\\'") for v in vals)
 
 
 def agencies(sf, cfg):
     names = [a["name"] for a in cfg["salesforce"]["agencies"]]
-    return {r["Name"]: r["Id"] for r in sf.query("SELECT Id, Name FROM Account WHERE Name IN (%s)" % q(names))}
+    return {r["Name"]: r["Id"] for r in sf.query("SELECT Id, Name FROM Account WHERE Name IN (%s)" % q(names))}  # nosec B608  # SOQL; values escaped by q()
 
 
 def documents(sf, acc_ids):
     if not acc_ids:
         return {}
-    links = sf.query("SELECT ContentDocumentId, LinkedEntityId FROM ContentDocumentLink WHERE LinkedEntityId IN (%s)" % q(acc_ids))
+    links = sf.query("SELECT ContentDocumentId, LinkedEntityId FROM ContentDocumentLink WHERE LinkedEntityId IN (%s)" % q(acc_ids))  # nosec B608  # SOQL; values escaped by q()
     docs = {l["ContentDocumentId"]: l["LinkedEntityId"] for l in links}
     if not docs:
         return {}
     vers = sf.query("SELECT Id, ContentDocumentId, Title, VersionNumber, Checksum, ContentSize, ReasonForChange, CreatedDate "
-                    "FROM ContentVersion WHERE ContentDocumentId IN (%s) ORDER BY ContentDocumentId, VersionNumber" % q(list(docs)))
+                    "FROM ContentVersion WHERE ContentDocumentId IN (%s) ORDER BY ContentDocumentId, VersionNumber" % q(list(docs)))  # nosec B608  # SOQL; values escaped by q()
     out = {}
     for v in vers:
         out.setdefault(v["ContentDocumentId"], {"account": docs[v["ContentDocumentId"]], "versions": []})["versions"].append(v)
@@ -143,7 +144,8 @@ def documents(sf, acc_ids):
 
 
 def md5(p):
-    return hashlib.md5(Path(p).read_bytes()).hexdigest()
+    """Salesforce ContentVersion.Checksum is an MD5 of the bytes: a change check the API dictates, not security."""
+    return hashlib.md5(Path(p).read_bytes(), usedforsecurity=False).hexdigest()
 
 
 def path_of(cfg, rel):

@@ -76,7 +76,7 @@ def new_guid():
 
 
 def new_internal_id():
-    return "U:" + base64.urlsafe_b64encode(uuid.uuid1().bytes).decode().rstrip("=")
+    return "U:" + base64.urlsafe_b64encode(uuid.uuid4().bytes).decode().rstrip("=")
 
 
 def chk_key(n):

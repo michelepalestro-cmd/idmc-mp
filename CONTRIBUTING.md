@@ -67,7 +67,9 @@ python3 tests/run_tests.py
 python3 toolkit/tools/secret_scan.py
 ```
 
-The tests must print `ALL PASSED` and the scan `CLEAN`. The tests check the manifests (one plugin), every skill and
+The tests must print `ALL PASSED` and the scan `CLEAN`. CI also runs CodeQL, bandit and detect-secrets (see
+[SECURITY.md](SECURITY.md)); if detect-secrets flags a value you have checked is not a secret, update the baseline
+with `detect-secrets scan --baseline .secrets.baseline` and say so in the pull request. The tests check the manifests (one plugin), every skill and
 command, every link and plugin path, the lessons file and its counts, that every Python file compiles and every library
 script answers `--help`, and the offline half of every user story. CI runs the same on every push and pull request.
 

@@ -122,7 +122,7 @@ def main():
         return 0
     if a.cmd == "verify-records":
         sql = f"DELETE FROM activation.customer_golden WHERE email LIKE {LIKE_VERIFY}; " \
-              f"DELETE FROM public.customers WHERE lower(trim(email)) LIKE {LIKE_VERIFY} RETURNING customer_id;"
+              f"DELETE FROM public.customers WHERE lower(trim(email)) LIKE {LIKE_VERIFY} RETURNING customer_id;"  # nosec B608  # constant pattern
         if not a.execute:
             print("[DRY-RUN] psql:", sql)
             print(f"[DRY-RUN] Salesforce: DELETE each Contact WHERE Email LIKE {LIKE_VERIFY} (REST sobjects/Contact/<Id>)")
@@ -132,7 +132,7 @@ def main():
         sys.path.insert(0, str(ROOT / "verify"))
         import urllib.request
         from e2e_check import sf_query
-        recs = sf_query(f"SELECT Id FROM Contact WHERE Email LIKE {LIKE_VERIFY}", cfg["crm"]["apiVersion"])
+        recs = sf_query(f"SELECT Id FROM Contact WHERE Email LIKE {LIKE_VERIFY}", cfg["crm"]["apiVersion"])  # nosec B608  # constant pattern
         print(f"{len(recs)} CRM Contact(s) to delete: delete them in the CRM UI or with the REST DELETE "
               "(the integration user needs Delete on Contact; a small dev org fills up fast)")
         return 0

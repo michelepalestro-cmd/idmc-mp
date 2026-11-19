@@ -12,7 +12,6 @@ import argparse
 import copy
 import csv
 import json
-import subprocess
 import sys
 import time
 from pathlib import Path
@@ -20,6 +19,9 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 MAPGEN = HERE.parents[1] / "mapgen"
 sys.path.insert(0, str(MAPGEN))
+if str(HERE) not in sys.path:
+    sys.path.append(str(HERE))
+import make_sample  # noqa: E402
 
 PROFILE = {
     "org": {"v2Id": "OFFLINE", "guid": "OFFLINEorgGuid00000001", "name": "offline"},
@@ -111,9 +113,7 @@ def main():
     ap.add_argument("--compare", metavar="FOLDER", help="folder holding the two CSVs a live IDMC run wrote")
     a = ap.parse_args()
     t0 = time.perf_counter()
-    step("1. make a messy customer CSV", lambda: subprocess.run(
-        [sys.executable, str(HERE / "make_sample.py"), "--customers", str(a.customers), "--seed", str(a.seed)],
-        check=True, capture_output=True))
+    step("1. make a messy customer CSV", lambda: make_sample.generate(a.customers, a.seed, HERE / "data"))
     ntx, nlinks, size = step("2. lint + build the IDMC mapping package", build_package)
     sys.path.insert(0, str(HERE))
     import reference as R

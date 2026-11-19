@@ -62,11 +62,11 @@ def body_for(key, cfg, st, offline, key_format):
             shown["connParams"]["clientEmail"] = "<client_email from BQ_KEY_FILE>"
             shown["connParams"]["privateKey"] = f"<private_key from BQ_KEY_FILE, form '{key_format}'>"
         else:
-            shown.update(username="<SF_USERNAME>", password="<SF_PASSWORD>", securityToken="<SF_SECURITY_TOKEN>")
+            shown.update(username="<SF_USERNAME>", password="<SF_PASSWORD>", securityToken="<SF_SECURITY_TOKEN>")  # nosec B106  # placeholder text, not a secret
         return None, shown
     if key in ("pg", "pg_cdc"):
         b["connParams"]["password"] = C.env(SECRETS[key][0], required=True)
-        shown["connParams"]["password"] = "***"
+        shown["connParams"]["password"] = "***"  # nosec B105  # display mask, not a secret
     elif key in ("bq", "bq_dbmi"):
         email, pk = key_material(key_format)
         b["connParams"].update(clientEmail=email, privateKey=pk)
@@ -74,7 +74,7 @@ def body_for(key, cfg, st, offline, key_format):
     else:
         b.update(username=C.env("SF_USERNAME", required=True), password=C.env("SF_PASSWORD", required=True),
                  securityToken=C.env("SF_SECURITY_TOKEN") or "")
-        shown.update(username="***", password="***", securityToken="***")
+        shown.update(username="***", password="***", securityToken="***")  # nosec B106  # display mask, not a secret
     return b, shown
 
 

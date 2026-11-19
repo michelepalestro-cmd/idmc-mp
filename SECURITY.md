@@ -14,6 +14,22 @@
 - A pre-commit hook and CI run `toolkit/tools/secret_scan.py`, which blocks passwords, keys, IP addresses, e-mails and
   local paths from being committed.
 
+## Automated security checks
+
+Every push and pull request runs, with read-only permissions and actions pinned to commit SHAs:
+
+| Check | What it enforces |
+|---|---|
+| CodeQL (`security-extended`, Python and GitHub Actions), also weekly | GitHub's code scanning |
+| bandit | no Python finding of medium or high severity |
+| detect-secrets | no secret that is not in the audited `.secrets.baseline` (it holds only reviewed false positives: field names in prose, environment-variable names, dummy test values) |
+| `toolkit/tools/secret_scan.py` | no credential, org id, IP address, e-mail or local path |
+| tests | the offline test suite, on Python 3.10 and 3.12 |
+
+Dependabot keeps the pinned actions current. The plugin itself has no third-party Python dependencies. Where a scanner
+rule is answered by a guard rather than a code change (for example XML parsing that refuses DTDs and entities, or SQL
+text for `psql` built from escaped values), the line carries a `# nosec` / `# nosemgrep` annotation with the reason.
+
 ## Good habits
 
 - Use a dedicated IDMC service user for Claude, with only the roles it needs, not your personal admin user.

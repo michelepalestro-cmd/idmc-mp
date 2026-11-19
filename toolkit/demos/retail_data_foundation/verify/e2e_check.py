@@ -86,15 +86,17 @@ def main():
     tag = time.strftime("%Y%m%d%H%M%S")
     email = f"Verify.Rdf{tag}@Verify.Invalid"
     name = f"  verify   rdf{tag}  "
-    ds = cfg["warehouse"]["datasets"]
-    ext = cfg["crm"]["contactExternalId"]
+    gold = C.ident(cfg["warehouse"]["datasets"]["gold"])
+    ext = C.ident(cfg["crm"]["contactExternalId"])
+    act_schema = C.ident(cfg["source"]["activationSchema"])
+    email_lc = email.lower()
     plan = [
         f"1 insert customer email={email.lower()} (messy name/phone/tier) into {cfg['source']['schema']}.customers",
         "2 POST rdf_cai_customer_to_crm (real time)" if a.cai else "2 (CAI path skipped; add --cai)",
         "3 run tf_rdf_customer" if not a.no_lane else "3 wait for the scheduled tf_rdf_full",
-        f"4 bq: SELECT ... FROM {ds['gold']}.customer_golden WHERE email = '{email.lower()}'",
-        f"5 psql: SELECT ... FROM {cfg['source']['activationSchema']}.customer_golden WHERE customer_id = <id>",
-        f"6 Salesforce: SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE {ext} = '<id>'",
+        "4 bq: SELECT ... FROM %s.customer_golden WHERE email = '%s'" % (gold, email_lc),  # nosec B608  # plan text printed only
+        "5 psql: SELECT ... FROM %s.customer_golden WHERE customer_id = <id>" % act_schema,  # nosec B608  # plan text printed only
+        "6 Salesforce: SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE %s = '<id>'" % ext,  # nosec B608  # plan text printed only
     ]
     if not a.execute:
         print("dry run - the end-to-end check would do:")
@@ -108,10 +110,11 @@ def main():
     from pgexec import q, run_sql
     t0 = time.time()
     results = {}
-    cid = run_sql("INSERT INTO public.customers (full_name, email, phone, address, city, state, zip, tier, signup_channel, "
-                  f"home_store_code) VALUES ({q(name)}, {q(' ' + email + ' ')}, {q('(217) 555-0' + tag[-3:])}, "
-                  f"{q('12 verify lane')}, {q('springfield')}, {q('il')}, {q('62701')}, {q('GOLD ')}, 'web', 'ST01') "
-                  "RETURNING customer_id;", a.psql)[0]
+    vals = ", ".join([q(name), q(" " + email + " "), q("(217) 555-0" + tag[-3:]), q("12 verify lane"), q("springfield"),
+                      q("il"), q("62701"), q("GOLD "), "'web'", "'ST01'"])
+    ins = ("INSERT INTO public.customers (full_name, email, phone, address, city, state, zip, tier, signup_channel, "  # nosec B608  # every value quoted by q()
+           "home_store_code) VALUES (%s) RETURNING customer_id;" % vals)
+    cid = run_sql(ins, a.psql)[0]
     print(f"1 inserted customer_id {cid}")
     results["source"] = True
     if a.cai:
@@ -128,8 +131,9 @@ def main():
             C.die("tf_rdf_customer id missing in state/ids.json (run 04_taskflows.py schedule or apply first)")
         rc = C.core_cli("idmc_taskflow_schedule.py", ["run", wid] + C.gate_args(a))
         print(f"3 lane run exit {rc}")
-    sql = (f"SELECT customer_id, full_name, email, phone_e164, tier, dq_valid FROM "
-           f"`{C.env('BQ_PROJECT', required=True)}.{ds['gold']}.customer_golden` WHERE customer_id = {int(cid)}")
+    bq_table = "%s.%s.customer_golden" % (C.gcp_project(C.env("BQ_PROJECT", required=True)), gold)
+    sql = ("SELECT customer_id, full_name, email, phone_e164, tier, dq_valid FROM "  # nosec B608  # validated identifiers and int id
+           "`%s` WHERE customer_id = %d" % (bq_table, int(cid)))
     rows = wait_for("4 golden record", lambda: bq_rows(sql), a.timeout)
     if rows:
         r = rows[0]
@@ -137,11 +141,10 @@ def main():
             and (r.get("phone_e164") or "").startswith("+1") and r.get("tier") == "Gold"
         print(f"   {json.dumps(r)} -> {'cleansed OK' if ok else 'NOT as expected'}")
         results["golden"] = ok
-    act = wait_for("5 reverse ETL row", lambda: run_sql(
-        f"SELECT full_name, email, dq_valid FROM {cfg['source']['activationSchema']}.customer_golden WHERE customer_id = {int(cid)};",
-        a.psql), a.timeout, every=10)
+    act_sql = "SELECT full_name, email, dq_valid FROM %s.customer_golden WHERE customer_id = %d;" % (act_schema, int(cid))  # nosec B608  # validated schema and int id
+    act = wait_for("5 reverse ETL row", lambda: run_sql(act_sql, a.psql), a.timeout, every=10)
     results["reverse_etl"] = bool(act)
-    soql = f"SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE {ext} = '{cid}'"
+    soql = "SELECT Id, FirstName, LastName, Email, Phone FROM Contact WHERE %s = '%d'" % (ext, int(cid))  # nosec B608  # validated field and int id
     sf = wait_for("6 CRM Contact", lambda: sf_query(soql, cfg["crm"]["apiVersion"]), a.timeout)
     if sf:
         print(f"   {json.dumps({k: v for k, v in sf[0].items() if k != 'attributes'})}")

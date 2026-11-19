@@ -80,17 +80,13 @@ def messy_record(p, rnd):
             "state": state, "zip": zip_, "updated_at": day}
 
 
-def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--customers", type=int, default=150, help="real people to generate (default 150)")
-    ap.add_argument("--seed", type=int, default=42)
-    ap.add_argument("--out", default=str(HERE / "data"), help="output folder (default data/)")
-    a = ap.parse_args()
-    rnd = random.Random(a.seed)
-    out = Path(a.out)
+def generate(customers=150, seed=42, out=HERE / "data"):
+    """Write customers_raw.csv + truth.csv into out; returns (records written, path of customers_raw.csv)."""
+    rnd = random.Random(seed)  # nosec B311  # seeded, reproducible fictional sample data, not crypto
+    out = Path(out)
     out.mkdir(parents=True, exist_ok=True)
     rows, truth = [], []
-    for i in range(1, a.customers + 1):
+    for i in range(1, customers + 1):
         p = person(i, rnd)
         for _ in range(rnd.choices([1, 2, 3, 4], weights=[45, 30, 17, 8])[0]):
             rows.append(messy_record(p, rnd))
@@ -107,7 +103,17 @@ def main():
             sid = f"S{n:06d}"
             w.writerow({"source_id": sid, **{c: (v if v != "" else BLANK) for c, v in rows[k].items()}})
             t.writerow([sid, truth[k]])
-    print(f"wrote {len(rows)} records of {a.customers} people -> {out / 'customers_raw.csv'} (+ truth.csv)")
+    return len(rows), out / "customers_raw.csv"
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--customers", type=int, default=150, help="real people to generate (default 150)")
+    ap.add_argument("--seed", type=int, default=42)
+    ap.add_argument("--out", default=str(HERE / "data"), help="output folder (default data/)")
+    a = ap.parse_args()
+    n, path = generate(a.customers, a.seed, a.out)
+    print(f"wrote {n} records of {a.customers} people -> {path} (+ truth.csv)")
 
 
 if __name__ == "__main__":

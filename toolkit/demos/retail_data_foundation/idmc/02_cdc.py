@@ -26,7 +26,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent / "lib"))
 import rdf_common as C  # noqa: E402
 
-TPL = C.BLUEPRINT / "idmc" / "templates" / "cdc" / "dbmi_cdc_task.json"
+TPL = C.BLUEPRINT / "idmc" / "templates" / "cdc" / "dbmi_cdc_task.json.tmpl"
 
 
 def render_lane(cfg, lane, offline):
@@ -35,7 +35,7 @@ def render_lane(cfg, lane, offline):
     v.update(TASK_NAME=t["name"], LANE=lane, SLOT=t["slot"], PUBLICATION=t["publication"],
              APPLY_SECS=t["applyCycleSecs"], FLUSH=t["flushPeriod"],
              SELECTION_RULES=json.dumps([{"include": x} for x in t["tables"]]))
-    body = json.loads(C.render(TPL.read_text(encoding="utf-8"), v, "dbmi_cdc_task.json"))
+    body = json.loads(C.render(TPL.read_text(encoding="utf-8"), v, "dbmi_cdc_task.json.tmpl"))
     p = C.write_rendered(f"{t['name']}.json", body)
     return t, body, p
 

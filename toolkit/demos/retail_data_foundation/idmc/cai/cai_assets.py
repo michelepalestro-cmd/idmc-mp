@@ -12,7 +12,7 @@ Why a custom service connector instead of the built-in Salesforce connector: the
 ModifyMetadata permission, which breaks least privilege for an integration user.
 """
 import html
-from xml.sax.saxutils import escape
+from xml.sax.saxutils import escape  # nosec B406  # escaping only, no parsing  # nosemgrep: python.lang.security.use-defused-xml.use-defused-xml
 
 MA = '<mutualAuth enabled="false"><keyStore mode="file"/><keyStorePassword/></mutualAuth>'
 
