@@ -1,5 +1,5 @@
 # Lessons: IPU, Metering & Licensing
-53 current lessons (2 of them disputed), 7 superseded; evidence dates 2026-06-28 to 2026-10-03.
+55 current lessons (2 of them disputed), 7 superseded; evidence dates 2026-06-28 to 2026-10-03.
 
 Every lesson is generic (placeholders `<pod>`, `<domain>`, `<serverUrl>`, `<agent_home>`, `<reId>`, `<agentId>`, `<connId>`, `<orgIdV3>`). Where a lesson came from a proof in one org or pod, re-test it in yours. Provenance (sources, raw ids) is kept outside this zone.
 
@@ -220,6 +220,14 @@ When a customer's IPU growth comes from Mass Ingestion, Secure Agent tuning (mem
 ### L-IPU-064  An external runner starting an address-verification mapping every few minutes at ~4,800 addresses per run burned ~728 jobs a day, on track for ~22,000 a month against a ~10,000 org cap
 **Kind:** GOTCHA · **Proven:** 2026-11-12 · **Evidence:** One day: 728 jobs (572 verifier runs + 156 shard runs); runs/day 57, 1,060, 504, 406 over four days; 9,800,544 results for 9,800,519 entities over 2,030 run ids; 390,963 previously verified; prior statuses secondary_unverified 4.59M, failed 2.52M, unresolved 1.87M
 A script outside IDMC re-imported the verification mapping with new key bounds and started it every few minutes; no IDMC schedule showed that cadence, so the burn was visible only by counting activity-log entries per task per day. Each run handled only about 4,800 addresses, so 9.8M results cost about 2,030 jobs in four days, plus four certified-mode shard tasks. It also paid twice: about 391k addresses had already verified in an earlier run, and most of the rest were retries of rows that had failed or come back unresolved and could not improve (no house number, placeholder street). At the monthly cap every Data Integration job in the org stops (L-IPU-041). Fix: few large runs, select inputs by anti-join on stored results (L-CDI-283), classify and route unfixable failures to review instead of re-calling (L-DQ-129), and count jobs per task per day in a daily check. Refines L-CDI-283.
+
+### L-IPU-065  Job-level IPU metering is a separate async export: POST license/metering/ExportServiceJobLevelMeteringData {startDate,endDate,allMeters:true}
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST /public/core/v3/license/metering/ExportServiceJobLevelMeteringData` with `{"startDate":"<ISO Z>","endDate":"<ISO Z>","allMeters":true}` starts a per-job metering export. The CLI polls it at `GET .../ExportMeteringData/<jobId>` (status CREATED or PROCESSING, then SUCCESS) and downloads `.../ExportMeteringData/<jobId>/download` like the other jobTypes. The start response carries `jobId`. Treat the job-level window as unverified and split it as for PROJECT_FOLDER until probed.
+
+### L-IPU-066  ExportMeteringData also takes allLinkedOrgs and combinedMeterUsage; job states are CREATED, PROCESSING, SUCCESS
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Besides `jobType`, `startDate` and `endDate`, the ExportMeteringData body accepts `allLinkedOrgs` ("TRUE"/"FALSE") to include linked sub-orgs, and, for SUMMARY and project exports, `combinedMeterUsage` ("TRUE"/"FALSE"). The poll returns `status` CREATED or PROCESSING until SUCCESS, and anything else is a failure. The client defaults to the last 14 days and formats dates as `YYYY-MM-DDTHH:MM:SSZ`. It sends combinedMeterUsage only when jobType is 'PROJECT', not 'PROJECT_FOLDER', so the flag never reaches project exports. Refines L-IPU-021.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

@@ -1,5 +1,5 @@
 # Lessons: Claude Working Methods
-138 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+147 current lessons, 8 superseded, plus 14 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-06. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [How Claude reaches and drives IDMC](../../knowledge/14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) · [Evidence discipline](../../knowledge/14-claude-working-methods/02-evidence-discipline.md) · [Multi-agent coordination](../../knowledge/14-claude-working-methods/03-multi-agent-coordination.md) · [Secrets hygiene](../../knowledge/14-claude-working-methods/06-secrets-hygiene.md) · [Environment & Ops lessons](13-environment-ops.md) · [UI Automation lessons](14-ui-automation.md)
 
@@ -560,6 +560,42 @@ A national mastering go-live was driven by several Claude sessions, babysitter s
 ### L-METHOD-161  Rate an IDMC capability in three tiers: built in, built with IDMC assets and proven, or buildable but not yet built; headless-built mappings count as IDMC, not DIY
 **Kind:** PROCESS · **Proven:** 2026-11-17 · **Evidence:** Customer 360 behaviour (fuzzy dedupe, survivorship, incremental golden sync, reverse ETL) built headless and validated live; reviewers had labelled it DIY
 When comparing what IDMC can do (for example against MDM or a graph database), a capability Claude built as an IDMC mapping or taskflow over the REST APIs is IDMC-native, not custom code: the assets live, run and are monitored in IDMC. Use three tiers: built in (out of the box), built with IDMC assets and proven (deployed asset plus successful runs, checked in the live org before you claim it), and buildable in IDMC but not yet built. Reserve 'DIY' for code that runs outside IDMC (Python, Cypher, shell). Read back the live org before rating, because 'proven' needs a deployed asset and runs.
+
+### L-METHOD-162  Three-tier MCP tool design: read, preview-then-confirm write, destructive with a resolved preview
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+Write tools return a preview (per field current vs proposed, or the resolved name and status of every run they would kill) unless `confirm=true`, so exploration never changes production. Docstrings are the contract the model reads: state the blast radius, say where each id legally comes from (v3 federated id vs v2 id), and keep the order of operation in the module and tool docstrings. A stale docstring (resume said 'SUSPENDED or FAILED') counts as a bug. Delete tools that duplicate a push signal. Audit the principle against the code: here `run_mapping_task` was the one ungated write, and the README lists it as a defect. Refines L-METHOD-013.
+
+### L-METHOD-163  Keep secrets out of the chat: server-side plan files, name assertions and recursive masking
+**Kind:** SECURITY · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+Credential or auth changes are read from a plan file on the server (`{connections:[{connection_id, expect_name, updates, role}]}`), so secrets never pass through the transcript. Each entry applies only if the live connection name equals `expect_name`. Placeholder entries (FILL_ME) are skipped. Every value whose key contains password, pwd, secret, token or passphrase is masked recursively in tool output ('***set***'). The opposite anti-pattern, seen in another server: a login tool that takes the password as a tool argument.
+
+### L-METHOD-164  Do not front a write-capable IDMC MCP with an unattended claude -p --dangerously-skip-permissions bot
+**Kind:** SECURITY · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+A Slack Socket Mode bot passed every channel message to `claude -p <msg> --mcp-config <cfg> --dangerously-skip-permissions`. The MCP config exposes create, update and delete for CDGC assets, catalog sources and marketplace objects. Any channel member, or text injected into a catalog description the model reads, can then trigger writes with no approval. If a chat front end is needed, give it a read-only tool set or keep a confirm gate that a human answers.
+
+### L-METHOD-165  Pin a server to one project: allowlist by v3 location and return the API chain it ran
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+A server fixed to one project through an env variable lists `type=='TASKFLOW' and location=='<project>'` through v3 objects. It refuses any taskflow outside that set, and filters tf/status run listings to those asset names. Every tool returns the list of REST calls it executed (`hidden_api_chain_executed`) for auditability. The repo is verified only against its own mock. Its run-listing form `GET /active-bpel/services/tf/status?startTime=..&endTime=..&rowLimit=50&runStatus=..` is unproven.
+
+### L-METHOD-166  Catalog discovery round model: parallel searches, then details with a fast or slow path
+**Kind:** PATTERN · **Documented:** 2026-11-19 · **Evidence:** The vendor's own Claude plugin skill, read 2026-11-19; not probed here
+Round 1 issues the topic search and every dimensional or fiscal term search in parallel. If Round 1 already returned the column UUIDs you need, Round 2 runs the parent's details (hierarchy, selfAttributes, dataClassification, stakeholdership) and the per-column glossary checks together (2 rounds). Otherwise Round 2 fetches hierarchy, and Round 3 runs the glossary checks on the UUIDs it returned (3 rounds). Never re-search for a column the hierarchy already listed, and batch segments into one call per asset. Budgets per intent run from 0-1 calls (FRESHNESS, COMPLIANCE_FLAG) to 3-5 (BROAD_DISCOVERY, up to 10 on a first-turn fitness prompt).
+
+### L-METHOD-167  Vendor answer format: verdict first, then evidence, gaps table and next actions
+**Kind:** PATTERN · **Documented:** 2026-11-19 · **Evidence:** The vendor's own Claude plugin skill, read 2026-11-19; not probed here
+Each answer has four parts in order: Verdict (plain conclusion with warnings, never 'I searched and found...'), Evidence and decision parameters (assets examined, rules applied, winners and rejects, tables), Gaps (type, asset/field, detail, severity) and Next actions (user steps plus steward-side curation asks). Use asset names, not UUIDs, and translate classType to plain language. For audit packs, cover every area briefly (source, definitions, PII, data-subject rights, policy, ownership, lineage, gaps) before going deep.
+
+### L-METHOD-168  Intent taxonomy: 15 catalog intents with routing and per-intent call budgets
+**Kind:** PATTERN · **Documented:** 2026-11-19 · **Evidence:** The vendor's own Claude plugin skill, read 2026-11-19; not probed here
+Intents: BROAD_DISCOVERY, AUTHORITY_COMPARE, FIELD_MEANING, FIELD_RELIABILITY (a named field), TRUST_ASSESSMENT (a dataset), FRESHNESS, RELATIONSHIPS, IMPACT_ANALYSIS, PROVENANCE, ROOT_CAUSE, OWNERSHIP, SENSITIVITY, POLICY, SAFE_USAGE and COMPLIANCE_FLAG, each with signal words and a disambiguator. Route one intent directly, two intents both (primary first), zero or three-plus by signal score with BROAD_DISCOVERY as fallback; skip search when the prompt references assets already in state. Keep a discovery state (scope, assets with UUIDs, facts, gaps, relationships) and never re-fetch a stored UUID.
+
+### L-METHOD-169  Delegate only fully-specified catalog calls to smaller models
+**Kind:** PATTERN · **Documented:** 2026-11-19 · **Evidence:** The vendor's own Claude plugin skill, read 2026-11-19; not probed here
+Keep intent classification, synthesis, trust scoring, root cause and the final answer in the main model. Delegate single search/details calls with fully determined parameters to a small model, and multi-step chains that need interpretation between steps to a mid model; skip delegation entirely in short conversations (1-2 turns, 1-2 calls).
+
+### L-METHOD-170  Community CDGC scripts that phone home: grep for outbound telemetry before running
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+Several public CDGC utility scripts from one author send an infaLog 'phone home' POST to a third-party workers.dev endpoint with a hard-coded X-Auth-Key, including the org id or user name, the pod URL, the script version and the machine hostname, on every login. Before running any community IDMC script, grep it for requests to hosts other than *.informaticacloud.com (workers.dev, webhook, telemetry, X-Auth-Key) and strip them. Credentials were not seen in the payload. Refines L-MCP-124.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

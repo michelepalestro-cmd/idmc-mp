@@ -1,5 +1,5 @@
 # Lessons: MDM
-72 current lessons (2 of them disputed) and 11 superseded, IDs L-MDM-###; evidence dated 2026-07-04 to 2026-11-12. Every lesson is generic; its sources are mapped outside the generic zone.
+93 current lessons (2 of them disputed) and 11 superseded, IDs L-MDM-###; evidence dated 2026-07-04 to 2026-11-12. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [MDM Runtime vs Design](../../knowledge/08-mdm/01-mdm-saas-runtime-vs-design.md) · [MDM Records](../../knowledge/08-mdm/02-mdm-records-ingest-search-export-cleanup.md) · [Business 360 Modeling & Match-Merge](../../knowledge/08-mdm/03-business-360-modeling-match-merge.md) · [P360 vs MDM SaaS & Licensing](../../knowledge/08-mdm/04-p360-vs-mdm-saas-licensing-notes.md)
 
 ## Current
@@ -319,6 +319,90 @@ In a property master, about 916k served rows shared a standardized address with 
 ### L-MDM-090  Insert a sizing step between pilot and fan-out: measure rows/s, jobs per run and sort memory on one scope, then extrapolate before scaling a mastering pipeline
 **Kind:** PROCESS · **Proven:** 2026-11-12 · **Evidence:** Pilot 235,734 rows; national ~92M entities; full IDMC pass estimated 8-25 h; job cap ~10,000/month; one state re-run ~11 times (197M rows written for 17.9M entities)
 A master went from a 235k-row single-state pilot straight to about 92M entities; throughput, the monthly job count and the warehouse sort-memory cap (L-CDI-272) were all discovered at go-live under deadline, and the team switched to plain SQL. Before fanning out: run one mid-size scope, record rows/s per stage from the warehouse log, jobs per scope (N tasks in a taskflow = N+1 jobs), and peak memory of the sorted reads; compute national time, monthly jobs and memory headroom; fan out in scope groups only if all three fit, otherwise redesign first (incremental, sharding, fewer bigger runs).
+
+### L-MDM-091  MDM Search API: sort and typed filters, MODEL_VERSION header, IDS-SESSION-ID alone, and search plus fields rejected together
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST https://<pod>-mdm.<domain>.informaticacloud.com/search/public/api/v1/search` with `IDS-SESSION-ID: <v3 sessionId>` only (no JWT) and the body `{"entityType":"<be>","search":"*","pageSize":500,"pageOffset":0,"recordOffset":<n>,"recordsToReturn":500,"sort":[{"fieldName":"<f>","order":"ASCENDING"}],"filters":{...}}`. Filter comparators: EQUALS, NOT_EQUALS, IN, BETWEEN, GREATER_THAN(_EQUAL_TO), LESS_THAN(_EQUAL_TO), STARTS_WITH, CONTAINS, IS_MISSING, IS_NOT_MISSING (the last two need a reindex job first). A request that sets both `search` and `fields` is rejected. Send `MODEL_VERSION: <epoch ms>` so a just-changed model is not served from the 5-minute metadata cache. At most 10,000 records per query, and a search string longer than 4,000 characters can fail. Refines L-MDM-025.
+
+### L-MDM-092  Reference 360 code values: POST /rdm-service/external/v2/search?showAssetDetails=true with page/pageSize/search
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST https://<pod>-mdm.<domain>.informaticacloud.com/rdm-service/external/v2/search?showAssetDetails=true` with `{"page":0,"pageSize":1000,"search":"*"}` returns `{content:[{record:{codeValueFields:{Code,Name,...}}, codeListDetails:{id,name}, referenceDataSetDetails:{name}}], lastPage}`. Page until `lastPage` is true. This is a working body for the R360 search, where the KB has only proven the v1 route's validator 400. Match codes to a business entity's LookupField through `codeListDetails.id`. Refines L-MDM-026.
+
+### L-MDM-093  Business-entity metadata read: GET <mdm host>/metadata/api/v2/objects/<businessEntity>
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+The desktop client reads entity relationships from `GET https://<pod>-mdm.<domain>.informaticacloud.com/metadata/api/v2/objects/<businessEntity>` (`IDS-SESSION-ID`), looking for `relationships`, `links` or `businessEntityRelationships` arrays with `to`/`target`/`businessEntity` and `label`/`name`. The parser tries several key names, so the exact response shape is unconfirmed. The README still says there is no general metadata API and uses the export package as the model.
+
+### L-MDM-094  Business-entity write paths: create with sourceSystem and sourcePKey, patch and delete by business id with sourceSystem
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Create: `POST /business-entity/public/api/v1/entity/<be>?sourceSystem=<src>&sourcePKey=<pk>`. Update: `PATCH /business-entity/public/api/v1/entity/<be>/<businessId>?sourceSystem=<src>`. Delete: `DELETE /business-entity/public/api/v1/entity/<be>/<businessId>?sourceSystem=<src>[&sourcePKey=<pk>]`. Read: `GET /business-entity/public/api/v1/entity/<be>/<businessId>` returns the full record when a search hit lacks nested field groups. Query-escape the values. Source-system names look like `c360.default.system`. Refines L-MDM-008.
+
+### L-MDM-095  Inside an MDM export package: MDM_BUSINESS_ENTITY/.dat is JSON with order[] and exportedMetadataObjects (businessEntity, matchConfig, sourceRankingTemplate)
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+A B360 export lists objectType `MDM_BUSINESS_ENTITY`, `MDM_REFERENCE_ENTITY`, `MDM_SRC_SYSTEM`, `RULE_SPECIFICATION`, `VERIFIER` and `Project` under `/Explore/<Customer360|Product360|Supplier360|Reference360|Business360>`. The package also carries a `ContentsofExportPackage_<name>.csv` (objectPath, objectName, objectType, id). `<Entity>.MDM_BUSINESS_ENTITY.dat` is JSON `{order:[...], exportedMetadataObjects:{<guid>:{metadataType, payload}}, rootGuid}` holding a `businessEntity` (`field[]` with eClass `http://informatica.com/mdm/v2/Core#//TextField|FieldGroup|LookupField|DateField|BusinessEntityReferenceField|URLField`, a `_meta` system group, and lookups pointing at `rdm.value.be.<id>` Code fields), a `matchConfig` and a `sourceRankingTemplate`. A `.MDM_REFERENCE_ENTITY.dat` holds `exportedRda{id,name,frsFolderId,codeValueBeGuid,defaultCodeList{id,name}}`. `exportMetadata.v2.json` adds `providerLevelValidator.MDM[].solutionsToValidate` with per-solution versions (b360, c360, p360, s360, r360). Refines L-MDM-013.
+
+### L-MDM-096  Bulk MDM snapshot: Egress job POST <mdm host>/job/public/api/v1/jobInstance/Egress to a file target
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+For a full local copy, rather than paging Search 10,000 records at a time, the client's design notes name `POST https://<pod>-mdm.<domain>.informaticacloud.com/job/public/api/v1/jobInstance/Egress` with a body naming the entity (`sourceSystem: <businessEntity>`), `targetSystem: File` (CSV or a flat file) and the field list. The platform writes the file to its storage, and you download it through the job APIs. Documented in the repo only, not implemented.
+
+### L-MDM-097  MDM SaaS: publish the match model before loading any record
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Match keys are generated at load time only, so a record loaded before the match model is Published has no keys and never matches. Recovery is Publish and Regenerate Match Keys, a background re-index across all records (minutes on an empty entity, hours at volume). On a first publish of an empty entity choose plain Publish; the regenerate option only adds a 'Regenerate Match Keys' job in My Jobs.
+
+### L-MDM-098  MDM SaaS: survivorship trust and DQ rules are applied at write time, never retroactively
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Trust scores are computed when a record is created or updated and are not recalculated, so records loaded before survivorship is configured keep default behaviour until re-ingested; DQ rules likewise do not run retroactively. Configure survivorship, DQ and match (in that order) before the first load; recovery costs a re-ingest proportional to volume. Refines L-MDM-038.
+
+### L-MDM-099  MDM SaaS objects that cannot be undone: source-system internal ids, predefined assets, custom entities, saved match rules
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+A source system's Internal ID (auto-derived from the display name) is locked at Create and cannot be renamed or deleted. Predefined c360.person, the person.ruleset1 match model and the Default and Informatica Customer 360 source systems cannot be deleted, and custom entities created in error cannot be deleted either. Once a Directed AI match rule is saved, Match Strategy and Match Criterion are locked: delete and recreate it. Custom field-group internal IDs are fixed at creation; deleting a field group after load drops its data.
+
+### L-MDM-100  MDM SaaS custom entity: Subscribed Record Type and Business ID Format lock once records exist
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Subscribed Record Type (Customer B2C, Customer B2B, Healthcare Professional, Product 360, Supplier/Vendor, Custom Domain, Supporting Entity, Assign Later) drives consumption tracking against the subscription and cannot change after records exist except by purging all records or a support case. Business ID Format is alphanumeric (3-character uppercase prefix, 14-24 characters) or numeric (3-digit prefix, 15-24 digits) and is immutable once records exist. Data Domain Tags are informational and editable any time. Refines L-MDM-056.
+
+### L-MDM-101  MDM SaaS custom internal IDs get the org namespace prefix
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Business 360 prepends the org namespace (for example X_) to every custom internal ID, so a field group created as BankAccount is stored as X_BankAccount. CDI mappings, File Import column names and API field maps must use the prefixed id.
+
+### L-MDM-102  MDM SaaS: register a custom entity in the Business Application in order Search, Pages, Model
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+A custom entity is invisible to C360 File Import and the C360 UI until it is associated with the Business Application, which needs a Search Layout component, a View/Edit page and a Create page first. Assign them on the Search tab, then Pages (View and Edit, then Create), then the Model tab; saving Model first fails with 'Cannot save the changes because <Entity> has no Search Layout assigned'. Remove in the reverse order (Model first). The Business Application asset lives in the Customer360 project folder, not the entity's folder.
+
+### L-MDM-103  MDM SaaS UI asset traps: only searchable fields, no calculated Full Name, Email not searchable by default
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+The Search Layout picker lists only fields marked searchable; Full Name is calculated and never offered (use First Name + Last Name), and Email Address is not searchable by default on Person copies. A page Header needs a Highlighted Field. The Source Records tab on a golden record appears only after the Source Records component is dragged onto the View/Edit page; it is not included by default.
+
+### L-MDM-104  MDM SaaS blank-canvas entity: generate search indexes before the first File Import
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+A blank-canvas entity has no search index, so File Import fails at its Index step with 'Cannot index the records. Recreate the indexes for the <entity> business entity and try again.' Create a job under New > Jobs > Generate Search Indexes or Match Keys with process MDMSearchIndex (or MDMSearchAndReportsIndex), add the entity, record type Source, then run it to Succeeded. Predefined entities and their copies already have indexes. Refines L-MDM-031.
+
+### L-MDM-105  C360 File Import CSV rules: <fieldGroupId>_fgid keys, country, DateTime format, never the Default source
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Each field group used needs a Source Primary Key column named <fieldGroupInternalId>_fgid (e.g. address_fgid, X_BankAccount_fgid), unique within a record, not globally; a wrong name gives 'required fields not mapped'. Address requires country. A DateTime field needs 'yyyy-MM-dd HH:mm:ss' (append 00:00:00), a Date field accepts yyyy-MM-dd, and a date-pattern mismatch leaves the Import button greyed out with no error. Delete auto-mappings into unwanted field groups (Identifier, Tax Details), or their keys become required, and never import under the Default source system: those records cannot be edited afterwards.
+
+### L-MDM-106  MDM SaaS Identifier field group: required-field dependencies and null matching
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+The Identifier field group is tied to DUNS SSN Validation (the only predefined rule specification in Customer 360 SaaS) and to the baseline match model, so its fields cannot simply be disabled. Disabling the rule specification removes the DQ dependencies but not the match one. Null matching is off by default, so records without identifiers skip that criterion and matching falls back to name, email, address and phone. There is no default-values feature in the File Import mapper.
+
+### L-MDM-107  MDM SaaS match rules: exact fields are case-sensitive; the Resident criterion takes only Attribute_1 and Attribute_2
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Exact-match fields compare case-sensitively (JAMES does not equal James), so do not put firstName or lastName there. Use fuzzy fullName plus addressLine1 for person/address rules. On a Resident criterion the optional field types are only Attribute_1 and Attribute_2 (Address_Part2 is not offered).
+
+### L-MDM-108  MDM SaaS Match and Merge job: phases and the 'Skip grouping potential matches' trap
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Create the job under New > Jobs > Match and Merge with process MDMMatchMerge, the entity, match model and version. Leave 'Skip grouping potential matches' unchecked: checked, borderline matches are silently skipped instead of queued for steward review. Phases in My Jobs: Lock the Job, Match, Merge, Index for Search, Group Potential Matches, Release the Job; Warning is completed-with-issues, not failure. Refines L-MDM-036.
+
+### L-MDM-109  MDM SaaS data model: static field groups only, and mark Required sparingly
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Dynamic field types cannot carry DQ or match rules, so use static field groups. A Required field rejects every record that omits it, which breaks multi-source loads where each source fills different groups; the Source Primary Key is enforced regardless. A model save prompts about the search index only when the change touches searchable fields.
+
+### L-MDM-110  MDM SaaS approval workflow: copy the MDM Multi-Step Approval Template and grant Workflow Approver
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Business events route record changes through a CAI process copied from the 'MDM Multi-Step Approval Template' in the Business360 folder of Application Integration; outcome buttons are a semicolon-delimited Task Actions string (e.g. Approve;Reject). A role appears in the event's Approvers list only with the Workflow Approver privilege on its Features tab, and only custom roles can be edited in B360 Console Security (predefined roles such as Customer 360 Data Steward cannot). Approvers need the Business360ProcessExecutor role to open the Workflow Inbox.
+
+### L-MDM-111  MDM SaaS DQ rule severities and DaaS verification entitlements
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+Rule severity Information or Warning lets users save in the UI; Error blocks UI saves unless error remediation is enabled, and rejects on ingress only when 'Reject records that fail validation' is set. Trust downgrade is a per-association percentage applied on load regardless of severity. Address Verification is predefined but disabled by default on blank-canvas entities and needs the DaaS license file uploaded (without it, ingress fails at load); phone and email verification are separate entitlements.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

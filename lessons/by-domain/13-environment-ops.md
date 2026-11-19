@@ -1,5 +1,5 @@
 # Lessons: Environment & Ops
-109 current lessons, 3 superseded, plus 26 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-08. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
+112 current lessons, 3 superseded, plus 26 general (non-IDMC) lessons; evidence dates 2026-07-04 to 2026-10-08. IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [Environment traps](../../knowledge/14-claude-working-methods/05-environment-traps-windows-git-bash-az-gcloud-docker.md) · [How Claude reaches and drives IDMC](../../knowledge/14-claude-working-methods/01-how-claude-reaches-and-drives-idmc.md) · [Secrets hygiene](../../knowledge/14-claude-working-methods/06-secrets-hygiene.md) · [Claude Working Methods lessons](12-claude-working-methods.md) · [UI Automation lessons](14-ui-automation.md)
 
@@ -444,6 +444,18 @@ When checking how much of a project's daily query quota IDMC tasks and dashboard
 ### L-ENV-139  A ReplacingMergeTree golden table read without FINAL returns superseded versions: readers counted ~104M rows for 91.7M real entities
 **Kind:** GOTCHA · **Proven:** 2026-11-12 · **Evidence:** 204,582,711 rows / 203,871,806 distinct ids; golden table 91,749,560 rows with FINAL vs ~104M without
 Golden tables on ClickHouse's replacing engine keep old row versions until a background merge, so count(), duplicate checks, DQ profiles and downstream readers that omit FINAL (or an argMax by version) see stale and duplicate rows. Measured: 204.58M rows vs 203.87M distinct ids in one table (710,905 unmerged versions) and about 104M rows read vs 91.7M with FINAL in another. Run every acceptance gate with FINAL and cap memory/threads in SETTINGS (needs readonly=2 on read-only sessions, L-ENV-112); list the table's readers in query_log and fix any that skip FINAL, including IDMC source queries. Refines L-MDM-079.
+
+### L-ENV-140  Failure-only Slack monitor that proves its own silence
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+A systemd oneshot on a 2-hour timer (`OnUnitActiveSec=2h`, `Persistent=true`, MemoryMax, CPUQuota, NoNewPrivileges) anchors each window to the last successful pass, kept in atomically written state, so late or missed timers leave no gap. It pages activityLog back to the window start and posts only on failures (with the simplified cause and the parent taskflow) or on jobs running longer than 2 cycles. The team webhook gets alerts only, the owner webhook also gets heartbeat and housekeeping. A daily heartbeat with counts proves the monitor is alive, and a crashed pass posts a failsafe alert and exits non-zero. Failures go to a JSONL ledger deduplicated on taskId:runId (last 500 keys). A weekly digest is built from the ledger plus per-week run counts (the failure-rate denominator) and fires daily until the week has posted.
+
+### L-ENV-141  Webhook URLs are credentials: httpx logs full request URLs at INFO
+**Kind:** SECURITY · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+httpx logs every request's full URL at INFO, and for a Slack incoming webhook the URL is the credential. On a shared host whose journald the team group can read, that leaks the webhook. Raise the httpx/httpcore loggers to WARNING, and never log the URL in your own post-failure messages (log the exception type only).
+
+### L-ENV-142  Dual-environment MCP deployment: per-env files, distinct server names, stdio over ssh
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+One codebase serves prod and dev. An env variable selects the environment, and each environment loads only its own env files, so a personal prod credential cannot leak into dev. The MCP server names differ, so two instances coexist in one client without tool confusion, and dev additionally enforces the org guard. Claude Desktop launches the stdio server over `ssh -T` to a cloud VM: no public endpoint and no bearer token to leak. Secrets come from the cloud secret manager through the instance role. Pin `mcp[cli]<2`, because 2.x renamed FastMCP and broke a shared install. With a shared team credential, IDMC startedBy/updatedBy shows the team account for everyone, and per-person attribution lives only in the SSH logs.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

@@ -24,6 +24,22 @@ belief.
 
 ---
 
+## 2026-11-19 (later): 188 lessons mined from public IDMC code
+
+- **About 40 public repositories read** (no code run): CLIs, SDKs, community MCP servers, CAI and CI/CD repos, the
+  vendor's own Claude skill, MDM and CDGC kits, and an open-source catalog's IDMC connector. Each candidate was checked
+  against the existing lessons; duplicates were merged and unverified claims left out.
+- **188 new lessons** (2,236 in total), every one labelled **Reported** (third-party code, not probed here) or
+  **Documented** (the vendor skill), with a confidence note. Largest gains: CDGC (search behaviour, bulk import and
+  export, audit events, DQ score upload, custom lineage and classifications), CAI (taskflow run, resume and terminate,
+  package internals, fault-alert handlers, deployment settings), migration and source control, Secure Agent service and
+  group configuration, MDM SaaS irreversible steps, and MCP tool design and monitoring patterns.
+- **Two contradictions flagged, not overturned:** agent-group configuration has a reported REST route (L-AGENT-132 next
+  to L-AGENT-088), and compare is reported as a POST (L-MIG-110 next to L-MIG-097). Probe both.
+- **New:** [Community code index](../12-reference-library/community-code-index.md), from each lesson to the file it came
+  from. The [ecosystem doc](../09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md) gains the newly found
+  repositories and three warnings (a phone-home script, an unattended write-capable bot, a cookie-copying extractor).
+
 ## 2026-11-19: 23 managed MCP servers, and the ecosystem around them
 
 - **Managed servers brought to the October 2026 release** ([Managed MCP Servers](../09-claire-mcp/01-managed-mcp-servers-catalog-access.md)):

@@ -1,5 +1,5 @@
 # Lessons: Access & Auth
-87 current lessons (1 disputed), 11 superseded; evidence dated 2026-06-27 to 2026-11-10.
+107 current lessons (1 disputed), 11 superseded; evidence dated 2026-06-27 to 2026-11-10.
 
 Last verified: 2026-06-27 to 2026-10-02.
 
@@ -355,6 +355,86 @@ Use `python -m azure.cli informatica data-management organization create -g <rg>
 ### L-AUTH-098  Azure Native IDMC signup: 'Partner signup failed ... Unexpected error occurred' on every variation from a personal-account Sponsorship tenant
 **Kind:** WALL · **Proven:** 2026-11-10 · **Evidence:** Failures across 3 Azure regions, 3 Informatica Region values, 3 emails, plain and #EXT# UPN, link to an existing org; 0 charges; all test resources deleted (2026-11-10)
 Once Azure-side validation passed, every create or link-existing-org attempt failed about 1-4 minutes in, inside Informatica's signup step, with 'Object reference not set to an instance of an object' or 'Partner signup failed ... Unexpected error occurred. Please try again later' and no detail. Varying Azure region, Informatica Region value, email (personal, plus-alias, corporate domain), UPN form, company domain and new-versus-link did not change it; Owner role, complete profile, accepted terms and registered providers were all in place. The likely trigger is the tenant type (a personal Microsoft account in a default directory on a Sponsorship subscription), unconfirmed. Do not keep retrying: send the operation ids to Informatica's Azure Native team, or use a company Entra tenant with a pay-as-you-go or enterprise subscription; existing IDMC orgs remain the free route.
+
+### L-AUTH-099  v3 userGroups and roles lists cap limit at 200 (V3API_IDSError_003); there is no get-by-id for users or groups
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+`GET /public/core/v3/userGroups?limit=1000` and `/roles?limit=1000` answer 400 `V3API_IDSError_003` 'Invalid value in limit parameter: must be between 0 and 200'; page with `limit=200&skip=<n>` (the client pages users at 200 too). `GET /public/core/v3/users/<id>` is 405 with `Allow: DELETE`; fetch one user with `q=userId==<id>` or `q=userName==<name>` (the only filterable fields, exact match). userGroups has no get-by-id or by-name route either: filter with `q=userGroupName=="<name>"` or scan the pages. Role details come from `GET /public/core/v3/roles?q=roleName=="<name>"&expand=privileges` (`/roles/<id>` is not a route).
+
+### L-AUTH-100  v2 user update by v3 user id fails 403 REPO_10704; change users only through v3 membership PUTs
+**Kind:** ERROR · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST /api/v2/user/<v3 userId>` (legacy v2 update, XML) answered 403 `<code>REPO_10704</code>` 'Internal error. An error occurred while loading the user.' for a freshly created, not yet activated user (earlier testing saw 400). In-place scalar edits (name, email, time zone) stayed unavailable; group and role changes work through `PUT /public/core/v3/users/<id>/addGroups|removeGroups|addRoles|removeRoles`. Roles a user already gets from a group need no direct assignment. Refines L-AUTH-059.
+
+### L-AUTH-101  Object ACLs: PUT /permissions/<aclId> updates, DELETE /permissions clears all, GET /permissions/checkAccess reports your own rights
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+Beyond list/add/delete-one, the v3 object-permissions resource has: `PUT /public/core/v3/objects/<id>/permissions/<aclId>` with the same `{principal:{type,name},permissions:{read,update,delete,execute,changePermission}}` body to replace one entry; `DELETE /public/core/v3/objects/<id>/permissions` to remove every entry (back to unrestricted); `GET /public/core/v3/objects/<id>/permissions/<aclId>` for one entry; and `GET /public/core/v3/objects/<id>/permissions/checkAccess[?type=<asset type>]`, which returns the caller's own permissions including `create` (whether that asset type can be created in a project or folder). A duplicate add for the same principal is rejected. POST may return an array or a single object; accept both. Refines L-AUTH-089.
+
+### L-AUTH-102  Retry policy for IDMC REST: one re-login on 401, bounded 429 backoff, resend only read-only calls after a dropped connection
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+A maintained client does: on 401, log in once and resend; if that login fails, stop and tell the user (never loop, to avoid lockout). On 429, wait `Retry-After` (seconds or HTTP date) or `ratelimit-reset` (seconds), capped at 60 s, up to 3 times; Informatica documents neither header for v3, so without one back off 2, 4, 8 s plus up to 25% jitter. On EOF or connection reset (IDMC drops connections now and then in long call runs) resend only GETs and read-only POSTs such as `/public/core/v3/lookup`, at most twice (1 s, 2 s); never resend writes, which may already have been applied. A lookup still rate-limited after retries should leave the asset in the deploy set rather than drop it.
+
+### L-AUTH-103  Login host per region code (v3 login URL table)
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST https://<login host>/saas/public/core/v3/login`, where the login host by region is: US, USE2, USE4, USE6, USW1, USW3, USW5 -> dm-us; USW1-1, USW3-1 -> dm1-us; USW1-2 -> dm2-us; CAC1 -> dm-na; EMEA, EMWE1 -> dm-em; EMC1 -> dm1-em; UK1 -> dm-uk; APJ, APSE1 -> dm-ap; APNE1 -> dm1-ap; APNE2 -> dm-apne; APSE2 -> dm1-apse; APAUC1 -> dm1-apau (all `.informaticacloud.com`). The org's working host is still the `products[].baseApiUrl` the login returns, not this table.
+
+### L-AUTH-104  Removing a role from a group's last role, or a user's last direct role, is refused; the v3 error codes
+**Kind:** ERROR · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+`PUT /public/core/v3/users/<id>/removeRoles` that would leave the user with no direct role fails 400 `V3API_IDSError_048` 'Failed to remove role(s) from the user <id>' wrapping `V3API_IDSError_044` 'The group must have at least one role' - IDMC keeps a user's direct roles in a hidden per-user group, whatever roles their user groups grant. `PUT /userGroups/<id>/addRoles|removeRoles` take `{"roles":[<role names>]}` and `addUsers|removeUsers` take `{"users":[<user names>]}`; a group must keep at least one role. Refines L-AUTH-090.
+
+### L-AUTH-105  Role privilege edits: PUT addPrivileges/removePrivileges take privilege NAMES and return 204; create takes ids; a role must keep at least one privilege
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+`POST /public/core/v3/roles` takes `privileges` as privilege ids, but `PUT /public/core/v3/roles/<roleId>/addPrivileges` and `/removePrivileges` take `{"privileges":["<privilege name>",...]}` with names such as `view.auditLog`, and answer 204. Three independent clients (a Python CLI, a Python SDK, a Terraform provider that translates ids into names before the call) do this. The vendor spec says removePrivileges cannot strip the last privilege, so add before you remove. An idempotent reconcile diffs the desired privilege set against `GET /roles?q=roleId=="<id>"&expand=privileges`, adds what is missing, then removes the extras. Rename or describe changes need a delete and recreate (the provider marks name and description ForceNew).
+
+### L-AUTH-106  GET /public/core/v3/privileges hides disabled and unlicensed privileges unless q=status==All
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`GET /public/core/v3/privileges` returns only the privileges the org can currently use. `?q=status==All` adds the Disabled (expired licence) and Unassigned (never licensed) ones. Each item has `id`, `name`, `description`, `service` and `status` (Enabled, Disabled, Unassigned, Default). Use the default list when you judge whether a feature is licensed, and the All list when you map privilege names to ids for role definitions that must also work in a differently licensed org. Refines L-AUTH-090.
+
+### L-AUTH-107  Roles can be addressed by name: /public/core/v3/roles/name/<roleName>/addPrivileges and /removePrivileges
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+Besides `/roles/<roleId>/...`, the SDK calls `PUT /public/core/v3/roles/name/<roleName>/addPrivileges` and `.../removePrivileges` with `{"privileges":["<privilege name>"]}`, which saves a lookup when a role's name is stable across orgs and its id is not. URL-encode role names that contain spaces. Untested in the SDK (no tests cover it).
+
+### L-AUTH-108  SAML group and role mappings over REST: Orgs/<orgId>/SAMLConfig/{groupMappings,roleMappings} and add/removeSamlGroupMappings
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`GET /public/core/v3/Orgs/<orgId>/SAMLConfig/groupMappings?limit=200&skip=0` and `.../SAMLConfig/roleMappings` list the SSO mappings. `PUT /public/core/v3/Orgs/<orgId>/addSamlGroupMappings` with `{"groupMappings":[{"roleName":"<IDMC role>","samlGroupName":["<IdP group>"]}],"reuseGroup":true}` adds mappings (204). `reuseGroup:false` creates a new IDMC group instead of reusing one with the same name as the SAML group. `PUT .../removeSamlGroupMappings` with `{"groupMappings":[...]}` removes them (204). `<orgId>` is `userInfo.orgId` from the v3 login.
+
+### L-AUTH-109  Read the org's trusted IP ranges with GET /public/core/v3/Orgs/<orgId>/TrustedIP
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence low: a comment or README claim); not probed here
+`GET /public/core/v3/Orgs/<orgId>/TrustedIP` with `INFA-SESSION-ID` returns the org's trusted IP address ranges (`<orgId>` = `userInfo.orgId` from the v3 login). Check it before running automation from a new egress IP, because logins from outside the ranges are refused. Only the read is implemented and it has no tests; no write verb was seen.
+
+### L-AUTH-110  User password routes: POST /public/core/v3/Users/ChangePassword and /Users/ResetPassword
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST /public/core/v3/Users/ChangePassword` with `{"userId":"<id>","oldPassword":"<old>","newPassword":"<new>"}` changes a password. `POST /public/core/v3/Users/ResetPassword` with `{"userId":"<id>","securityAnswer":"<answer>","newPassword":"<new>"}` resets it with the security answer. Note the capital U in `Users`. Rotating a service user's password this way still needs every stored copy updated (see the lockout lessons).
+
+### L-AUTH-111  v3 user create accepts forcePasswordChange, maxLoginAttempts, authentication (0 native, 1 SAML), aliasName, roles and groups
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST /public/core/v3/users` takes `name`, `firstName`, `lastName` and `email`, plus optional `password` (empty: the user gets an activation email; at most 255 characters), `description`, `title`, `phone`, `forcePasswordChange`, `maxLoginAttempts`, `authentication` (0 native, 1 SAML), `aliasName`, `roles` (role ids) and `groups` (group ids). Set `maxLoginAttempts` on service users when you create them, rather than finding a low default later. Refines L-AUTH-095.
+
+### L-AUTH-112  securityLog q= filter: entryTime range joined by 'and', other fields appended with ';', window at most 14 days
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`GET /public/core/v3/securityLog?limit=100&skip=<m>&q=entryTime>="<ISO ms Z>" and entryTime<="<ISO ms Z>";actionCategory=="<cat>";actor=="<user>";objectName=="<name>"` filters server-side, and the results are under `entries[]`. The CLI's help says the date range is at most 14 days, so split longer audits into 14-day windows. Page with skip until `entries` is empty. Refines L-AUTH-075.
+
+### L-AUTH-113  Two error envelopes: v2 {@type:error,code,description,statusCode} vs v3 {error:{code,message,requestId,details}}
+**Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+v2 routes return errors such as `{"@type":"error","code":"UI_10000","description":"...","statusCode":403}`. v3 routes return `{"error":{"code":"IDS_085","message":"...","requestId":"<id>","details":[...]}}`. Parse both shapes in one error handler, and log `requestId` for support tickets.
+
+### L-AUTH-114  Detect the JWT switch from the token's shape and refresh before exp
+**Kind:** PATTERN · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+No org field shows whether the org issues JWTs or session ids (the v2 org record has no auth-type field). A token with three base64url segments whose payload decodes to a dict is a JWT. Read `exp` without verifying the signature (a scheduling decision, not authorization) and re-login 60 s before it. Persist the last-seen mode and alert once when it flips: a parent-org admin can flip it. Under JWT, also treat 403 from active-bpel and dbmi as possible expiry (re-auth once). Under session ids, keep 403 failing fast. Refines L-AUTH-032.
+
+### L-AUTH-115  Sending the token in three session headers breaks at JWT size: route one header per path family
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+A client that sends the same token as INFA-SESSION-ID, icSessionId and IDS-SESSION-ID costs about 6.2 KB per request once the token is a JWT (measured: 2,075 chars x 3). That approaches the 8 KB default header limit of nginx and many load balancers. Send one header per path family: v3 INFA-SESSION-ID, v2 icSessionId, mftsaas, dbmi and identity IDS-SESSION-ID. Probe active-bpel before trimming it. Under JWT, v2 logout revokes nothing (stateless): rely on a short TTL. Refines L-AUTH-033.
+
+### L-AUTH-116  An org guard after every login accepts both org-id forms and fails closed
+**Kind:** SECURITY · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+When prod and dev share a login URL, the credential alone decides the org. After each login, compare against an expected org id. Accept either form: v3 login reports the 22-character orgUUID, while v2 login and `GET /api/v2/org` report the short orgId (the org record carries `orgId`, `id` and `orgUUID`). Call /api/v2/org directly, not through the retrying wrapper, so a 401 cannot recurse into login. If the org cannot be proven, discard the session and raise. Refines L-AUTH-047.
+
+### L-AUTH-117  Check a v2 session before reuse: POST /api/v2/user/validSessionId
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+POST <serverUrl>/api/v2/user/validSessionId with header icSessionId and body {"@type":"validatedToken","userName":"<user>","icToken":"<sessionId>"} returns isValidToken and timeUntilExpire (minutes). A long-running client calls it at most every few minutes and re-logs in only when isValidToken is false, which avoids a login per request.
+
+### L-AUTH-118  Log in to IDMC with an identity-provider JWT: POST /ma/api/v2/user/loginOAuth
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+POST https://<login-host>/ma/api/v2/user/loginOAuth with {"orgId":"<orgId>","oauthToken":"<jwt>"} exchanges a short-lived JWT from the org's identity provider (obtained by ROPC from Okta, Entra ID and the like) for a v2 session; the response has the v2 login shape (serverUrl, icSessionId). It needs SAML configured org-wide. A monitoring vendor's agent uses it as the non-password mode beside v2 /ma/api/v2/user/login and v3 /saas/public/core/v3/login.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 ### L-AUTH-077  IDMC REST has no PUT or PATCH; update only by POST to the id, overturned 2026-09-28

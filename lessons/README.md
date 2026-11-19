@@ -1,8 +1,8 @@
 # Lessons Learned
 
-> **Summary.** Every lesson this KB rests on: **2,048 lessons** in 14 domain files, each with a stable id
+> **Summary.** Every lesson this KB rests on: **2,236 lessons** in 14 domain files, each with a stable id
 > (`L-<DOM>-<NNN>`), a kind, a date, the evidence that proved it and one to six sentences of generic, placeholder-only
-> text. 1,843 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
+> text. 2,031 are current, 182 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
 > these ids; [Overturned Beliefs](overturned-beliefs.md) lists every belief that fell and what replaced it.
 
 Last verified: 2026-11-19, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-19 across all files).
@@ -45,21 +45,21 @@ Counts are the `### L-` headings in each file.
 
 | File | Id prefixes | Lessons | Current | Superseded | Disputed | Evidence dates |
 |---|---|---|---|---|---|---|
-| [01 Access & Auth](by-domain/01-access-auth.md) | `AUTH` | 98 | 86 | 11 | 1 | 2026-06-27 to 2026-11-10 |
-| [02 Secure Agent & Connections](by-domain/02-secure-agent-connections.md) | `AGENT` (123), `CONN` (141) | 264 | 238 | 23 | 3 | 2026-06-27 to 2026-11-05 |
-| [03 Data Integration (CDI)](by-domain/03-data-integration-cdi.md) | `CDI` | 305 | 281 | 21 | 3 | 2026-06-27 to 2026-11-12 |
-| [04 Mass Ingestion & CDC](by-domain/04-mass-ingestion-cdc.md) | `DBMI` | 64 | 58 | 5 | 1 | 2026-07-04 to 2026-11-02 |
-| [05 Application Integration (CAI)](by-domain/05-application-integration-cai.md) | `CAI` | 163 | 146 | 16 | 1 | 2026-07-01 to 2026-11-01 |
-| [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.md) | `DQ` | 163 | 145 | 14 | 4 | 2026-06-27 to 2026-11-12 |
-| [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-cdgc.md) | `CDGC` | 226 | 198 | 26 | 2 | 2026-06-27 to 2026-11-01 |
-| [08 MDM](by-domain/08-mdm.md) | `MDM` | 90 | 77 | 11 | 2 | 2026-07-04 to 2026-11-12 |
-| [09 CLAIRE & MCP](by-domain/09-claire-mcp.md) | `MCP` | 137 | 121 | 14 | 2 | 2026-07-04 to 2026-11-19 |
-| [10 Migration & Org Management](by-domain/10-migration-org-management.md) | `MIG` (100), `CLEAN` (36) | 136 | 118 | 17 | 1 | 2026-07-04 to 2026-11-02 |
-| [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing.md) | `IPU` | 60 | 51 | 7 | 2 | 2026-06-28 to 2026-11-12 |
-| [12 Claude Working Methods](by-domain/12-claude-working-methods.md) | `METHOD` | 160 | 152 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-13 |
-| [13 Environment & Ops](by-domain/13-environment-ops.md) | `ENV` | 139 | 136 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-12 |
+| [01 Access & Auth](by-domain/01-access-auth.md) | `AUTH` | 118 | 106 | 11 | 1 | 2026-06-27 to 2026-11-10 |
+| [02 Secure Agent & Connections](by-domain/02-secure-agent-connections.md) | `AGENT` (123), `CONN` (141) | 285 | 259 | 23 | 3 | 2026-06-27 to 2026-11-05 |
+| [03 Data Integration (CDI)](by-domain/03-data-integration-cdi.md) | `CDI` | 316 | 292 | 21 | 3 | 2026-06-27 to 2026-11-12 |
+| [04 Mass Ingestion & CDC](by-domain/04-mass-ingestion-cdc.md) | `DBMI` | 66 | 60 | 5 | 1 | 2026-07-04 to 2026-11-02 |
+| [05 Application Integration (CAI)](by-domain/05-application-integration-cai.md) | `CAI` | 188 | 171 | 16 | 1 | 2026-07-01 to 2026-11-01 |
+| [06 Data Quality & Profiling](by-domain/06-data-quality-profiling.md) | `DQ` | 167 | 149 | 14 | 4 | 2026-06-27 to 2026-11-12 |
+| [07 Catalog & Governance (CDGC)](by-domain/07-catalog-governance-cdgc.md) | `CDGC` | 261 | 233 | 26 | 2 | 2026-06-27 to 2026-11-01 |
+| [08 MDM](by-domain/08-mdm.md) | `MDM` | 111 | 98 | 11 | 2 | 2026-07-04 to 2026-11-12 |
+| [09 CLAIRE & MCP](by-domain/09-claire-mcp.md) | `MCP` | 150 | 134 | 14 | 2 | 2026-07-04 to 2026-11-19 |
+| [10 Migration & Org Management](by-domain/10-migration-org-management.md) | `MIG` (100), `CLEAN` (36) | 158 | 140 | 17 | 1 | 2026-07-04 to 2026-11-02 |
+| [11 IPU, Metering & Licensing](by-domain/11-ipu-metering-licensing.md) | `IPU` | 62 | 53 | 7 | 2 | 2026-06-28 to 2026-11-12 |
+| [12 Claude Working Methods](by-domain/12-claude-working-methods.md) | `METHOD` | 169 | 161 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-13 |
+| [13 Environment & Ops](by-domain/13-environment-ops.md) | `ENV` | 142 | 139 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-12 |
 | [14 UI Automation](by-domain/14-ui-automation.md) | `UI` | 37 | 30 | 6 | 1 | 2026-07-06 to 2026-10-26 |
-| **Total** | 16 prefixes | **1,763** | **1,563** | **181** | **19** | 2026-06-27 to 2026-10-26 |
+| **Total** | 16 prefixes | **1,951** | **1,751** | **181** | **19** | 2026-06-27 to 2026-10-26 |
 
 A machine-readable copy of the same lessons, one JSON object per line, is [lessons.jsonl](lessons.jsonl) in this
 folder, with the fields `id`, `domain`, `kind`, `title`, `text`, `evidence`, `date`, `status` and `supersedes_id`

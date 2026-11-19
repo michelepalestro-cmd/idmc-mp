@@ -1,5 +1,5 @@
 # Lessons: Mass Ingestion & CDC
-59 current lessons (1 of them disputed) and 5 superseded, IDs L-DBMI-###; evidence dated 2026-07-04 to 2026-10-12. Every lesson is generic; its sources are mapped outside the generic zone.
+61 current lessons (1 of them disputed) and 5 superseded, IDs L-DBMI-###; evidence dated 2026-07-04 to 2026-10-12. Every lesson is generic; its sources are mapped outside the generic zone.
 Related: [DBMI over REST](../../knowledge/04-cdc-mass-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) · [CDC from PostgreSQL](../../knowledge/04-cdc-mass-ingestion/02-cdc-from-postgresql.md) · [DBMI Targets & Drivers](../../knowledge/04-cdc-mass-ingestion/03-dbmi-targets-drivers.md)
 
 ## Current
@@ -239,6 +239,14 @@ The cloud provider hard-stopped the VM hosting the PostgreSQL source for about 1
 ### L-DBMI-064  Unused logical replication slots on a CDC source fill its disk: find which slot the live CDC job uses before dropping the rest
 **Kind:** GOTCHA · **Proven:** 2026-10-12 · **Evidence:** data disk 92% full; about 700 MB held by unused slots; left untouched pending a slot-to-task mapping (2026-10-12)
 On a demo PostgreSQL host that fed Database Ingestion CDC, leftover replication slots from earlier tasks kept retaining WAL: about 700 MB, which pushed the data disk to 92% against an 85% rule. Before dropping anything, map each slot in pg_replication_slots to a running CDC task (a polling job's slot shows active=f between cycles, L-DBMI-016), drop only the orphans, and set max_slot_wal_keep_size so a forgotten slot cannot fill the disk again (L-DBMI-014). Include a slot and disk check in every pre-demo checklist. Refines L-DBMI-014.
+
+### L-DBMI-065  DBMI job status: a GET with a JSON body {jobId} on the -ing host; the fallback is /dbmi/api/v1/job/<id>/metrics/v2
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+On `https://<pod>-ing.<domain>.informaticacloud.com`, `GET /dbmi/public/api/v2/job/status` with `Content-Type: application/json` and body `{"jobId": <n>}` returns status (Up and Running, Running with Warning, On Hold, Stopped, Failed, Deploying, Aborted, Completed), errorMessage, lastAction, timings and jobConfig (taskMode UNLOAD/CDC/COMBINED, source and target connections). On a 404 (older pods), fall back to `GET /dbmi/api/v1/job/<id>/metrics/v2`. Job names end in the id (`dbmir_<name>_<jobId>`). DBMI jobs never appear in the v2 activity APIs. Refines L-DBMI-002.
+
+### L-DBMI-066  DBMI per-table metrics: POST /dbmi/public/api/v2/job/metrics; stateFilter must be an array
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+`POST https://<pod>-ing.<domain>.informaticacloud.com/dbmi/public/api/v2/job/metrics` with `{"jobId":<n>,"parameters":{"metricsOptions":{"stateFilter":["FAILED"],"sort":["srcTable","asc"],"search":"","limit":25,"offset":0}}}` returns `jobInfo` plus `metricsInfo[]`: per task recordsRead/recordsWritten and `subTasks[]` with srcName, tgtName and state, and for CDC inserts/updates/deletes. It also returns `counts.statusCounts` and `currentThroughput`. A bare string stateFilter answers 500 (Jackson ArrayList deserialization). 409 means the job is not in a state that has stats.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

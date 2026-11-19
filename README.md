@@ -5,7 +5,7 @@ A Claude Code plugin that makes Claude an IDMC co-pilot: it understands Informat
 promote, tune Secure Agents, build and speed up CDI pipelines, set up CDC, publish CAI processes, add data quality,
 scan into the catalog, master data, and read IPU use, on the systems you already have.
 
-Inside: 2,048 field lessons (error signature -> cause -> fix), one skill per IDMC area, twelve slash commands, a
+Inside: 2,236 field lessons (error signature -> cause -> fix), one skill per IDMC area, twelve slash commands, a
 13-stage deploy-and-operate playbook, a Python library with a login lockout guard, a mapping generator, three
 rebuildable demo blueprints, and an endpoint-level API and MCP reference.
 

@@ -1,5 +1,5 @@
 # Lessons: Data Quality & Profiling
-140 current lessons (2 of them disputed), 14 superseded; evidence dated 2026-06-27 to 2026-11-12.
+144 current lessons (2 of them disputed), 14 superseded; evidence dated 2026-06-27 to 2026-11-12.
 
 Topic docs: [DQ Assets](../../knowledge/06-data-quality-profiling/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) · [Profiling - What Is Headless](../../knowledge/06-data-quality-profiling/02-profiling-what-is-headless.md) · [CLAIRE DQ Agent](../../knowledge/06-data-quality-profiling/03-claire-dq-agent-file-based-profiling-cleansing.md) · [DQ Scorecards](../../knowledge/06-data-quality-profiling/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md) · [Overturned Beliefs](../overturned-beliefs.md)
 
@@ -618,6 +618,22 @@ In Region A the mapping found 300 duplicates (1.6 % more) that a SQL key compari
 ### L-DQ-167  After a merge rule improves, re-count duplicates in every region already built with the old rule: the rule's progress is not in the live data until each region is rebuilt
 **Kind:** PROCESS · **Proven:** 2026-11-18 · **Evidence:** national read-only re-measure 2026-11-18 (51 regions, about 1 s each); applied merges read from the stage merge table of the region's live build
 A national re-measure found more duplicate verified records than three days earlier (235,111 vs 205,845) although the merge rule had improved. A region built before the improvement had applied 1,405 merges; the current rule (and the IDMC match) would merge 32,042 records there, all pairs of a county parcel record and an address-only record of one house. Count each live region with the current rule (read only, seconds per region), compare with the merges its live build applied, and rebuild the regions that are behind.
+
+### L-DQ-168  Pre-flight a CDQ rule model: POST <pod>-dqcloud /rule-service/api/v1/validateRule
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST https://<pod>-dqcloud.<domain>.informaticacloud.com/rule-service/api/v1/validateRule` with header IDS-SESSION-ID and body `{"ruleModel":"<RuleDefinition JSON serialized as a string>"}` returns `{name, description, outputs[], error}`. Empty `outputs` with a null `error` means valid. It writes nothing to FRS, so use it as a dry run before creating a rule specification.
+
+### L-DQ-169  Profiling reads on the -dqprofile host: list filters, recent runs, OData column drill-down, CLAIRE insights
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+With IDS-SESSION-ID on `https://<pod>-dqprofile.<domain>.informaticacloud.com` (the first label of serverUrl plus -dqprofile): `GET /profiling-service/api/v1/profile?frsProjectName=..&frsFolderName=..&name=..&exactMatch=true`, `GET /profiling-service/api/v1/runDetail/topNrun?limit=10`, `GET /profiling-service/api/v1/job/<profileJobId>`, `GET /metric-store/api/v1/odata/Profiles('<id>')/Columns` and `/Columns('<colId>')/{Patterns|ValueFrequencies|DataTypes}`, and `GET /metric-store/api/v1/Profiles('<id>')/Insights` for CLAIRE insights (type, score, statement, confirmation status). Refines L-DQ-155.
+
+### L-DQ-170  Data Profiling: a replaced file with a different column count keeps stale metadata and writes 0 rows
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+If a profiled file is replaced by one with a different column count under the same name, the profiling engine's stored metadata keeps the old count: the reader reads N rows, the writer outputs 0, and the run shows Completed with an empty column profile. The log line is 'READER_1_1_1> _3120 Number of column in metadata are more than source file.' Delete every prior profiling task on that file name and recreate the task. Other known traps: a date with month <= 12 can be inferred as year/dd/mm, all-digit phones infer as Integer/Decimal, and a 10.2.0 HotFix2 engine version in the log is normal.
+
+### L-DQ-171  Export a profile's results to Excel from metric-store
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+GET https://<pod>-dqprofile.<domain>.informaticacloud.com/metric-store/api/v1/Profiles('<profileId>')/Export?runKey=<n>&range=ALL_COLUMNS&fileFormat=EXCEL with header IDS-SESSION-ID streams the profile results workbook. Runs start with POST .../profiling-service/api/v1/profile/<profileId>/execute.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

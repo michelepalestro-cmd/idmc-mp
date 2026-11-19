@@ -42,6 +42,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | Agent-style MCP and shims | `knowledge/09-claire-mcp/04-agent-style-mcp-async-orchestration-custom-shims.md` |
 | MCP vs REST | `knowledge/09-claire-mcp/05-mcp-vs-rest-when-to-use-which.md` |
 | Vendor Claude plugin, MCP registries, community CLIs and MCP servers | `knowledge/09-claire-mcp/07-ecosystem-plugins-registries-community-tools.md` |
+| Someone else's public code for a route or pattern | `knowledge/12-reference-library/community-code-index.md` |
 | MCP servers, actions and calls | `knowledge/playbook/10-mcp.md` |
 
 ## Tools (`--help` on each)

@@ -1,5 +1,5 @@
 # Lessons: Data Integration (CDI)
-268 current lessons (including 18 that overturned earlier beliefs), 21 superseded, 3 disputed; evidence dated 2026-06-27 to 2026-11-12. Topic docs: [knowledge/03-cdi-data-integration](../../knowledge/03-cdi-data-integration/).
+279 current lessons (including 18 that overturned earlier beliefs), 21 superseded, 3 disputed; evidence dated 2026-06-27 to 2026-11-12. Topic docs: [knowledge/03-cdi-data-integration](../../knowledge/03-cdi-data-integration/).
 
 ## Current
 
@@ -1301,6 +1301,50 @@ To beat a latency target, extra runs of a golden-record mapping task were starte
 ### L-CDI-305  Pushdown would not rescue a mapping-based master on ClickHouse: SQL ELT is proven only within one warehouse family, and Cleanse, Verifier, Deduplicate and cloud address verification never push down
 **Kind:** FACT · **Proven:** 2026-11-12 · **Evidence:** Not probed live (would need a task change); KB evidence only; measured agent-mode gap 10-100x on full rebuilds
 Asked whether enabling pushdown would have closed the gap with native SQL: full SQL ELT is documented and proven only when source and target share an ecosystem (BigQuery to BigQuery, L-CDI-043/L-CDI-202), and nothing shows pushdown generating ClickHouse SQL through the JDBC V2 connector. Even where it works, only set work (joins, survivorship aggregations, match keys, routing) pushes down; the DQ engine steps run in the agent's engine and address verification is a cloud service call either way. Plan ClickHouse mastering as agent mode: incremental volume, tuned JDBC writes (L-CDI-262) and a Post SQL fold. For certainty, test pushdown once on a copy of one task and look for generated SQL in the session log. Refines L-CDI-043.
+
+### L-CDI-306  Monitor jobs of every type from jls-di JobLogEntries with the session as a USER_SESSION cookie plus a double-submit XSRF_TOKEN
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`GET https://<pod>.<domain>.informaticacloud.com/jls-di/api/v1/Orgs('<orgUuid>')/JobLogEntries?$top=<n>&$skip=<m>&$orderby=<f>&$filter=(status eq 'RUNNING' or status eq 'QUEUED') and (assetType eq 'MTT') and (contains(assetName,'<x>')) and (startTime ge <ts>) and (contains(runtimeEnvName,'<re>'))` returns `{value:[...]}` for all job types, taskflows included. Auth in the CLI: `Cookie: USER_SESSION=<v3 sessionId>; XSRF_TOKEN=<random>` plus the header `XSRF_TOKEN: <same random>`, an alternative to the KB's `IDS-SESSION-ID`. Pre-encode `$filter` in the URL. Each row's `extraData` is a JSON string: `pid` is the process id for a TASKFLOW, and `saasTaskId` is the v2 task id otherwise. Other filterable fields: `errorMessage`, `location`. The CLI marks this as experimental and unsupported. Refines L-DQ-106.
+
+### L-CDI-307  Stop anything running: job/stop with cleanStop for tasks, restadmin terminate for taskflows; the set of non-terminal states
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+The CLI treats these states as running: AWAITING_AUTO_RESTART, CHILD_SUSPENDED, INITIALIZED, NOT_STARTED, QUEUED, RUNNING, SKIPPED, SUBMITTED, SUSPENDED, TRYING_TO_STOP. A task is stopped with `POST /saas/api/v2/job/stop?cleanStop=true` and `{"@type":"job","taskFederatedId":"<assetId>","taskType":"<assetType>"}`. A taskflow is stopped with `PUT https://<pod>.<domain>.informaticacloud.com/active-bpel/restadmin/processes/<pid>/terminate?isManual=true` using the cookie and XSRF auth, with `<pid>` from the JobLogEntries `extraData`. The KB knows only the bare documented terminate PUT and has nothing on `cleanStop`. Refines L-CAI-044.
+
+### L-CDI-308  Start a task by path: v3 lookup id works as taskFederatedId in POST /api/v2/job; the job body also takes callbackURL and runtime parameter-file fields
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+The CLI resolves `<project>/<folder>/<task>` with `POST /public/core/v3/lookup` and sends the returned v3 id as `taskFederatedId` in `POST /saas/api/v2/job` with `{"@type":"job","taskFederatedId":"<v3 id>","taskType":"MTT"}`, plus optional `callbackURL` and `runtime:{parameterFileName:"<file>",parameterFileDir:"<dir>"}` to override the parameter file per run. This matches the KB's finding that taskFederatedId works only with the task's own federated id in the same org: the v3 object id is that id. Refines L-CDI-057.
+
+### L-CDI-309  v3 schedule PATCH needs a schedules[] wrapper with id and scheduleFederatedId, which likely explains V3API_007 on a bare {status:disabled}
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+The CLI updates a schedule with `PATCH /public/core/v3/schedule/<id>` and the body `{"schedules":[{"id":"<id>","scheduleFederatedId":"<fedId from GET /schedule/<id>>","status":"disabled", ...changed fields}]}`. The KB records `400 V3API_007` for a bare `{"status":"disabled"}` body. Create is `POST /public/core/v3/schedule` with `name` and `startTime`, plus optional `interval`, `frequency`, `status`, `endTime`, `rangeStartTime`, `rangeEndTime`, `timeZoneId`, `weekDay`, `dayOfMonth`, `weekOfMonth`, `dayOfWeek` and `sun`..`sat`. List filters use `q=status=="enabled";interval=="<i>";updateTime>="<ts>"`. Retest the disable with the wrapper. Refines L-CDI-076.
+
+### L-CDI-310  Bridge a mapping-task run to its parent taskflow: parentTaskFederatedId plus POST /public/core/v3/lookup
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+Each v2 activityLog entry carries `parentTaskFederatedId`, a v3 federated id. `POST <baseApiUrl>/public/core/v3/lookup` with `{"objects":[{"id":"<parentTaskFederatedId>"}]}` returns the parent TASKFLOW's path, name and type (`objects[0].path`). With this, a failure alert can name the taskflow, and the name feeds the /active-bpel/rt re-run. Lookup failures should never block the alert.
+
+### L-CDI-311  Validate an expression headless: POST /api/v2/expression/validate; list custom functions with GET /api/v2/customFunc
+**Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+`POST <serverUrl>/api/v2/expression/validate` with `{"@type":"expressionValidation","expr":"<expr>","connectionId":"<v2 connId>","objectName":"<object>","isSourceType":true}` validates an expression against a source or target object's fields before you embed it in a mapping. `GET <serverUrl>/api/v2/customFunc` lists the org's reusable custom functions. Both are read-only and were in the author's live smoke-test set.
+
+### L-CDI-312  Read activityMonitor and activityLog with the right fields, and page the log to the window start
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+activityMonitor (`GET /api/v2/activity/activityMonitor?details=true`, running only) names the job in `taskName` (objectName is empty) and the state in `executionState`. activityLog (completed only) names it in `objectName`, and `state == 3` means failed. Use `startTimeUtc`/`endTimeUtc`. Entries carry every transformation's stats (multi-MB pages), so always send `rowLimit`, page with `offset`, filter with `taskId`, and give a 120 s timeout (30 s failed in production). A fixed newest-N pull silently missed failures on a busy org. Refines L-CDI-288.
+
+### L-CDI-313  Rule-based errorMsg triage table mined from production failures
+**Kind:** ERROR · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Substring rules on the activityLog `errorMsg`: 'was stopped by user' (not an error: a manual stop), 'another instance of the task is currently running' (the previous run overran its slot), 'is not recognized' (Snowflake type mismatch, for example a date string into NUMBER), 'duplicate row detect' (Snowflake MERGE with duplicate keys), 'deadlock' (SQL Server victim, rerun), 'dtm process terminated unexpectedly' (agent memory or disk, or an agent restart), 'no more data available to read' (PostgreSQL connection dropped mid-read), 'unknownhostexception' (DNS on the agent), 'repoexception' (IICS-side HTTP 500, usually transient), 'sql compilation error' (bad warehouse or database value on the Snowflake connection). The string 'no errors encountered' means no real error.
+
+### L-CDI-314  Lineage from mapping exports: resolve the IMF by templateId, never by file size or name prefixes
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+One third-party lineage extractor picks the largest `bin/*.bin` in a DTEMPLATE zip and classifies sources and targets by transformation name prefixes (`src_`, `tgt_`), which silently mislabels mappings that follow other naming; it also calls a `/saas/api/v2/export` route that the v2 API does not have (export is v3). Resolve the mapping body through `mappingTemplate.json` `templateId` and `fileRecord.json` (type `IMFOBJECT`; `mappingPreviewFileRecordId` names the preview image), then read sources and targets from the IMF transformation classes and their connection bindings. The same code tolerates `mappingTemplate.json` as a bare array or as `{"value":[...],"Count":n}`. Refines L-CDI-027.
+
+### L-CDI-315  v2 mapping and connection lists are unpaginated: limit, skip and maxRecordsCount are ignored
+**Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes); not probed here
+GET <serverUrl>/api/v2/mapping and /api/v2/connection return every record in one response and ignore limit, skip and maxRecordsCount (verified live by the maintainers of an open-source catalog connector). Very large orgs (over 10k mappings or 1k connections) can hit request timeouts; raise the timeout or scope by tag through the v3 objects API, which does page with limit/skip. /api/v2/mttask is often restricted to some roles (403).
+
+### L-CDI-316  Table lineage from a v3 mapping export: bin/@3.bin JSON transformations and saas:@ connection refs
+**Kind:** RECIPE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code only); not probed here
+Export mappings with POST /public/core/v3/export (batches of up to ~1000 ids), poll, download, and in each inner dTemplate zip read bin/@3.bin (bin/@2.bin is a preview image) as UTF-8 JSON. content.transformations[] entries with a dataAdapter give object name/objectName/label, dbSchema and connectionId 'saas:@<federatedId>', and $$class marks source or target. Resolve the federated id against /api/v2/connection connParams['Connection Type'] for the platform. Taskflow step order comes from the exported .TASKFLOW.xml taskflowModel (start/service/end nodes linked by link targetId). Filter bundle objects by path 'Add-On Bundles/' or updatedBy 'bundle-license-notifier'. Refines L-CDI-027.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 
