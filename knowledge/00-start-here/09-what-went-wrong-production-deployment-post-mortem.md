@@ -25,8 +25,8 @@ deployment "done".
 
 ## The deployment in one paragraph
 
-A property data platform (a 100M+ row served table, a 1B+ row raw registry, hundreds of tables in a columnar
-warehouse on one cloud VM, a PostgreSQL application database) was brought onto IDMC: a Secure Agent next to the data,
+A production data platform (a very large served table, a larger raw layer, hundreds of tables in a warehouse and
+an application database) was brought onto IDMC: a Secure Agent next to the data,
 JDBC V2 connections, column profiles and DQ rule specifications on raw and gold tables, address verification, a
 table-by-table migration into a consolidated model and a golden-record (mastering) layer. Several Claude sessions and
 another coding agent worked on it at the same time. The IDMC product behaviour mostly worked as the KB describes. What
@@ -55,10 +55,10 @@ definition of "done". Every item below links to the lesson with the exact eviden
 |---|---|---|
 | The nightly backup covered 2 of the databases and failed every night, so its alert was ignored; no restore had ever been tested | list what the backup actually covers; restore one database to a scratch host | L-ENV-113 |
 | A new host held the only copy of migrated data with no backup timer and one local backup on the same disk | no data lands on a host before its offsite backup has run once | L-ENV-123 |
-| Repair "backups" kept as tables inside the database piled up to 530 tables and 190 GB on a 91 % full disk | rollback copies go off the server; a janitor drops untracked copies after 7 days | L-ENV-114 |
+| Repair "backups" kept as tables inside the database piled up to hundreds of tables on a 91 % full disk | rollback copies go off the server; a janitor drops untracked copies after 7 days | L-ENV-114 |
 | Waiting for spend approval for offsite backup left nothing at all | a filesystem-level freeze (ClickHouse `FREEZE`) is an immediate, near-free guard | L-ENV-105 |
 | A truncate-then-insert rebuild ran out of memory and left a table empty every night | rebuild into a staging table and swap atomically | L-ENV-106 |
-| A cleanup delete hid 49.5M rows IDMC had loaded and reset the progress cursors | no deletes on a migration target while lanes run; know the engine's recovery window | L-MIG-089 |
+| A cleanup delete hid tens of millions of rows IDMC had loaded and reset the progress cursors | no deletes on a migration target while lanes run; know the engine's recovery window | L-MIG-089 |
 | A re-ingest doubled a partition; every reader without dedup served rows twice | on merge-deduplicated engines, read with `FINAL` or dedupe, and count after every load | L-ENV-107 |
 | Constraints added mid-load rejected rows that had loaded fine an hour earlier | add constraints before the load, or re-check every earlier row | L-MIG-090 |
 
@@ -70,15 +70,15 @@ definition of "done". Every item below links to the lesson with the exact eviden
 | Status columns were 100 % "passed": constants, or forced by a CHECK constraint | a gate with no failures over many runs is suspect; bind independent rules to it | L-DQ-143, L-DQ-152 |
 | A fingerprint column held the SHA-256 of an empty string | reject `e3b0c442…b855` in the hash rule | L-DQ-146 |
 | Most lineage ids were typed into SQL or written outside IDMC | validate lineage stamps as data: real IDMC object ids only | L-CDI-295, L-CDI-293 |
-| A case-sensitive key comparison passed a state holding about a million duplicates | normalise case and whitespace inside key checks | L-DQ-139 |
+| A case-sensitive key comparison passed a partition holding about a million duplicates | normalise case and whitespace inside key checks | L-DQ-139 |
 | Approximate distinct counts were used to "prove" a key unique | exact counts in key and duplicate checks | L-DQ-141 |
 | A correct repair broke the duplicate gate overnight; the dependent flagging job had not run in weeks | after a repair, re-run the dependent flags; do not revert the repair | L-DQ-138 |
-| A hand-written fix query selected 2M rows where the gate flagged 2 groups | build the fix set from the gate's own view | L-DQ-135 |
-| An empty standardized column made "address present" fail on 34M rows | check presence on the raw column, standardization separately | L-DQ-145, L-DQ-140 |
+| A hand-written fix query selected millions of rows where the gate flagged 2 groups | build the fix set from the gate's own view | L-DQ-135 |
+| An empty standardized column made "address present" fail on a third of the rows | check presence on the raw column, standardization separately | L-DQ-145, L-DQ-140 |
 | A 5-digit postal rule failed ZIP+4 output | define each column's format before writing its rule | L-DQ-156 |
 | Closed lists taken from observed values disagreed with the data dictionary | take closed lists from the dictionary's enums | L-DQ-153 |
 | A classification column was empty on every row of the target | profile fill rates before writing rules | L-DQ-142 |
-| Address verification ran on reference address points: 0 served properties verified | confirm the population (which table, which rows) before any verification run | L-DQ-144 |
+| Address verification ran on reference address points: no served entity verified | confirm the population (which table, which rows) before any verification run | L-DQ-144 |
 | A quoted DQ score was older than the table's last write | the profile's last completed run must be newer than the last write | L-METHOD-147, L-DQ-150 |
 | The session's own DQ evaluator read empty as missing and accepted a script name as lineage | validate your evaluator on known-bad rows first | L-METHOD-139 |
 
@@ -93,7 +93,7 @@ definition of "done". Every item below links to the lesson with the exact eviden
 | A find-by-name after create missed profiles past 200 (offset is ignored) | page with a large limit and check the count | L-DQ-155 |
 | 940 tables waited because each database needed its own connection and REST never returns the stored password | plan one connection per database at provisioning | L-CONN-136 |
 | Profiles store real values in the cloud metric store | leave PII and raw JSON blobs out of every profile | L-DQ-157 |
-| A full ALL_ROWS read of a 1B+ row blob registry would have pulled about 282 GB | inventory and price the run first; sample | L-CDI-296, L-DQ-158, L-DQ-159 |
+| A full ALL_ROWS read of a billion-row blob registry would have pulled a few hundred GB | inventory and price the run first; sample | L-CDI-296, L-DQ-158, L-DQ-159 |
 | A long profiling orchestrator ran in a laptop shell and was killed under memory pressure | run multi-hour orchestrators on a server with a done-ledger | L-METHOD-148 |
 
 ## 5. Inherited builds, migration and mastering

@@ -129,7 +129,7 @@ Mechanics:
   that renames each `Output`, an Aggregator per group and a JDBC V2 target on a second connection whose URL names the
   results database (L-CDI-040). An independent SQL computation of the same checks on the same 1M-row sample matched
   866 of 867 group x check cells; use a deterministic hash filter so both sides read the same rows. The one miss was a
-  CLAIRE-generated state-code rule that rejected DC (L-DQ-118): read generated allowed lists before national runs.
+  CLAIRE-generated state-code rule that rejected DC (L-DQ-118): read generated allowed lists before nationwide runs.
 
 ### 2.4 Make the numbers honest (L-DQ-058)
 

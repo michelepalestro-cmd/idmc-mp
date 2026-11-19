@@ -235,7 +235,7 @@ The step-by-step method around this pipeline (dataset archetypes, the ten steps,
 one-page spec) is [Mastering a Table - Repeatable Playbook](05-mastering-a-table-repeatable-playbook.md).
 
 When the master must live in a warehouse table (no Business 360 model), build the MDM stages as a few parameterized
-CDI mappings plus one linear taskflow, not one mapping per table or per state (a stand-in in the sense of L-MDM-050;
+CDI mappings plus one linear taskflow, not one mapping per table or per region (a stand-in in the sense of L-MDM-050;
 call its output the master record of the stand-in, L-MDM-052):
 
 | Stage | Mapping shape | Lessons |
@@ -245,9 +245,9 @@ call its output the master record of the stand-in, L-MDM-052):
 | Survivorship | cross-reference-joined source ordered by master id, newest first -> sorted Aggregator `FIRST(value, condition)` per attribute group, `FIRST(record_id, condition)` for field lineage -> Rule Specifications -> certification Expression -> Router: master record + steward queue for hard-rule failures | L-CDI-263 |
 | Publish | counts per scope (expected masters vs written, certified, held, failed, issues) -> one manifest row; consumers read only committed publications | - |
 
-Rules that mattered: scope is an in-out parameter (one state, a list or ALL; L-CDI-265), lineage comes from
+Rules that mattered: scope is an in-out parameter (one region, a list or ALL; L-CDI-265), lineage comes from
 `$CurrentTaskId` / `$CurrentRunId` (never hard-coded), the run start is the record version so re-runs replace, transaction
 events can beat a stale attribute (the latest qualified sale event replaced nominal last-sale values), hierarchy gates hold
 units whose parent relationship is unconfirmed, and the write path needs big batches and a bigger DTM heap
-(L-CDI-262, L-AGENT-112). Bound warehouse memory per query and run national backfills by state group: one long national
+(L-CDI-262, L-AGENT-112). Bound warehouse memory per query and run full-scale backfills by scope group: one long full-scale
 read died when other workloads exhausted the warehouse's memory.

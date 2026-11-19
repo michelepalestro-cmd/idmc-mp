@@ -355,7 +355,7 @@ Evidence: 2026-07-13 to 2026-11-03. There is no native connector.
   profile failed with `JDBC_V2_ERROR_205 'entry [<database>] already exists in the collection [null]'` (three URL
   variants; L-CONN-089, now disputed), and on 2026-10-29 a REST create with NSTRING fields was refused (L-DQ-119,
   disputed). On 2026-11-02 five ClickHouse profiles on a JDBC V2 connection COMPLETED, up to an ALL_ROWS run over
-  101M rows: clone a profile body that has run on JDBC V2 (`TOOLKIT_CCI`, `sourcePath` `<database>/TABLE`, NSTRING
+  about 100M rows: clone a profile body that has run on JDBC V2 (`TOOLKIT_CCI`, `sourcePath` `<database>/TABLE`, NSTRING
   fields with `dataType` varchar) and profile typed sample tables (body and steps in
   [Profiling](../06-data-quality-profiling/02-profiling-what-is-headless.md)). What differed from the failed
   attempts was not isolated, so start from a profile that has run on the same connection type.

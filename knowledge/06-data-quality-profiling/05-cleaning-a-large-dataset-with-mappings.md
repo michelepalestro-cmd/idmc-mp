@@ -9,7 +9,7 @@ this?"; or a mapping-based clean-up is much slower than the SQL it replaces.
 
 **Key rules:**
 - Measure first, then size the work: full rebuilds stay in the warehouse's own SQL; IDMC mappings clean the **slice that
-  needs it** (candidates, changed rows, one state or region at a time) (L-MDM-085, L-CDI-305).
+  needs it** (candidates, changed rows, one region at a time) (L-MDM-085, L-CDI-305).
 - A mapping that cleans writes to a **stage table** in a work schema; a separate, reviewed step applies its decisions to
   the real tables. Nothing is merged or overwritten by the first run (L-DQ-165).
 - Prove the mapping against a **twin**: the same rule in SQL, read only, compared row by row (decision and survivor) before
@@ -52,14 +52,14 @@ The shape that worked (stage target in a work schema; every step native):
 4. **Cleanse with the org's dictionary.** Standardize street words (HIGHWAY -> HWY, STREET -> ST ...). This is the step
    that finds the duplicates a plain SQL key misses (L-DQ-166).
 5. **Expression: the match key and the guard flags.** Key = house | standardized street | unit | ZIP5. Flags per row: has a
-   unit, is a building / condo / multi-unit, residential type, has a county parcel, survivor rank (parcel record first,
+   unit, is a building / condo / multi-unit, residential type, has a parcel record, survivor rank (parcel record first,
    then the oldest).
 6. **Aggregator per key** on the `GROUPS` branch: group size, max flags, min / max type, min / max parcel, best survivor rank.
 7. **Filter** groups of size > 1.
 8. **Expression: the decision.** `review` when any member has a unit, is a building or condo, types are incompatible, or
    two different parcel numbers are present; `merge` otherwise, with the survivor taken from the best rank.
 9. **Joiner** of the decided groups back to every member row (`ROWS` branch), so each record gets its decision and survivor.
-10. **Target**: the stage table (`state`, `record_id`, `match_key`, `group_size`, `decision`, `reason`, `survivor`, run id
+10. **Target**: the stage table (`region`, `record_id`, `match_key`, `group_size`, `decision`, `reason`, `survivor`, run id
     from `$CurrentTaskId` / `$CurrentRunId`).
 
 ## 3. Prove it, then apply it
@@ -72,7 +72,8 @@ The shape that worked (stage target in a work schema; every step native):
    keeping every old record id as an alias of its survivor so links and pages still resolve.
 4. **Re-measure** the duplicate count after the write, and add the run to the scorecard.
 5. **After the rule improves, re-count every region already built.** The improvement is not in the live data until each
-   region is rebuilt: one region built under the old rule had applied 1,405 merges where the current rule merges 32,042 (L-DQ-167).
+   region is rebuilt: one region built under the old rule had applied about a thousand merges where the current rule merges tens of
+   thousands (L-DQ-167).
 
 ## 4. Running it safely
 
@@ -85,5 +86,5 @@ The shape that worked (stage target in a work schema; every step native):
 
 | Run | Candidates | Agreement with the SQL twin | Extra found by IDMC | Time |
 |---|---|---|---|---|
-| Region A (about 1.2 M verified records) | 18,210 records in duplicate groups | 18,210 / 18,210 same decision; 17,986 / 17,986 same survivor | 300 (274 merge, 26 review): "HIGHWAY 165" vs "HWY 165" written two ways | one job |
-| Region B (about 520 k verified records) | 38,771 records in duplicate groups | 38,763 / 38,763 same decision; 32,042 / 32,042 same survivor | none; 8 review records only the SQL key grouped ('ROAD # REAR' vs 'RD REAR') | 2 min 10 s, one job |
+| Region A (over a million verified records) | tens of thousands of records in duplicate groups | every shared record: same decision, same survivor | a few hundred (mostly merges, some review): a highway number written 'HIGHWAY' in one record and 'HWY' in the other | one job |
+| Region B (several hundred thousand verified records) | tens of thousands of records in duplicate groups | every shared record: same decision, same survivor | none; 8 review records only the SQL key grouped ('ROAD # REAR' vs 'RD REAR') | 2 min 10 s, one job |

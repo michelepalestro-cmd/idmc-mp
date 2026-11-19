@@ -155,7 +155,7 @@ Take `GET /profile/<templateId>` of a working profile on the **same connection t
 5. `POST /profile`, then `GET /profile?limit=200` to confirm the new `id` if the response does not carry it.
 
 **A JDBC V2 source (ClickHouse, proven 2026-11-02; L-DQ-128).** Five profiles on a JDBC V2 connection COMPLETED, up to
-an ALL_ROWS run over a 101M-row, 89-column table, two of them created by this cloned-body POST, and rule bindings and
+an ALL_ROWS run over a wide table of about 100M rows, two of them created by this cloned-body POST, and rule bindings and
 metric-store reads worked on them. The body: `connectionId` = the JDBC V2 connection; `source.sourceType` DATASOURCE;
 `source.dataSourceType` and `source.properties.dataSourceType` = `TOOLKIT_CCI`; `source.properties.sourcePath` =
 `<database>/TABLE`; `source.name` = the table; `runtimeOptions.runtimeEnvironmentId` null (the connection's runtime
@@ -166,8 +166,8 @@ fetches, L-CONN-089; NSTRING refused and a 'string' create that hung, L-DQ-119; 
 (a body cloned from a profile that had already run, NSTRING paired with `dataType` varchar, another agent and
 connection) was not isolated, so start from a profile that has run on the same connection type. Profile typed sample
 tables, not raw production tables: cast enum and low-cardinality columns to Nullable String, numbers to Float64 and
-dates to text, and use a stable hash sample (about 2,000 rows per partition, L-DQ-099); a full profile of a 1.3B-row
-table would have pulled about 282 GB through the agent.
+dates to text, and use a stable hash sample (about 2,000 rows per partition, L-DQ-099); a full profile of a
+billion-row table would have pulled a few hundred GB through the agent.
 
 ### 2.4 Field typing (PostgreSQL example) (L-DQ-022)
 
@@ -490,7 +490,7 @@ Catalog-source APIs (create/update multipart, scans, polling) are documented in 
 | "Low coverage (~17%) is caused by the connector skipping json/enum/array; casting views take it to ~100%" | 2026-06-28 to 2026-07-09 | Empty tables were 97.9% of the gap; the views recovered ~0.25% | L-DQ-092 → L-DQ-042 |
 | "Catalog scans and profiling are UI-initiated; there is no REST trigger" | 2026-07-05 | `POST /data360/executable/v1/catalogsource/<id>` with `capabilityNames` (used in June, proven again 2026-09-24) | L-DQ-093 → L-DQ-043 |
 | "Running only the Data Quality capability returns 406; failed profiling jobs expose no error over REST" | 2026-07-09 | The Data Quality run completes and scores once the Scope groups carry a runtime environment | L-DQ-044 → L-CDGC-143 |
-| "ClickHouse cannot be profiled through JDBC V2: object fetches fail JDBC_V2_ERROR_205, NSTRING is refused and 'string' hangs; profile a PostgreSQL copy" | 2026-10-03 to 2026-10-29 | Five JDBC V2 ClickHouse profiles COMPLETED from a cloned JDBC V2 body, up to ALL_ROWS over 101M rows (2026-11-02) | L-CONN-089, L-DQ-119 (disputed) → L-DQ-128 |
+| "ClickHouse cannot be profiled through JDBC V2: object fetches fail JDBC_V2_ERROR_205, NSTRING is refused and 'string' hangs; profile a PostgreSQL copy" | 2026-10-03 to 2026-10-29 | Five JDBC V2 ClickHouse profiles COMPLETED from a cloned JDBC V2 body, up to ALL_ROWS over about 100M rows (2026-11-02) | L-CONN-089, L-DQ-119 (disputed) → L-DQ-128 |
 
 ---
 

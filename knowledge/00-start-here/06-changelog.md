@@ -66,8 +66,8 @@ belief.
 - **Quick Start** ([10 Quick Start](10-quick-start-your-first-hour-with-idmc-and-claude.md)): the first hour for a
   new user: connect, prove the org, what to ask Claude for each common task, and the lessons that trip up almost every
   new user.
-- **20 more from a live review of a mappings-built property MDM (2,036 in total):** mapping vs SQL write speed and
-  why mapping-based mastering must be incremental; a 12-point checklist for why it failed at national scale; telling
+- **20 more from a live review of a mappings-built MDM (2,036 in total):** mapping vs SQL write speed and
+  why mapping-based mastering must be incremental; a 12-point checklist for why it failed at full scale; telling
   who wrote a table from the query log; address-verification job-cap burn and re-paying for verified addresses;
   blank match keys that block merges.
 - **51 new lessons (2,016 in total)** from session work 2026-10-08 to 2026-11-13 that earlier harvests had not read:
@@ -83,7 +83,7 @@ belief.
 ## 2026-11-10 (v5): ready for GitHub; what went wrong in a production deployment
 
 Why: the KB is published as a git repository, and a production deployment onto a live warehouse (hundreds of tables,
-a 100M+ row served table, many Claude sessions and another coding agent on one estate) produced most of its lessons
+a very large served table, many Claude sessions and another coding agent on one estate) produced most of its lessons
 from things that went wrong around IDMC rather than in it.
 
 - **Ready for GitHub:** `.gitignore` (caches, `.env` files, keys, run output, the private scan list), `.gitattributes`,
@@ -94,7 +94,7 @@ from things that went wrong around IDMC rather than in it.
 - **93 new lessons** (1,965 in all), 74 of them failures with their fix: a data disk that silently did not mount,
   forced password expiry and OOM lockouts, a Secure Agent watchdog, agent config saves that kill every job, backups
   that covered 2 databases and were never restored, repair copies piling up inside the database, a delete that hid
-  49.5M loaded rows, DQ gates on the wrong table or unable to fail, live-database profiling (memory caps, stale
+  tens of millions of loaded rows, DQ gates on the wrong table or unable to fail, live-database profiling (memory caps, stale
   "latest run", metric-store leftovers, one connection per database), an inherited 357-mapping build with fake
   lineage, golden-table rebuilds that doubled, peer sessions rewriting reviewed SQL, orphaned schedules and leases,
   identities that could not do the approved change, cost with no billing export, and Azure Native IDMC sign-up.

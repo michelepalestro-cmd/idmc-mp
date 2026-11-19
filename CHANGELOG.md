@@ -69,10 +69,10 @@ Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 
 - **New playbook:** [cleaning a large dataset with IDMC mappings](knowledge/06-data-quality-profiling/05-cleaning-a-large-dataset-with-mappings.md):
   when mappings and when SQL, the duplicate-record match as ten native steps, the SQL-twin proof, safe runs, and field
-  results from two regions (every shared record agreed, every survivor the same).
+  results from two test datasets (every shared record agreed, every survivor the same).
 - **New command** `/idmc-mp:clean-data` (twelve in all); the `idmc-data-quality` skill points to both.
 - **Three lessons:** L-DQ-165 (the match-mapping pattern), L-DQ-166 (the Cleanse dictionary is where IDMC beats a plain
-  key), L-DQ-167 (re-count every region after a merge rule improves).
+  key), L-DQ-167 (re-count every scope after a merge rule improves).
 
 ## 1.2.0 (2026-11-18): the IDMC co-pilot layout
 

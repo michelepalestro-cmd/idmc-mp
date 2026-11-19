@@ -138,8 +138,8 @@ service.
   with `TO_INTEGER(SUBSTR(<input>, <n>, 1))` and `MOD(..., 10) = 0`) validated as a mapplet at DTM load and matched an SQL
   check row for row (L-DQ-111).
 - **Read a generated rule's allowed list.** A rule CLAIRE generated for 'valid two-letter US state abbreviation' failed
-  every District of Columbia row (2,121 rows), while a SQL check with the 50 states plus DC passed them; extend such
-  lists (DC, territories) before using them on national data (L-DQ-118, 2026-10-29).
+  every District of Columbia row, while a SQL check with the 50 states plus DC passed them; extend such
+  lists (DC, territories) before using them on nationwide data (L-DQ-118, 2026-10-29).
 - **A changed rule spec leaves its mappings Invalid in the designer only.** A Rule Specification transformation stores
   a copy of the rule's definition: after the asset changed, the Mapping Designer showed the mapping Invalid ('The
   definition of the referenced asset [<rule spec>] has been changed. Synchronize the asset') while FRS, the v2 API and
