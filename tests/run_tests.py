@@ -291,6 +291,26 @@ def _():
     assert f in out2, "check_setup does not point at the home login file"
 
 
+@test("US-02b connect: example or empty login values never reach IDMC; --where and --setup without a terminal are safe")
+def _():
+    home = tempfile.mkdtemp()
+    d = os.path.join(home, ".idmc_toolkit")
+    os.makedirs(d)
+    f = os.path.join(d, "IDMC_LOGIN.txt")
+    cases = [("", "", ""),
+             ("jane.doe@example.com", "changeme", "https://usw5.dm-us.informaticacloud.com/cloudUX/home"),
+             ("svc_user", "a-real-looking-pass", "https://www.google.com/")]
+    for user, pw, host in cases:
+        with open(f, "w", encoding="utf-8") as out:
+            out.write("IDMC_USER=%s\nIDMC_PASS=%s\nIDMC_LOGIN_HOST=%s\n" % (user, pw, host))
+        rc, out = run(["toolkit/check_login.py"], home=home)
+        assert rc == 2 and "No login was tried" in out and "Logging in" not in out, out[-400:]
+    rc, out = run(["toolkit/check_login.py", "--where"], home=home)
+    assert rc == 0 and f in out, out[-300:]
+    rc, out = run(["toolkit/check_login.py", "--setup"], home=home)
+    assert rc == 2 and "needs a terminal" in out, out[-300:]
+
+
 @test("US-03 health-check: read-only command, uses the session tool and the lessons")
 def _():
     t = read("commands", "health-check.md")

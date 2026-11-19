@@ -3,6 +3,20 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/00-start-here/06-changelog.md](knowledge/00-start-here/06-changelog.md).
 
+## 1.6.0 (2026-11-19): setup anyone can follow
+
+- **README rewritten around a 3-step setup** in plain words: a checklist of what you need, install, connect, check,
+  and a table that explains every login message and what to do about it.
+- **Guided login:** `python3 toolkit/check_login.py --setup` asks for the IDMC address from your browser, your user
+  name and your password (hidden while typing) and saves them to your private login file. `--where` shows the file.
+- **No wasted login attempts:** the login check now looks at your file on your computer first (empty values, example
+  values, an address that is not IDMC) and only then makes its single attempt. A failed login is explained in plain
+  words: wrong region, single sign-on user, locked account, paused login, network or certificate problem.
+- A short "CONNECTED" summary instead of raw JSON (`--json` for the full answer); `/idmc-mp:connect` asks users not to
+  paste passwords into the chat.
+- **New** [SECURITY.md](SECURITY.md); `toolkit/setup/SETUP.md` rewritten for git clones, demos and sharing; a test
+  (US-02b) proves example or empty values never reach IDMC.
+
 ## 1.5.0 (2026-11-19): 186 lessons from public IDMC code
 
 - **186 new lessons** (2,234 in total) mined from about 40 public IDMC repositories and the vendor's own Claude skill,

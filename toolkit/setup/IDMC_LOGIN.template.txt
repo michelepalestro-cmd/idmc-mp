@@ -1,13 +1,21 @@
-# YOUR IDMC LOGIN: fill in the 3 lines at the bottom, save, done. No quotes, no spaces around "=".
+# YOUR IDMC LOGIN
 #
-#   IDMC_USER        the user name you sign in to IDMC with, in full (e.g. jane.doe@example.com).
-#                    It must be a native IDMC user: an SSO-only user cannot log in through the API.
-#   IDMC_PASS        that user's password
-#   IDMC_LOGIN_HOST  sign in to IDMC in your browser and paste the address bar here, as is
-#                    (e.g. https://usw5.dm-us.informaticacloud.com/cloudUX/home); the toolkit keeps the region part.
+# Fill in the 3 lines at the bottom, after the "=" sign. No quotes. No spaces around "=". Then save the file.
 #
-# This file lives in your home folder (~/.idmc_toolkit/), never inside the plugin: the plugin folder is replaced
-# on every update. It holds your password: never share it or commit it.
+#   IDMC_USER        The user name you type on the IDMC sign-in page, exactly (it may not be your e-mail).
+#                    It must have its own IDMC password: if you sign in with your company's single sign-on
+#                    button, ask your IDMC admin for a "native" IDMC user (a service user is best).
+#   IDMC_PASS        The password of that user.
+#   IDMC_LOGIN_HOST  Sign in to IDMC in your web browser, copy the whole address from the top of the browser,
+#                    and paste it here as it is. Example: https://usw5.dm-us.informaticacloud.com/cloudUX/home
+#
+# Example of a filled-in file:
+#   IDMC_USER=svc_claude
+#   IDMC_PASS=MyS3cretPassw0rd
+#   IDMC_LOGIN_HOST=https://usw5.dm-us.informaticacloud.com/cloudUX/home
+#
+# This file stays in your home folder (~/.idmc_toolkit/), never inside the plugin, so updates never touch it.
+# It holds your password: never share it, never paste it into a chat, never commit it to git.
 
 IDMC_USER=
 IDMC_PASS=

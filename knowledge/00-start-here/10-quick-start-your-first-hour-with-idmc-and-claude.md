@@ -18,8 +18,11 @@ Claude, and the lessons that trip up almost every new user. Everything deeper is
 
 ## 2. Connect and prove the org (10 minutes)
 
-1. Ask Claude: **"connect to my IDMC org"**. It runs `check_login.py`, which creates a login file outside the
-   skill folder the first time. Fill in user, password and login host, then ask again.
+1. Type `/idmc-mp:connect` (or ask **"connect to my IDMC org"**). The first time, it creates your login file in
+   `~/.idmc_toolkit/` and shows a `--setup` command: run that in a terminal window and answer three questions (the IDMC
+   address from your browser, your user name, your password, which stays hidden). Then type `/idmc-mp:connect` again.
+   It checks the file on your computer first and makes one login attempt at most; the
+   [README](../../README.md#if-the-login-doesnt-work) explains every login message in plain words.
 2. Ask: **"prove which org we are in"**. Claude runs the three-call preflight (login, `GET /api/v2/org`,
    `GET /api/v2/agent`) and prints org name, id, pod and base URL (L-AUTH-018, L-AUTH-046).
 3. Ask: **"health-check my org"**. That lists runtimes and agent health, connections, projects and which services the
