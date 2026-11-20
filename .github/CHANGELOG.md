@@ -3,6 +3,12 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/reference/kb-changelog.md](../knowledge/reference/kb-changelog.md).
 
+## 1.14.2 (2026-11-20): MCP servers in the README
+
+- The README now covers Informatica's 23 managed MCP servers: how to connect, when to use MCP or the REST API, and which
+  servers were called live (6), connected with tools listed (13) or only documented (4).
+- The MCP skill tells Claude to say which servers are untested and to prove one with a read-only call first.
+
 ## 1.14.1 (2026-11-20): golden-record and DQ lessons from a production mastering build
 
 - **16 new lessons** (2,358 in total), mostly mastering: measure precision per match class before auto-merging

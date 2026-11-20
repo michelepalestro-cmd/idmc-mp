@@ -32,6 +32,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
    and auth (docs 01-02) with `toolkit/lib/idmc_mcp.py`.
 2. Pick MCP or REST per doc 05; MCP never replaces the Secure Agent.
 3. Long-running work: the async orchestration pattern (doc 04).
+4. When you describe coverage, say which servers were called live and which are only listed or documented (the root
+   README's table, L-MCP-131). Before relying on an untested server, make one read-only `tools/call` and show its answer.
 
 ## Read (in this order when unsure)
 | Need | File |

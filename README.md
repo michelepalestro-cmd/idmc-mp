@@ -1,7 +1,7 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
 [![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.14.1-blue)](.github/CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.14.2-blue)](.github/CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
@@ -40,6 +40,40 @@ Behind the skills:
   rebuildable demo blueprints such as [customer mastering from a CSV](toolkit/demos/customer_master_csv/README.md).
 - **Safety by default:** your login stays on your computer, every write is a dry run until you name the org it may
   change, and the plugin talks only to Informatica and the systems you connect.
+
+## Informatica's MCP servers
+
+The knowledge base covers **all 23 of Informatica's managed MCP servers** (the October 2026 release) plus the CLAIRE
+agent server: what each one can and cannot do, its tools, how to log in to it, and the traps found using it.
+
+**How to connect:** after `/idmc-mp:connect`, ask Claude to "list my org's MCP servers", or run
+`python3 toolkit/lib/idmc_mcp.py servers --tools`. It reads your org's own server list (servers are switched on per
+org) and their tools, with no setup. For a script or gateway that runs unattended, `idmc_mcp.py client-create` makes a
+scoped OAuth client whose secret goes straight to a private file; `claude mcp add` then wires it into Claude Code. The
+steps are in [MCP servers and CLAIRE](knowledge/11-mcp-claire/README.md).
+
+**MCP or API?** Both reach the same IDMC services, so neither can do what the service itself can't. Claude picks per
+task ([full table](knowledge/11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md)):
+
+| Use MCP for | Use the REST API for |
+|---|---|
+| Questions in plain language (CLAIRE orchestrator and data exploration) | Building mappings, deploying CDC, publishing CAI processes (no MCP tool does these) |
+| Fuzzy customer match (MCP only) and lineage reads (simplest on MCP) | Data profiling and DQ dictionaries (REST only) |
+| Profiling and cleansing an uploaded file (DQ agent, MCP only) | Bulk work, exact bodies, paging and read-back, such as batch address checks (1,000 per call vs 1) |
+| One-off address checks, running and watching tasks | Anything a scheduled job repeats: same input, same result |
+
+Using MCP is not free: the services behind each call use IPUs as usual.
+
+**What has been tested:**
+
+| Status | Servers |
+|---|---|
+| **Called live, results recorded** (6) | Connection Management, Secure Agent Management, Address Verification, CLAIRE Data Quality Agent, CLAIRE Orchestrator, CLAIRE Data Exploration Agent |
+| **Connected and tools listed, no recorded tool call** (13) | Job Management, Log Management, Audit Management, Asset Promotion, CDGC Metadata Search, Catalog Discovery, Catalog Enrichment, CDGC Data Quality Score, Customer Identification, Data Provisioning, User Management, IPU Management, Troubleshooting (preview) |
+| **Documented only, not yet seen in an org** (4, October 2026) | Data Marketplace Order Management, Catalog Asset History, Data Access Management, IDMC Asset Documentation |
+
+The CLAIRE agent server also ran as a local MCP server inside Claude Code. For an untested server, Claude says it is
+untested and confirms with one read-only call before relying on it.
 
 ## Install
 
