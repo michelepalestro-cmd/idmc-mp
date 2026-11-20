@@ -1,8 +1,8 @@
 # Lessons Learned
 
-> **Summary.** Every lesson this KB rests on: **2,358 lessons** in 16 domain files, each with a stable id
+> **Summary.** Every lesson this KB rests on: **2,369 lessons** in 16 domain files, each with a stable id
 > (`L-<DOM>-<NNN>`), a kind, a date, the evidence that proved it and one to six sentences of generic, placeholder-only
-> text. 2,152 are current, 184 are superseded (kept so nobody re-learns them) and 22 are disputed. The topic docs cite
+> text. 2,163 are current, 184 are superseded (kept so nobody re-learns them) and 22 are disputed. The topic docs cite
 > these ids; [Overturned Beliefs](overturned-beliefs.md) lists every belief that fell and what replaced it.
 
 Last verified: 2026-11-19, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-20 across all files).
@@ -56,13 +56,13 @@ Counts are the `### L-` headings in each file.
 | [08 Data Quality & Profiling](../08-data-quality/lessons.md) | `DQ` | 176 | 157 | 15 | 4 | 2026-06-27 to 2026-11-19 |
 | [09 Catalog & Governance (CDGC)](../09-catalog-lineage/lessons.md) | `CDGC` | 266 | 238 | 26 | 2 | 2026-06-27 to 2026-11-19 |
 | [10 MDM](../10-mdm/lessons.md) | `MDM` | 131 | 118 | 11 | 2 | 2026-07-04 to 2026-11-19 |
-| [11 CLAIRE & MCP](../11-mcp-claire/lessons.md) | `MCP` | 149 | 133 | 14 | 2 | 2026-07-04 to 2026-11-19 |
+| [11 CLAIRE & MCP](../11-mcp-claire/lessons.md) | `MCP` | 160 | 144 | 14 | 2 | 2026-07-04 to 2026-11-20 |
 | [12 Migration & Org Management](../12-deploy-migrate/lessons.md) | `CLEAN` (37), `MIG` (132) | 169 | 151 | 17 | 1 | 2026-07-04 to 2026-11-20 |
 | [13 IPU, Metering & Licensing](../13-ipu-cost/lessons.md) | `IPU` | 68 | 59 | 7 | 2 | 2026-06-28 to 2026-11-19 |
 | [14 Environment & Ops](../14-working-with-claude/lessons-environment-ops.md) | `ENV` | 145 | 142 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-19 |
 | [14 UI Automation](../14-working-with-claude/lessons-ui-automation.md) | `UI` | 37 | 30 | 6 | 1 | 2026-07-06 to 2026-10-26 |
 | [14 Claude Working Methods](../14-working-with-claude/lessons.md) | `METHOD` | 171 | 163 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-19 |
-| **Total** | 16 prefixes | **2,358** | **2,152** | **184** | **22** | 2026-06-27 to 2026-11-20 |
+| **Total** | 16 prefixes | **2,369** | **2,163** | **184** | **22** | 2026-06-27 to 2026-11-20 |
 
 The source of truth is [lessons.jsonl](lessons.jsonl), one JSON object per line, in this folder; the `knowledge/<job>/lessons*.md`
 files are the readable view. Each line has the fields `id`, `domain`, `kind`, `title`, `text`, `evidence`, `date`, `status` and `supersedes_id`
@@ -72,17 +72,17 @@ files are the readable view. Each line has the fields `id`, `domain`, `kind`, `t
 
 | Kind | Means | Count |
 |---|---|---|
-| `GOTCHA` | a trap: something that looks like one thing and is another | 812 |
-| `RECIPE` | a proven multi-step procedure | 322 |
-| `ROUTE` | an exact verb, host, path, headers and body with the success signal and read-back | 209 |
+| `GOTCHA` | a trap: something that looks like one thing and is another | 818 |
+| `RECIPE` | a proven multi-step procedure | 323 |
+| `ROUTE` | an exact verb, host, path, headers and body with the success signal and read-back | 210 |
 | `PROCESS` | an end-to-end way of working | 159 |
 | `WALL` | something that is not headless, dated (many walls are superseded) | 142 |
 | `LAW` | a rule that holds across orgs and changes outcomes | 141 |
 | `OVERTURNED` | the newer lesson that replaced an older belief; its partner is a superseded lesson | 130 |
-| `FACT` | a fact worth knowing, with its source | 96 |
+| `FACT` | a fact worth knowing, with its source | 98 |
 | `PATTERN` | a reusable way to do something | 85 |
 | `ERROR` | an error signature and what it really means | 77 |
-| `PERF` | a measured performance fact | 60 |
+| `PERF` | a measured performance fact | 61 |
 | `SECURITY` | a rule about secrets, access or exposure | 54 |
 | `DECISION` | a choice made, with its reasons | 45 |
 | `WORKAROUND` | a way around a wall | 18 |

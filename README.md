@@ -5,10 +5,11 @@
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
-plain words; Claude builds, runs, checks and fixes the work in your IDMC org through its APIs, without clicking through
-the IDMC website.
+plain words; Claude builds, runs, checks and fixes the work in your IDMC org without clicking through the IDMC
+website. It works both ways IDMC can be reached: the **REST APIs** and **Informatica's managed MCP servers**, and it
+picks the right one per task ([MCP or API?](#informaticas-mcp-servers)).
 
-Its purpose is to let anyone set up IDMC without the trial and error: it carries **2,358 field lessons** from real
+Its purpose is to let anyone set up IDMC without the trial and error: it carries **2,369 field lessons** from real
 builds (what works, what does not, the error that fooled everyone and its fix), so Claude starts from what is already
 known instead of rediscovering it.
 
@@ -38,13 +39,16 @@ Behind the skills:
   [knowledge/00-start-here](knowledge/00-start-here/README.md).
 - **A Python toolkit** (standard library only): login with a lockout guard, org proof, a headless mapping generator, and
   rebuildable demo blueprints such as [customer mastering from a CSV](toolkit/demos/customer_master_csv/README.md).
+- **An MCP bridge** that turns your org's managed MCP servers into Claude's own tools after `/idmc-mp:connect-mcp`,
+  read-only unless you choose otherwise.
 - **Safety by default:** your login stays on your computer, every write is a dry run until you name the org it may
   change, and the plugin talks only to Informatica and the systems you connect.
 
 ## Informatica's MCP servers
 
-The knowledge base covers **all 23 of Informatica's managed MCP servers** (the October 2026 release) plus the CLAIRE
-agent server: what each one can and cannot do, its tools, how to log in to it, and the traps found using it.
+The knowledge base covers **Informatica's managed MCP servers** (25 servers and 271 tools in the November 2026
+registry, including four CAI servers) plus the CLAIRE agent server: what each one can and cannot do, its tools, how to
+log in to it, and the traps found using it.
 
 **How to connect:** after `/idmc-mp:connect`, run **`/idmc-mp:connect-mcp`**. It lists the servers your org has
 (Informatica switches them on per org), creates a scoped OAuth client whose secret goes straight to a private file on
@@ -58,20 +62,23 @@ task ([full table](knowledge/11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md))
 
 | Use MCP for | Use the REST API for |
 |---|---|
-| Questions in plain language (CLAIRE orchestrator and data exploration) | Building mappings, deploying CDC, publishing CAI processes (no MCP tool does these) |
-| Fuzzy customer match (MCP only) and lineage reads (simplest on MCP) | Data profiling and DQ dictionaries (REST only) |
+| Questions in plain language (CLAIRE orchestrator and data exploration) | Building mappings, deploying CDC, publishing CAI processes (an MCP CAI publish is listed but unproven) |
+| Fuzzy customer match (MCP only) | Lineage (the MCP lineage tool's backend answers "Unknown tool") and data profiling (REST only) |
 | Profiling and cleansing an uploaded file (DQ agent, MCP only) | Bulk work, exact bodies, paging and read-back, such as batch address checks (1,000 per call vs 1) |
-| One-off address checks, running and watching tasks | Anything a scheduled job repeats: same input, same result |
+| One-off address checks, running and watching tasks, CAI process monitoring | Anything a scheduled job repeats: same input, same result |
+| "Why is it failing?": agent health, connection tests, browsing and previewing a table | Loops: MCP adds 0.25-0.65 s per call and its list tools do not page |
 
-Using MCP is not free: the services behind each call use IPUs as usual.
+Using MCP is not free: the services behind each call use IPUs as usual. An MCP failure comes back HTTP 200 with the
+error in the text, so Claude reads the text, not the status.
 
 **What has been tested:**
 
 | Status | Servers |
 |---|---|
-| **Called live, results recorded** (6) | Connection Management, Secure Agent Management, Address Verification, CLAIRE Data Quality Agent, CLAIRE Orchestrator, CLAIRE Data Exploration Agent |
-| **Connected and tools listed, no recorded tool call** (13) | Job Management, Log Management, Audit Management, Asset Promotion, CDGC Metadata Search, Catalog Discovery, Catalog Enrichment, CDGC Data Quality Score, Customer Identification, Data Provisioning, User Management, IPU Management, Troubleshooting (preview) |
-| **Documented only, not yet seen in an org** (4, October 2026) | Data Marketplace Order Management, Catalog Asset History, Data Access Management, IDMC Asset Documentation |
+| **Every read-only tool called live** (24, 2026-11-20) | Job Management, Audit Management, Asset Promotion, CDGC Metadata Search, Catalog Discovery, CDGC Data Quality Score, Customer Identification, Data Provisioning, IPU Management, Troubleshooting, Connection Management, Address Verification, CLAIRE Data Quality Agent, CLAIRE Orchestrator, CLAIRE Data Exploration Agent, Data Marketplace Order Management, Data Access Management, IDMC Asset Documentation, CAI Administration, CAI Asset Management, CAI Connection Management, CAI Job Management, Data Quality Assets, Catalog Asset History |
+| **Listed but broken** | Catalog Asset History `get_asset_history` and Catalog Discovery `get_asset_lineage`: their backends answer "Unknown tool" |
+| **Write tools listed, not called** | Catalog Enrichment (all write), CAI publish and run, policy and DQ-asset writes, order approvals |
+| **Called live earlier, not in the November registries** | Secure Agent Management; User Management and Log Management were listed in September only |
 
 The CLAIRE agent server also ran as a local MCP server inside Claude Code. For an untested server, Claude says it is
 untested and confirms with one read-only call before relying on it.

@@ -49,7 +49,7 @@ def load():
     by_file, general = {}, collections.Counter()
     for p in lesson_files():
         t = p.read_text(encoding="utf-8")
-        key = str(p.relative_to(KNOWLEDGE))
+        key = p.relative_to(KNOWLEDGE).as_posix()
         by_file[key] = re.findall(r"^### (L-[A-Z]+-\d+)\s", t, re.M)
         g = re.split(r"^## Other general lessons.*$", t, flags=re.M)
         if len(g) > 1:

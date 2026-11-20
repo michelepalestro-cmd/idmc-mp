@@ -11,8 +11,9 @@ same task look like both ways? What do they cost and how fast are they?
 - Use REST when you need exact bodies, paging, bulk, read-back and idempotence; use MCP for natural language, lineage
   reads and fuzzy match (L-MCP-049).
 - Only on MCP: fuzzy customer match, the file-based DQ agent, the CLAIRE agent questions. Only on REST: Data Profiling,
-  dictionaries, DBMI deploy, CAI publish, authoring mappings (L-MCP-003, L-MCP-049). Lineage is on both: MCP in one
-  call, REST hop by hop from the asset read (L-CDGC-181).
+  DBMI deploy, CAI publish (MCP publish listed, unproven), authoring mappings (L-MCP-003, L-MCP-049, L-MCP-160).
+  Lineage is REST only today: the MCP `get_asset_lineage` backend answers "Unknown tool" (L-MCP-153); REST walks it
+  hop by hop from the asset read (L-CDGC-181).
 - In this plugin both are available at once: the REST API through the toolkit, and the org's managed servers as
   Claude Code tools after `/idmc-mp:connect-mcp` (§0).
 - Never a user session in a daemon: use REST with a service login or an MCP gateway that holds an OAuth client
@@ -20,13 +21,17 @@ same task look like both ways? What do they cost and how fast are they?
 - Budget the backing service, not the MCP line (L-MCP-026).
 - NL-to-SQL runs in the CLAIRE GPT UI or the managed agent routes with the same answers; neither changes data
   (L-MCP-111, L-MCP-089).
+- MCP adds 0.25-0.65 s per call over REST for the same read (L-MCP-159), and its failures arrive as HTTP 200 with a
+  text body: check the text, not the status (L-MCP-154). A tool in `tools/list` can still have no backend (L-MCP-153).
+- CAI reads are now on MCP (four CAI servers); CAI publish and run are listed but unproven (L-MCP-160).
 
 **Related:** [01 Managed MCP Servers](01-managed-mcp-servers-catalog-access.md) ·
 [04 Agent-Style MCP & Custom Shims](04-agent-style-mcp-async-orchestration-custom-shims.md) ·
 [Capability Map](../00-start-here/03-capability-map.md) ·
 [The Laws of Headless IDMC](../00-start-here/02-the-laws-of-headless-idmc.md) · [Lessons: CLAIRE & MCP](lessons.md)
 
-**Last verified:** 2026-11-20 (23 managed servers, October 2026 release; L-MCP-132)
+**Last verified:** 2026-11-20 (25 managed servers, 271 tools, every read-only tool called in one org and the registry
+read in two; L-MCP-151)
 
 > **Summary.** Many writes now exist on **both** sides (connections, runtime-environment selections, glossary and
 > classification, users and roles, export and import) (L-MCP-049). Auth for MCP callers:
@@ -76,13 +81,13 @@ it, L-MCP-025), and the services' IPU bill. Neither side can do what the service
 | Capability | REST | MCP (managed server → tool) | Use | Evidence |
 |---|---|---|---|---|
 | Catalog search | `POST https://idmc-api.<domain>.../data360/search/api/v1/search` with an Elasticsearch body (`X-INFA-SEARCH-LANGUAGE: elasticsearch`) | `cdgcsearchmetadata` / `cdgccatalogdiscovery` → `search_metadata` / `search_assets` (one NL string) | **MCP** for natural-language questions; **REST** for exact filters, bulk counts, facets (`core.profiled`) and paging | REST proven; MCP documented and listed |
-| Asset detail and **lineage** | `GET .../data360/search/v1/assets/<identity>?scheme=internal&segments=all`: the `lineage` segment lists inbound and outbound data-flow hops, one asset at a time (L-CDGC-181); `/data360/lineage/*` graph paths are 404 | `get_asset_details` (`id`, `scheme`): lineage, profile, descriptions; **(Oct)** `cdgccatalogdiscovery` → `get_asset_lineage` | **MCP** for a lineage question; **REST** to walk and store lineage in a pipeline | REST hops proven; MCP documented |
+| Asset detail and **lineage** | `GET .../data360/search/v1/assets/<identity>?scheme=internal&segments=all`: the `lineage` segment lists inbound and outbound data-flow hops, one asset at a time (L-CDGC-181); `/data360/lineage/*` graph paths are 404 | `cdgcsearchmetadata` → `get_asset_details` (`id`, `scheme`): details, profile, descriptions (proven, 57 KB); `cdgccatalogdiscovery` → `get_asset_lineage` is listed but its backend answers **"Unknown tool"** (L-MCP-153) | **REST** for lineage; MCP `get_asset_details` for one asset's detail | REST hops proven; MCP details proven, MCP lineage dead |
 | Fuzzy customer match | no public MDM search/list (404/405; 403 role gap on one pod) | `searchcustomer` → master-record search and details | **MCP** | REST walls |
 | Address verification | `POST.../dataquality/addressverification/api/v1/process` (≤1,000 per call) | `dqverifyaddress` → `verify_address` (1 per call) | **REST** for batches; **MCP** for trickle or one-off | REST documented; MCP proven |
 | Profile and cleanse an **uploaded file** | none | `dataqualityagent` → `request_upload_url` + `data_quality_cleansing` | **MCP only** | proven |
 | Data Profiling profiles (create, run, poll) | `<pod>-dqprofile/profiling-service/api/v1` | none | **REST only** | proven |
 | Per-rule pass rates of a profile | metric store `Profiles('<id>')/Columns('<columnId>')/ValueFrequencies` on the rule's `Output` column (L-DQ-123) | none proven (`get_asset_score` reads catalog scores, untested) | **REST** | REST proven |
-| DQ dictionaries | `<pod>-dqcloud-api/quality/public/v2/dictionaries` | none | **REST only** | create proven |
+| DQ dictionaries and cleanse assets | `<pod>-dqcloud-api/quality/public/v2/dictionaries` | `dataqualityassets` → `search_assets` (`type` CLEANSE or DICTIONARY), `get_asset` (proven; 403 on vendor-supplied cleanse assets), plus create, append, replace and delete (listed) | **REST** for scripted dictionary loads; **MCP** to find and read DQ assets | REST create proven; MCP reads proven (L-MCP-156) |
 | Run / monitor / stop CDI tasks | `POST /saas/api/v2/job`; `/api/v2/activity/activityLog`, `/activityMonitor` | `jobmanagement` → `run_*`, `get_*_status`, stop/terminate, `search_completed_jobs` | **Either**. MCP suits an operator agent; REST gives full history and exact filters. | both proven |
 | Taskflows | `POST /api/v2/workflow` (linear, headless); advanced taskflow publish was a wall | `run_linear_taskflow`, `run_published_taskflow` (run only) | REST to author linear taskflows; either to run | REST proven |
 | **Connections** create, update, test | v2 GET → edit → POST the full body; `GET /api/v2/connection/test/<id>` | `connectionmanagement` → `create_connection`, `update_connection`, `test_connection(_by_id)` | **Either**. The MCP test passed where a v2 POST test returned APP_21000. | both proven |
@@ -90,20 +95,22 @@ it, L-MCP-025), and the services' IPU bill. Neither side can do what the service
 | Export / import (clone authoring, migration) | `POST /public/core/v3/export`, `/import/package`, `/import/<id>` | `diassetpromotion` → `rest_export_start`, `rest_import_start`, status/log | **REST** for package editing (checksums, retargeting); MCP to trigger or inspect | REST proven |
 | New CDI mapping definition (field mapping) | package synthesis and import; template mapping tasks | **none** | **REST** | MCP wall |
 | Deploy a DBMI task | `task/deploy/<id>`, `job/start` on `<pod>-ing` | **none** | **REST** | proven |
-| Publish a CAI process | `POST <pod>-cai/active-bpel/asset/v1/publish` | **none** | **REST** | proven |
-| CAI suspend / resume / terminate, schedules | `/active-bpel/restadmin/...` | none. `jobmanagement` stops CDI jobs, not CAI instances. | **REST** | documented |
+| Publish a CAI process | `POST <pod>-cai/active-bpel/asset/v1/publish` | `cai-asset-management` → `publish_assets`, `unpublish_assets` (listed, **not called**; L-MCP-160) | **REST** until an MCP publish is proven | REST proven; MCP listed |
+| CAI deployed processes, deployment logs, contributions | `/active-bpel/...` admin reads | `cai-asset-management` → `search_deployed_processes`, `search_deployed_services`, `search_deployment_logs`, `deployment_audit`, `list_assets` | **MCP** for a quick look; **REST** in pipelines | MCP proven |
+| CAI process instances: list, detail, log; suspend / resume / terminate | `/active-bpel/restadmin/...` | `caijobmanagement` → `list_processes`, `count_processes`, `get_process_detail`, `list_alarms` (proven); `get_process_full_log` returned a stack trace, `get_process_state` a 500 lock error (L-MCP-154); run, suspend, resume, terminate listed | **MCP** for monitoring reads; **REST** for actions until proven | MCP reads proven |
+| CAI schedules, URN mappings, email config | `/active-bpel/restadmin/...` | `caiadministration` → `list_schedules` (`tenantContextId` = org v3 id), `get_urn_definitions`, `get_email_config` (proven); create, edit, run schedules listed | **Either** for reads | MCP reads proven |
 | Glossary and classification writes | `POST/PATCH.../data360/content/v1/assets` | `cdgccatalogenrichment` (glossary, classification, business-metadata writes) | **REST** for scripted, idempotent curation with undo; MCP for conversational edits | REST proven; MCP listed |
 | Classification *accept*, steward assignment | UI-only (not re-probed since) | not recorded | **Neither** (re-probe) | walls |
 | Users, groups, roles | `/public/core/v3/users`, `/userGroups`, `/roles` (user DELETE 204) | `usermanagement` → `create_user`, add/remove roles and groups | **Either** (both privileged) | REST proven; MCP listed |
 | Marketplace order | full REST chain | `dataprovisioning` → `checkout_data_order` | **REST** for the full chain; **MCP** for a just-in-time conversational request | both documented; REST chain proven |
-| Catalog DQ scores | the asset's `dataQuality` segment returns per-dimension DQResult objects once the source's Data Quality capability ran (L-CDGC-144, L-DQ-097) | `cdgcdataqualityscore` → `get_asset_score` (untested); `orchestrate` answers score questions (L-MCP-095, L-MCP-111) | **REST** for automation; **MCP** or CLAIRE for questions | REST proven; `get_asset_score` untested |
-| IPU metering export | `POST /public/core/v3/license/metering/ExportMeteringData` | `ipumanagement` (metering exports) | **REST** for exact windows | REST proven |
-| Diagnostics (session logs, dependencies, agent health) | scattered v2/v3 reads | `troubleshooting`, `logmanagement`, `auditmanagement` | **MCP** for exploration, **REST** for automation | MCP listed |
-| Browse a connection's objects, read metadata, preview rows | object reads through the v2 connection and metadata routes (see [03 Connections](../03-connections/README.md)) | **(Oct)** `connectionmanagement` → `browse_objects`, `get_object_metadata`, `preview_object_data` | **MCP** for a quick look; **REST** in pipelines | MCP documented |
-| Data access policies, row filters, de-identification | not recorded here | **(Oct)** `policymanagement` (32 tools: create and publish policies, filters, de-identification) | **MCP**; a privileged write surface | documented |
-| Who changed a catalog asset, and when | not recorded here | **(Oct)** `cdgccatalogassethistory` → `get_asset_history` | **MCP** | documented |
-| Document a project's assets | v3 object reads and exports, assembled yourself | **(Oct)** `idmcassetdocumentation` (35 read-only tools) | **MCP** for documentation; it does not change mappings | documented |
-| Data Marketplace order lifecycle (approve, fulfill, cancel) | full REST chain | `ordermanagement` (Sept), the approver's side `dataprovisioning` lacks | **Either** | documented |
+| Catalog DQ scores | the asset's `dataQuality` segment returns per-dimension DQResult objects once the source's Data Quality capability ran (L-CDGC-144, L-DQ-097) | `cdgcdataqualityscore` → `get_asset_score` (proven: returns the asset with its DQ attributes; no score fields on unscored assets); `orchestrate` answers score questions (L-MCP-095, L-MCP-111) but failed to find a ClickHouse table (L-MCP-155) | **REST** for automation; **MCP** for one asset | REST proven; MCP proven |
+| IPU metering export | `POST /public/core/v3/license/metering/ExportMeteringData` | `ipumanagement` → `request_*_export` (async: `jobId`, `CREATED`) and `get_metering_export_job_status` | **REST** for exact windows; either to start one | both proven |
+| Diagnostics (agent health, running and completed jobs, session logs, schedules, dependencies, audit) | scattered v2/v3 reads | `troubleshooting` (19 read-only tools), `auditmanagement`; `logmanagement` absent in two orgs | **MCP** first stop for "why is it failing": `ts_get_agent_health_summary` shows every engine's state (L-MCP-161); **REST** for automation | MCP proven |
+| Browse a connection's objects, read metadata, preview rows | object reads through the v2 connection and metadata routes (see [03 Connections](../03-connections/README.md)) | `connectionmanagement` → `browse_objects`, `get_object_metadata`, `preview_object_data` (10 rows); JDBC V2 path rule in L-MCP-157 (`<db>/TABLE/<table>`; `get_objects` returns []) | **MCP** for a quick look; **REST** in pipelines | MCP proven (ClickHouse, PostgreSQL) |
+| Data access policies, row filters, de-identification | not recorded here | `policymanagement` (32 tools; the 14 list/get reads proven, creates and publish listed) | **MCP**; a privileged write surface | MCP reads proven |
+| Who changed a catalog asset, and when | not recorded here | `cdgccatalogassethistory` → `get_asset_history`: backend answers **"Unknown tool"** (L-MCP-153) | **Neither** headless today | MCP dead |
+| Document a project's assets | v3 object reads and exports, assembled yourself | `idmcassetdocumentation` (35 read-only tools: agents, runtimes, connections, mappings, mapplets, MTTs, taskflows, dependencies; most return the same payload as `troubleshooting`, L-MCP-158); list tools take no limit (L-MCP-156) | **MCP** for documentation | MCP proven |
+| Data Marketplace order lifecycle (approve, fulfill, cancel) | full REST chain | `ordermanagement` (`list_orders`, `get_order` proven; approve, fulfill, cancel listed), the approver's side `dataprovisioning` lacks | **Either** | MCP reads proven |
 | NL-to-SQL over cataloged warehouse data | none public | CLAIRE GPT (UI); `dataexplorationagent.data_explore`, `datamanagementorchestrator.orchestrate` (agent MCP) | **Either**: the UI for demos, agent MCP for automation; same answers (L-MCP-111); SELECT-only, rows capped by `LIMIT 100` (L-MCP-114) | both proven |
 
 ---
@@ -124,6 +131,13 @@ it, L-MCP-025), and the services' IPU bill. Neither side can do what the service
    not proof (L-MCP-049).
 8. **Untested server, one read-only call first.** Say which servers were called live and which are only listed
    (L-MCP-131), and prove an untested one with a read-only call before building on it.
+9. **Judge an MCP call by its text, not its status.** Every failure seen came back HTTP 200 with "The tool's backend
+   request failed" in the text, and CLAIRE agents finish with SUCCESS even when they found nothing (L-MCP-154,
+   L-MCP-155).
+10. **Loops, bulk and anything repeated: REST.** MCP adds 0.25-0.65 s per call and its list tools return everything
+    with no paging (L-MCP-159, L-MCP-156). One question, one look, one diagnosis: MCP.
+11. **One server per need.** Four servers share the same backends (L-MCP-158); `troubleshooting` alone covers the
+    read-only diagnostics.
 
 ---
 
@@ -187,7 +201,10 @@ of [04](04-agent-style-mcp-async-orchestration-custom-shims.md) §5.
 | CLAIRE GPT answer | 47-112 s |
 | Managed agent routes (`orchestrate`, `data_explore`) | 28-80 s (L-MCP-111) |
 | CLAIRE DQ agent code-generation run | minutes (poll up to ~15 min) |
-| Address verification | REST batches 1,000 per call; MCP 1 per call, and not counted as an IDMC job |
+| Address verification | REST batches 1,000 per call; MCP 1 per call (0.6 s), and not counted as an IDMC job |
+| Same read, REST vs managed MCP, warm session, median of 3 (L-MCP-159) | list connections 0.39 vs 0.73 s; test connection 1.30 vs 1.94 s; objects search 0.28 vs 0.54 s; activity log 0.24 vs 0.63 s; list agents 0.20 vs 0.43 s |
+| Managed read-only tools (145-call sweep, 2026-11-20) | 0.4-2 s; `test_connection_by_id` ~2 s; `preview_object_data` 1.6-5.4 s; `idmc_taskflow_list_linear` 7 s (198 KB, no paging) |
+| Managed agent routes, 2026-11-20 | 13-36 s, including runs that end SUCCESS with no answer (L-MCP-155) |
 
 ---
 
@@ -214,6 +231,9 @@ Recorded as L-MCP-078 → L-MCP-049. The capabilities that *remain* MCP-only or 
   GPT in the UI?~~ Answered: yes, faster (L-MCP-111).
 - ~~Can per-rule pass rates be read headless?~~ Answered on REST: the metric store's ValueFrequencies (L-DQ-123).
   Still open: does `get_asset_score` read Data Profiling scorecard values?
-- Do the October 2026 servers (`cdgccatalogassethistory`, `policymanagement`, `idmcassetdocumentation`), the October
-  connection tools and `ordermanagement` behave as documented? None has been called live yet.
+- ~~Do the October 2026 servers (`cdgccatalogassethistory`, `policymanagement`, `idmcassetdocumentation`), the October
+  connection tools and `ordermanagement` behave as documented?~~ Answered 2026-11-20: their reads work, except
+  `get_asset_history` and `get_asset_lineage`, whose backends answer "Unknown tool" (L-MCP-153, L-MCP-151).
+- Do the CAI write tools (`publish_assets`, `run_process`, `terminate_process`) work? Listed, not called (L-MCP-160).
+- Do the `dataqualityassets` and `policymanagement` writes work? Listed, not called.
 - Are classification accept and steward assignment now reachable through `cdgccatalogenrichment`?

@@ -2,7 +2,7 @@
 
 # Field lessons: error signatures and their causes
 
-328 current KB lessons that name an error code, an HTTP status or an error message, out of 2358 lessons.
+332 current KB lessons that name an error code, an HTTP status or an error message, out of 2369 lessons.
 Each row points at its lesson id in `knowledge/lessons/lessons.jsonl`, where the full text and the evidence are.
 
 **Grep this file for your error string first**; then open the lesson. The evidence is dated: re-probe in your
@@ -311,6 +311,10 @@ own org before you rely on it, and your org's live answer wins.
 | `500` | L-MCP-084 An upstream HTTP 500 hangs a proxied MCP call forever: set the client timeout | When an upstream MCP server answers a request with HTTP 500 (MCP Toolbox does this for a failing SQL tool, with a JSON-RPC error body), the streamable-HTTP client raises inside a background task nobody awaits (`Task exception was… |
 | `409` | L-MCP-112 Driving the managed agent routes: nested envelope, cursor polling from '0', TOKEN fragments, probe_message, upload retries | Every agent tool argument goes inside a nested inner JSON-RPC envelope, and results are nested the same way (unwrap as in L-MCP-030). After the submit, poll `get_skill_execution_updates` with `cursor` starting at "0" and feed bac… |
 | `APP_105060` | L-MCP-127 A gateway-only BigQuery connection fails the v2 connection test yet serves 'Query the data': prove it with a data query, not the test | On a pod where the CDI BigQuery V2 connector accepts the service-account key only as the header-less PEM body, a copy of the working CDI connection whose `privateKey` holds the unmodified PEM (BEGIN/END lines and newlines, the fo… |
+| `500` | L-MCP-154 Managed tool failures arrive as HTTP 200 with a text body, and some 'successes' are stack traces | A failing tool still answers HTTP 200 and a JSON-RPC result; the failure is only in the result text: 'The tool's backend request failed: '<status> <reason>: <backend body>''. JSON-RPC errors (-32602) appear only for schema valida… |
+| `V3API_IDSError_003`, `APP_13436`, `VCS_004`, `403` | L-MCP-156 Managed list tools ignore page limits, and several argument rules are not in the schema | list_connections, ts_get_connections and idmc_connection_list return every connection (84 KB for 68 connections), idmc_taskflow_list_linear 198 KB in 7 s, idmc_task_list_by_type 480 KB: none takes a limit, so prefer the by-name o… |
+| `APP_13400`, `APP_105060` | L-MCP-157 Browse, describe and preview a JDBC V2 (ClickHouse) table over connectionmanagement | On JDBC V2 connections get_objects returns [] for every path form, and so does get_objects on a PostgreSQL schema path. Instead: browse_objects with path '<database>/TABLE' lists the tables as records inside nested containers (VI… |
+| `APP_105060` | L-MCP-161 A connection tool that says 'Unable to resolve channel service' means the agent is down, not MCP | test_connection_by_id and browse_objects on connections whose Secure Agent stopped reporting answer APP_105060 'Unable to resolve channel service. - No running service found of type Connector_Service' (or Data_Integration_Server)… |
 
 ## Migration & org management
 
