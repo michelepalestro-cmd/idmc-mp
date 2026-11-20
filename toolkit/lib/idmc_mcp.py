@@ -4,7 +4,8 @@ OAuth client (secret written straight to a 0600 file, never printed), and call M
 (JSON-RPC) with the nested-envelope and async-poll patterns.
 
   python idmc_mcp.py servers [--tools]        python idmc_mcp.py clients
-  python idmc_mcp.py client-create --name N --contexts jobmanagement,dqverifyaddress --env-out PATH [--access-timeout 1440]
+  python idmc_mcp.py client-create --name N --contexts jobmanagement,dqverifyaddress [--env-out PATH] [--allow-writes]
+                           (the file, default ~/.idmc_toolkit/mcp_client.env, is what idmc_mcp_bridge.py reads)
   python idmc_mcp.py client-delete <clientId>                          (both writes: --execute --expect-org <orgIdV3>)
   python idmc_mcp.py tools --server <context> [--env PATH | --auth session]
   python idmc_mcp.py call  --server <context> --tool <name> (--args-json '{..}' | --args-file f) [--nested] [--poll]
@@ -147,8 +148,13 @@ def main():
     sub.add_parser("servers").add_argument("--tools", action="store_true")
     sub.add_parser("clients")
     cc = H.add_gate_args(sub.add_parser("client-create"))
-    for f in ("--name", "--contexts", "--env-out"):
+    for f in ("--name", "--contexts"):
         cc.add_argument(f, required=True)
+    cc.add_argument("--env-out", default=os.path.expanduser(os.path.join("~", ".idmc_toolkit", "mcp_client.env")),
+                    help="new 0600 file for the client (default ~/.idmc_toolkit/mcp_client.env, which the plugin's "
+                         "MCP bridge reads)")
+    cc.add_argument("--allow-writes", action="store_true",
+                    help="let the bridge offer tools that change the org (default: read-only tools only)")
     cc.add_argument("--access-timeout", type=int, default=1440)
     cc.add_argument("--desc", default="")
     H.add_gate_args(sub.add_parser("client-delete")).add_argument("client_id")
@@ -214,11 +220,13 @@ def main():
                 if r.status not in (200, 201) or not j.get("clientSecret"):
                     H.die(f"create failed HTTP {r.status} (answer redacted above)")
                 h = S.hosts()
+                os.makedirs(os.path.dirname(os.path.abspath(a.env_out)), mode=0o700, exist_ok=True)
                 fd = os.open(a.env_out, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o600)
                 with os.fdopen(fd, "w") as f:
                     f.write(f"IDMC_CLIENT_ID={j['clientId']}\nIDMC_CLIENT_SECRET={j['clientSecret']}\n"
                             f"IDMC_TOKEN_URL={h['login']}/authz-service/oauth/token\nMCP_BASE={h['mcp']}/mcp-servers/public/\n"
-                            f"IDMC_ORG_ID={S.v2().get('orgUuid')}\n")
+                            f"IDMC_ORG_ID={S.v2().get('orgUuid')}\nMCP_CONTEXTS={','.join(want)}\n"
+                            f"IDMC_MCP_ALLOW_WRITES={'1' if a.allow_writes else '0'}\n")
                 print(f"  client created; id {str(j['clientId'])[:4]}...; secret written to {a.env_out} (0600), never printed")
         elif a.cmd == "client-delete":
             r = gate.send(f"delete OAuth client {a.client_id[:4]}...", "hdm", "DELETE", f"{MGMT}/oauth2clients/{a.client_id}")

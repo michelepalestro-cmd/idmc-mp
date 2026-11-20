@@ -28,6 +28,10 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - Use CLAIRE GPT well.
 
 ## How to work
+0. To give Claude the org's servers as its own tools, run `/idmc-mp:connect-mcp`: a scoped OAuth client in
+   `~/.idmc_toolkit/mcp_client.env`, read by the plugin's bridge (`toolkit/lib/idmc_mcp_bridge.py`, read-only unless
+   the client allows writes). The tools are `mcp__plugin_idmc-mp_idmc__<server>_<tool>`; `idmc_mcp_status` says what
+   is connected. Without it, use `toolkit/lib/idmc_mcp.py` directly.
 1. For the vendor's current catalog, read the public registry (no login, doc 01 §1a); then list the org's MCP registry
    and auth (docs 01-02) with `toolkit/lib/idmc_mcp.py`.
 2. Pick MCP or REST per doc 05; MCP never replaces the Secure Agent.
@@ -49,7 +53,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | MCP servers, actions and calls | `knowledge/11-mcp-claire/README.md` |
 
 ## Tools (`--help` on each)
-- `toolkit/lib/idmc_mcp.py`: managed MCP servers: registry, tools, calls
+- `toolkit/lib/idmc_mcp.py`: managed MCP servers: registry, tools, calls, OAuth clients
+- `toolkit/lib/idmc_mcp_bridge.py`: the plugin's MCP server; `--check` shows what it would offer
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

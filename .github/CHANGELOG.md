@@ -3,6 +3,17 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/reference/kb-changelog.md](../knowledge/reference/kb-changelog.md).
 
+## 1.15.0 (2026-11-20): Informatica's MCP servers as Claude's own tools
+
+- **`/idmc-mp:connect-mcp`:** lists the org's managed MCP servers, creates a scoped OAuth client (secret straight to a
+  0600 file in `~/.idmc_toolkit/`), and tests it. After a restart every server's tools are Claude Code tools.
+- **The plugin's MCP bridge** (`toolkit/lib/idmc_mcp_bridge.py`, started by the plugin): read-only by default (tools
+  that change the org appear only when the client allows writes, marked "WRITES to IDMC"), tokens renew by themselves,
+  https only, the secret is never printed. With no client file it offers one status tool and makes no network call.
+- **MCP and REST together:** the core skill now says which to use per task; the README and the MCP cheat sheet match.
+- Tested offline against a stand-in Informatica server (four new tests), and in a real Claude Code install that
+  called the bridge's tools.
+
 ## 1.14.2 (2026-11-20): MCP servers in the README
 
 - The README now covers Informatica's 23 managed MCP servers: how to connect, when to use MCP or the REST API, and which

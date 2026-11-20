@@ -24,7 +24,7 @@ TESTS = []
 SKILLS = ["idmc-mp", "idmc-secure-agent", "idmc-connections", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
           "idmc-governance", "idmc-mdm", "idmc-claire-mcp", "idmc-deploy", "idmc-ipu"]
 COMMANDS = ["connect", "health-check", "new-pipeline", "fix-error", "save-lesson", "tune-agent", "optimize",
-            "promote", "add-dq", "catalog", "ipu-report", "clean-data"]
+            "promote", "add-dq", "catalog", "ipu-report", "clean-data", "connect-mcp"]
 DOMAINS = {"auth", "agent", "connections", "cdi", "dbmi-cdc", "cai", "dq-profiling", "cdgc", "mdm", "claire-mcp",
            "migration", "org-cleanup", "ipu-licensing", "environment-ops", "claude-method", "ui-automation"}
 LESSON_KEYS = {"id", "domain", "kind", "title", "text", "evidence", "status", "date", "supersedes_id"}
@@ -479,6 +479,111 @@ def _():
     for s in SKILLS:
         t = read("skills", s, "SKILL.md")
         assert "~/.idmc_toolkit" in t, s + ": does not send user data to ~/.idmc_toolkit"
+
+
+# ---- the MCP bridge: Informatica's managed MCP servers as Claude Code tools (against a local stand-in, no network) ----
+def _bridge(env_path, msgs):
+    """Run the bridge over stdio with these JSON-RPC messages; return ({id: response}, stderr)."""
+    env = dict(ENV, **NO_NET)
+    env.update(NO_PROXY="127.0.0.1,localhost", no_proxy="127.0.0.1,localhost", IDMC_MCP_ENV_FILE=env_path)
+    lines = "".join(json.dumps(m) + "\n" for m in msgs)
+    r = subprocess.run([PY, p("toolkit", "lib", "idmc_mcp_bridge.py")], input=lines, env=env, capture_output=True,
+                       text=True, timeout=120)
+    out = {}
+    for ln in r.stdout.splitlines():
+        j = json.loads(ln)
+        out[j.get("id")] = j
+    return out, r.stderr + r.stdout
+
+
+INIT = [{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {},
+         "clientInfo": {"name": "test", "version": "1"}}}, {"jsonrpc": "2.0", "method": "notifications/initialized"},
+        {"jsonrpc": "2.0", "id": 2, "method": "tools/list"}]
+
+
+def _call(i, name, args=None):
+    return {"jsonrpc": "2.0", "id": i, "method": "tools/call", "params": {"name": name, "arguments": args or {}}}
+
+
+def _mock():
+    sys.path.insert(0, p("toolkit", "tests"))
+    import mock_idmc_mcp
+    return mock_idmc_mcp
+
+
+@test("MCP bridge: the plugin starts it, and with no client file it offers only the status tool")
+def _():
+    man = json.loads(read(".claude-plugin", "plugin.json"))
+    srv = man["mcpServers"]["idmc"]
+    assert srv["args"] == ["${CLAUDE_PLUGIN_ROOT}/toolkit/lib/idmc_mcp_bridge.py"], srv
+    out, log = _bridge(os.path.join(tempfile.mkdtemp(), "none.env"), INIT + [_call(3, "idmc_mcp_status")])
+    assert out[1]["result"]["serverInfo"]["name"] == "idmc-mp", out[1]
+    assert [t["name"] for t in out[2]["result"]["tools"]] == ["idmc_mcp_status"], out[2]
+    assert "/idmc-mp:connect-mcp" in out[3]["result"]["content"][0]["text"], out[3]
+
+
+@test("MCP bridge: read-only by default, forwards calls, renews an expired token, never prints the secret")
+def _():
+    m = _mock()
+    srv, base, state = m.start()
+    try:
+        d = tempfile.mkdtemp()
+        envf = os.path.join(d, "client.env")
+        m.write_env(envf, base, list(m.TOOLS))
+        out, log = _bridge(envf, INIT + [_call(3, "addr_verify_address", {"address": "1 Main St"}),
+                                         _call(4, "conn_list_connections"), _call(5, "jobs_run_mapping_task"),
+                                         _call(6, "idmc_mcp_status")])
+    finally:
+        srv.shutdown()
+    names = [t["name"] for t in out[2]["result"]["tools"]]
+    assert "addr_verify_address" in names and "jobs_get_job_status" in names, names
+    assert not any(n.endswith(("run_mapping_task", "delete_connection")) for n in names), names
+    assert all(len(n) <= 38 for n in names), [n for n in names if len(n) > 38]
+    assert out[3]["result"]["structuredContent"]["status"] == "VERIFIED", out[3]
+    assert out[4]["result"]["structuredContent"]["server"] == "connectionmanagement", out[4]      # an SSE answer
+    assert out[5]["result"]["isError"], out[5]
+    assert ("jobmanagement", "run_mapping_task", {}) not in state.calls, state.calls
+    assert state.issued >= 2, "the first token was expired: the bridge must fetch a new one after the 401"
+    assert "read-only" in out[6]["result"]["content"][0]["text"], out[6]
+    assert m.CLIENT_SECRET not in log, "the client secret was printed"
+
+
+@test("MCP bridge: writes appear only when the client file allows them, marked as writes")
+def _():
+    m = _mock()
+    srv, base, state = m.start()
+    try:
+        envf = os.path.join(tempfile.mkdtemp(), "client.env")
+        m.write_env(envf, base, ["jobmanagement"], allow_writes=True)
+        out, _ = _bridge(envf, INIT)
+    finally:
+        srv.shutdown()
+    tools = {t["name"]: t for t in out[2]["result"]["tools"]}
+    assert "jobs_run_mapping_task" in tools, list(tools)
+    assert tools["jobs_run_mapping_task"]["description"].startswith("WRITES to IDMC"), tools["jobs_run_mapping_task"]
+    assert tools["jobs_run_mapping_task"]["annotations"]["readOnlyHint"] is False
+
+
+@test("MCP bridge: refuses a client file others can read, inside the plugin, or pointing at a non-https host")
+def _():
+    m = _mock()
+    d = tempfile.mkdtemp()
+    envf = os.path.join(d, "client.env")
+    m.write_env(envf, "http://example.com", ["jobmanagement"])
+    out, _ = _bridge(envf, INIT + [_call(3, "idmc_mcp_status")])
+    assert "https" in out[3]["result"]["content"][0]["text"], out[3]
+    if os.name == "posix":
+        m.write_env(envf, "http://127.0.0.1:9", ["jobmanagement"])
+        os.chmod(envf, 0o644)
+        out, _ = _bridge(envf, INIT + [_call(3, "idmc_mcp_status")])
+        assert "chmod 600" in out[3]["result"]["content"][0]["text"], out[3]
+    inside = p("toolkit", "tests", "client-test.env")
+    try:
+        m.write_env(inside, "http://127.0.0.1:9", ["jobmanagement"])
+        out, _ = _bridge(inside, INIT + [_call(3, "idmc_mcp_status")])
+        assert "outside the plugin" in out[3]["result"]["content"][0]["text"], out[3]
+    finally:
+        os.remove(inside)
 
 
 def main():

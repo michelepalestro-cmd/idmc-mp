@@ -1,7 +1,7 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
 [![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.14.2-blue)](.github/CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.15.0-blue)](.github/CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
@@ -18,7 +18,7 @@ known instead of rediscovering it.
 
 | Area | Skill | Commands | For example |
 |---|---|---|---|
-| Rules, login, routing, errors | `idmc-mp` | `connect`, `health-check`, `fix-error`, `save-lesson` | "why does this fail: `<error>`" |
+| Rules, login, routing, errors | `idmc-mp` | `connect`, `connect-mcp`, `health-check`, `fix-error`, `save-lesson` | "why does this fail: `<error>`" |
 | Secure Agent and runtime environments | `idmc-secure-agent` | `tune-agent` | "install an agent on my VM and tune it" |
 | Connections to any system | `idmc-connections` | | "connect to our Snowflake account" |
 | Mappings, tasks, taskflows (CDI) | `idmc-cdi` | `new-pipeline`, `optimize` | "build a nightly pipeline from `<source>` to `<target>`" |
@@ -46,11 +46,12 @@ Behind the skills:
 The knowledge base covers **all 23 of Informatica's managed MCP servers** (the October 2026 release) plus the CLAIRE
 agent server: what each one can and cannot do, its tools, how to log in to it, and the traps found using it.
 
-**How to connect:** after `/idmc-mp:connect`, ask Claude to "list my org's MCP servers", or run
-`python3 toolkit/lib/idmc_mcp.py servers --tools`. It reads your org's own server list (servers are switched on per
-org) and their tools, with no setup. For a script or gateway that runs unattended, `idmc_mcp.py client-create` makes a
-scoped OAuth client whose secret goes straight to a private file; `claude mcp add` then wires it into Claude Code. The
-steps are in [MCP servers and CLAIRE](knowledge/11-mcp-claire/README.md).
+**How to connect:** after `/idmc-mp:connect`, run **`/idmc-mp:connect-mcp`**. It lists the servers your org has
+(Informatica switches them on per org), creates a scoped OAuth client whose secret goes straight to a private file on
+your computer, and tests it. After a restart, every server's tools are Claude's own tools, through a small bridge the
+plugin starts by itself. It is **read-only** unless you choose otherwise, Claude Code still asks before each call, and
+tokens renew by themselves. Without this step Claude can still call the servers through the toolkit. Details:
+[MCP servers and CLAIRE](knowledge/11-mcp-claire/README.md).
 
 **MCP or API?** Both reach the same IDMC services, so neither can do what the service itself can't. Claude picks per
 task ([full table](knowledge/11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md)):

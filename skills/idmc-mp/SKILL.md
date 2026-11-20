@@ -53,6 +53,16 @@ filled in, the user is already connected: run `check_login.py`, don't ask again.
 password in the chat**; if one is pasted, tell the user to change it and enter the new one with `--setup`. Setup and
 login help: `knowledge/00-start-here/11-setup-and-login.md`.
 
+## MCP tools and the REST API: use both, per task
+Two ways into the same org, with the same limits. If `mcp__plugin_idmc-mp_idmc__*` tools are loaded (the org's managed
+MCP servers, set up once with `/idmc-mp:connect-mcp`; `idmc_mcp_status` shows what is connected), prefer them for:
+plain-language questions (`claire_*`, `explore_*`), fuzzy customer match (`cust_*`), lineage and catalog search
+(`catsearch_*`, `catfind_*`), one-off address checks (`addr_*`), and quick reads of jobs, logs, connections and agents.
+Use the toolkit's REST scripts for: building mappings, deploying CDC, publishing CAI, profiling, dictionaries, bulk or
+paged work, anything scheduled or repeatable, and every write that needs a dry run and a read-back. Read back an MCP
+write over REST. If the tools are not loaded, everything still works through the toolkit (`toolkit/lib/idmc_mcp.py`
+calls the same servers). Full table: `knowledge/11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md`.
+
 ## Where to go: one skill per area
 | The user wants to... | Skill | Start at |
 |---|---|---|
