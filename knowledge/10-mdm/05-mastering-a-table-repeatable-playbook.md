@@ -33,7 +33,7 @@ CDI-mapping MDM pipeline) · [DQ Assets](../08-data-quality/01-dq-assets-rule-sp
 [Glossary, Links & Classification](../09-catalog-lineage/03-glossary-links-classification.md) ·
 [Lessons: MDM](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Every mastering job runs the same ten steps: profile, define, standardize, rule, match, cross-reference,
 > survive, relate, steward, publish. What changes between datasets is *how* steps 5-8 are done and *which* gates prove
@@ -108,11 +108,11 @@ Run it the same way each time:
 | Step | Rule |
 |---|---|
 | Match key | Deterministic tiers. R1 = same source system + source id. R2 = the full business key (for a property: state + ZIP5 + normalized parcel + normalized address + unit + class). Never merge on parcel alone or address alone (L-MDM-075). |
-| Fuzzy | Only for party data (name populations), or to *propose* pairs into the steward queue. Measure degenerate keys first: one shared address can collapse hundreds of distinct records (L-MDM-044). |
-| Survivorship | Attribute groups with one anchor each (assessed value and its tax year come from one observation). Transaction events beat snapshot fields when the event is qualified (arm's length, above a floor price). |
+| Fuzzy | Only for party data (name populations), or to *propose* pairs into the steward queue. Measure degenerate keys first: one shared address can collapse hundreds of distinct records (L-MDM-044). Block on a union of tight keys, not one coarse key (L-MDM-124); hand-check precision per match class and auto-merge only the classes that clear the bar (L-MDM-121); veto pairs that carry two ids from the same source system (L-MDM-122, L-MDM-123). |
+| Survivorship | Attribute groups with one anchor each (assessed value and its tax year come from one observation). Transaction events beat snapshot fields when the event is qualified (arm's length, above a floor price). Rank per field, then recency, and store the winning source per field (L-MDM-125); merge whole clusters, never pair by pair (L-MDM-126); re-key retired ids one-to-one only (L-MDM-128). Keep mutable columns out of a replacing table's sort key (L-ENV-145). |
 | Hierarchy | Unit -> building -> parcel or site. A building id comes from the verified premise without the unit. Units with no verified unit are held with a code (L-MDM-076). |
 | Steward queue | Same business key under two masters, ambiguous groups, provisional matches (parcel-only, address-only). |
-| Extra gates | Exact-key duplicates across masters = 0 or queued. Every provisional master has a reason code. Address verification status is on every row that has an address. |
+| Extra gates | Exact-key duplicates across masters = 0 or queued. Every provisional master has a reason code. Address verification status is on every row that has an address. No duplicate (address, ZIP, unit) among served rows: condo units without a unit number collapse onto one address (L-MDM-089). |
 
 ### R - Registry (small curated list)
 
@@ -153,7 +153,7 @@ Run it the same way each time:
 |---|---|
 | Match key | master id (from the cross-reference, never from a raw address) + event type + date + amount or instrument number, with a small tolerance on dates. |
 | Survivorship | A conflict group per candidate duplicate set, plus one canonical row flagged inside it. Qualification codes (arm's length, transfer type) are attributes, not filters. |
-| Keep, do not drop | Events with unknown or year-only dates, and zero-value events, are kept with a precision code. Dropping them is information loss. |
+| Keep, do not drop | Events with unknown or year-only dates, and zero-value events, are kept with a precision code. Dropping them is information loss. Measure each source's date precision and amount rounding before choosing a dedupe key: (date, amount) dropped 30-85 % of real events from month-level, rounded sources (L-MDM-131); keep corroborating sources rather than first-writer-wins (L-MDM-130). |
 | Extra gates | Every event resolves to a master. Exactly one canonical row per conflict group. Portfolio (multi-property) transactions carry an allocation rule. |
 
 ---
@@ -194,6 +194,8 @@ SELECT countIf(fk_id IN ('', 'unresolved') OR fk_id NOT IN (SELECT id FROM regis
 
 -- G8 Reconciliation: legacy count = masters + merged-away + retired + held, per scope (every difference explained)
 -- G9 Dictionary: every golden column defined, no definition without a column (unless tied to a planned change)
+-- G10 Merge invariants (daily): no merged loser left in the golden table, every loser has an active alias (L-MDM-127)
+-- G11 Build-over-build: row count and identity-status mix within tolerance of the previous build (L-MDM-083)
 ```
 
 Gate thresholds: G1, G2, G6 and G7 must be exact. G4 is "0, or every group queued with a reason". G8 is "every
@@ -239,6 +241,10 @@ DQ assets never run, and every change means editing N copies (L-MDM-081).
 
 The test: open the mapping. If removing every transformation between Source and Target would change nothing that the
 query does not already do, the mapping is not mastering anything.
+
+A mapping-built master that passed on one pilot scope was abandoned at close to a hundred million entities for design
+reasons (full rebuilds instead of incremental, no sizing step between pilot and fan-out), not because mappings cannot
+master: plan incremental runs and a sizing step before the fan-out (L-MDM-086, L-MDM-090, L-MDM-085).
 
 The target shape, per table (one mapping per archetype and table, parameterized by scope and shard, never one per
 scope):

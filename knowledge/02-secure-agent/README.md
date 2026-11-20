@@ -19,6 +19,7 @@ Open first: [Secure Agent: install, run and tune](01-secure-agent-install-run-tu
 | Select services and connectors | `GET` then `PUT https://<pod>.<domain>.informaticacloud.com/runtime/api/v2/runtimeEnvironment/<reId>/selections/ui` with `IDS-SESSION-ID: <v2 sid>`; GET body = undo | L-AGENT-039 |
 | List / create a runtime | `GET`/`POST <serverUrl>/api/v2/runtimeEnvironment`; create needs `"@type":"runtimeEnvironment"`; DELETE works | L-AGENT-035, L-AGENT-130 (reported) |
 | DTM heap and DTM pool | 1) UI: Administrator > Runtime Environments > agent > Edit > System Configuration Details; 2) group level: `PUT /api/v2/runtimeEnvironment/<reId>/configs`; 3) last resort, per agent: legacy form `/runtime/app/agent.do` (guide §6.1) | L-AGENT-132 (reported), L-AGENT-088, L-AGENT-099, L-AGENT-127 (reported) |
+| Stop or start one engine | `POST /public/core/v3/agent/service` (`INFA-SESSION-ID`), body `agentId` = the agent's `federatedId`, `serviceName`, `serviceAction` `start`/`stop`; a stopped engine vanishes from `agentEngines[]` | L-AGENT-124, L-AGENT-125 (reported) |
 | Reinstall on the same host | `consoleAgentManager.sh configureTokenWithRuntime <user> <token> <runtimeEnvironment>` reuses the agent id | L-AGENT-111 |
 | Move to a bigger host | rsync the install dir; same OS user, UID/GID, path, hostname; same agent id | L-AGENT-102 |
 | Memory / CPU caps | `systemctl set-property <unit> MemoryHigh=... MemoryMax=... CPUWeight=...` | L-AGENT-017 |
@@ -28,7 +29,7 @@ Open first: [Secure Agent: install, run and tune](01-secure-agent-install-run-tu
 
 | Wall | Workaround | Lesson |
 |---|---|---|
-| `POST /api/v2/agent/service`, `/api/v2/agent/selectiveservices`, `POST /api/v2/agent/<id>` with `desiredStatus`, v3 `runtimeEnvironments` | The selections PUT; `APP_13401` / `CMN_001` there are router artifacts | L-AGENT-044, L-AGENT-031 |
+| `POST /api/v2/agent/service`, `/api/v2/agent/selectiveservices`, `POST /api/v2/agent/<id>` with `desiredStatus`, v3 `runtimeEnvironments` | The selections PUT to enable; the v3 `agent/service` route to start or stop a running engine; `APP_13401` / `CMN_001` there are router artifacts | L-AGENT-044, L-AGENT-031, L-AGENT-124 (reported) |
 | Selections with `INFA-SESSION-ID` -> login HTML 200 | `IDS-SESSION-ID: <v2 icSessionId>` | L-AGENT-039 |
 | `configureToken` -> 'Cannot connect to the Agent.' | Start the daemon first | L-AGENT-002 |
 | `consoleAgentManager.sh` by absolute path -> 'cannot open ./version.sh' | `cd <agent_home>/apps/agentcore` first | L-AGENT-006 |
@@ -82,4 +83,4 @@ Open first: [Secure Agent: install, run and tune](01-secure-agent-install-run-tu
 - [Runtime environments: services and connectors](02-runtime-environments-services-connectors.md): runtime types, engine list, selections PUT, dependencies, Hosted Agent failover.
 - [Lessons: Secure Agent](lessons.md): every current and superseded `L-AGENT` lesson.
 - [Troubleshooting: the four gates](../03-connections/03-troubleshooting-the-four-gates.md): host, engine, adapter, driver signatures.
-- [Bootstrap](../03-connections/03-troubleshooting-the-four-gates.md): zero to a running job.
+- [End-to-end playbook](../00-start-here/07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md): zero to a running job (the agent steps are in [doc 01](01-secure-agent-install-run-tune.md) §2).

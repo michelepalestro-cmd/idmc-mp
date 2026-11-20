@@ -14,6 +14,7 @@ applies to any cost report, sizing, licence question, cadence plan or "exceeded 
 | Billed consumption | `POST <serverUrl>/public/core/v3/license/metering/ExportMeteringData` `{"jobType":"SUMMARY","startDate":"<ISO Z>","endDate":"<ISO Z>"}` -> 201 `jobId` -> poll `.../ExportMeteringData/<jobId>` until SUCCESS -> `.../<jobId>/download` (ZIP, one CSV per org); costs 0 IPU; tool: `toolkit/lib/idmc_metering.py export --start --end --out` | L-IPU-021 |
 | Per-project / per-asset split | Same export with `jobType` `PROJECT_FOLDER` (or `ASSET`), windows of 30 days or less | L-IPU-021 |
 | Job-level metering (Reported) | `POST .../license/metering/ExportServiceJobLevelMeteringData` `{startDate,endDate,allMeters:true}`; unverified window | L-IPU-065 (reported) |
+| IPU alert thresholds (Reported) | `GET /public/core/v3/metering/ipuAlert/org('<orgId>')[/viewTagsPreference]`, read-only | L-IPU-069 (reported) |
 | Usage proxy when billed reads 0 | `GET /api/v2/activity/activityLog?rowLimit=1000&offset=<n>`; hours x editable rate, labelled `estimate=true, billed=false` | L-IPU-024 |
 | Licence census | `GET <pod>/license-service/api/v1/OrgLicenseAssignment('<orgIdV3>')/EffectiveLicenses` -> `active[]` (`limits{}` read -1) | L-IPU-030 |
 | Per-org licence record | `GET /public/core/v3/license/org/<orgIdV3>` (22-char v3 id; v2 id gives `V3API_016`) | L-IPU-029 |
@@ -34,7 +35,7 @@ applies to any cost report, sizing, licence question, cadence plan or "exceeded 
 | Trial / embedded sub-org exports a header-only CSV | Labelled activity-log proxy; the zero is trial-conditional | L-IPU-023, L-IPU-024 |
 | Monthly job cap readable nowhere (`limits` -1, `customLimits: []`, no jobs row on trial) | Own job ledger; assume ~10,000 until Informatica confirms; ask for limit and reset date | L-IPU-041, L-IPU-056 |
 | No licence inventory API | Administrator > Licenses CSV export; `EffectiveLicenses` `active[]` | L-IPU-029, L-IPU-028 |
-| Sub-org licence allocation | UI-only (parent's Sub-Organizations > Licenses); check the parent first | L-IPU-035, L-IPU-034 |
+| Sub-org licence allocation | Proven in the UI (parent's Sub-Organizations > Licenses); a reported `PUT /public/core/v3/license/org/<subOrgId>` is a full overwrite: GET, edit, PUT back; check the parent first | L-IPU-035, L-IPU-072, L-IPU-034 |
 | Activity log keeps only days and misses profiles and catalog jobs | Collect on a schedule; add profiling and catalog job sources | L-IPU-024, L-IPU-055 |
 | Price of an IPU | Never from this KB: it is in the customer's Order | L-IPU-019 |
 
@@ -57,6 +58,8 @@ applies to any cost report, sizing, licence question, cadence plan or "exceeded 
 - Capability "missing" -> usually the selection or engine layer, not the contract (L-IPU-033).
 - 400 `V3API_007` on export -> bare date -> `2026-06-01T00:00:00Z` form; 400 `LS_147` -> `jobType` alone (L-IPU-021).
 - 400 `LS_298`, no job -> `PROJECT_FOLDER` window over 30 days -> split windows (L-IPU-021).
+- Export will not start or comes back `PARTIAL_SUCCESS` -> 5 active jobs per org; partial ZIPs may be incomplete, ZIPs kept 3 days -> queue, flag partials (L-IPU-070).
+- Tuning agents to cut Mass Ingestion IPUs -> it is metered per GB or million rows, not runtime -> move less data (L-IPU-063).
 - Estimator says 0.0 -> the collector got 403 or nothing -> treat zero or unsampled as unknown, fail on errors (L-IPU-025).
 - Estimator prices a line at 0 -> service name not exactly the rate-card name (L-IPU-010).
 - Monthly read as annual -> twelvefold error -> keep the unit in every variable (L-IPU-016).

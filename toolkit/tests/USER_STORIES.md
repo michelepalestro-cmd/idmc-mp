@@ -26,7 +26,7 @@ Record each live run in the table at the bottom (date, org type, result, notes).
 | US-13 | MDM lead | a table mastered into golden records | one trusted record per entity | skill `idmc-mdm` |
 | US-14 | release manager | assets promoted from dev to prod with a rollback plan | releases are repeatable and safe | `/idmc-mp:promote` |
 | US-15 | budget owner | an IPU and job usage report with the biggest savings | I control spend | `/idmc-mp:ipu-report` |
-| US-16 | architect | Claude connected to our managed MCP servers, and told when to use MCP vs REST | we use CLAIRE and MCP where they fit | skill `idmc-claire-mcp` |
+| US-16 | architect | Claude connected to our managed MCP servers, and told when to use MCP vs REST | we use CLAIRE and MCP where they fit | `/idmc-mp:connect-mcp`, skill `idmc-claire-mcp` |
 | US-17 | presales / learner | a demo blueprint rebuilt end to end | I can show the pattern on real systems | `toolkit/demos/*/BUILD.md` |
 | US-18 | any user | updates that never touch my login or my lessons | updating is always safe | `/plugin update idmc-mp@idmc-mp` |
 | US-19 | data steward | duplicates and bad values in a large table cleaned with IDMC mappings, proven before anything changes | the data gets cleaner without slowing every rebuild | `/idmc-mp:clean-data` |
@@ -38,7 +38,8 @@ Run in a new Claude Code session after installing the plugin. "Pass" means every
 
 **US-01 install**
 - `/plugin` shows one marketplace `idmc-mp` with one plugin `idmc-mp`, and its version matches `plugin.json`.
-- Typing `/idmc-mp:` lists the twelve commands; asking "what IDMC skills do you have?" names the eleven skills.
+- Typing `/idmc-mp:` lists the thirteen commands; asking "what IDMC skills do you have?" names the twelve skills.
+- `/mcp` lists the plugin's `idmc` server (the MCP bridge); before `/idmc-mp:connect-mcp` it offers only `idmc_mcp_status`.
 
 **US-02 connect**
 - First `/idmc-mp:connect` creates `~/.idmc_toolkit/IDMC_LOGIN.txt` and stops without a login attempt.
@@ -94,6 +95,10 @@ Run in a new Claude Code session after installing the plugin. "Pass" means every
 
 **US-16 MCP**
 - The org's MCP servers listed and one tool called; MCP vs REST advice cites the doc.
+- `/idmc-mp:connect-mcp`: dry run shown before the OAuth client is created; the secret goes to
+  `~/.idmc_toolkit/mcp_client.env` (0600) and is never printed; `idmc_mcp_bridge.py --check` lists the chosen servers;
+  after a restart the `mcp__plugin_idmc-mp_idmc__*` tools appear, read-only unless the user chose `--allow-writes`, and
+  one read-only call answers.
 
 **US-17 demo**
 - `python3 verify/offline_check.py` (retail) and `python3 verify/bid_verify.py offline` pass; a live rebuild follows

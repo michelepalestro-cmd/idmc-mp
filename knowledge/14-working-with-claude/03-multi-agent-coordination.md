@@ -354,3 +354,6 @@ run-command (L-ENV-004).
 | About 15 cross-session messages sat waiting for the user's approval in one clean-up | tracker comments for prompting peers (section 2, L-METHOD-061) |
 | An undo built as a git revert would have reverted three later deploys | a patch-only undo scoped to the change (section 8, L-METHOD-124) |
 | A padded plan estimate was rejected as unreasonable | bottom-up estimates calibrated on actuals (section 10.1, L-METHOD-122) |
+| Three build subagents read for minutes and died with no files | write output skeletons within the first ~15 tool calls and cap the reading (L-METHOD-152) |
+| A chat "yes" was taken as clearing an auto-mode block on a production deploy | stage everything; run the cutover in ask mode with the user approving each step, the unproven step first (L-METHOD-151, L-METHOD-150) |
+| Sessions orchestrating a multi-day build were reaped and the chain stalled | run the chain on a server or as a scheduled IDMC taskflow with a gate mapping (L-METHOD-148, L-METHOD-160) |

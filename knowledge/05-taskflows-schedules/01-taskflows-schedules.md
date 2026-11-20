@@ -13,7 +13,7 @@
 
 **Related:** [03 Mapping Tasks - Create, Update, Run, Monitor](../04-mappings/03-mapping-tasks-create-update-run-monitor.md) · [05 The Pipeline-Generation Pattern](../04-mappings/04-the-pipeline-generation-pattern.md) · [07 Performance, Concurrency & Job Caps](../04-mappings/06-performance-concurrency-job-caps.md) · [Lessons: CDI](../04-mappings/lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Build pipelines as **linear taskflows** (v2 `workflow`): `POST /api/v2/workflow` with an ordered `tasks[]`, no publish step, run with `POST /api/v2/job {"taskType":"WORKFLOW"}`. Children log under the taskflow's activity-log entry.
 > Advanced (parallel) taskflows can be generated and imported, but API-made ones could not be **published**, and `/api/v2/job` rejects them. Get parallelism from several linear lanes or a controller that starts tasks itself.
@@ -57,7 +57,9 @@ POST /api/v2/workflow/<wfId>  -> 200; GET again and compare the task count and s
 - **Placement.** v2 workflows carry no `frsGuid`. Resolve the v3 id by name among `type=='WORKFLOW'` objects (require exactly one match), then move it with FRS `MoveEntities` (L-CDI-009).
 - **Run:** `POST /api/v2/job {"@type":"job","taskId":"<wfId>","taskType":"WORKFLOW"}` → `runId`. A taskflow run counts as one job, plus one per task inside it.
 - **Monitor:** poll `GET /api/v2/activity/activityLog?taskId=<wfId>&rowLimit=1` until a row with `endTime` that started after your start. Read each child's state from its `entries[]`. Children do **not** appear under their own task ids (L-CDI-061). While it runs, `GET /api/v2/activity/activityMonitor?details=true` shows `subTaskName`/`currentTaskName` for the child running now (L-CDI-062).
-- **Adopting a schedule-started run.** A controller that sees the taskflow in the activity monitor, without having started it, can adopt that instance and mirror its children instead of starting a second one.
+- **Adopting a schedule-started run.** A controller that sees the taskflow in the activity monitor, without having started it, can adopt that instance and mirror its children instead of starting a second one. A second `POST /api/v2/job` for a running taskflow is refused with `REPO_17315`: attach, do not retry (L-CDI-253).
+- **Name the parent taskflow in a failure alert.** Each activity-log entry carries `parentTaskFederatedId`; `POST /public/core/v3/lookup {"objects":[{"id":"<parentTaskFederatedId>"}]}` returns the parent taskflow's path and name. Never let a lookup failure block the alert (L-CDI-310, reported).
+- **Stop a running taskflow** (reported from third-party code, not probed here): `PUT https://<pod>.<domain>.informaticacloud.com/active-bpel/restadmin/processes/<pid>/terminate?isManual=true`, with `<pid>` from the `extraData` of its JobLogEntries row; a task stops with `POST /api/v2/job/stop?cleanStop=true` (L-CDI-307).
 - **Delete:** `DELETE /api/v2/workflow/<wfId>` → 200. Unbind its schedule first ([knowledge/12-deploy-migrate](../12-deploy-migrate)).
 - **Removing one task from a shared taskflow:** GET, filter `tasks[]`, POST, read back.
 - **Land files before a mapping.** A File Ingestion task ran as a taskflow step that copies cloud-storage files to an agent folder before a mapping that needs local files (L-DBMI-060); a CAI process can instead start it, poll its status and start the mapping's taskflow only on SUCCESS (L-DBMI-061) ([DBMI over REST](../06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md)).
@@ -107,7 +109,7 @@ POST /api/v2/schedule
 | 5-minute boundary | The start minute must be on a :05 boundary, else `UI_10621` | L-CDI-074 |
 | Day flags | An `Hourly` schedule without the `mon`…`sun` flags fails with `UI_10612` | L-CDI-074 |
 | Idempotent by name | Look the name up first; update with `POST /api/v2/schedule/<id>` | L-CDI-073 |
-| Update = the full object | `POST /api/v2/schedule/<id>` with the object you read (drop the create/update stamps). `interval` is the unit ('Minutely', 'Hourly', 'Daily', 'Weekly', 'Monthly') and `frequency` the count (`Hourly` + 6 = every 6 hours); swapped they give 403 `UI_10622` 'Interval is not valid', and a string `frequency` gives 400. Bound tasks keep their bindings; read back | L-CDI-195 |
+| Update = the full object | `POST /api/v2/schedule/<id>` with the object you read (drop the create/update stamps; vendor docs also list the header `Update-Mode: PARTIAL` for v2 schedule and workflow, L-CDI-321). `interval` is the unit ('Minutely', 'Hourly', 'Daily', 'Weekly', 'Monthly') and `frequency` the count (`Hourly` + 6 = every 6 hours); swapped they give 403 `UI_10622` 'Interval is not valid', and a string `frequency` gives 400. Bound tasks keep their bindings; read back | L-CDI-195 |
 | Create **unbound** | For a migration or a new lane, create schedules unbound and bind them in one explicit step | L-CDI-073 |
 | No cloning | Never build a schedule by GETting another application's schedule and changing the name. Builders did, and broke when that schedule was deleted with its app | L-CDI-079 |
 | Check the start date | A schedule starting years ahead (e.g. 2037) never fires; data then moves only on manual runs | L-CDI-080 |
@@ -128,7 +130,7 @@ GET  /api/v2/workflow/<wfId>  -> scheduleId must equal what you sent (None after
 - Prove the verb on a low-risk workflow first, and snapshot every binding to JSON (workflow and task level) as the rollback baseline.
 - **Task-level bindings are invisible in the v2 task list.** Before a cutover, scan **every task's detail**. One task-level schedule was missed by a workflow-only unbind and ran once more in the old org (L-CDI-077, 2026-09-29).
 
-**Stop a schedule by date** (L-CDI-076). Set **both** `endTime` (pod-local) and `endTimeUTC`, on a :05 boundary. Setting `endTime` alone to "23:40Z" meant 03:40Z on a UTC-4 pod, and the lane kept running and failing. `PATCH /public/core/v3/schedule/<id> {"status":"disabled"}` returned `400 V3API_007`. **Unbinding** (`scheduleId:null`) is the simpler stop.
+**Stop a schedule by date** (L-CDI-076). Set **both** `endTime` (pod-local) and `endTimeUTC`, on a :05 boundary. Setting `endTime` alone to "23:40Z" meant 03:40Z on a UTC-4 pod, and the lane kept running and failing. `PATCH /public/core/v3/schedule/<id> {"status":"disabled"}` returned `400 V3API_007`; third-party code wraps the change as `{"schedules":[{"id":"<id>","scheduleFederatedId":"<from GET /public/core/v3/schedule/<id>>","status":"disabled"}]}`, which likely explains the 400 but is not yet retested here (L-CDI-309). **Unbinding** (`scheduleId:null`) is the simpler stop.
 
 **Delete:** `DELETE /api/v2/schedule/<id>` → 200. A deleted schedule's GET returns an **empty 200 shell**, so confirm with the schedule list (L-CDI-081).
 
@@ -166,7 +168,8 @@ GET  /api/v2/workflow/<wfId>  -> scheduleId must equal what you sent (None after
 | The old org still runs a task after a cutover | A task-level schedule (hidden from the list) | Scan every task detail; unbind | L-CDI-077 |
 | `REPO_52013` on task delete | The task is bound to a schedule | Unbind deliberately, or keep the task | L-CDI-053 |
 | A deleted schedule still answers GET | A deleted schedule returns an empty 200 shell | Check the schedule list | L-CDI-081 |
-| `400 V3API_007` on `PATCH /public/core/v3/schedule/<id>` | Status change not supported that way | Unbind, or set the end times | L-CDI-076 |
+| `400 V3API_007` on `PATCH /public/core/v3/schedule/<id>` | A bare body; the v3 PATCH reportedly needs a `schedules[]` wrapper with `id` and `scheduleFederatedId` | Unbind, or set the end times; retest with the wrapper | L-CDI-076, L-CDI-309 |
+| An on-demand task start ends in ~1 s, state 3, 0 rows: 'Another instance of the task is currently running' | The task's scheduled or lane run is active; a mapping task runs one instance at a time | Check the activity monitor for that task id and skip or coalesce; do not fail the lane | L-CDI-304 |
 | `AvrEntryNotFoundFault` / "File format was not recognized" on publish | An API-created or FRS-copied advanced taskflow | Linear taskflow or controller staging | L-CDI-070 |
 | A task "is scheduled" but never runs | The schedule's start date is years ahead | Fix the start; read the next run | L-CDI-080 |
 | A builder's schedule step raises "not found" | It cloned a template schedule that was deleted | Explicit schedule body | L-CDI-079 |

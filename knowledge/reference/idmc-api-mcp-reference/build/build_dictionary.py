@@ -54,14 +54,120 @@ SERVICE_RANGE = re.compile(r"^(1\d|2\d)-")
 VERB_VERDICT = {
     "GET": "The platform's real surface. Nearly everything readable is readable.",
     "POST": "Every write, every run, and on the v2 plane every UPDATE. POST to /{id} IS the update.",
-    "PUT": "Effectively absent. Documented in places, never once proven live. Do not design on it.",
-    "PATCH": "Does not exist in practice. No live proof anywhere; only MDM even discusses it.",
+    "PUT": "Rare. None proven in the July 2026 census; proven since on runtime-environment selections, "
+           "catalog sources and profiles (L-AUTH-016). Other documented PUTs stay unproven.",
+    "PATCH": "Rare. None proven in the July 2026 census; proven since on v3 folders and projects "
+             "(L-MIG-105) and data360 content assets (L-CDGC-053). Other documented PATCHes stay unproven.",
     "DELETE": "Rare and clustered - admin, connections, catalog sources, CDQ dictionaries. "
               "It is half of the sanctioned update pattern (DELETE then re-POST).",
 }
 
 # the only MCP action that writes anything. Everything else is a read.
 MCP_WRITES = {"checkout_data_order"}
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Newer evidence from the lessons log (knowledge/lessons/lessons.jsonl).
+# content/*.json is the July 2026 probe corpus and is not re-seeded (AGENTS.md
+# rule 9). Where a later CURRENT lesson proves an entry wrong or incomplete, the
+# note goes here, keyed by the exact endpoint string, so every rebuild carries it.
+# The entry's own Works/Rejected line is left as probed; the note says what holds now.
+# ─────────────────────────────────────────────────────────────────────────────
+LATER_LESSONS = [
+    ("/data360/lineage/v1/*", "L-CDGC-181", "2026-10-08",
+     "The graph routes are still not found, but lineage IS readable over REST: "
+     "`GET /data360/search/v1/assets/<identity>?scheme=internal&segments=all` returns a "
+     "`lineage` segment of inbound and outbound data-flow hops (walk it asset by asset) and a "
+     "`neighborhood` segment with table- and column-level data-flow edges (L-CDGC-156). "
+     "MCP get_asset_details is no longer the only lineage read. Supersedes L-CDGC-085."),
+    ("/data360/search/v1/assets", "L-CDGC-181", "2026-10-08",
+     "The single-asset form works: `GET /data360/search/v1/assets/<identity>?scheme=internal"
+     "&segments=all` reads lineage and neighborhood segments, and `segments=dataQuality` reads "
+     "the asset's catalog DQ scores (L-CDGC-266). Use `search/api/v1/search` for queries."),
+    ("/data360/glossary/v1/terms", "L-CDGC-051", "2026-09-29",
+     "This path stays 404, but glossary authoring is headless: create domains and terms with "
+     "`POST /data360/content/v1/assets` (L-CDGC-050, L-CDGC-051) and rename or redefine them with "
+     "`PATCH /data360/content/v1/assets/<externalId>?scheme=external` (L-CDGC-053)."),
+    ("/data360/businessDataset/v1 (RuleOccurrence)", "L-CDGC-243", "2026-11-19",
+     "This path stays 404, but catalog rule occurrences are written through the contentv2 publish, "
+     "and their scores are pushed with `PATCH /ccgf-ruleautomation/api/v1/dataQuality/publishScore` "
+     "(L-CDGC-243) and read with `segments=dataQuality` (L-CDGC-266)."),
+    ("/quality/public/v2/scorecards", "L-DQ-123", "2026-11-02",
+     "The CDQ scorecard path stays 404, but per-rule pass rates ARE readable headless: each "
+     "bound rule is an `Output` column in the metric store, and "
+     "`Profiles('<id>')/Columns('<columnId>')/ValueFrequencies` gives VALID/INVALID counts. "
+     "Keep only entries whose totalRows equals the column's current totalRows (L-DQ-151). "
+     "Supersedes L-DQ-031."),
+    ("/metric-store/api/v1/odata/Profiles('{uuid}')/Columns", "L-DQ-123", "2026-11-02",
+     "Bound rule specifications appear here as `Output` columns (columnKey from 40000 up); "
+     "`Columns('<columnId>')/ValueFrequencies` returns each rule's VALID/INVALID frequency, i.e. "
+     "its pass rate. Page with $top/$skip (20 per page by default). After a re-run, filter value "
+     "entries to the current totalRows (L-DQ-151)."),
+    ("/metric-store/.../Profiles('{uuid}')/Insights | Patterns | ValueFrequencies", "L-DQ-123",
+     "2026-11-02",
+     "The profile-level `Profiles('<id>')/ValueFrequencies?$filter=...` form answers 400 "
+     "METRIC_STORE_00022; use the column-level `Columns('<columnId>')/ValueFrequencies`."),
+    ("/profiling-service/api/v1/profile", "L-DQ-019", "2026-10-03",
+     "POST is proven: profiles are created over REST with a body cloned from a known-good "
+     "profile, run with `POST /profile/<id>/execute` and polled at `GET /job/<profileJobId>`."),
+    ("/profiling-service/api/v1/profile/{uuid}", "L-DQ-019", "2026-10-03",
+     "PUT is proven: `PUT /profile/<id>` updates a profile."),
+    ("/public/core/v3/license/metering/ExportMeteringData", "L-IPU-021", "2026-10-03",
+     "The full cycle works: POST (dates in full ISO-8601 with a zone), poll "
+     "`GET .../ExportMeteringData/<jobId>` until SUCCESS, then `GET .../<jobId>/download` for a "
+     "ZIP with one CSV per org. `toolkit/lib/idmc_metering.py` wraps it. Job-level metering is "
+     "a separate export, `ExportServiceJobLevelMeteringData` (L-IPU-065)."),
+    ("/public/core/v3/license/metering/MeteringUsageSummary", "L-IPU-022", "2026-07-26",
+     "Still 404; it does not mean metering is not entitled. Use the async export "
+     "(`toolkit/lib/idmc_metering.py`)."),
+    ("/active-bpel/opsanalytics-das/metrics?query={processJobReport(...)}", "L-CAI-159",
+     "2026-11-01",
+     "GET is proven: it returns 200 and `data.processJobReport[]` with the header "
+     "`IDS-SESSION-ID: <session>`; the documented `Authorization: Bearer <session>` gets 401."),
+    ("/public/core/v3/users/{id}", "L-AUTH-058", "2026-09-28",
+     "DELETE is proven: `DELETE /public/core/v3/users/<userId>` returns 204 and removes the user. "
+     "Edit in place is still not available."),
+]
+
+# section-level notes, keyed by the content/ section id
+LATER_SECTION_NOTES = {
+    "15-cdgc": [
+        "Newer evidence (L-CDGC-181, 2026-10-08): the MCP table's 'MCP ONLY for lineage. Every "
+        "REST lineage path returns 404' no longer holds. Lineage hops are readable over REST "
+        "through the asset read's `lineage` and `neighborhood` segments (L-CDGC-156)."],
+}
+
+# global notes, rendered before the Postman section
+LATER_GLOBAL = [
+    ("PUT and PATCH", "L-AUTH-016, L-METHOD-032, L-MIG-105, L-CDGC-053",
+     "The verb counts below are the July 2026 census. Later lessons proved PUT (runtime-"
+     "environment selections, catalog sources, profiles) and PATCH (v3 folders and projects, "
+     "204; data360 content assets for glossary terms and descriptions; FRS documents). Treat "
+     "any other documented PUT or PATCH as unproven until a live call succeeds."),
+    ("Lineage", "L-CDGC-181",
+     "Readable over REST hop by hop through the asset read's `lineage` segment; the "
+     "`/data360/lineage/*` graph routes are still 404."),
+    ("Per-rule DQ pass rates", "L-DQ-123",
+     "Readable over REST from the metric store's rule `Output` column ValueFrequencies "
+     "(supersedes L-DQ-031)."),
+    ("MCP catalog", "L-MCP-132, L-MCP-001",
+     "The vendor's public MCP registry (`/mcp-registry/v0.1/servers`, no login) listed 23 "
+     "managed servers as of the October 2026 release, and an org's managed registry is read at "
+     "`/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED`. The 'five managed servers' "
+     "count in the MCP dictionary below is the April 2026 catalog."),
+    ("IPU metering", "L-IPU-021",
+     "The async `ExportMeteringData` job works end to end (start, poll, download); "
+     "`toolkit/lib/idmc_metering.py` wraps it."),
+]
+
+# the MCP dictionary predates the full registry
+LATER_MCP_NOTE = (
+    "Newer evidence (L-MCP-132, 2026-11-19; L-MCP-001): the tables below are the April 2026 "
+    "catalog. The public registry listed 23 managed servers as of the October 2026 release, "
+    "and lists `get_asset_lineage` on the catalog discovery server (registry-only, not called "
+    "here; L-MCP-148 reports that server's neighborhood read excludes lineage); the org registry "
+    "at `/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED` says what your org exposes "
+    "(`/public/core/v3/mcpServers` is not the registry). Asset lineage is no longer an MCP-only "
+    "read (L-CDGC-181). Mark each server as called live or registry-only (L-MCP-131).")
 
 # ─────────────────────────────────────────────────────────────────────────────
 # which auth plane and host a path lives on.  First match wins, so order matters:
@@ -390,6 +496,25 @@ def render(services, by_path, caps, mcp_rows, cross):
       "wrong path or wrong host — keep hunting. Full decoder in the appendix.")
     A("")
 
+    # ── newer evidence from the lessons log ───────────────────────────────
+    A("## Newer evidence: what later lessons changed")
+    A("")
+    A("The entries below are the July 2026 probe corpus. These later current lessons in "
+      "`knowledge/lessons/lessons.jsonl` change what holds; each affected entry also carries a "
+      "*Newer evidence* note. Where a note and an entry disagree, the note wins.")
+    A("")
+    A("| Topic | What holds now | Lessons |")
+    A("|---|---|---|")
+    for topic, ids, text in LATER_GLOBAL:
+        A(f"| {topic} | {text} | {ids} |")
+    A("")
+    later = {}
+    for ep, lid, date, text in LATER_LESSONS:
+        later.setdefault(ep, []).append((lid, date, text))
+    missing = [ep for ep in later if ep not in by_path]
+    if missing:
+        print(f"WARN LATER_LESSONS keys with no endpoint: {missing}")
+
     # ── the Postman answer ────────────────────────────────────────────────
     A("## The Postman question, answered")
     A("")
@@ -400,7 +525,8 @@ def render(services, by_path, caps, mcp_rows, cross):
     for v in VERBS:
         A(f"| `{v}` | {per_verb_work[v]} | {per_verb_doc[v]} | {per_verb_rej[v]} | {per_verb_unt[v]} |")
     A("")
-    A("What that table means in practice:")
+    A("What that table means in practice (July 2026 census; see *Newer evidence* above for "
+      "the PUT and PATCH routes proven since):")
     A("")
     A(f"- **`GET` and `POST` are the platform.** {per_verb_work['GET']} endpoints read, "
       f"{per_verb_work['POST']} write or run. Everything else is a rounding error.")
@@ -489,6 +615,9 @@ def render(services, by_path, caps, mcp_rows, cross):
             if len(r["svc"]) > 1:
                 A(f"*Also documented under:* {', '.join(x for x in r['svc'] if x != sid)}")
                 A("")
+            for lid, date, text in later.get(r["ep"], []):
+                A(f"> **Newer evidence ({lid}, {date}):** {text}")
+                A("")
 
         own_caps = [c for c in caps if sid in c["svc"]]
         if own_caps:
@@ -527,11 +656,16 @@ def render(services, by_path, caps, mcp_rows, cross):
         for q in svc["open"]:
             A(f"> ⚠️ **Open question.** {q}")
             A("")
+        for n in LATER_SECTION_NOTES.get(sid, []):
+            A(f"> {n}")
+            A("")
 
     # ── MCP dictionary ────────────────────────────────────────────────────
     A("---")
     A("")
     A("# MCP dictionary")
+    A("")
+    A(f"> {LATER_MCP_NOTE}")
     A("")
     mcp = cross.get("30-mcp-servers")
     if mcp:

@@ -19,13 +19,15 @@ All on `<serverUrl>` (`https://<pod>.<domain>.informaticacloud.com/saas`) with `
 | Clone | GET a working one, change `name` (+ host/db), drop `id`, POST, test | L-CONN-004 |
 | Clone into another org | Drop `agentId`, `agentGroupId`, `orgId` from `connParams`, set the target runtime, re-supply secrets | L-CONN-122 |
 | Test (free, 0 IPU) | `GET /api/v2/connection/test/<connId>`, or MCP `connectionmanagement.test_connection_by_id` | L-CONN-014 |
-| Update | GET, drop `createTime`/`updateTime`/`createdBy`/`updatedBy`, re-supply every secret, `POST /api/v2/connection/<connId>` (full body), GET, test | L-CONN-006, L-CONN-007 |
+| Browse objects and preview data through MCP | `connectionmanagement` (18 tools since the October 2026 release, browse, metadata and preview included); as Claude Code tools through `/idmc-mp:connect-mcp` (read-only by default) | L-MCP-132 |
+| Update | GET, drop `createTime`/`updateTime`/`createdBy`/`updatedBy`, re-supply every secret, `POST /api/v2/connection/<connId>` (full body: unsent optional fields reset), GET, test | L-CONN-006, L-CONN-007, L-CONN-145 (reported) |
 | Partial update | Same POST with header `Update-Mode: PARTIAL` (reported, code-read) | L-CONN-142 (reported) |
 | Rebind to another runtime | Set `runtimeEnvironmentId` **and** `connParams.agentGroupId`, re-supply secrets, POST, test | L-CONN-132 |
 | Repoint after a DB move | Update host/port in place: ids and bindings stay | L-CONN-009 |
 | Delete | `DELETE /api/v2/connection/<connId>` -> 200; GET -> 403/404 = gone | L-CONN-017 |
 | Flat file | `"type":"CSVFile"`, directory on the agent host in top-level `database` | L-CONN-065 |
 | Look up by name | `GET /api/v2/connection/name/<url-encoded name>` | L-CONN-149 (reported) |
+| Smoke test after a credential change | `GET /api/v2/connection/target/<connId>/datapreview/<DB/SCHEMA/TABLE>` (read-only, no job) | L-CONN-147 (reported) |
 | Connector formats | `GET /api/v2/connector/metadata?connectorName=<name>` (`cciMeta` `supportedEngineTypes`) | L-CONN-130 |
 
 ## What doesn't work, and the workaround

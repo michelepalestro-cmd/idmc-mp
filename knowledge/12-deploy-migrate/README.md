@@ -27,7 +27,7 @@ or cleanup.
 | Rename in place | `PATCH .../frs/api/v1/Documents('<frsId>')` `{"name"}` (not `BaseEntities`) | L-MIG-075 |
 | Unbind / bind schedules | v2 idiom: `GET /api/v2/workflow/<id>`, POST the full body back with `scheduleId`, read back | L-MIG-047 |
 | Delete | v2 `DELETE /api/v2/<resource>/<id>` (read-back 403); FRS `DeleteEntities {"artifactIds"}` / `BaseEntities('<id>')` (`idmc_frs_delete.py`) | L-CLEAN-006, L-CLEAN-003, L-CLEAN-005 |
-| Delete a user | `DELETE /public/core/v3/users/<id>` -> 204 | L-CLEAN-009 |
+| Delete a user | Reassign file listener associations first (`POST /mftsaas/api/v1/ChangeCallbackOwnership`, reported), then `DELETE /public/core/v3/users/<id>` -> 204 | L-CLEAN-037, L-CLEAN-009 |
 | CAI unpublish before delete | `POST <pod>-cai/active-bpel/asset/v1/unpublish`, processes -> app connections -> connectors | L-CLEAN-011 |
 
 ## What doesn't work, and the workaround

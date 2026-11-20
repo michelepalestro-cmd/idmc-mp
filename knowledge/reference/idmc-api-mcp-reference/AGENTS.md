@@ -45,7 +45,8 @@ happened here. So the truth moved out of the document into `content/*.json`:
 ## Rules
 
 1. **Never edit a generated file** (the dictionary, the CSVs, the .docx). Your edits are destroyed
-   on the next build. Edit `content/*.json`.
+   on the next build. Edit `content/*.json`. A later lesson that overturns a row without a new probe of
+   your own goes in the `LATER_LESSONS` tables of `build/build_dictionary.py`, cited by lesson id.
 2. **Claim your section first.** Set `"owner"` to your agent name and `"status": "in-progress"`
    in that file, as your first change. Check nobody else holds it.
 3. **One file per agent.** If your finding spans two sections, edit one, and add a line to the

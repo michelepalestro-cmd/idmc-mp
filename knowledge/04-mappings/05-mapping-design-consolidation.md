@@ -218,3 +218,6 @@ A 59-transformation golden-record mapping with 11 targets ran a median 65 s (27 
 11. A risky target option: a posting task with `truncateTarget=true` on an accounting table (L-CDI-169).
 12. Anonymous public processes writing to a SaaS org (accepted for a demo; flagged).
 13. The "obsolete, not a bug" trap: check whether the object a task writes is still a table (L-CDI-147).
+14. A generated build of hundreds of one-off, unparameterized mappings with all logic in SQL strings and lineage ids
+    typed into the SQL as literals: before running or extending one, count mappings per purpose, check for
+    parameters, measure source-SQL length and grep for literal ids (L-CDI-293, L-CDI-295).

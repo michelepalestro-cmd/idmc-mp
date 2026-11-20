@@ -22,6 +22,8 @@ translating IDMC rules into another engine; building or debugging an address-ver
   (L-CAI-086).
 - A verifier returns only the enrichments its own process settings request: added output ports gave no geocodes, so
   prove one known address returns coordinates before a bulk run (L-DQ-130).
+- Count verification coverage per served entity, not per verified row (reference address points inflated it), and
+  pause verification while entity ids are still being merged or re-keyed (L-DQ-144, L-DQ-162).
 
 **Related:** [Profiling - What Is Headless](02-profiling-what-is-headless.md) ·
 [DQ Scorecards](04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md) ·
@@ -29,7 +31,7 @@ translating IDMC rules into another engine; building or debugging an address-ver
 [Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md) ·
 [Lessons: Data Quality & Profiling](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** CDQ assets are reusable *definitions*: cleanse, deduplicate, labeler, parse, rule specification and
 > verifier, plus dictionaries of reference data. None of them reads or writes data by itself. Rule specifications are
@@ -183,8 +185,8 @@ dims   = spec["customAttributes"]["stringAttrs"]
 output is Valid, True, 1, Yes or Ok). Before trusting a translation, check three semantics against each rule's
 `testData`: whether REG_MATCH is a full-string match, what IS_SPACES('') returns, and whether IN is case-sensitive.
 RE2-based engines also reject lookarounds and backreferences. Mark anything the translator cannot map as needs-review,
-and prove parity with per-rule checked and failed counts from one CDI task over the same rows, because profile rule
-results have no REST read (L-DQ-100).
+and prove parity with per-rule checked and failed counts on a sample that cannot change: the metric store's per-rule
+pass rates (L-DQ-123; they matched SQL to 0.01 point, L-DQ-147) or one CDI task over the same rows (L-DQ-100).
 
 ### 3.2 Read (census): proven
 
@@ -238,6 +240,10 @@ Direct create does not exist. `POST /public/core/v3/objects` returns **405** "Me
    **SUCCESSFUL**. `MigrationSvc_031` was transient when known-good packages also failed; retry later.
 6. Read back: the census count rises by one. The imported object gets its **own id**: in a clone of another asset type the
    client-supplied GUID was discarded. Address it by the id the target reports.
+
+**Pre-flight (public code, not probed here, L-DQ-168).** `POST https://<pod>-dqcloud.<domain>.informaticacloud.com/rule-service/api/v1/validateRule`
+with `IDS-SESSION-ID` and `{"ruleModel": "<RuleDefinition JSON as a string>"}` returns `{name, description, outputs[], error}`
+and writes nothing to FRS: a dry run for an edited rule model before the import.
 
 **Caveat:** the clone inherits the template's expression logic. In the first proof the rule-spec count went from 4 to
 11 to 12, but 7 of the clones still needed their expressions completed in the rulebuilder canvas. Pick a template whose
@@ -401,7 +407,9 @@ Gotchas:
   golden mapping and each of its targets, the real-time CAI path, the CRM sync): with two different rules the passes
   flip values back and forth. Bracketed tombstones such as `[erased]` get re-cased too, so match tombstones
   case-insensitively downstream. The mapping-side pattern is in
-  [Mapping Design & Consolidation](../04-mappings/05-mapping-design-consolidation.md).
+  [Mapping Design & Consolidation](../04-mappings/05-mapping-design-consolidation.md). An IDMC name-cleansing
+  capitalization step showed the same defect (`O'NEILL` became `O'neill`): put O', Mc/Mac and hyphenated names in the
+  test set before loading real data (L-DQ-161).
 - **Make cleansing visible in a demo (L-DQ-069).** Generate realistically messy inputs (case, spacing, formats) that
   still pass the application's API contract, so the cleanse has something to fix.
 

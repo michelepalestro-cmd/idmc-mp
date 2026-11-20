@@ -21,7 +21,7 @@ MDM bundle or the IPU pool.
 [IPU Model (mechanics)](../13-ipu-cost/01-ipu-model-mechanics.md) ·
 [Lessons: MDM](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** "Product 360" names two different things: the AWS-hosted PIM product, and the Product 360 app inside MDM
 > SaaS (Business 360), which sits on the same REST-reachable platform as Customer 360. MDM SaaS is metered outside the
@@ -107,6 +107,8 @@ Metering mechanics and rate cards are covered by the IPU lessons linked above.
 | Measure divergence before promising reconciliation | Mirrored sources give match/merge nothing to resolve (L-MDM-045) |
 | Plan the design clicks and the metered first run explicitly | Model publish, source systems, match and survivorship are UI; the first native run is metered (L-MDM-053) |
 | Keep DaaS enrichment off unless you have data for it | Supplier-entity enrichment bills per external lookup (L-MDM-040) |
+| Pick a custom entity's Subscribed Record Type deliberately | It drives consumption tracking against the subscription and locks once records exist, as does the Business ID Format; a change needs a purge of all records or a support case (L-MDM-100, public material) |
+| Plan for objects that cannot be undone | Source-system internal ids, predefined assets and custom entities cannot be deleted, so try a model in a sandbox org first (L-MDM-099, public material) |
 | Name things honestly | A SQL dedup layer is not MDM; "golden record" means MDM in Informatica terms (L-MDM-052) |
 
 ---

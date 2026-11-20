@@ -54,6 +54,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   for another connector, add a template from doc 02.
 - `toolkit/lib/idmc_runtime_selections.py`: services and connectors of a runtime environment
 - `toolkit/lib/idmc_objects.py`: find existing connections and the assets that use them
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `conn_*` (list, get, test,
+  browse and preview; create and update only when the client allows writes); read a write back over REST
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

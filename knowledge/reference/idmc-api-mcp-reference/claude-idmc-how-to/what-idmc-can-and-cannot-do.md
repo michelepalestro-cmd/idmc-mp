@@ -2,7 +2,8 @@
 
 > **Currency.** This guide is a snapshot of the live evidence up to 2026-07-26. Several walls below have since fallen
 > (design objects authored by package import, the DBMI task lifecycle, a `PUT` on runtime-environment selections, full
-> SQL ELT pushdown). Check the currency list in [the Reference Library README](../../README.md) and the topic
+> SQL ELT pushdown, `PATCH` on v3 folders and catalog assets, lineage over REST (L-CDGC-181), per-rule DQ pass rates
+> (L-DQ-123), 23 managed MCP servers (L-MCP-132)). Check the currency list in [the Reference Library README](../../README.md) and the topic
 > folders before quoting any limit from this file.
 
 **The whole answer, in one file.** Nothing here is inferred. Every claim below traces to either a
@@ -123,6 +124,11 @@ All 11 actions, every one an HTTP `POST`. **Only `checkout_data_order` writes an
 **fuzzy customer identity match** (`search_master_record`). Every REST lineage path returns 404, and
 REST has no public MDM search resource. Those two are the entire case for using MCP.
 
+> **Later evidence.** Lineage is now readable over REST, hop by hop, through the asset read's `lineage` segment
+> (`GET /data360/search/v1/assets/<identity>?scheme=internal&segments=all`); only the `/data360/lineage/*` graph routes
+> stay 404 (L-CDGC-181). The five servers above are the April 2026 catalog: the public MCP registry listed 23 managed
+> servers as of the October 2026 release (L-MCP-132).
+
 The other 8 actions wrap a REST endpoint you could call directly, and **REST is often more
 capable**: raw Elasticsearch DSL vs one search string, 1,000 addresses per call vs one, full job
 history vs a single job.
@@ -151,11 +157,11 @@ automate around the wall.
 | Design a **CDI mapping** | list / run / schedule / monitor it | `POST /api/v2/mapping` → 400 HTML; v3 objects → 405 | Mapping Designer canvas |
 | **Publish a taskflow** | `GET` the taskflow (200) | `POST /api/v2/taskflow/publish` → 404 | DI designer Publish |
 | Author **Mass Ingestion tasks** | see engines RUNNING; read activityLog | every `mi`/`dbmi` path 404; `MI_TASK` count 0 | Mass Ingestion wizard |
-| Author **CDQ rule logic / scorecards** | read and clone rule specs | `data360/dq/*` 404; no create on RuleOccurrence | rulebuilder + DQO wizard |
+| Author **CDQ rule logic / scorecards** | read and clone rule specs; read per-rule pass rates from the metric store (later evidence, L-DQ-123) | `data360/dq/*` 404; no create on RuleOccurrence | rulebuilder + DQO wizard |
 | **Accept CLAIRE classifications** | read classifications | 37+ accept paths 404; UI offers only Dismiss | auto-accept threshold + re-scan |
 | **Deploy an MDM business entity** | read 97 `MDM_*` design objects | ~20 deploy paths 404; `BUSINESS_ENTITY` count 0 | B360 Modeler Publish |
 | Run **MDM ingress / match-merge** | ingest a record (201) | all ingress and job paths 404 | B360 Console |
-| Bind a **glossary term to a column** | read the glossary | ~20 paths 404, empty bodies | CDGC UI (partial `ccgf-contentv2` workaround) |
+| Bind a **glossary term to a column** | read the glossary; link terms with a `glossary` segment PATCH on `data360/content/v1/assets` (later evidence, L-CDGC-056) | ~20 paths 404, empty bodies | CDGC UI (partial `ccgf-contentv2` workaround) |
 | Assign a **steward / data owner** | read stewards | stewardship writes 404 / 405 | CDGC UI |
 | Create a **Marketplace delivery template** | read templates | **405 on every verb** | Marketplace UI, headed browser |
 | Create a **DAM masking policy** | — | ~40 policy paths 404; policy count 0 | engine deployed, no REST plane at all |
@@ -172,7 +178,11 @@ sentence is the shape of this entire platform.
 
 ## 3.2 Cannot in place — `PUT` and `PATCH`
 
-**Zero `PUT` and zero `PATCH` are proven live anywhere across 166 endpoints.**
+**Zero `PUT` and zero `PATCH` are proven live anywhere across 166 endpoints** (July 2026 census).
+
+> **Later evidence.** `PUT` was proven on runtime-environment selections (L-AUTH-016) and `PATCH` on v3 folders and
+> projects (L-MIG-105) and data360 content assets (L-CDGC-053); `DELETE /public/core/v3/users/{id}` returns 204
+> (L-AUTH-058). The 405 on the other verbs of that path still holds.
 
 | Verb | Works | Documented only | Rejected | Untested |
 |---|---:|---:|---:|---:|

@@ -18,7 +18,7 @@ plugin, whose source is the repo root.
 
 | You are adding... | Put it in | Rule |
 |---|---|---|
-| A lesson (something IDMC did, with evidence) | `knowledge/lessons/lessons.jsonl` (one JSON line, the source of truth) and the job folder's `knowledge/<job>/lessons.md` | generic; see "A lesson" below |
+| A lesson (something IDMC did, with evidence) | `knowledge/lessons/lessons.jsonl` (one JSON line, the source of truth) and the job folder's `knowledge/<job>/lessons*.md` | generic; see "A lesson" below |
 | An explanation, a procedure, a pattern | the job folder in `knowledge/` (`01-login-and-orgs` ... `14-working-with-claude`), or `knowledge/reference/` for lookup material | cite the lesson ids it rests on |
 | A compact rule Claude must always apply | `knowledge/00-start-here/` or the core skill `skills/idmc-mp/SKILL.md` | short; link to the long doc |
 | A workflow for one IDMC area | that area's `skills/idmc-*/SKILL.md` | "How to work", "Read", "Tools" sections |
@@ -36,7 +36,7 @@ code (`knowledge/...`, `knowledge/lessons/...`, `toolkit/...`) are relative to t
 
 ## A lesson
 
-One line in `knowledge/lessons/lessons.jsonl` with exactly these fields, and the same lesson as a block in its job folder's `knowledge/<job>/lessons.md`:
+One line in `knowledge/lessons/lessons.jsonl` with exactly these fields, and the same lesson as a block in its job folder's `knowledge/<job>/lessons*.md`:
 
 ```json
 {"id": "L-CDI-331", "domain": "cdi", "kind": "ERROR", "title": "...", "text": "...", "evidence": "...", "date": "2026-11-19", "status": "current", "supersedes_id": ""}

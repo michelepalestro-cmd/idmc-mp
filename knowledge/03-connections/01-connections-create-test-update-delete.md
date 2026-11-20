@@ -22,9 +22,9 @@ secrets), or when a test passes but runs fail.
 [Troubleshooting: the four gates](03-troubleshooting-the-four-gates.md) ·
 [02 Runtime Environments](../02-secure-agent/02-runtime-environments-services-connectors.md) ·
 [Org-to-Org Migration Runbook](../12-deploy-migrate/04-org-to-org-migration-runbook.md) (imported connections arrive without secrets) ·
-[Lessons: Secure Agent & Connections](lessons.md)
+[Lessons: Connections](lessons.md) · [Lessons: Secure Agent](../02-secure-agent/lessons.md)
 
-**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03; 8 migrated connections re-secured and tested
+**Last verified:** 2026-11-20 (evidence 2026-06-27 to 2026-11-19; 8 migrated connections re-secured and tested
 headless; connections rebound off a downed Hosted Agent).
 
 > Connections are v2-only objects with a full headless lifecycle: create, test (a free metadata handshake), update by
@@ -110,7 +110,9 @@ Other reads (L-CONN-016, 2026-07-25): `GET /api/v2/connection` lists connections
 `GET /api/v2/connection/source/<connId>?type=table` browses source objects (200 or 403 per connection, and it can
 surface target-side errors such as a throttled warehouse); `GET /api/v2/connector` lists connector types;
 `GET /api/v2/connector/metadata?connectorName=<name>` returns a connector's schema, and `200 []` means the connector is
-not activated.
+not activated; the name matches by prefix and the answer is an array, so pick the exact `name` (L-CONN-144, reported).
+`GET /api/v2/connection` ignores `type` and `name` query parameters and returns every connection: filter client-side or
+use `/api/v2/connection/name/<url-encoded name>` (L-CONN-149, reported).
 
 What a pass does and does not prove (L-CONN-015, 2026-08-19): it proves the handshake from that agent. It can pass with
 a wrong stored password (a JDBC V2 test did, L-CONN-013, 2026-06-27) and it proves nothing about write paths, staging buckets or types.
@@ -129,7 +131,9 @@ GET https://<pod>.<domain>.informaticacloud.com/da/w3.model/object/cloud/saas:<v
 **An empty browse proves nothing** (L-CONN-016): `GET /api/v2/connection/source/<connId>?type=table` (and
 the same call without `?type`) returned `200 []` for two working PostgreSQL connections whose databases held tables and
 whose tests passed. Confirm objects through a consumer instead (profile source fields, a mapping preview, a catalog
-scan's Metadata Extraction). To prove that a test really reached the database and was not a cached status, diff the
+scan's Metadata Extraction), or with a data preview, which opens a real session without a job:
+`GET /api/v2/connection/{source|target}/<connId>/datapreview/<objectName>`, where a database object is `DB/SCHEMA/TABLE`
+(a bare table name answers 403 'Invalid Object Path Format') (L-CONN-147, reported). To prove that a test really reached the database and was not a cached status, diff the
 database's own counters around it; on PostgreSQL one test opened one session and committed about 8 transactions in
 1.4 s:
 
@@ -151,6 +155,12 @@ GET  <serverUrl>/api/v2/connection/test/<connId>
 ```
 
 `POST /api/v2/connection` without the id is create-only: for an existing name it fails with REPO_10200 (name exists).
+
+**Always start from the full GET body.** The update is replace-style: a body with only the changed fields answers 403
+(missing `name`), and optional fields you leave out reset to their defaults (a port came back as -1). Merge your changes
+into the current `connParams` key by key (L-CONN-145, reported). The header `Update-Mode: PARTIAL` on the same POST is
+reported to change only the attributes present in the body (still with `"@type":"connection"`); probe it on a scratch
+connection before relying on it (L-CONN-142, reported).
 
 **Secrets come back masked** (L-CONN-007, 2026-09-23). The password or private key in the GET body is masked; POSTing
 it back unchanged blanks the secret and breaks the connection. Re-supply the secret in every update, even one that only
@@ -187,6 +197,11 @@ without the secret, drop createTime, updateTime, createdBy, updatedBy and majorU
 `connParams` only to pin one agent, and remove it when going back to the Hosted Agent), re-supply every masked secret
 (for a BigQuery key, cycle the key formats until the test passes, L-CONN-036), POST, then test. This is the failover
 step tasks alone do not cover (§6).
+
+**Repoint assets to a newer connector version** (L-CONN-151, reported, not probed here): `POST
+<serverUrl>/api/v2/connectionMigration/migrate` with `sourceConn`, `targetConn` (connection names) and an optional
+`projectName` does not edit in place: it copies the assets into a `<folder>_Migration_<jobId>` folder and swaps the
+connection in their Source, Target and Lookup transformations.
 
 **Repoint after a database move** (L-CONN-009, 2026-07-12): update host and port in place with
 `POST /api/v2/connection/<connId>` so mapping tasks and catalog sources that reference the id stay bound; scans that

@@ -24,9 +24,9 @@ engines flap or the agent will not start; before you delete anything on an agent
 [Troubleshooting: the four gates](../03-connections/03-troubleshooting-the-four-gates.md) ·
 [Process Server on a Secure Agent](../07-app-integration/04-process-server-on-a-secure-agent.md) ·
 [Performance, Concurrency & Job Caps](../04-mappings/06-performance-concurrency-job-caps.md) ·
-[Lessons: Secure Agent & Connections](../03-connections/lessons.md)
+[Lessons: Secure Agent](lessons.md) · [Lessons: Connections](../03-connections/lessons.md)
 
-**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03; live installs on four orgs, two agents on one host).
+**Last verified:** 2026-11-20 (evidence 2026-06-27 to 2026-11-19; live installs on four orgs, two agents on one host).
 
 > A Secure Agent is an `agentcore` supervisor plus one JVM-based engine per selected service, on a host you own.
 > Installing and registering it is headless; only the shell on the host is manual. Most "IDMC is broken" incidents on an
@@ -244,6 +244,13 @@ systemctl status <unit>
 - Restart detached: `infaagent shutdown`, then `nohup infaagent startup &` (or `setsid ./agent_start.sh`, or tmux, or the
   unit). A dropped SSH or IAP session in the middle of a startup can leave the agent down (L-AGENT-012, 2026-07-06).
 - After any restart: all engines RUNNING, DIS `subState` 0, one connection test green (L-AGENT-075, 2026-06-27).
+  RUNNING with `subState` -1 (or 2) is still starting; the Process Server can take up to 20 minutes to reach 0
+  (L-AGENT-125, L-AGENT-139, reported).
+- To stop or start one engine without restarting the agent: `POST /public/core/v3/agent/service` (header
+  `INFA-SESSION-ID`) with `{"agentId":"<agent federatedId>","serviceName":"Data Integration Server","serviceAction":"stop"|"start"}`;
+  `agentId` is the 22-character `federatedId` from `GET /api/v2/agent`, not the v2 id. It controls running engines only;
+  enabling a service stays the selections PUT. A stopped engine disappears from `agentEngines[]` (L-AGENT-124,
+  L-AGENT-125, reported).
 - Break-glass ladder: restart the agent, reboot the host, re-register (new token), reinstall; check each rung from both
   sides, the per-agent API and on-host `getstatus` (L-AGENT-010, 2026-07-08).
 - A locked-out IDMC user does not stop the agent: it has its own agent token, schedules keep running, only REST triggers,
@@ -475,8 +482,13 @@ for it. The Administrator shell iframes a legacy Struts form, and that form can 
    `PMRDTM_CFG`), `customConfigSubType=-1`, `customConfigName`, `customConfigValue`. Leave `customConfigType=-1`; that
    select is for agent-core types.
 4. **Save:** `POST /runtime/app/agent.do` as `application/x-www-form-urlencoded` with the WHOLE form, `actionMethod=update`
-   and the page's `csrfToken`. This is exactly what the UI's `doSave` → `doUpdate` → `AgentForm.submit` sends. It
-   returns 200 and renders the read view. **Read back** by re-GETting `displayUpdate`.
+   and the page's `csrfToken`. Since a vendor UI change, the property rows (`sysConfig*`, `customConfig*`,
+   `engineConfig*`, `engineCustomConfigIdInput`, `isSensitiveConfig`) must be packed into the hidden `configFormJson`
+   field as `{"<name>":["v1","v2",...]}` in the form's key order; sent flat, the ~1,550 parameters exceed the server's
+   parameter limit and the POST answers 500 `CMN_001` at once (L-AGENT-127, reported). `id`, `name`, `version`,
+   `actionMethod` and `csrfToken` stay flat. The answer is always HTTP 200 HTML: a page without the form means the
+   session was refused, and `hasErrors = "true"` plus `#InfErrorDiv` carry validation errors (L-AGENT-126). **Read
+   back** by re-GETting `displayUpdate`.
 5. **Effect:** the cloud pushes the change into `<ver>/ICS/main/tomcat/tomcat.cfg` and
    `<ver>/ICS/main/bin/rdtm/pmrdtm.cfg`, then **restarts DIS by itself ~1.5 min later**. That restart may also **roll
    DIS to a pending newer version**. The old DIS JVM keeps serving until the new one's tunnel opens (~1 min), and it is
@@ -485,6 +497,10 @@ for it. The Administrator shell iframes a legacy Struts form, and that form can 
    - the DIS default DTM pool is `maxDTMProcesses` (poolSize) = 2, as logged in `tomcat_<ver>.log`;
    - the Administrator shell iframe can stop rendering for a headless browser, but driving `agent.do` at top level works;
    - the undo is the same POST with the custom row removed and/or the key reset;
+   - send newlines as CRLF and compare values normalised (line endings, trailing whitespace) before calling a row
+     overridden; a new Custom Configuration row needs `engineCustomConfigIdInput` = the current epoch milliseconds; the
+     agent's own `sysConfig*` rows are accepted but never stored; Process Server changes apply only after that service
+     restarts (L-AGENT-128, reported);
    - verify on the **running** DIS and DTM processes' command lines (`ps -o args`), not on the newest version directory:
      the save can roll DIS to a newer build in the same step, and the old JVM lingers 5-8 minutes (L-AGENT-099).
 
@@ -626,7 +642,11 @@ do not appear in `docker ps`; look for `/home/*/infaagent/` and 14xxx listeners 
 
 - **Routes** (L-AGENT-020, 2026-07-26): `GET /api/v2/agent/<agentId>` (`active`, `readyToRun`, `version`,
   `upgradeStatus`, `lastUpgradeCheck`, `packages[]`) and `GET /api/v2/agent/details/<agentId>` (`agentEngines[]` with
-  `agentEngineStatus.status`, `desiredStatus`, `subState`). No v3 object returns live status.
+  `agentEngineStatus.status`, `desiredStatus`, `subState`). No v3 object returns live status. Details return status only
+  by default; `?onlyStatus=false` adds every agent and engine property (L-AGENT-138, reported).
+- **Readiness is `subState` "0"**, not RUNNING: "-1" is initializing and "2" still starting. A stopped engine is absent
+  from `agentEngines[]`, so detect "stopped" by comparing against the expected engine list, not by a STOPPED status
+  (L-AGENT-125, L-AGENT-136, reported).
 - **Do not trust the list**: `GET /api/v2/runtimeEnvironment` reports a stale `agents[].readyToRun: false`
   (3 reads of 3); read per agent and confirm with `getstatus` (L-AGENT-021, 2026-07-26). `readyToRun` exists twice and
   only catalog-source creation checks it; mapping runs ignore it (L-AGENT-022, 2026-07-04).

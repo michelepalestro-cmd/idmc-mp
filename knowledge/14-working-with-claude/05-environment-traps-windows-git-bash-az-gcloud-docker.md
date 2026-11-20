@@ -168,6 +168,7 @@ az storage blob upload --auth-mode login --account-name <account> --container-na
 | an HTTP sweep hangs | `urlopen(timeout=...)` does not bound a slow body; server-sent-event streams never end | a hard-deadline watchdog; skip stream paths | (L-ENV-037) |
 | a nightly backup "succeeds" after a rename | it dumps the old, now empty target (a 20-byte dump) | monitor dump size against a floor; update backup targets in every rename | (L-ENV-038) |
 | a grep picks an unrelated series | dots in `grep -E` match any character | `grep -F` for literal keys | (L-ENV-036) |
+| a v3 list parser finds nothing, or crashes | v3 list envelopes differ per resource: `schedule` is `{schedules:[]}`, `securityLog` is `{entries:[]}`, `userGroups` a bare array | parse each resource's shape from a captured live body, not from the docs | (L-ENV-143), (L-METHOD-171) |
 
 ## 7. Moving code and running long jobs on a VM
 
@@ -219,6 +220,8 @@ the load was 11 for the same work. A stopped agent installation still occupies a
 | a warehouse capacity bills while nothing runs | Fabric F-SKUs bill while Active | pause the capacity | (L-ENV-042) |
 | you cannot tell whether a dataset is absent or only unreadable | the two answers differ | `bq show <cloud-project>:<dataset>`: "Not found" (404) = absent, "Access Denied" (403) = exists but unreadable; calibrate with a made-up name first | (L-ENV-041) |
 | it is unclear which identity may create datasets, run jobs or mint keys | rights differ per identity | `POST https://cloudresourcemanager.googleapis.com/v1/projects/<cloud-project>:testIamPermissions` with `{"permissions": ["bigquery.datasets.create", "bigquery.jobs.create", "iam.serviceAccountKeys.create", "serviceusage.quotas.update"]}` returns the granted subset; run it for the operator and, from the VM with the metadata-server token, for the VM's service account; metadata reads (`__TABLES__`, `datasets.list`) bill 0 bytes | (L-ENV-041) |
+| a service key cannot measure the query quota it spends (`JOBS_BY_PROJECT` / `JOBS_BY_USER` answer 403) | the key lacks `bigquery.jobs.listAll` / `jobs.list` | grant one, or measure from an identity that has it | (L-ENV-138) |
+| counts, duplicate checks and profiles of a ClickHouse golden table read about 13 % high | a ReplacingMergeTree keeps old versions until a merge; readers omitted `FINAL` | read with `FINAL` (or argMax by version); keep mutable columns out of the sort key, and do not version by load time | (L-ENV-139), (L-ENV-145) |
 | a runaway query is not stopped by any quota | the project quota `QueryUsagePerDay` defaults to 200 TiB a day and per-user usage is unlimited | `maximum_bytes_billed` on every automated job and a default table expiration on sample datasets; a custom daily quota needs `serviceusage.quotas.update` | (L-ENV-041), (L-ENV-041) |
 
 ### 9.1 BI tools and API gateways over the IDMC-built warehouse

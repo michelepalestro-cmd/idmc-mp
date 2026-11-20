@@ -51,10 +51,12 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | Serving outputs to BI and apps | `knowledge/04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md` |
 
 ## Tools (`--help` on each)
-- `toolkit/mapgen/mapgen.py`: mapping generator: build, lint, import, task, run, deploy, log, jobs
+- `toolkit/mapgen/mapgen.py`: mapping generator: build, lint, whoami, resolve, import, task, run, deploy, log, jobs
 - `toolkit/mapgen/exemplar.py`: read the shape of an exported mapping that already uses a connector
-- `toolkit/lib/idmc_mttask.py`: mapping tasks: show, clone, update, run
+- `toolkit/lib/idmc_mttask.py`: mapping tasks: show, clone, set-query (change the custom query), run, log
 - `toolkit/lib/idmc_taskflow_schedule.py`: linear taskflows and schedules
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `jobs_*` (run, status, search
+  completed jobs of deployed tasks), `logs_*`, `trouble_*` for quick reads; build and deploy stay on the toolkit
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

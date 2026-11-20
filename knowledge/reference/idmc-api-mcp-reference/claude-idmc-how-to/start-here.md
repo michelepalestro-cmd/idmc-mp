@@ -2,7 +2,8 @@
 
 > **Currency.** The live evidence behind this folder ends 2026-07-26. Several walls have since fallen
 > (design objects authored by package import, the DBMI task lifecycle, a `PUT` on runtime-environment selections, full
-> SQL ELT pushdown). Check the currency list in [the Reference Library README](../../README.md) and the topic
+> SQL ELT pushdown, `PATCH` on v3 folders and catalog assets, lineage over REST (L-CDGC-181), per-rule DQ pass rates
+> (L-DQ-123), 23 managed MCP servers (L-MCP-132)). Check the currency list in [the Reference Library README](../../README.md) and the topic
 > folders before quoting any limit from this folder.
 
 **What IDMC can and cannot do over its APIs and its MCP servers, with the evidence attached.**
@@ -28,14 +29,16 @@ Counts are from the generated set (`csv-every-endpoint/`); re-check them after a
 - **102 of 167 endpoints** have a proven working verb. 38 `POST`s and 5 `DELETE`s are the corpus's
   entire proven write surface.
 - **Zero `PUT` and zero `PATCH`** are proven live in the corpus. Updates are `DELETE` + re-`POST`, or
-  on the v2 plane `POST` to `/{id}` *is* the update. (A later `PUT` on runtime-environment selections
-  is recorded in the topic folders, not here.)
+  on the v2 plane `POST` to `/{id}` *is* the update. (Later lessons proved a `PUT` on runtime-environment selections
+  (L-AUTH-016) and `PATCH` on v3 folders and projects (L-MIG-105) and data360 content assets (L-CDGC-053).)
 - **No `HEAD`, no `OPTIONS`.** To test a write verb, `POST` an empty body: `400`/`415`/`422` = the
   verb exists, `405` = it doesn't.
 - **28 operations have no endpoint at all** (`06_no_endpoint_ui_only.csv`); the UI-only walls are
   listed in full in `10_ui_only_walls.csv`. Design and publish are the wall; read, run and operate are not.
 - **MCP does exactly two things REST cannot:** asset **lineage**, and **fuzzy identity match**. Eight
-  of the other nine actions wrap REST, often less capably; one is disputed.
+  of the other nine actions wrap REST, often less capably; one is disputed. (Later evidence: lineage is readable
+  over REST through the asset read's `lineage` segment, L-CDGC-181, and the MCP catalog grew to 23 managed servers,
+  L-MCP-132. The dictionary's *Newer evidence* section lists what else changed.)
 
 ## What else is in here
 

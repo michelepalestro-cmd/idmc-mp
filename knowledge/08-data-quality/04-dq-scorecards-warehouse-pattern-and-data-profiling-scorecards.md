@@ -18,6 +18,9 @@ running catalog Data Quality scoring; a DQ score looks too good or too bad.
   (L-CDGC-161, L-DQ-097, L-CDGC-143, L-MCP-086, L-CDGC-166).
 - Bind each catalog rule occurrence to a column of the rule's input type: a decimal-input rule on a text column passes
   publish and sync and is never scored (L-CDGC-170).
+- Scores computed outside IDMC can be pushed onto existing occurrences: a multipart CSV to
+  `data-quality/v1/rule-occurrences/runs` (async job), which public code says replaces the older `publishScore` PATCH;
+  both are code reads only, not probed here (L-CDGC-263, L-CDGC-243).
 - A format rule must test the stored string literally (E.164 is `^\+[1-9]\d{7,14}$`); count failing patterns before
   trusting a score (L-DQ-105).
 - Right denominators, each business rule counted once, test identities excluded, and a detector proven falsifiable
@@ -30,12 +33,13 @@ running catalog Data Quality scoring; a DQ score looks too good or too bad.
 [CLAIRE GPT - Prompting Rules & Patterns](../11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) ·
 [Lessons: Data Quality & Profiling](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** A DQ score can live in three places. (A) **Warehouse scorecard tables** written by CDI mapping tasks:
 > one row per rule with `checked`, `failed` and `dimension`, rolled up to `pass_rate` per dimension; fully headless and
 > readable by apps. (B) **Data Profiling scorecards**: rule occurrences on a profile, a run, then **View Scorecard** in
-> the CDGC dashboard; binding and running are headless, reading the pass rates is console-only. (C) **CDGC catalog DQ
+> the CDGC dashboard; binding and running are headless, and per-rule pass rates are readable from the metric store
+> (L-DQ-123). (C) **CDGC catalog DQ
 > scores**: rule instances on catalog assets, scored by the catalog source's Data Quality capability and readable by
 > CLAIRE. Build on (A) for anything an application must read, (B) for console stewardship, (C) for catalog-wide
 > governance and CLAIRE answers. Never loosen a gate to accept a partial score.
@@ -51,7 +55,7 @@ running catalog Data Quality scoring; a DQ score looks too good or too bad.
 | Engine | a CDI mapping task on the Secure Agent (or warehouse pushdown) | the Data Profiling job | CDGC / DQ engine during a catalog scan |
 | Author headless? | yes (mapping task over a template, [CDI](../04-mappings)) | yes: `PUT /profile/<id>` with MAPPLETFIELD entries | yes: a `ccgf-contentv2` publish of the RuleInstance plus its column relationship, then a sync (§4, L-CDGC-161); or CLAIRE GPT recommend-and-accept (browser-automatable) |
 | Run headless? | yes (`POST /api/v2/job`, schedules, taskflows) | yes: `POST /profile/<id>/execute` | yes: the source's `Data Quality` capability run (needs a runtime environment in the Scope groups) |
-| Read the numbers headless? | **yes** (SQL) | **no REST read found** (console only) | **yes**: each RuleInstance's `selfAttributes` (`value`, `totalCount`, `exception`, `scannedTime`; L-CDGC-166), the `dataQuality` segment and CLAIRE answers; the MCP `cdgcdataqualityscore` server lists `get_asset_score` (untested) |
+| Read the numbers headless? | **yes** (SQL) | **yes** (since 2026-11-02): each rule binding's `Output` column in the metric store, `ValueFrequencies` VALID / INVALID (L-DQ-123, L-DQ-151) | **yes**: each RuleInstance's `selfAttributes` (`value`, `totalCount`, `exception`, `scannedTime`; L-CDGC-166), the `dataQuality` segment and CLAIRE answers; the MCP `cdgcdataqualityscore` server lists `get_asset_score` (untested) |
 | Who can see it | anyone with warehouse or BI access | Results → Rules view: Data Profiling users; View Scorecard: needs the **Governance User** role, and DQ + CDGC on the pod | CDGC users |
 | Visible to CLAIRE GPT | yes, if the view is cataloged and "queried" | via CDGC once published | yes, once published |
 | Best for | apps, dashboards, alerts, trends | console demos, stewardship in IDMC | catalog-wide governance |
@@ -243,7 +247,7 @@ from another org arrive with **no** rule occurrences: re-bind them (L-DQ-026).
 | Data Profiling → profile → **Results** tab | column statistics, patterns, value frequencies; the **Rules** view with per-rule pass/fail | Data Profiling results view privilege; no CDGC |
 | **View Scorecard** → CDGC scorecard dashboard | per-dimension and per-occurrence scores, trends (widgets such as Average Latest Scores), thresholds; notifications on status changes (good → not acceptable,...) to stakeholders; download of up to 100 rows (valid/invalid preview) | Governance User role; DQ + CDGC on the pod; drill-down needs the Data Profiling Query Create/Submit, Results View and Sensitive Data view privileges |
 | **Export Profile Results** | an Excel file of the results | results export privilege |
-| REST | the profile definition, run history, rule bindings, column metrics (metric-store OData) | no pass-rate read found |
+| REST | the profile definition, run history, rule bindings, column metrics and per-rule pass rates (metric-store OData, L-DQ-123); an Excel export of the results from the metric store (L-DQ-171) | keep only value-list entries of the current run (L-DQ-151) |
 
 When the scorecard dashboard is not available (no CDGC entitlement or no Governance User role), use the **Results →
 Rules view** and export to Excel. Land your own rule results in a table for dashboards (L-DQ-050).
@@ -381,7 +385,8 @@ are exportable. Pattern C is the one CLAIRE GPT reads.
 
 ## 7. Open questions
 
-- A REST (or MCP `get_asset_score`) read of Data Profiling scorecard values per rule occurrence.
+- An MCP `get_asset_score` read of Data Profiling scorecard values per rule occurrence (the REST read is answered by
+  L-DQ-123).
 - Whether the auto-generated `DQ_Capability_Schedule_*` runs count against the monthly job cap, and how many jobs they add.
 - Whether rule-occurrence thresholds and criticality can be set in the `PUT /profile` body. The builders relied on
   defaults.

@@ -109,7 +109,11 @@ See [Secure Agent & Connections](../02-secure-agent) for the full agent procedur
 2. Import the whole package with `REUSE` (L-MIG-011). Fix the package as needed (see [Editing Packages Safely](02-editing-packages-safely.md)):
    - remap objects bound to the reserved hosted runtime (`REPO_38210`; L-MIG-015);
    - drop objects that fail validation, because the import is all-or-nothing (L-MIG-012);
-   - `MigrationSvc_056` means a dependency is missing (L-MIG-014).
+   - `MigrationSvc_056` means a dependency is missing (L-MIG-014);
+   - re-point connections, runtime environments and org ids in every file, nested zips included, then compare each
+     target connection's host and database with the intended values (L-MIG-082).
+   On a poll timeout, read the job back (`idmc_export_import.py status <jobId> --kind import`); never start a second
+   import (L-MIG-132).
 3. Re-tag with `TagObjects` and read back (L-MIG-016).
 4. **Build the id map at once** (L-MIG-036): source and target v3 ids, source v2 id (`repoInfo.repoHandle`), target v2 id found by name **only among the objects this import created**.
 5. Compare every reused pair whose source changed recently; the reused copy may be older.
@@ -190,6 +194,10 @@ Budget validation and story rounds in jobs: group writes into waves (one lane ru
 
 - Host capacity: free RAM after the existing agent, swap, about 25 GB free for a second agent's roughly 20 GB of engines, a listener baseline (`ss -ltnp`), free replication slots, `wal_level=logical`.
 - The target's job limit and entitlements.
+- The target org is on the same or a newer IDMC release than the source, and each export or import job stays within
+  1,000 objects (vendor docs; L-MIG-129).
+- Tasks built on Add-On Bundle templates do not migrate as exported: remove the template entries and rebuild those
+  tasks as user mappings before the first import (L-MIG-083).
 - Probe each plane against a fake-path twin (a 404 on the fake path versus a typed answer on the real one tells you the plane is routed).
 - Probe the import route: an empty multipart should give 400 `MigrationSvc_030`.
 - A stateful cutover script that stops at each manual step, saves its state, and resumes only with an explicit confirm token.
@@ -201,6 +209,11 @@ Budget validation and story rounds in jobs: group writes into waves (one lane ru
 - **Legacy pipeline → IDMC** (L-MIG-053): snapshot the tables with an expiry, point the scheduler at IDMC, stop the legacy service with a no-restart policy, and roll back by starting it again.
 - **Catalog or governance consumer cutover** (L-MIG-057, L-MIG-058): crosswalk assets by column-set similarity; repoint readers only after sustained parity.
 - Before renaming or retiring a dataset, check which IDMC jobs write it (L-MIG-059).
+- **Table and warehouse migrations through IDMC** (L-MIG-086 to L-MIG-094): audit any earlier automated build before
+  extending it; read a live source through a dedicated reader login; prove completeness with per-dataset counts and an
+  order-free checksum on both sides, over an inventory of every source store, not only the warehouse; do not add target constraints mid-load; check for
+  rows hidden by a lightweight DELETE before calling them missing; project only the columns needed instead of one wide
+  table; and consolidate warehouse databases with atomic renames rather than copies.
 
 ## 8. Overturned beliefs
 
@@ -212,4 +225,4 @@ Budget validation and story rounds in jobs: group writes into waves (one lane ru
 
 ## 9. Lessons in this doc
 
-L-MIG-003, L-MIG-011 to L-MIG-018, L-MIG-031 to L-MIG-046, L-MIG-050 to L-MIG-053, L-MIG-056 to L-MIG-059, L-MIG-072, L-DBMI-015, L-DBMI-021, L-DBMI-034, and the superseded L-MIG-061 and L-MIG-069. Full text: [Lessons: Migration & Org Management](lessons.md).
+L-MIG-003, L-MIG-011 to L-MIG-018, L-MIG-031 to L-MIG-046, L-MIG-050 to L-MIG-053, L-MIG-056 to L-MIG-059, L-MIG-072, L-MIG-082, L-MIG-083, L-MIG-129, L-MIG-132, L-DBMI-015, L-DBMI-021, L-DBMI-034, and the superseded L-MIG-061 and L-MIG-069. Full text: [Lessons: Migration & Org Management](lessons.md).

@@ -24,7 +24,7 @@ permission signature, and before anyone says "not licensed".
 [Runtime Environments - Services & Connectors](../02-secure-agent/02-runtime-environments-services-connectors.md) ·
 [Lessons: Access & Auth](lessons.md)
 
-**Last verified:** 2026-10-13 (evidence 2026-07-04 to 2026-10-13).
+**Last verified:** 2026-11-20 (evidence 2026-07-04 to 2026-11-19).
 
 > Users, groups, roles and privileges are readable and largely writable over the v3 plane. Roles bind through groups and
 > cost nothing. **Entitlement is read from privileges, engines, selections and effective licences, never from the login
@@ -42,9 +42,16 @@ All routes below are on `https://<pod>.<domain>.informaticacloud.com/saas/public
 | List | `GET /users` (supports `?q=userName=="<login>"`) | 200 | L-AUTH-066 |
 | Create | `POST /users`, body `{"name":"<login>","firstName":"…","lastName":"…","email":"…","groups":["<groupId>"]}` | 201. The key is **`name`** (`userName` → `400 V3API_007`); `groups` is a list of plain id strings; the body needs at least one role or group (else `V3API_IDSError_033`) | L-AUTH-057 |
 | Delete | `DELETE /users/<userId>` | **204** (29 users removed in one cleanup). Read back with `GET /users`. Overturns the recorded "405" | L-AUTH-058 |
-| Edit in place | PUT/PATCH on the collection or the item | **405 / unproven.** Change a user by delete + recreate; the Admin UI can edit in place | L-AUTH-059 |
-| Add / remove roles | `PUT /users/<userId>/addRoles` and `/removeRoles`, body `{"roles":["<role name>"]}` | 204. Role **names**, not ids (a bad value is reported as 'name is invalid'). Removing a user's last direct role answers `400 V3API_IDSError_044` 'The group must have at least one role': add the new role first, then remove the old ones | L-AUTH-066, L-AUTH-090 |
+| Read one | `GET /users?q=userId=="<id>"` or `q=userName=="<name>"` | `GET /users/<id>` is 405 (`Allow: DELETE`); lists cap `limit` at 200, so page with `skip`; the users resource throttles under load (client code, not probed here) | L-AUTH-099, L-AUTH-134 |
+| Edit in place | PUT/PATCH on the collection or the item | **405 / unproven.** Change a user by delete + recreate; the Admin UI can edit in place. The legacy v2 `POST /api/v2/user/<id>` failed with `403 REPO_10704` in client code: change groups and roles through the membership PUTs below | L-AUTH-059, L-AUTH-100 |
+| Add / remove roles | `PUT /users/<userId>/addRoles` and `/removeRoles`, body `{"roles":["<role name>"]}` | 204. Role **names**, not ids (a bad value is reported as 'name is invalid'); client code matches the role's `displayName` where it differs from `roleName`, and the API refuses these changes when the org maps SAML groups and roles. Removing a user's last direct role answers `400 V3API_IDSError_044` 'The group must have at least one role' (direct roles live in a hidden per-user group): add the new role first, then remove the old ones | L-AUTH-066, L-AUTH-090, L-AUTH-104, L-AUTH-119 |
 | Add / remove groups | `PUT /users/<userId>/addGroups` and `/removeGroups`, body `{"groups":["<group name>"]}` | 204 | L-AUTH-090 |
+
+Documented create fields beyond the ones above (not probed here): `password` (omit it and IDMC e-mails an activation
+link), `forcePasswordChange`, `maxLoginAttempts` (set it on service users at creation, L-AUTH-095), `authentication`
+(0 native, 1 SAML) and `identityType` (2 = non-human, required for automation users when the org enforces MFA)
+(L-AUTH-111, L-AUTH-134). Password routes: `POST /Users/ChangePassword` and `/Users/ResetPassword`, capital U
+(L-AUTH-110).
 
 **Before any batch change:** snapshot the users (`GET /users` to a file) and test the recreate body on one seat. A wrong
 body once stranded 27 seats, which were restored from the snapshot (L-AUTH-059).
@@ -56,12 +63,18 @@ body once stranded 27 seats, which were restored from the snapshot (L-AUTH-059).
   `GET /userGroups?limit=200` (L-AUTH-060).
 - Members: `PUT /userGroups/<groupId>/addUsers` (and `removeUsers`) with `{"users":["<user name>"]}` → 204. The empty-body
   message names `userNames`, but that property gets a bare `400 V3API_007` (L-AUTH-090).
-- DELETE works; PUT and PATCH are untested.
+- DELETE works. `GET /userGroups/<id>` and `PUT /userGroups/<id>` answer 405: read a group through the list with
+  `q=userGroupName=="<name>"`. A group's name and description cannot change after creation (create a new group, move
+  members and roles, delete the old one); its roles change only through `PUT /userGroups/<id>/addRoles|removeRoles`
+  with role names, and a group must keep at least one role (L-AUTH-120, L-AUTH-104).
 - Groups and role bindings consume **no seats and no IPU**. Only user seats are licensed.
 - Persona users (engineer, operator, governance, MDM, …) with no role bindings give **no separation of duties**. Bind
   roles per persona through groups, especially when dev and prod runtime environments share one org (L-AUTH-064).
 - For ~1,000 users, plan SAML SSO + SCIM group provisioning, not native accounts (design recommendation, untested;
-  L-AUTH-065).
+  L-AUTH-065). The routes, from client code and vendor docs (not probed here): SAML group and role mappings under
+  `/Orgs/<orgId>/SAMLConfig/...` and `addSamlGroupMappings` / `removeSamlGroupMappings` (the two sources disagree on
+  singular or plural body fields, so probe first: L-AUTH-108, L-AUTH-129); SCIM tokens on `/scimTokens`, at most two
+  (L-AUTH-128).
 
 ## 3. Roles and privileges (read)
 
@@ -84,6 +97,12 @@ empty-body message names `privilegeIds`, but that property gets a bare `400 V3AP
 role: `GET /roles?q=roleId==%22<roleId>%22&expand=privileges` lists each privilege's `id`, `name`, `service` and `status`
 ('Default'-status privileges are accepted). URL-encode the quotes and spaces in `q=`. `DELETE /roles/<roleId>` → 204.
 
+Client code and vendor docs add (not probed here): a custom role has no general update, only
+`PUT /roles/<roleId>/addPrivileges` and `/removePrivileges` with privilege **names** (204; also addressable as
+`/roles/name/<roleName>/...`), and a role must keep at least one privilege (`V3API_IDSError_088`), so add before you
+remove (L-AUTH-105, L-AUTH-107, L-AUTH-121). `GET /privileges` hides disabled and unlicensed privileges unless
+`q=status==All` (L-AUTH-106). Role and group lists cap `limit` at 200 (`V3API_IDSError_003`) (L-AUTH-099).
+
 ## 3a. Object permissions: which objects a user sees (L-AUTH-089, L-AUTH-091)
 
 Role privileges decide what a user may do with a type of object; object permissions decide which objects. An object with
@@ -95,6 +114,7 @@ no entries is open to everyone whose roles allow the type; its first entry restr
 | Read | `GET /objects/<frsId>/permissions` | 200; `[]` = no restriction |
 | Add | `POST /objects/<frsId>/permissions`, body `{"principal":{"type":"USER" or "GROUP","name":"<user or group name>"},"permissions":{"read":true,"update":true,"delete":true,"execute":true,"changePermission":true}}` | 201, a list holding the new entry's `id`. A principal given by `id` gets a bare `400 V3API_007` |
 | Remove | `DELETE /objects/<frsId>/permissions/<entryId>` | 204 |
+| Replace one, clear all, check your own rights | `PUT .../permissions/<entryId>`, `DELETE .../permissions`, `GET .../permissions/checkAccess` | from client code, not probed here (L-AUTH-101) |
 
 Projects, folders and assets take their FRS id; connections and runtime environments their v2 `federatedId`; a
 catalog-source UUID is refused (`400 V3API_AccessControlError_001`, L-CDGC-195). Add the owner first, and list the CAI
@@ -166,10 +186,16 @@ Two more reads settle the questions people ask next:
 
 ## 7. Audit logs
 
-- `GET /public/core/v3/securityLog?limit=N` (N = 100–1,000) is the canonical audit log (200).
+- `GET /public/core/v3/securityLog?limit=N` (N = 100–1,000) is the canonical audit log (200); rows are under
+  `entries[]` (L-ENV-143). Without `q` it returns only the last 24 hours. Filter with an `entryTime` range of at most 14
+  days; `actor`, `actionCategory`, `objectName` and `skip` need that range (documented and client code, L-AUTH-112,
+  L-AUTH-135).
 - `GET /api/v2/loginAudit` answered only on a parent or standalone org.
 - `GET /api/v2/auditlog` is disputed: one record says 404, another says live. It also did not record a job-cap change
-  (L-AUTH-075).
+  (L-AUTH-075). Client code pages it with `batchSize` and `batchId` (0 = newest), so probe it on your org first
+  (L-AUTH-122).
+- Trusted IP ranges: `GET /Orgs/<orgId>/TrustedIP`; the PUT overwrites every range, and enabling it from automation can
+  lock out your own callers (L-AUTH-109, L-AUTH-133).
 
 ## 8. Vendor context
 

@@ -68,6 +68,11 @@ sessions, UI automation, workstation traps and secrets; applies to every session
 - Secret in a SQL `SET` or query parameter -> lands in warehouse query logs -> send it in the body (L-ENV-078).
 - Rotating piecemeal breaks consumers -> one coordinated window, every consumer listed (L-ENV-049).
 - Large Claude tasks are overestimated about 2x -> estimate bottom-up, never pad (L-METHOD-122).
+- A multi-hour orchestrator in a Claude session gets reaped -> run it on a server with a done-ledger, or as a scheduled
+  IDMC taskflow (L-METHOD-148, L-METHOD-160).
+- Response shapes typed from the docs -> capture a live body; v3 list envelopes differ per resource (L-METHOD-171, L-ENV-143).
+- A write-capable IDMC MCP behind an unattended `--dangerously-skip-permissions` bot -> read-only tools or a human
+  confirm gate (L-METHOD-164).
 
 ## Go deeper
 

@@ -24,7 +24,7 @@ returns 409 or a skill returns an empty answer; deciding whether CLAIRE-generate
 [MCP Auth & OAuth Clients](../11-mcp-claire/02-mcp-auth-oauth-clients.md) ·
 [Lessons: Data Quality & Profiling](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** The managed MCP server **`dataqualityagent`** is Informatica's hosted CLAIRE Data Quality Agent. It has
 > seven tools: five prompt-driven skills plus `request_upload_url` and `get_skill_execution_updates`. The file recipe:

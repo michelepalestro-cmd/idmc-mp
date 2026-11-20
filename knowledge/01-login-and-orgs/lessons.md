@@ -5,7 +5,7 @@ Last verified: 2026-06-27 to 2026-10-02.
 
 Related: [Pods, Hosts & Service Planes](01-pods-hosts-service-planes.md) · [Login, Sessions & Tokens](02-login-sessions-tokens.md) · [Identify the Org Before You Write](03-identify-the-org-before-you-write.md) · [Users, Roles & Permissions](04-users-roles-permissions.md)
 
-Topics: planes and hosts L-AUTH-001 to 017 · logins, sessions and tokens 018 to 033 · lockout 034 to 045 · org identity and multi-org safety 046 to 056 · users, roles, permissions and entitlement 057 to 076 · superseded beliefs 077 to 087. Each superseded entry names the lesson that overturned it.
+Topics: planes and hosts L-AUTH-001 to 017 · logins, sessions and tokens 018 to 033 · lockout 034 to 045 · org identity and multi-org safety 046 to 056 · users, roles, permissions and entitlement 057 to 076 · superseded beliefs 077 to 087 · later additions 088 to 136 (header and object-permission writes, lockout follow-ups, Azure Native org creation, and session, user, role, SAML, SCIM and audit routes read from client code and vendor docs on 2026-11-19). Each superseded entry names the lesson that overturned it.
 
 ## Current
 ### L-AUTH-001  The auth plane is a property of the host and path; never mix planes
@@ -462,7 +462,7 @@ A maintained IDMC ingestion client classifies an auth failure as HTTP 401 or HTT
 
 ### L-AUTH-125  JWT-authentication orgs return a JWT as the session id: allow up to 16,000 characters and re-auth before expiry
 **Kind:** FACT · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes, or vendor documentation bundled in the repository); not probed here
-An org admin can set the org's REST authentication type to Session ID (30 minutes idle expiry plus up to a 2-minute grace) or JWT. Under JWT the 'session id' returned by v2/v3 login is a JWT, so the documented maximum session-id length is 16,000 characters; size header buffers, DB columns and log masks for that. Scripts must re-authenticate before the JWT expires rather than relying on idle refresh. The header name is still icSessionId (v2), INFA-SESSION-ID (v3) or IDS-SESSION-ID (other services).
+An org admin can set the org's REST authentication type to Session ID (30 minutes idle expiry plus up to a 2-minute grace) or JWT. Under JWT the 'session id' returned by v2/v3 login is a JWT, so the documented maximum session-id length is 16,000 characters; size header buffers, DB columns and log masks for that. Scripts must re-authenticate before the JWT expires rather than relying on idle refresh. The header name is still icSessionId (v2), INFA-SESSION-ID (v3) or IDS-SESSION-ID (other services). Live tests saw the v2 session die 30 minutes after grant even while busy (L-AUTH-027), so keep refreshing at about 25 minutes whatever the docs call the expiry; and the October 2026 notices cap JWT values at 2,000 characters (L-AUTH-033): size for the larger figure until one is observed.
 
 ### L-AUTH-126  validSessionId: timeUntilExpire drops to 0 under one minute; re-login at 0, not at isValidToken=false
 **Kind:** GOTCHA · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence high: code plus its tests, change notes or live-check notes, or vendor documentation bundled in the repository); not probed here

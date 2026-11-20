@@ -18,6 +18,9 @@ running a golden-record stand-in; writing golden values back to source systems o
 - A golden-record write-back must also update the identity provider the apps display names from, and an erasure must
   fan out to every replicated layer (L-MDM-074).
 - Name a SQL dedup layer a trusted curated layer; "golden record" means MDM (L-MDM-052).
+- Configure survivorship, DQ rules and the match model, and publish the match model, before the first load: match keys
+  and trust are computed at write time, never retroactively, so earlier records need a re-ingest or a Regenerate Match
+  Keys pass (L-MDM-097, L-MDM-098; public material, not probed here).
 
 **Related:** [Mastering a Table - Repeatable Playbook](05-mastering-a-table-repeatable-playbook.md) (classify the dataset, the ten steps, acceptance gates) ·
 [MDM Runtime vs Design](01-mdm-saas-runtime-vs-design.md) ·
@@ -26,7 +29,7 @@ running a golden-record stand-in; writing golden values back to source systems o
 [CDC from PostgreSQL](../06-cdc-ingestion/02-cdc-from-postgresql.md) ·
 [Lessons: MDM](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** The Business 360 Modeler authors business entities, source systems, match models and survivorship
 > (source ranking, trust, best-version rules); the Business 360 Console runs and shows jobs; the Customer 360 app is for
@@ -57,8 +60,12 @@ All on `https://<pod>-mdm.<domain>.informaticacloud.com` (L-MDM-048).
    timestamps to Date Time with milliseconds, money to Decimal, coded values with leading zeros to Text), do not attach
    one key-format validator to an id whose shape differs by source, and null out sentinel defaults on extract
    (L-MDM-046).
-3. **Source systems.** Register each contributing source, named exactly as your ingest code will send it.
-4. **Match model.** Rules, strategy (exact or fuzzy), candidate selection and match keys.
+3. **Source systems.** Register each contributing source, named exactly as your ingest code will send it. Its Internal
+   ID is derived from the display name and locked at Create; custom internal ids get the org namespace prefix (for
+   example `X_`), which mappings, File Import columns and API field maps must use (L-MDM-099, L-MDM-101).
+4. **Match model.** Rules, strategy (exact or fuzzy), candidate selection and match keys. Exact-match fields compare
+   case-sensitively, so keep first and last names out of them (L-MDM-107); use static field groups, since dynamic
+   fields carry no DQ or match rules, and mark fields Required sparingly (L-MDM-109).
 5. **Merge and survivorship.** Source ranking, trust, best-version rules, and the auto-merge thresholds (section 5).
 6. **Save and publish** (the disputed step, see [Runtime vs Design](01-mdm-saas-runtime-vs-design.md) section 4),
    capture the console's confirmation text as the receipt, and prove it with the ingest gate.
@@ -104,6 +111,8 @@ Budget real time for this: it is a working session in the Modeler, not one click
 4. Watch the stage graph: Lock, Match, Merge, Index for Search, Group Potential Matches, Release.
 5. Before trusting an automatic merge on new rules, inspect the candidate pairs in the Match Analysis and
    Explainability views.
+6. Leave **Skip grouping potential matches** unchecked: checked, borderline matches are skipped instead of queued for
+   steward review (L-MDM-108).
 
 | Fact | Value |
 |---|---|
@@ -123,6 +132,8 @@ Budget real time for this: it is a working session in the Modeler, not one click
 - **Best-version rules per attribute.** Typical choices: most trusted source for email, most recent for name,
   non-null for external ids, earliest for first-seen dates, recompute for derived scores.
 - **Change control.** Editing a published match model creates a new model version and a re-index.
+- **Write time only.** Trust and DQ rules apply when a record is created or updated, never retroactively: records
+  loaded before survivorship was configured keep default behaviour until re-ingested (L-MDM-098).
 - **In Customer 360.** Survivorship details (rules, rankings, trust scores) can be shown per record; a steward can
   override survivorship (the chosen value gets the highest trust), merge masters manually, and unmerge source records
   (patch records follow their source records).
@@ -146,6 +157,7 @@ Budget real time for this: it is a working session in the Modeler, not one click
 | Household key | A deterministic key `lower(surname)\|house-number` folded two people of one household into one golden record, so a new sign-up "disappeared" | Use `surname\|first-initial\|house-number`, and `surname\|first-initial\|email` when the address has no number; tie out counts before and after | L-MDM-072 |
 | Every copy of the key | The key lived in the batch mapping, a real-time dedupe view and the application's own customer rows (driving a one-subscription-per-person guard and a staff duplicate list) | Search code and stored key columns; change every copy together, with the same token rules and fallback | L-MDM-073 |
 | Attribution | Spend joined to customers on the transaction's e-mail undercounted everyone whose payments sat under a merged duplicate's e-mail | Credit each payment to its booking or order owner, map every e-mail to its golden id through the same person key, aggregate by golden id | L-MDM-071 |
+| Merged repeat sign-ups | A re-registration merged correctly into the existing golden customer, but later CRM writes landed on the survivor and the new CRM contact stayed orphaned, so paying customers listed as open trials | Repoint or close the merged-away record's downstream copies when a merge happens, and keep source tags from being overwritten | L-MDM-084 |
 
 ---
 

@@ -25,7 +25,7 @@ glossary; replacing or migrating a catalog source that carries links and classif
 [CLAIRE GPT - Prompting Rules](../11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) ·
 [Export & Import (v3 Migration API)](../12-deploy-migrate/01-export-import-v3-migration-api.md) · [Lessons: CDGC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** The glossary, the data dictionary and manual classification are all headless on the
 > `data360/content/v1/assets` plane. Slash-bearing external ids in a URL path give 400, so always resolve identities by
@@ -142,6 +142,9 @@ the change up on their next refresh.
 - On a **Published** term the call once reported "deleted" while the term stayed in search. Always read back by search;
   if the term persists, rename it "<name> (retired duplicate)" with a pointer to its replacement, move it out of
   Published, or remove it in the UI.
+- Public wipe scripts delete imported content by reference id (`DELETE .../assets/<referenceId>?scheme=external`),
+  skip `BT-` system terms (the platform manages them and refuses the delete), and confirm each delete by search
+  (L-CDGC-267, code read).
 
 ### 3.5 Idempotent, reversible glossary scripts (L-CDGC-052)
 
@@ -311,7 +314,10 @@ before relying on it.
   roles must already exist in Administrator or the picker is empty.
 - Keep ownership as code: a RACI table (data owner, data steward, technical steward per asset) is the authoritative store;
   the catalog assignment mirrors it.
-- Not re-probed with the content-API segments; a stakeholder segment on the content PATCH is untested.
+- Not re-probed with the content-API segments; a stakeholder segment on the content PATCH is untested. Public bulk-import
+  kits fill stakeholder e-mail columns in the xlsx template (they must be real org users, or the import fails without a
+  clear error), and the Marketplace v2 collection PATCH queues stakeholder changes as a job; both are code reads, not
+  probed here (L-CDGC-259, L-CDGC-273).
 
 ---
 
@@ -355,6 +361,13 @@ phrased as "the business term X". CLAIRE answered 18 of 18 such questions. Promp
    a registry, a per-item log and undo files.
 5. Read back counts (terms, links, classified columns) against the export.
 
+For many assets at once, public kits use the bulk import instead: a multipart `.xlsx` in the CDGC bulk-import template
+to `data360/content/import/v1/assets`, then poll `observable/v1/jobs/<jobId>` (L-CDGC-258). Its template fails
+silently on wrong sheet names or column order, display names in relationships (use Reference IDs) and unknown
+stakeholder e-mails (L-CDGC-259). Custom data-element classifications and lookup tables can be created on
+`ccgf-metadata-discovery` (`POST /classifications`, `POST /lookuptables/import`) for an org that has none
+(L-CDGC-272). All three are code reads, not probed here.
+
 ---
 
 ## 12. Overturned beliefs (kept so nobody re-learns them)
@@ -370,5 +383,5 @@ assignment (L-CDGC-066) and DAM policy authoring (L-CDGC-067).
 
 ## Lessons cited in this doc
 
-L-CDGC-050 to 072, 075, 076, 077, 083, 084, 144, 145, 153, 161, 164, 165, 166, 169, 170, 173, 174, 175, and the superseded L-CDGC-125, 126, 133.
+L-CDGC-050 to 072, 075, 076, 077, 083, 084, 144, 145, 153, 161, 164, 165, 166, 169, 170, 173, 174, 175, 258, 259, 267, 272, 273, and the superseded L-CDGC-125, 126, 133.
 Full text: [Lessons: CDGC](lessons.md).

@@ -401,6 +401,10 @@ Run this before any verdict leaves the session (L-METHOD-056):
 | "it runs every N minutes" | the live crontab, timer or IDMC schedule, not the repository copy (L-METHOD-124) |
 | "latency is N s" | the collector's n, window, success-only rule and pipeline mode (L-METHOD-049) |
 | "the docs say" | the raw page text with its URL and Updated month; label it DOC, not WORKS (L-METHOD-126) |
+| a response shape taken from the docs | a captured live body; build test fakes that reproduce the live failures (L-METHOD-171) |
+| "your lessons" / "IDMC can't, X can" (a comparison) | the provenance of every claim (this project, another project, general guidance), and each product claim checked against current vendor docs (L-METHOD-149, L-METHOD-157) |
+| "IDMC can do X" (a capability rating) | the tier: built in, built with IDMC assets and proven, or buildable but not yet built (L-METHOD-161) |
+| "the agent status is stale" / "the test passes with the agent stopped" | whether the same agent identity now runs on another host (L-METHOD-154) |
 
 ## 11. Overturned beliefs (kept so nobody re-learns them)
 

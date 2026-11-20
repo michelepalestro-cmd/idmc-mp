@@ -13,7 +13,7 @@
 
 **Related:** [CAI Asset Lifecycle](01-cai-asset-lifecycle-author-publish-unpublish-delete.md) · [CAI Runtime](02-cai-runtime-invoke-urls-control.md) · [CAI Troubleshooting](05-cai-troubleshooting-stuck-assets.md) · [Connections - Create, Test, Update, Delete](../03-connections/01-connections-create-test-update-delete.md) · [Lessons: CAI](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** A service connector defines an API; an app connection holds the values (and decides where calls run:
 > the Cloud Server unless an agent is set); a process calls `<connection>:<action>`. For SaaS writes, a REST service
@@ -105,7 +105,15 @@ Copy element structure and MIME types from a genuine export of a working connect
   holding the URL.
 - **Data Access Service Connector (JDBC).** A `businessConnector agentOnly="true"` with the JDBC pool attributes and its
   actions in `<dasActions>` (L-CAI-140). In one org it would not publish at all (L-CAI-139): check that it publishes in
-  the target org first, or reach the database through its REST layer (L-CAI-146).
+  the target org first, or reach the database through its REST layer (L-CAI-146). The process engine's own Data
+  Access Service system service (`execSQL`, `execMultiSQL`) is a different thing: it runs only on an agent, against a
+  JDBC data source configured there (L-CAI-203, reported).
+- **More connector XML, read from vendor connectors** (reported, not probed here): body generators `UnwrappedJSON`,
+  `JSON`, `Form` (from `otherParams`) and `URL`, or a literal template (L-CAI-194); `nogen="true"` inputs and otherParams
+  are not sent and can be chained as local variables (L-CAI-192, L-CAI-193); abstract base actions with `inherits=` and
+  `inheritanceMetadata` (L-CAI-191); a SOAP call through a REST action with a `SOAPAction` header and
+  `util:simplifyXml` on the reply (L-CAI-195); a JSON array returned as an objectlist (L-CAI-197); connection
+  attributes and per-action basic auth (L-CAI-198); optional query strings built with `encode-for-uri` (L-CAI-199).
 
 ---
 
@@ -119,6 +127,11 @@ Copy element structure and MIME types from a genuine export of a working connect
 - **Built-in SaaS connectors.** An app connection can also wrap one of Informatica's own connectors (for example the
   Salesforce SOA connector with form-based login attributes). A builder for that variant existed; its publish outcome
   is not recorded, and the same plaintext rule applies to its login attributes.
+- **Built-in connector descriptors** for hand-built AI_CONNECTION files (Email, File, Amazon SQS, JDBC, the ICS_API
+  connector) are listed in L-CONN-148 (from 2020-2021 exports: confirm against a fresh export). The ICS_API connection
+  exposes v2 reads (agents, mappings, tasks, audit log) as process actions after its `Login` action (L-CAI-200), and an
+  Email connection sends mail through `<connection>:sendEmailService` (L-CAI-209); keep one such connection per Run On
+  target (reported).
 - **Migration.** A v3 import brings the connection design; verify it in the target with one real call before
   switching callers (L-CAI-087).
 

@@ -71,7 +71,7 @@ and `hosts`. Open first: [Login, Sessions & Tokens](02-login-sessions-tokens.md)
 - Session dies 30 min after grant even while busy -> refresh at ~25 min, not on idle (L-AUTH-027).
 - 404 -> wrong path, host or label first; DNS sweep + bogus twin before any verdict; 405 proves the route (L-AUTH-008, L-AUTH-012).
 - Results do not transfer between orgs or pods -> re-probe in this org (L-AUTH-011).
-- v2 and activity-log times are pod-local labelled `Z` -> use the `*Utc` fields (L-AUTH-014).
+- v2 and activity-log times read UTC-4 labelled `Z` on every pod seen, whatever the pod's zone -> use the `*Utc` fields (L-AUTH-014, L-AUTH-094).
 - Removing a user's last direct role -> `400 V3API_IDSError_044` -> add the new role first (L-AUTH-090).
 - Guessed group-role shapes drop bindings silently -> plain role-id strings, then read back (L-AUTH-060).
 - Never delete `CAI_Anonymous_<orgIdV3>` or live service users: anonymous CAI URLs break (L-AUTH-061).

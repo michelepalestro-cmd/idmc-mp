@@ -12,7 +12,7 @@
 
 **Related:** [CAI Runtime](02-cai-runtime-invoke-urls-control.md) · [CAI Connections & Connectors](03-cai-connections-connectors-salesforce-oauth.md) · [CAI Troubleshooting](05-cai-troubleshooting-stuck-assets.md) · [Secure Agent - Install, Run & Tune](../02-secure-agent/01-secure-agent-install-run-tune.md) · [Lessons: CAI](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** The CAI Process Server (engine `process-engine`) is only needed for agent-bound processes; processes
 > that call public APIs run on the Cloud Server. It can be enabled headless through the runtime-environment
@@ -67,7 +67,9 @@ Always finish with the health checks below.
 | Processes | the java process launched from `apps/process-engine/*/conf`; the embedded PostgreSQL up; deployed BPEL plans in state 2 | no engine PostgreSQL process |
 
 Probe the agent host, not a cloud host root: a 404 from a cloud host says nothing about the engine. The agent itself
-polls the status every 60 s.
+polls the status every 60 s. In agent details the engine is ready at `subState` "0", and the Process Server can take up
+to 20 minutes to get there after a start, so give a start or restart a 20-minute deadline (L-AGENT-125, L-AGENT-139,
+reported).
 
 ---
 
@@ -161,12 +163,29 @@ Operational Insights for those ([CAI Runtime](02-cai-runtime-invoke-urls-control
 
 Local defaults: `http://localhost:7080/process-engine/` and `https://localhost:7443/process-engine/`.
 
+An anonymous process published to an agent answers on `http://<agentHost>:7080/process-engine/public/rt/<process>`
+with no IDMC login, so keep that port local (bind or firewall it) and put an authenticating reverse proxy with an
+allow-list of process names in front of any page that must call it (L-CAI-163).
+
 ---
 
 ## 11. Other agent-side notes
 
 - **Start a stopped engine.** When the binaries are installed, a stopped Process Server can be started on the host
-  (or toggled in the console); verify ports 7080/7443 and agent details (L-CAI-076).
+  (or toggled in the console); verify ports 7080/7443 and agent details (L-CAI-076). From REST, `POST
+  /public/core/v3/agent/service` with the agent's `federatedId`, `serviceName` and `serviceAction` start or stop starts
+  or stops one engine ([Secure Agent](../02-secure-agent/01-secure-agent-install-run-tune.md) §4.4; L-AGENT-124,
+  reported).
+- **Limits you can raise per agent** (L-CAI-189, reported): the message size limits (5 MB by default; the Cloud Server
+  keeps 5 MB), the contribution and deployment-plan caches, and the JVM heap (`512M`/`1536M` by default) under
+  Administrator > Runtime Environments > the agent > Process Server > JVM. The Shell and Email services start
+  disabled. Restart the Process Server after a change.
+- **Agent groups do not fail over state** (L-AGENT-137, reported): each node keeps instances in its own embedded
+  PostgreSQL, so only stateless processes balance across a group. For a site failover, sync `apps/process-engine/ext`
+  to the standby agents beforehand, move them into the group, then republish the processes.
+- **Monitoring thresholds** for the Application Integration Console engine monitors, from one field setup, are in
+  L-CAI-188 (reported); a CAI process can also count RUNNING engines per agent from `GET /api/v2/agent/details`
+  (L-AGENT-136).
 - **Crash-looping engines.** A Process Server whose embedded PostgreSQL data directory never initialised
   crash-loops; a minimal catalog-plus-DI agent ran fine with it disabled (L-CAI-075).
 - **Shell steps.** A "Run a Shell Command" process step on an agent needs a one-time UI enablement of the Shell

@@ -22,13 +22,15 @@ apply before a write?
 [Catalog & Governance (CDGC)](../../knowledge/09-catalog-lineage) · [CLAIRE & MCP](../../knowledge/11-mcp-claire) ·
 [Migration & Org Management](../../knowledge/12-deploy-migrate) · [Lessons Learned](../../knowledge/lessons)
 
-**Last verified:** 2026-10-04 (structure). Source evidence 2026-07 to 2026-09; compile-checked and exercised offline
-with mocked HTTP on 2026-09-29; none of these scripts has been run against a live org in this form.
+**Last verified:** 2026-11-20 (script names, subcommands and flags checked against `--help`). Source evidence 2026-07
+to 2026-10; compile-checked and exercised offline with mocked HTTP on 2026-09-29; none of these scripts has been run
+against a live org in this form.
 
 A small set of generic, stdlib-only Python scripts that let a Claude session drive Informatica IDMC without
 the UI, in any org. It covers login and org proof, object inventory, v3 export/import and package editing,
 mapping tasks, linear taskflows and schedules, runtime-environment selections, Database Ingestion (CDC), CAI
-publish, CDGC, guarded deletes, managed MCP servers and route probing. Each script was adapted from code proven
+publish, CDGC, guarded deletes, managed MCP servers (and the plugin's MCP bridge), IPU metering exports and route
+probing. Each script was adapted from code proven
 in 2026-07..09 against production orgs, then sanitised and parameterised. **Re-verify every call in your org.**
 
 ---
@@ -38,7 +40,7 @@ in 2026-07..09 against production orgs, then sanitised and parameterised. **Re-v
 - Python 3.10 or newer. **No third-party packages**: everything uses the standard library (`urllib`, `json`,
   `zipfile`, `hashlib`). `requests` is not needed.
 - Copy the whole folder: every script imports `idmc_http.py` and `idmc_session.py` from its own directory.
-- Check it: `python -m py_compile *.py` (all 15 files pass).
+- Check it: `python -m py_compile *.py` (all 17 files pass).
 - Every script has `-h`. Subcommands that only read are safe to run at once. Anything that changes the org
   prints its request and stops, unless you add `--execute --expect-org <orgIdV3>`.
 
@@ -58,7 +60,7 @@ file. Credentials are sent only over https to a `<domain>.informaticacloud.com` 
 | `IDMC_CREDS_FILE` | Optional `KEY=value` file (for example one per org); its values win over `IDMC_LOGIN.txt`. It must live **outside** the plugin; the scripts refuse a path inside it. Environment values win. |
 | `IDMC_CACHE_DIR` | Session caches, the login lock, the block file and its HMAC key. The default is `~/.idmc_session` (0700; files 0600). It is refused inside the plugin. |
 | `IDMC_PROFILE` | The cache name. Use one per org. The default is a hash of user and login host. |
-| `IDMC_MCP_ENV_FILE` | Default `--env` for `idmc_mcp.py` (the 0600 OAuth file that `client-create` writes). |
+| `IDMC_MCP_ENV_FILE` | Default `--env` for `idmc_mcp.py tools` / `call` and for `idmc_mcp_bridge.py` (the 0600 OAuth file that `client-create` writes; the bridge falls back to `~/.idmc_toolkit/mcp_client.env`). |
 
 Rules:
 
@@ -113,18 +115,21 @@ documented or inferred only.
 | Script | Lines | What it is for | Writes? |
 |---|---|---|---|
 | `idmc_http.py` | 313 | Shared plumbing: HTTP that never raises, response verdicts, redaction, multipart, poll, diff, JSONL log, the `WriteGate`. | n/a (library) |
-| `idmc_session.py` | 426 | Guarded v2 + v3 login, pod hosts, plane headers, JWT mint, `whoami`, `require_org`. CLI `whoami`, `hosts`, `get`. | no |
+| `idmc_login.py` | 72 | Finds and reads `IDMC_LOGIN.txt` (precedence above), normalises a pasted address to the login host. | n/a (library) |
+| `idmc_session.py` | 439 | Guarded v2 + v3 login, pod hosts, plane headers, JWT mint, `whoami`, `require_org`. CLI `whoami`, `hosts`, `get` (`--full`, `--save-to FILE`). | no |
 | `idmc_objects.py` | 197 | v3 object list/search/census, references, path lookup, v2 detail GETs, v2 <-> v3 id resolution. | no |
-| `idmc_export_import.py` | 202 | v3 export -> package; upload -> start -> poll -> per-object result -> log; REUSE / OVERWRITE with a NEW/EXISTS preview. | import |
+| `idmc_export_import.py` | 234 | v3 export -> package; upload -> start -> poll -> per-object result -> log; REUSE / OVERWRITE with a NEW/EXISTS preview (connections and runtime environments EXISTS/MISSING); exits 1 unless the job ends SUCCESSFUL. | import |
 | `idmc_package_edit.py` | 260 | Offline package surgery: replace or regex-edit a file (nested zips too), drop objects, remap an id, and fix `exportMetadata.v2.json` and `exportPackage.chksum`. | local file only |
 | `idmc_mttask.py` | 254 | Mapping tasks: show, clone a template task (upsert by name), change `customQuery` safely, run via `/api/v2/job`, read logs. | yes |
-| `idmc_taskflow_schedule.py` | 225 | Linear taskflows and schedules: upsert, create or end schedules, bind/unbind (also task level), audit, snapshot/restore, run. | yes |
+| `idmc_taskflow_schedule.py` | 227 | Linear taskflows and schedules: upsert, create or end schedules, bind/unbind (also task level), audit, snapshot/restore, run. | yes |
 | `idmc_runtime_selections.py` | 162 | Runtime-environment services and connectors: show, set with a diff and a "never select all" guard, restore. | yes |
 | `idmc_dbmi.py` | 167 | Database Ingestion on `<pod>-ing`: list, details, status, create, deploy, start/stop/resume/undeploy, delete once undeployed. | yes |
 | `idmc_cai_publish.py` | 161 | CAI publish/unpublish in dependency waves, per-item check, publication-status read-back. | yes |
-| `idmc_cdgc.py` | 273 | CDGC: JWT check, catalog sources (multipart create/update), scans and jobs, ES search, glossary with registry and undo, term links. | yes |
+| `idmc_cdgc.py` | 286 | CDGC: JWT check, catalog sources (multipart create/update), scans and jobs, ES search, glossary with registry and undo, term links. | yes |
 | `idmc_frs_delete.py` | 206 | Guarded deletes: FRS dependency check, KEEP guards, leaf-first `DeleteEntities` rounds, per-item codes, read-back; v2 DELETE with read-back. | yes |
-| `idmc_mcp.py` | 257 | Managed MCP: registry, OAuth clients (secret to a 0600 file), `tools/list` and `tools/call` (OAuth or session auth, nested envelope, async poll). | yes |
+| `idmc_mcp.py` | 265 | Managed MCP: registry, OAuth clients (secret to a 0600 file), `tools/list` and `tools/call` (OAuth or session auth, nested envelope, async poll). | yes |
+| `idmc_mcp_bridge.py` | 330 | The plugin's local stdio MCP server (started from `plugin.json`): offers the org's managed MCP tools as Claude Code tools, read-only by default. `--check`, `--env`. | only with `IDMC_MCP_ALLOW_WRITES=1` |
+| `idmc_metering.py` | 120 | IPU metering export: `export --start --end [--job-type] --out`, `status <jobId>`; prints IPU by meter. | no (a report job only, 0 IPU) |
 | `idmc_probe.py` | 157 | Route discovery: bogus-twin comparison, empty-POST verb probe, Content-Type variation, DNS sweep, GET sweep. | verbs/ctypes only |
 
 ### Planes, hosts and headers (from `idmc_session.py`)
@@ -148,7 +153,10 @@ string-replace of a pod literal broke when the org moved to another pod.
 
 - **Use it** first in every session: `python idmc_session.py whoami` (two logins; `--no-v3` for one), then
   `whoami --expect-org <orgIdV3>` before any write session. `hosts` shows the derived hosts. `get <plane> <path>`
-  is a single read-only GET with a verdict (JSON / HTML-200 / EMPTY-200 / 404 kind).
+  is a single read-only GET with a verdict (JSON / HTML-200 / EMPTY-200 / 404 kind) on one of the planes `v2`, `v3`,
+  `frs`, `runtime`, `dbmi`, `cai`, `cdgc`, `d360`, `hdm`, `profiling`, `session`, `login` or `public` (a full URL, no
+  auth header). `--full` prints the whole body; `--save-to FILE` writes the whole answer, secrets included (for example
+  an agent install token), to a 0600 file outside the plugin and prints only the field names.
 - **PROVEN 2026-09:**
   - the v2 login returns `icSessionId`, `serverUrl`, `orgId` and `orgUuid`;
   - the v3 login returns `userInfo.sessionId`, `userInfo.orgId` and `products[].baseApiUrl`;
@@ -166,7 +174,9 @@ string-replace of a pod literal broke when the org moved to another pod.
 - `list` pages `GET /public/core/v3/objects?limit=200&skip=N&q=...`. **The `q` filter is not validated**: a wrong
   type name returns 0 objects, not an error (`type=='DBMI'` returns 0 while the real type is `DBMI_TASK`), so
   run `census` for the real names. It also filters client-side (`--path-prefix`, `--name-contains`).
-- `refs` walks `/objects/<id>/references?refType=uses|usedBy`. `lookup` uses `POST /public/core/v3/lookup`
+- `refs` walks `/objects/<id>/references?refType=uses|usedBy` (50 per page). Each reference carries `appContextId`,
+  the v2 id that v2 task, job and connection calls accept (L-MIG-114); `usedBy` on a connection lists what an update
+  of it affects. `lookup` uses `POST /public/core/v3/lookup`
   (read-only).
 - `resolve` maps ids in both directions:
   - a v2 MTT to its `frsGuid` (from the detail GET only; the list omits it);
@@ -182,11 +192,15 @@ string-replace of a pod literal broke when the org moved to another pod.
   - checks the PK magic and prints the object count per type;
   - a scope of about 200 objects exported in about 20 s.
 - `import`:
-  - previews each packaged object as NEW, REUSE or OVERWRITE (by path lookup);
+  - previews each packaged object as NEW or EXISTS (by path lookup), and each connection and runtime environment
+    as EXISTS or MISSING in the target (by name over v2). Pass `--expect-org` on the dry run too, so the preview is
+    proven to read the target org;
   - uploads multipart to `/import/package` (field `package`) and **never starts a job whose `checksumValid` is
     false**;
   - starts it with `POST /public/core/v3/import/<jobId>`, then polls and prints the root failures (not the
-    "skipped because of previous failures" noise), the per-object result and the log.
+    "skipped because of previous failures" noise), the per-object result and the log;
+  - `import` and `log` exit 1 unless the job ended `SUCCESSFUL`. On a poll timeout, read the job back with
+    `status <jobId> --kind import` and never start a second import.
 - Traps it prints: see the docstring. In short:
   - the import is all-or-nothing, and `includeObjects` does not exclude an object from validation;
   - `objectSpecification` returned `V3API_007` in every shape tried;
@@ -292,8 +306,9 @@ string-replace of a pod literal broke when the org moved to another pod.
 - Catalog-source create is multipart with one part named `dataSource` (plain JSON gives 415) and needs `custom`
   and `endOfLife`. `--map OLD=NEW` remaps connection and runtime-environment ids, and `--forbid-prefix` proves
   that no old-org id is left.
-- Update is a multipart PUT (PATCH fallback) with a backup and a diff. Password option values are masked in all
-  output.
+- Update is a multipart PUT (PATCH fallback) with a backup and a diff. The body keeps `id`, and the diff sorts
+  `capabilities` / `typeCapabilities` by `capabilityName`, because the read-back reorders them (L-CDGC-212). Password
+  option values are masked in all output.
 - Scans read the source's capability names; an empty list gives a misleading 500. A scan bills IPUs.
 - Search pages the ES endpoint and backs off on 429.
 - The glossary uses a registry file for idempotency, and `glossary-undo` deletes in reverse.
@@ -318,17 +333,55 @@ string-replace of a pod literal broke when the org moved to another pod.
 
 ### `idmc_mcp.py`: managed MCP servers
 
-- `servers` reads the org's managed registry from the `hdm` host. One org had 19 servers with about 140 tools.
-  Enumerate the whole registry before you call anything a wall.
-- `client-create` builds `mcpServers:[{id,name,serverEndpointUrl,context,serverPolicy:null}]`; other body shapes
-  did not create a client. It writes `IDMC_CLIENT_ID`, `IDMC_CLIENT_SECRET`, `IDMC_TOKEN_URL`, `MCP_BASE` and
-  `IDMC_ORG_ID` to a new 0600 file.
+- `servers` (`--tools` to list each server's tools) reads the org's managed registry from the `hdm` host. One org
+  had 19 servers with about 140 tools in 2026-09; the vendor's public registry listed 23 servers as of the October
+  2026 release (L-MCP-132). Enumerate the whole registry before you call anything a wall.
+- `client-create --name <n> --contexts <c1,c2,...>` builds
+  `mcpServers:[{id,name,serverEndpointUrl,context,serverPolicy:null}]`; other body shapes did not create a client.
+  It refuses an unknown context and a client name that already exists (its secret cannot be read again). It writes
+  `IDMC_CLIENT_ID`, `IDMC_CLIENT_SECRET`, `IDMC_TOKEN_URL`, `MCP_BASE`, `IDMC_ORG_ID`, `MCP_CONTEXTS` and
+  `IDMC_MCP_ALLOW_WRITES` to a new 0600 file:
+  - `--env-out` defaults to `~/.idmc_toolkit/mcp_client.env`, the file the plugin's bridge reads; the file must not
+    exist yet and must be outside the plugin;
+  - `--allow-writes` sets `IDMC_MCP_ALLOW_WRITES=1`, so the bridge also offers the tools that change the org; without
+    it the bridge is read-only;
+  - `--access-timeout` (default 1440) and `--desc` are optional.
+  `/idmc-mp:connect-mcp` walks a user through it.
 - `tools` and `call` speak JSON-RPC over streamable HTTP: `initialize` (protocol `2025-06-18`), then keep
   `Mcp-Session-Id`, then `notifications/initialized`, then `tools/list` or `tools/call`. SSE `data:` lines are
   parsed and nested envelopes unwrapped.
 - For the Data Quality agent server use `--auth session --nested --poll`. `call` is a write because tools can
   act, and it checks the OAuth file's org against `--expect-org`.
 - PROVEN 2026-09 except `client-delete`, which is UNTESTED.
+
+### `idmc_mcp_bridge.py`: the org's MCP servers as Claude Code tools
+
+- The plugin starts it on its own (`.claude-plugin/plugin.json` `mcpServers.idmc`), as a local stdio MCP server.
+  Claude Code names its tools `mcp__plugin_idmc-mp_idmc__<tool>`.
+- Until a client file exists it offers one tool, `idmc_mcp_status`, which says how to connect
+  (`/idmc-mp:connect-mcp`), and makes no network call.
+- With the file (`--env PATH`, else `IDMC_MCP_ENV_FILE`, else `~/.idmc_toolkit/mcp_client.env`; it must be 0600 and
+  outside the plugin) it gets a client-credentials token, opens each server in `MCP_CONTEXTS` and offers its tools as
+  `<server>_<tool>` with a short server alias (for example `jobs_`, `conn_`, `addr_`, `claire_`), forwarding calls
+  unchanged.
+- **Read-only by default:** only tools that read (`get_`, `list_`, `search_`, `browse_`, `preview_`, `test_`,
+  `verify_` ..., the agent questions and the documentation reader) are offered. Tools that change the org appear only
+  with `IDMC_MCP_ALLOW_WRITES=1` (`client-create --allow-writes`), and their description then starts with
+  "WRITES to IDMC". Claude Code still asks before each call.
+- `--check` prints the servers and tools it would offer, then exits: run it after `client-create`. Only https hosts
+  are called (plain http only to localhost, for tests); the secret is never printed or logged.
+- ADAPTED: it reuses the PROVEN 2026-09 token and JSON-RPC routes of `idmc_mcp.py`; tested offline.
+
+### `idmc_metering.py`: billed IPU consumption (read-only)
+
+- `export --start YYYY-MM-DD --end YYYY-MM-DD [--job-type SUMMARY|ASSET|PROJECT_FOLDER] --out usage.zip [--timeout]`
+  starts `POST /public/core/v3/license/metering/ExportMeteringData`, polls, downloads the ZIP (0600) and prints IPU
+  by meter. `status <jobId>` reads one export job. PROVEN (L-IPU-021).
+- It adds `T00:00:00Z` to bare dates (a bare date gives `400 V3API_007`); `PROJECT_FOLDER` and `ASSET` windows must
+  be 30 days or less (`LS_298`); at most 5 active export jobs per org; `PARTIAL_SUCCESS` is downloadable (L-IPU-070).
+- A trial or embedded sub-org returns a header-only CSV: use the labelled activity-log proxy in
+  `knowledge/13-ipu-cost/02-metering-consumption-exports.md` section 5 and say it is an estimate.
+- It creates a report job only, so it needs no `--execute`.
 
 ### `idmc_probe.py`: find routes without fooling yourself
 

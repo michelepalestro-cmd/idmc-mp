@@ -15,7 +15,7 @@
 
 **Related:** [DBMI over REST](01-dbmi-over-rest-create-deploy-run-stop.md) · [DBMI Targets & Drivers](03-dbmi-targets-drivers.md) · [Serving Outputs to BI and Apps](../04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) · [Cutover & Rollback](../12-deploy-migrate/05-cutover-rollback.md) · [Lessons: Mass Ingestion & CDC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > Log-based CDC from PostgreSQL uses a Database Ingestion task in `CDC_COMBINED` mode (an initial load, then continuous apply) through a `pgoutput` slot and a dedicated publication.
 > Four source rules each killed a job until they were fixed: CREATE on the schema, no `FOR ALL TABLES` publication, `REPLICA IDENTITY FULL`, and the slot created after the publication.
@@ -139,6 +139,7 @@ FROM pg_replication_slots ORDER BY 1;
 ```
 
 - **An idle slot pins WAL** (L-DBMI-014). A slot nobody consumes grows until `max_slot_wal_keep_size`, then it is invalidated. Create a new slot only right before the switch that will use it; a slot created days early can fill a nearly full disk. A stopped job's slot starts retaining WAL immediately.
+- **Unused slots fill the source disk** (L-DBMI-064): leftover slots from earlier tasks retained about 700 MB of WAL and pushed a data disk to 92%. Map every slot to a running CDC task first, drop only the orphans, and set `max_slot_wal_keep_size`.
 - **Never drop a live slot.** Cleanup scripts must refuse by default and drop a slot only when its consumer is known to be undeployed for good (L-DBMI-016, L-CLEAN-027). After a cutover that reused a slot, that slot is the live one.
 
 ## 5. Handing a slot to another org's task (cutover)
@@ -196,7 +197,7 @@ A delete in the operational database flows through CDC to the warehouse tables (
 
 Run it every 5 minutes (cron) and pause it explicitly during planned redeploys:
 
-1. **Job:** `GET /dbmi/api/v1/task/<taskId>/job` must say `running`. Treat `awaiting_auto_restart` as transient for at least 30 minutes after an agent restart: after a host reboot the jobs came back to `running` by themselves about 20 minutes after boot, with slot lag back to 0 (L-DBMI-028, L-ENV-069). A hard stop of the **source** host is different: two jobs failed with PWX-36749 'Call to read from a replication slot failed' (Not retriable) and stayed failed for 3 days after the database returned (L-DBMI-063, 2026-11-02).
+1. **Job:** `GET /dbmi/api/v1/task/<taskId>/job` must say `running`. Treat `awaiting_auto_restart` as transient for at least 30 minutes after an agent restart: after a host reboot the jobs came back to `running` by themselves about 20 minutes after boot, with slot lag back to 0 (L-DBMI-028, L-ENV-069). A hard stop of the **source** host is different: two jobs failed with PWX-36749 'Call to read from a replication slot failed' (Not retriable) and stayed failed for 3 days after the database returned (L-DBMI-063, 2026-11-02); a source crash (a full disk) did the same, and `job/resume` restarted both jobs from their restart point with no re-baseline (L-DBMI-059).
 2. **Slot:** it exists, and `pg_wal_lsn_diff(pg_current_wal_lsn, confirmed_flush_lsn)` is below a threshold (for example 256 MB).
 3. **Freshness:** the newest source audit row older than 5 minutes is present in the warehouse.
 4. **Auto-resume**, only when the newest task log shows a transient warehouse error (`Retrying the job may solve the problem`, `100032`, `backendError`, `rateLimitExceeded`) and no schema or type error (`Value of type`, `cannot be assigned to`, `does not exist`, `Permission denied`). At most 3 resumes per rolling hour; anything else is left for a human. Also auto-resume a job whose failure `endTime` falls in a window around a source restart (30 minutes before to 15 minutes after the database's start time, or the start of the tunnel the agent reads through), at most 3 times per hour: it passed 5 of 5 simulated cuts. Decide on the failure time, not on log text: a log-based watchdog never fired because it read task logs from the old agent host after a runtime move (L-DBMI-063).
@@ -224,4 +225,4 @@ an outage, or the catch-up shows an 'average latency' of tens of thousands of se
 
 ## 11. Lessons in this doc
 
-L-DBMI-011 to L-DBMI-029, L-DBMI-042 to L-DBMI-044, L-DBMI-063, L-CLEAN-027, and the superseded L-DBMI-048 and L-DBMI-049. Full text: [Lessons: Mass Ingestion & CDC](lessons.md).
+L-DBMI-011 to L-DBMI-029, L-DBMI-042 to L-DBMI-044, L-DBMI-059, L-DBMI-063, L-DBMI-064, L-CLEAN-027, and the superseded L-DBMI-048 and L-DBMI-049. Full text: [Lessons: Mass Ingestion & CDC](lessons.md).

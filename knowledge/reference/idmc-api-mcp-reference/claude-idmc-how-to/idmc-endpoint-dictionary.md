@@ -19,6 +19,18 @@ Four states, never merged, because conflating them is the mistake this whole doc
 
 A `404` with an empty body is a genuine UI-only wall. A `404` *with* a body is usually the wrong path or wrong host — keep hunting. Full decoder in the appendix.
 
+## Newer evidence: what later lessons changed
+
+The entries below are the July 2026 probe corpus. These later current lessons in `knowledge/lessons/lessons.jsonl` change what holds; each affected entry also carries a *Newer evidence* note. Where a note and an entry disagree, the note wins.
+
+| Topic | What holds now | Lessons |
+|---|---|---|
+| PUT and PATCH | The verb counts below are the July 2026 census. Later lessons proved PUT (runtime-environment selections, catalog sources, profiles) and PATCH (v3 folders and projects, 204; data360 content assets for glossary terms and descriptions; FRS documents). Treat any other documented PUT or PATCH as unproven until a live call succeeds. | L-AUTH-016, L-METHOD-032, L-MIG-105, L-CDGC-053 |
+| Lineage | Readable over REST hop by hop through the asset read's `lineage` segment; the `/data360/lineage/*` graph routes are still 404. | L-CDGC-181 |
+| Per-rule DQ pass rates | Readable over REST from the metric store's rule `Output` column ValueFrequencies (supersedes L-DQ-031). | L-DQ-123 |
+| MCP catalog | The vendor's public MCP registry (`/mcp-registry/v0.1/servers`, no login) listed 23 managed servers as of the October 2026 release, and an org's managed registry is read at `/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED`. The 'five managed servers' count in the MCP dictionary below is the April 2026 catalog. | L-MCP-132, L-MCP-001 |
+| IPU metering | The async `ExportMeteringData` job works end to end (start, poll, download); `toolkit/lib/idmc_metering.py` wraps it. | L-IPU-021 |
+
 ## The Postman question, answered
 
 Across 167 endpoints:
@@ -31,7 +43,7 @@ Across 167 endpoints:
 | `PATCH` | 0 | 5 | 9 | 152 |
 | `DELETE` | 5 | 7 | 6 | 148 |
 
-What that table means in practice:
+What that table means in practice (July 2026 census; see *Newer evidence* above for the PUT and PATCH routes proven since):
 
 - **`GET` and `POST` are the platform.** 83 endpoints read, 38 write or run. Everything else is a rounding error.
 - **`PUT` is nearly absent and `PATCH` effectively does not exist** — 0 and 0 proven respectively. IDMC has almost no in-place edit. The sanctioned update pattern is `DELETE` then re-`POST` (`/public/core/v3/users/{id}` is canonical: `PUT` and `PATCH` both 405), or, on the v2 plane, **`POST` to the `/{id}` path — that *is* the update**.
@@ -367,6 +379,8 @@ Async IPU export -> jobId
 
 *Evidence:* 201 — jobType SUMMARY|ASSET|PROJECT_FOLDER
 
+> **Newer evidence (L-IPU-021, 2026-10-03):** The full cycle works: POST (dates in full ISO-8601 with a zone), poll `GET .../ExportMeteringData/<jobId>` until SUCCESS, then `GET .../<jobId>/download` for a ZIP with one CSV per org. `toolkit/lib/idmc_metering.py` wraps it. Job-level metering is a separate export, `ExportServiceJobLevelMeteringData` (L-IPU-065).
+
 ### `/public/core/v3/license/metering/MeteringUsageSummary`
 
 IPU summary read
@@ -376,6 +390,8 @@ IPU summary read
 *Plane:* v3 platform — `<pod>.dm-us.informaticacloud.com/saas` · header `INFA-SESSION-ID`
 
 *Evidence:* 404 — use the async export
+
+> **Newer evidence (L-IPU-022, 2026-07-26):** Still 404; it does not mean metering is not entitled. Use the async export (`toolkit/lib/idmc_metering.py`).
 
 ### `/public/core/v3/license/org/{id}`
 
@@ -486,6 +502,8 @@ Edit a user in place
 *Plane:* v3 platform — `<pod>.dm-us.informaticacloud.com/saas` · header `INFA-SESSION-ID`
 
 *Evidence:* 405 — delete + recreate instead
+
+> **Newer evidence (L-AUTH-058, 2026-09-28):** DELETE is proven: `DELETE /public/core/v3/users/<userId>` returns 204 and removes the user. Edit in place is still not available.
 
 ### `/public/core/v3/{licenses, jobs, connections, runtimeEnvironments}`
 
@@ -1363,6 +1381,8 @@ Business-glossary CRUD (~20 variants)
 
 *Evidence:* 404 empty body = no route mounted
 
+> **Newer evidence (L-CDGC-051, 2026-09-29):** This path stays 404, but glossary authoring is headless: create domains and terms with `POST /data360/content/v1/assets` (L-CDGC-050, L-CDGC-051) and rename or redefine them with `PATCH /data360/content/v1/assets/<externalId>?scheme=external` (L-CDGC-053).
+
 ### `/data360/lineage/v1/*`
 
 Lineage graph API (25+ variants)
@@ -1372,6 +1392,8 @@ Lineage graph API (25+ variants)
 *Plane:* Identity / CDGC — `idmc-api.dm-us.informaticacloud.com` · header `Bearer + IDS-SESSION-ID + X-INFA-ORG-ID`
 
 *Evidence:* 404 — read lineage via catalog objects
+
+> **Newer evidence (L-CDGC-181, 2026-10-08):** The graph routes are still not found, but lineage IS readable over REST: `GET /data360/search/v1/assets/<identity>?scheme=internal&segments=all` returns a `lineage` segment of inbound and outbound data-flow hops (walk it asset by asset) and a `neighborhood` segment with table- and column-level data-flow edges (L-CDGC-156). MCP get_asset_details is no longer the only lineage read. Supersedes L-CDGC-085.
 
 ### `/data360/observable/api/v1/jobs?limit=N`
 
@@ -1413,6 +1435,8 @@ Documented search path
 
 *Evidence:* 400 — dead end; use search/api/v1
 
+> **Newer evidence (L-CDGC-181, 2026-10-08):** The single-asset form works: `GET /data360/search/v1/assets/<identity>?scheme=internal&segments=all` reads lineage and neighborhood segments, and `segments=dataQuality` reads the asset's catalog DQ scores (L-CDGC-266). Use `search/api/v1/search` for queries.
+
 #### No endpoint exists for these
 
 | Operation | Status | What it does | Where it happens |
@@ -1429,6 +1453,8 @@ Documented search path
 
 > ⚠️ **Open question.** Every data360 path in this document is probe-derived and has never been vendor-confirmed, because no CDGC API guide is held locally. Treat the whole CDGC section as lower-confidence than the CAI or CDQ sections until that guide is obtained.
 
+> Newer evidence (L-CDGC-181, 2026-10-08): the MCP table's 'MCP ONLY for lineage. Every REST lineage path returns 404' no longer holds. Lineage hops are readable over REST through the asset read's `lineage` and `neighborhood` segments (L-CDGC-156).
+
 ## CDQ - Cloud Data Quality
 
 *Last verified 2026-07-25.*
@@ -1442,6 +1468,8 @@ Bind a rule to an asset = the SCORING object
 *Plane:* Identity / CDGC — `idmc-api.dm-us.informaticacloud.com` · header `Bearer + IDS-SESSION-ID + X-INFA-ORG-ID`
 
 *Evidence:* 404 — CDGC DQO wizard only
+
+> **Newer evidence (L-CDGC-243, 2026-11-19):** This path stays 404, but catalog rule occurrences are written through the contentv2 publish, and their scores are pushed with `PATCH /ccgf-ruleautomation/api/v1/dataQuality/publishScore` (L-CDGC-243) and read with `segments=dataQuality` (L-CDGC-266).
 
 ### `/data360/dq/v1/ruleSpecifications`
 
@@ -1523,6 +1551,8 @@ Scorecards over the public v2 API
 
 *Evidence:* 404 — the API is dictionaries-only
 
+> **Newer evidence (L-DQ-123, 2026-11-02):** The CDQ scorecard path stays 404, but per-rule pass rates ARE readable headless: each bound rule is an `Output` column in the metric store, and `Profiles('<id>')/Columns('<columnId>')/ValueFrequencies` gives VALID/INVALID counts. Keep only entries whose totalRows equals the column's current totalRows (L-DQ-151). Supersedes L-DQ-031.
+
 #### No endpoint exists for these
 
 | Operation | Status | What it does | Where it happens |
@@ -1567,6 +1597,8 @@ Insights, patterns, value frequencies
 
 *Evidence:* 200
 
+> **Newer evidence (L-DQ-123, 2026-11-02):** The profile-level `Profiles('<id>')/ValueFrequencies?$filter=...` form answers 400 METRIC_STORE_00022; use the column-level `Columns('<columnId>')/ValueFrequencies`.
+
 ### `/metric-store/.../Profiles('{uuid}')/Insights|Patterns`
 
 Insights, patterns, value frequencies
@@ -1585,6 +1617,8 @@ Per-column scored metrics (OData)
 
 *Evidence:* 200
 
+> **Newer evidence (L-DQ-123, 2026-11-02):** Bound rule specifications appear here as `Output` columns (columnKey from 40000 up); `Columns('<columnId>')/ValueFrequencies` returns each rule's VALID/INVALID frequency, i.e. its pass rate. Page with $top/$skip (20 per page by default). After a re-run, filter value entries to the current totalRows (L-DQ-151).
+
 ### `/profiling-service/api/v1/profile`
 
 Profile list
@@ -1595,6 +1629,8 @@ Profile list
 
 *Evidence:* 200 — SPA IDS session
 
+> **Newer evidence (L-DQ-019, 2026-10-03):** POST is proven: profiles are created over REST with a body cloned from a known-good profile, run with `POST /profile/<id>/execute` and polled at `GET /job/<profileJobId>`.
+
 ### `/profiling-service/api/v1/profile/{uuid}`
 
 Profile definition detail
@@ -1604,6 +1640,8 @@ Profile definition detail
 *Plane:* Data Profiling — `<pod>-dqprofile.dm-us.informaticacloud.com` · header `IDS-SESSION-ID (SPA-injected)`
 
 *Evidence:* 200
+
+> **Newer evidence (L-DQ-019, 2026-10-03):** PUT is proven: `PUT /profile/<id>` updates a profile.
 
 ### `/profiling-service/api/v1/ruleOccurrence/...ForProfile_V2_Token/{uuid}`
 
@@ -2082,6 +2120,8 @@ Export detailed CAI job execution data; Aggregated stats by process name + envir
 
 *Evidence:* documented — up to 13 months history; documented — up to 1 month history
 
+> **Newer evidence (L-CAI-159, 2026-11-01):** GET is proven: it returns 200 and `data.processJobReport[]` with the header `IDS-SESSION-ID: <session>`; the documented `Authorization: Bearer <session>` gets 401.
+
 ### `/public/core/v3/operationalInsights`
 
 An OI resource on the platform plane
@@ -2201,6 +2241,8 @@ Policy census; Managed-API census; Agent and MCP-server assets
 ---
 
 # MCP dictionary
+
+> Newer evidence (L-MCP-132, 2026-11-19; L-MCP-001): the tables below are the April 2026 catalog. The public registry listed 23 managed servers as of the October 2026 release, and lists `get_asset_lineage` on the catalog discovery server (registry-only, not called here; L-MCP-148 reports that server's neighborhood read excludes lineage); the org registry at `/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED` says what your org exposes (`/public/core/v3/mcpServers` is not the registry). Asset lineage is no longer an MCP-only read (L-CDGC-181). Mark each server as called live or registry-only (L-MCP-131).
 
 Informatica publishes five managed MCP servers exposing eleven actions between them. This section is the consolidated view; the same actions also appear inside each service section next to that product's API table. Source: the official April-2026 Getting Started with Informatica MCP Servers guide.
 

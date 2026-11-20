@@ -67,8 +67,8 @@ hiding it. If a verb appears nowhere in the source evidence, it lands here rathe
 | `DELETE` | 5 | 7 | 6 | 148 |
 
 **IDMC is a GET/POST platform.** Zero `PUT` and zero `PATCH` are proven live anywhere across
-the corpus's 167 endpoints (a later `PUT` on runtime-environment selections is recorded in the topic
-folders). The sanctioned update pattern is `DELETE` then re-`POST`, or on the v2 plane
+the corpus's 167 endpoints (later lessons proved a `PUT` on runtime-environment selections, L-AUTH-016, and
+`PATCH` on v3 folders and projects, L-MIG-105, and data360 content assets, L-CDGC-053). The sanctioned update pattern is `DELETE` then re-`POST`, or on the v2 plane
 **`POST` to `/{id}` — that *is* the update**. `HEAD` and `OPTIONS` appear in no guide and no probe:
 there is no preflight discovery, so to test whether a write verb exists, `POST` an empty body —
 **400 / 415 / 422 means the verb is there**, 405 means it is not.
@@ -85,7 +85,8 @@ intent lives in the action name. Only `checkout_data_order` writes anything. Eig
 wrappers over a REST endpoint you could call directly, and REST is often *more* capable (raw
 Elasticsearch DSL vs one search string; 1,000 addresses per call vs one; full job history vs one
 job). **Two are MCP-only:** `get_asset_details` for lineage and `search_master_record` for fuzzy
-identity match. Neither has any REST equivalent. `get_master_record_details` is marked `DISPUTED`
+identity match. Neither has any REST equivalent in this snapshot (later evidence: lineage is readable over REST
+through the asset read's `lineage` segment, L-CDGC-181). `get_master_record_details` is marked `DISPUTED`
 because its REST counterpart returns 200 on one org and 404 on another.
 
 ## Before you rely on a row

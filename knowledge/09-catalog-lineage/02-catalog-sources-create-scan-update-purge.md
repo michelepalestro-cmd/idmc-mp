@@ -32,7 +32,7 @@ objects; moving a source to another org or retiring it.
 [05 CDGC Gaps & Gotchas](05-cdgc-gaps-gotchas.md) ·
 [Profiling - What Is Headless](../08-data-quality/02-profiling-what-is-headless.md) · [Lessons: CDGC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** A catalog source is created with a multipart `POST` to
 > `cdgc-api.<domain>/ccgf-catalog-source-management/api/v1/datasources`, updated with a multipart `PUT`, scanned with
@@ -288,7 +288,7 @@ capabilities in one scan (L-CDGC-036).
 | `typeCapabilities` > Data Quality | `Data Quality Scope` | `Sampling Type` (All Rows / Limit N Rows / Custom Query), `No of rows to limit` ["1000"], `Sampling Query`, `Runtime Environment` ["<reId>"] | Without the runtime environment, Rule Profiling fails in 0 s | L-CDGC-143, L-CDGC-016 |
 | `capabilities` > Data Quality | run switches | `Run Rule Occurrence Frequency`, `Data Quality Automation`, `Data Quality Automation Scope` (e.g. "Apply on all Data Elements"), `Data Quality Run Scope`, `Data Quality Remediation`, `Create Data Quality Failure Ticket`, `Cache Result` (the PUT validator names the mandatory ones) | `true` on the first two creates IDMC-side schedules (section 8) | L-CDGC-143, L-CDGC-152 |
 | `typeCapabilities` > Lineage Discovery | `Lineage Discovery Filter Config` | `Filter Pivot` ["Include"], `Filter Type` ["Catalog Source Name"], `Filter Value` ["<source name>",...] | Limit which sources an IICS source stitches to (effect not recorded) | L-CDGC-141, L-CDGC-159 |
-| `globalConfigOptions` > Execution | `Runtime Settings`, `Metadata Sync Settings` | `Runtime Environment` ["<reId>"], `Mode of Execution` ["Full Sync"] | Where the scan runs | L-CDGC-021 |
+| `globalConfigOptions` > Execution | `Runtime Settings`, `Metadata Sync Settings` | `Runtime Environment` ["<reId>"], `Mode of Execution` ["Full Sync"] | Where the scan runs. A maintained public script records that `Runtime Environment` has been mandatory since March 2026 (empty = 500; `["MultiTenantServerless"]` for a custom source) and that the `Execution Mode` capability option and the `Metadata Schedule Settings` block were dropped from the payload: copy a fresh GET of your type rather than an old body | L-CDGC-021, L-CDGC-270 |
 
 The exclude pivot is `Filter Pivot` ["Exclude Metadata"] with `Filter Type` ["Tables"] and `Filter Value`
 ["<schema>.<table>"], next to the `Include Metadata` groups (L-CDGC-172). A PostgreSQL table with an array column is
@@ -306,6 +306,10 @@ POST https://idmc-api.<domain>.informaticacloud.com/data360/executable/v1/catalo
 
 -> 201 (200 also seen) {"jobId": "<jobId>", "trackingURI": "..."}
 ```
+
+The ids this route expects are listed by `GET .../data360/executable/v1/catalogsources` (`{"catalogSources":[...]}`;
+L-CDGC-245, code read). Custom lineage can also come from a Custom catalog source: zip a `links.csv` (Source, Target, Association), stage it on
+`ccgf-metadata-staging`, create the source with `custom` true, then run it (L-CDGC-269, code read, not probed here).
 
 | Response | Meaning |
 |---|---|
@@ -564,6 +568,6 @@ new source scoped to the assets you need) or retire the target source (L-CDGC-22
 
 ## Lessons cited in this doc
 
-L-CDGC-007, 008, 014-049, 055, 084, 087, 090, 103, 141-143, 147, 159-163, 166, 168, 170, 206, 210-212, 221, 223, 225, 226, 230, 234, L-CONN-129, L-ENV-099,
+L-CDGC-007, 008, 014-049, 055, 084, 087, 090, 103, 141-143, 147, 159-163, 166, 168, 170, 206, 210-212, 221, 223, 225, 226, 230, 234, 245, 269, 270, L-CONN-129, L-ENV-099,
 L-IPU-055, and the superseded L-CDGC-031, 040, 120, 121, 124, 127, 128, 134, 135, 136, 188 and L-DQ-044 (superseded by L-CDGC-143).
 Full text: [Lessons: CDGC](lessons.md).

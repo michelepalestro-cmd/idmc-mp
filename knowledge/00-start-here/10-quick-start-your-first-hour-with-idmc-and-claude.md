@@ -51,11 +51,11 @@ recommendations.
 | Data quality | "profile `<table>`, suggest DQ rules, and add them to the pipeline" | [knowledge/08-data-quality](../08-data-quality) |
 | Catalog and lineage | "scan `<source>` into the catalog and show lineage from source to report" | [knowledge/09-catalog-lineage](../09-catalog-lineage) |
 | Golden records | "match and merge `<entity>` across `<sources>` and show me the golden records" | [knowledge/10-mdm](../10-mdm) |
-| Use IDMC from Claude over MCP | "connect Claude to IDMC's MCP servers" | [knowledge/11-mcp-claire](../11-mcp-claire) |
+| Use IDMC from Claude over MCP | `/idmc-mp:connect-mcp`, or "connect Claude to IDMC's MCP servers" (read-only tools by default) | [knowledge/11-mcp-claire](../11-mcp-claire) |
 | Move assets between orgs | "export project `<name>` and import it into my other org" | [knowledge/12-deploy-migrate](../12-deploy-migrate) |
 | Know the cost | "how many IPUs did we use this month, and by what" | [knowledge/13-ipu-cost](../13-ipu-cost) |
 | Fix an error | paste the error: "why does this fail: `<message>`" | [Error Triage](04-error-triage.md), `knowledge/lessons/` |
-| See it end to end first | "deploy the `<demo>` blueprint into my org" | `demos/` (start at `BLUEPRINT_CONVENTIONS.md`) |
+| See it end to end first | "deploy the `<demo>` blueprint into my org" | `toolkit/demos/` (start at `BLUEPRINT_CONVENTIONS.md`) |
 
 ## 4. The lessons that save the most time
 
@@ -105,3 +105,4 @@ Each one cost a real project hours or days. The id leads to the full lesson in `
 - What went wrong in a real production deployment, and how to avoid it: [What Went Wrong](09-what-went-wrong-production-deployment-post-mortem.md).
 - The laws behind every answer: [The Laws of Headless IDMC](02-the-laws-of-headless-idmc.md).
 - Every endpoint and verb: `knowledge/reference/`.
+- Keep it running after go-live: [Run it in production](12-run-it-in-production.md).

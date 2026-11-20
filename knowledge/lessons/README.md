@@ -2,7 +2,7 @@
 
 > **Summary.** Every lesson this KB rests on: **2,358 lessons** in 16 domain files, each with a stable id
 > (`L-<DOM>-<NNN>`), a kind, a date, the evidence that proved it and one to six sentences of generic, placeholder-only
-> text. 2,152 are current, 183 are superseded (kept so nobody re-learns them) and 23 are disputed. The topic docs cite
+> text. 2,152 are current, 184 are superseded (kept so nobody re-learns them) and 22 are disputed. The topic docs cite
 > these ids; [Overturned Beliefs](overturned-beliefs.md) lists every belief that fell and what replaced it.
 
 Last verified: 2026-11-19, against lessons.jsonl (evidence dates 2026-06-27 to 2026-11-20 across all files).
@@ -26,7 +26,7 @@ Related: [How to use this KB](../00-start-here/01-how-to-use-this-kb.md) ·
   - `## Superseded / overturned (kept so nobody re-learns them)`: every older belief, each with the date range it was
     held and the lesson that overturned it;
   - in the working-methods and environment files only, `## Other general lessons (not IDMC-specific)`: current lessons about QA suites, BI tools and dashboards fed by IDMC, API
-    gateways, Office files and app platforms that came out of the same work (14 and 24 lessons).
+    gateways, Office files and app platforms that came out of the same work (14 and 26 lessons).
 - **Each lesson** has this shape:
 
 ```
@@ -49,7 +49,7 @@ Counts are the `### L-` headings in each file.
 | [01 Access & Auth](../01-login-and-orgs/lessons.md) | `AUTH` | 136 | 124 | 11 | 1 | 2026-06-27 to 2026-11-19 |
 | [02 Secure Agent](../02-secure-agent/lessons.md) | `AGENT` | 142 | 131 | 11 | 0 | 2026-06-27 to 2026-11-19 |
 | [03 Connections](../03-connections/lessons.md) | `CONN` | 152 | 137 | 12 | 3 | 2026-06-27 to 2026-11-19 |
-| [04 Mappings & Mapping Tasks (CDI)](../04-mappings/lessons.md) | `CDI` | 291 | 271 | 18 | 2 | 2026-06-27 to 2026-11-19 |
+| [04 Mappings & Mapping Tasks (CDI)](../04-mappings/lessons.md) | `CDI` | 291 | 271 | 19 | 1 | 2026-06-27 to 2026-11-19 |
 | [05 Taskflows & Schedules](../05-taskflows-schedules/lessons.md) | `CDI` | 40 | 36 | 3 | 1 | 2026-07-04 to 2026-11-19 |
 | [06 Mass Ingestion & CDC](../06-cdc-ingestion/lessons.md) | `DBMI` | 71 | 65 | 5 | 1 | 2026-07-04 to 2026-11-19 |
 | [07 Application Integration (CAI)](../07-app-integration/lessons.md) | `CAI` | 214 | 197 | 16 | 1 | 2026-07-01 to 2026-11-19 |
@@ -62,7 +62,7 @@ Counts are the `### L-` headings in each file.
 | [14 Environment & Ops](../14-working-with-claude/lessons-environment-ops.md) | `ENV` | 145 | 142 (26 general) | 3 | 0 | 2026-07-04 to 2026-11-19 |
 | [14 UI Automation](../14-working-with-claude/lessons-ui-automation.md) | `UI` | 37 | 30 | 6 | 1 | 2026-07-06 to 2026-10-26 |
 | [14 Claude Working Methods](../14-working-with-claude/lessons.md) | `METHOD` | 171 | 163 (14 general) | 8 | 0 | 2026-07-04 to 2026-11-19 |
-| **Total** | 16 prefixes | **2,358** | **2,152** | **183** | **23** | 2026-06-27 to 2026-11-20 |
+| **Total** | 16 prefixes | **2,358** | **2,152** | **184** | **22** | 2026-06-27 to 2026-11-20 |
 
 The source of truth is [lessons.jsonl](lessons.jsonl), one JSON object per line, in this folder; the `knowledge/<job>/lessons*.md`
 files are the readable view. Each line has the fields `id`, `domain`, `kind`, `title`, `text`, `evidence`, `date`, `status` and `supersedes_id`

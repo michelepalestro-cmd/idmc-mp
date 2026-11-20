@@ -23,9 +23,9 @@ query or a new licence does not show up on the agent.
 [05 Troubleshooting - the Four Gates](../03-connections/03-troubleshooting-the-four-gates.md) ·
 [Entitlement, Licenses & Job Caps](../13-ipu-cost/03-entitlement-licenses-job-caps.md) ·
 [Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md) (the `secureagentmanagement` server) ·
-[Lessons: Secure Agent & Connections](../03-connections/lessons.md)
+[Lessons: Secure Agent](lessons.md) · [Lessons: Connections](../03-connections/lessons.md)
 
-**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03; selections GET/PUT proven 2026-09-28 and used for
+**Last verified:** 2026-11-20 (evidence 2026-06-27 to 2026-11-19; selections GET/PUT proven 2026-09-28 and used for
 several on/off cycles; a Hosted Agent failover 2026-11-03).
 
 > A runtime environment (RE) decides where work runs and which services and connectors its agents run. The selections
@@ -46,7 +46,11 @@ A runtime environment is a network position, not a setting: whatever runs a task
 | Serverless | Informatica-managed compute inside your own AWS or Azure account (your VPC/VNet, subnets, IAM role) | Data already sits in that cloud account and you want no agent | Reach other clouds or data centres; it bills IPUs per runtime-hour; creation is UI-only (`/public/core/v3/serverlessRuntimeEnvironments` and `/api/v2/serverlessRuntimeEnvironment` both 404) |
 
 **Routes** (L-AGENT-035, 2026-07-26): `GET <serverUrl>/api/v2/runtimeEnvironment` lists REs with nested `agents[]`;
-`POST <serverUrl>/api/v2/runtimeEnvironment` creates one (an empty body answers 400, so the verb exists). An agent
+`POST <serverUrl>/api/v2/runtimeEnvironment` creates one; the body needs `"@type":"runtimeEnvironment"` (and
+`"@type":"agent"` on each nested agent), or it answers 400 `APP_20149`; `DELETE` works, and `PUT` answers 500 `CMN_001`,
+so there is no v2 rename (L-AGENT-130, reported). `POST /api/v2/runtimeEnvironment/<reId>` with the full `agents[]`
+list sets the group's members, so send the existing agents plus the new one (L-AGENT-134, reported). Name lookups:
+`/api/v2/runtimeEnvironment/name/<name>`, `/api/v2/agent/name/<name>` (L-AGENT-135, reported). An agent
 creates its own RE when it registers. Prefer the v2 forms: `GET /public/core/v3/runtimeEnvironments` returned 200 on one
 pod and 404 on another, and the singular v3 path answered 415.
 
@@ -81,7 +85,9 @@ notice), so open a support case early and fail over:
 **The truth is per agent.** `GET <serverUrl>/api/v2/agent/details/<agentId>` (header `icSessionId`) returns
 `agentEngines[]`, each with `agentEngineStatus.appname`, `displayName`, `status`, `desiredStatus`, `subState` and the
 engine version. `GET /api/v2/agent/<agentId>` gives `active`, `readyToRun`, the agent core `version`,
-`upgradeStatus`, `lastUpgradeCheck` and `packages[]` (L-AGENT-020, 2026-07-26).
+`upgradeStatus`, `lastUpgradeCheck` and `packages[]` (L-AGENT-020, 2026-07-26). An engine is ready at `subState` "0";
+RUNNING with "-1" or "2" is still starting, and a stopped engine is absent from `agentEngines[]` rather than listed as
+STOPPED. `?onlyStatus=false` adds every agent and engine property (L-AGENT-125, L-AGENT-138, reported).
 
 **Per-agent versus list `readyToRun`.** The list (`GET /api/v2/runtimeEnvironment`, `agents[].readyToRun`) reported
 false for agents the per-agent read reported true, 3 times of 3, while the host said READY (L-AGENT-021, 2026-07-26).
@@ -198,10 +204,16 @@ st, _ = call("PUT", sel)
 st2, back = call("GET")          # verify the flags, then poll agentEngines[]
 ```
 
+**A second route, not yet probed here** (L-AGENT-133, reported): the v2 plane has `GET
+<serverUrl>/api/v2/runtimeEnvironment/<reId>/selections` and `/selections/details` (every item with its id) under
+`icSessionId`, and a PUT to `/selections` that carries only the items it changes. Expect the same engine rollover.
+
 **What does not work** (still true as negative facts, L-AGENT-044, 2026-07-26): `POST /api/v2/agent/service` (router
 artifacts 403 APP_13401 / 500 CMN_001), `/api/v2/agent/selectiveservices` (500), `POST /api/v2/agent/<agentId>` with
 `agentEngines[].desiredStatus` (500 or a redirect, reads back `agentEngines: []`), and anything under
-`/public/core/v3/runtimeEnvironments`. Those error codes prove nothing either way (L-AGENT-031, 2026-07-26).
+`/public/core/v3/runtimeEnvironments`. Those error codes prove nothing either way (L-AGENT-031, 2026-07-26). Starting
+or stopping an engine that is already selected is a different, v3 route: `POST /public/core/v3/agent/service`
+([doc 01](01-secure-agent-install-run-tune.md) §4.4, L-AGENT-124, reported).
 
 **UI equivalent**: Administrator > Runtime Environments > (RE) > Actions > Enable or Disable Services. The receipt recorded
 for the components dialog in July read 'Changes successful. The selected components are enabled for the runtime
@@ -293,7 +305,8 @@ first; re-test one connection per engine afterwards.
   adapters went live about 4 minutes after the selections PUT (L-CONN-131, 2026-10-28).
 - Read a connector's formats and the engines each supports before you design a read:
   `GET <serverUrl>/api/v2/connector/metadata?connectorName=<name>`, `cciMeta` formatters with `supportedEngineTypes`
-  (spark only means an advanced-mode mapping and an advanced configuration) (L-CONN-130, 2026-10-26).
+  (spark only means an advanced-mode mapping and an advanced configuration) (L-CONN-130, 2026-10-26). The name matches
+  by prefix and the answer is an array: pick the exact `name` (L-CONN-144, reported).
 
 ## 8. Overturned beliefs (runtime environments)
 

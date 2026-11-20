@@ -22,7 +22,7 @@ and whenever two orgs or two workloads share one session module or one org.
 [Multi-Agent Coordination](../14-working-with-claude/03-multi-agent-coordination.md) ·
 [Lessons: Access & Auth](lessons.md)
 
-**Last verified:** 2026-10-03 (evidence 2026-07-06 to 2026-10-01).
+**Last verified:** 2026-11-20 (evidence 2026-07-06 to 2026-11-19).
 
 > Every IDMC answer is org-specific, and a proven result in one org is not evidence for another. Sub-org membership is
 > explicit, and switching orgs is an admin action. When several Claude sessions work one program, **one lead session is
@@ -57,6 +57,8 @@ base URL. Guessing the pod was recorded as the single most common way to lose an
    - `GET /api/v2/org` → `id`, `orgUUID`.
 2. **Assert in code:** the script refuses to write unless `GET /api/v2/org` returns `id == <expected orgIdV2>` (or
    `orgUUID == <expected orgIdV3>`).
+   Accept either id form, call `/api/v2/org` directly rather than through a retrying wrapper (so a 401 cannot recurse
+   into a login), and fail closed: if the org cannot be proven, discard the session (L-AUTH-116).
 3. Print a **receipt line** before the first write (user, org name, v2 id, pod), and keep it in the run log.
 4. If anyone asks mid-run "which org are you deleting from?", that receipt is the answer. A cleanup was once interrupted
    by exactly that question (L-AUTH-047).
@@ -73,7 +75,8 @@ actually happened (see [Headless Deletes & Org Cleanup](../12-deploy-migrate/06-
   - sub-orgs can use capabilities the parent allocates;
   - one sub-org showed 1 engine while its parent ran 22, and enabling services on the sub-org's own agent delivered all
     22, which was an assignment, not a purchase;
-  - licence allocation to sub-orgs is a UI step in the parent (Sub-Organizations > Licenses);
+  - licence allocation to sub-orgs is a UI step in the parent (Sub-Organizations > Licenses); client code also shows
+    `PUT /public/core/v3/license/org/<subOrgId>` as a full overwrite (read, edit, put back; L-IPU-072, not probed here);
   - a sub-org's runtime environments can be inherited and show zero agents.
 - **Don't bind a sub-org connection to the parent's shared runtime environment** as a shortcut. It creates fine, and the
   test error changes to `error [error [null]]`, but an unroutable bogus host returns the identical error, so it proves
@@ -117,6 +120,10 @@ org inaccessible or unentitled:
 4. try a free create + delete.
 
 Then read [04 Users, Roles & Permissions](04-users-roles-permissions.md) §6.
+
+The same goes for an object that "is missing": an object id in a designer URL resolves only in the org that owns it, so
+find the owning org before you conclude a mapping is unsaved or gone, and when you tell someone where assets are, give
+the org name and the full pod URL (L-METHOD-155, L-METHOD-134).
 
 ## 7. Preflight checklist (copy into any new script)
 

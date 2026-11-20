@@ -132,7 +132,7 @@ FRS details:
 - FRS wants `IDS-SESSION-ID: <v2 icSessionId>`. With `INFA-SESSION-ID` it returns the login HTML page, which a script can mistake for success.
 - Both `/frs/v1/...` and `/frs/api/v1/...` prefixes were used successfully. FRS `$metadata` needs `Accept: */*`.
 - A `PATCH` of a Document's `customAttributes` returns 204 and changes nothing (L-CLEAN-019): read back every write.
-- A `PATCH` of a Document's `name` does work: `PATCH .../frs/api/v1/Documents('<frsId>')` with `{"name": "<new name>"}` → 204 renames a mapping, mapping task or CLAIRE structure model in place (id unchanged; v3 path and v2 names change at once). The same PATCH on `BaseEntities` gives `400 FRS_068`. Keep `{id, old name}` as the undo (L-MIG-075).
+- A `PATCH` of a Document's `name` does work: `PATCH .../frs/api/v1/Documents('<frsId>')` with `{"name": "<new name>"}` → 204 renames a mapping, mapping task or CLAIRE structure model in place (id unchanged; v3 path and v2 names change at once). The same PATCH on `BaseEntities` gives `400 FRS_068`. Keep `{id, old name}` as the undo (L-MIG-075). A new name with parentheses answers 400 `FRS_082` and nothing changes, the description in the same body included (L-MIG-080); a folder's description is changed with `PATCH /frs/v1/Folders('<folderId>')` (L-MIG-085).
 - An older `DeleteEntities` body, `{"deleteSpec":{"sourceSpecArr":[{"sourceEntityId":"<id>"}]}}` on `/frs/api/v1/DeleteEntities`, was tried once; its outcome was not recorded. Use `{"artifactIds":[...]}`.
 
 ## 5. Delete order (L-CLEAN-013)
@@ -163,6 +163,7 @@ Tell the migration lead before each batch, never delete while an import runs, an
 ## 7. Users (L-CLEAN-009, L-CLEAN-010)
 
 - `DELETE /public/core/v3/users/<userId>` returns 204 (an older reference row said 405; that is wrong). Back up the user list first.
+- **Reassign the user's file listener associations first** (reported): the owner is whoever last picked the listener in a file ingestion task or last published the taskflow it triggers, and that account cannot be deleted until `POST <serverUrl>/mftsaas/api/v1/ChangeCallbackOwnership {"currentOwner":"<userId>","newOwner":"<userId>"}` (`IDS-SESSION-ID`) moves them (L-CLEAN-037).
 - **Keep** the `CAI_Anonymous_<orgIdV3>` system user (anonymous `/active-bpel/public/rt` calls need it), the automation user you are logged in as, and any service user a live process, connection or catalog scanner signs in as (grep the hosts and configs first).
 - There is no proven in-place edit (PUT or PATCH were 405 in July), so an edit is delete plus re-create: `POST /public/core/v3/users` with `{"name":"<login>","firstName":"<first>","lastName":"<last>","email":"<email>","groups":["<groupId>"]}`. The key is `name` (not `userName`), and `groups` holds plain id strings. Test the re-create on one seat before a batch: a wrong body once left 27 seats deleted.
 
@@ -187,7 +188,8 @@ It returns `data.id`. Poll `GET /active-bpel/asset/v1/unpublish/<id>/Status` and
 | the CDGC home dashboard and widgets; system classifications, policies and roles | catalog scans rely on the system classifications |
 | `CAI_Anonymous_<orgIdV3>` | anonymous CAI endpoints need it |
 | stock samples and utilities (`dsst__*`, `B2B_Gateway_*`, `infacore_*` DQ utilities) | kept DQ mappings may reference the utilities |
-| Reference360, Business360 and MultidomainMDM system content | deleting stock MDM scaffolding can destabilize the MDM engine; delete only the entities and records you authored |
+| Reference360, Business360 and MultidomainMDM system content | deleting stock MDM scaffolding can destabilize the MDM engine; delete only the entities and records you authored. Licence-installed MDM bundle content cannot be deleted headless anyway: FRS answers 403 `FRS_127` even for an org admin, so republish anything you unpublished and hide it with roles (L-MIG-084) |
+| platform-generated objects (the 'Sample ... Connection' mock connections, `DQ_Capability_Schedule_*` schedules) | they regenerate after a delete when CDC tasks or catalog DQ scoring are in use: keep them, or switch the feature off (L-CLEAN-036) |
 | MDM entities that live assets still use | for example an address-verification entity |
 | the live replication slot (when cleaning the database host) | a polling CDC job shows `active=f` between cycles (L-CLEAN-027) |
 
@@ -254,4 +256,4 @@ In one 228-object source the split was 180 READY, 9 HOLD-VERIFY, 7 NO-TWIN, 3 pr
 
 ## 14. Lessons in this doc
 
-L-CLEAN-001 to L-CLEAN-027, L-MIG-018, L-MIG-051, L-MIG-072, L-CDGC-028, L-CLEAN-034, L-MIG-073, and the superseded L-CLEAN-028 to L-CLEAN-033. Full text: [Lessons: Migration & Org Management](lessons.md).
+L-CLEAN-001 to L-CLEAN-027, L-MIG-018, L-MIG-051, L-MIG-072, L-CDGC-028, L-CLEAN-034, L-CLEAN-036, L-CLEAN-037, L-MIG-073, L-MIG-075, L-MIG-084, L-MIG-087, and the superseded L-CLEAN-028 to L-CLEAN-033. Full text: [Lessons: Migration & Org Management](lessons.md).

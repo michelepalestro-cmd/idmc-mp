@@ -23,7 +23,7 @@ zero-byte 200; before you call anything "not licensed".
 [Error Triage](../00-start-here/04-error-triage.md) ·
 [Lessons: Access & Auth](lessons.md)
 
-**Last verified:** 2026-10-03 (evidence 2026-07-06 to 2026-09-30, pods under two domain labels).
+**Last verified:** 2026-11-20 (evidence 2026-07-06 to 2026-11-19, pods under two domain labels).
 
 > IDMC is not one API. It is about ten **auth planes**, each served from its own host and expecting its own header: the
 > **pod host**, a **per-pod service host** (`<pod>-cai`, `<pod>-ing`, `<pod>-mdm`, `<pod>-dqprofile`,
@@ -35,7 +35,8 @@ zero-byte 200; before you call anything "not licensed".
 ## 1. Host anatomy
 
 Every URL is built from two values that the login returns: the **domain label** (`dm-us`, `dmp-us`, `dm-em`, `dm-ap`,
-`dm-na`, `dm-uk`, …) and the **pod** (`usw1`, `usw3`, …).
+`dm-na`, `dm-uk`, …) and the **pod** (`usw1`, `usw3`, …). Client code maps region codes to login hosts (for example
+`dm1-us`, `dm-apne`, `dm1-apau`), but the org's working host is still the one its login returns (L-AUTH-103).
 
 | Host | Pattern | What lives there |
 |---|---|---|
@@ -128,9 +129,12 @@ lives on `<pod>-ing`.
 - **Long operations:** POST to start, then GET to poll (export, import, metering, scans, CAI publish). A GET on the starter returns 405.
 - **No HEAD/OPTIONS:** probe a write verb with an empty POST. 400/415/422 (or a null-field 500) means the verb exists; 405
   means it does not. Vary the `Content-Type` too (json, multipart, zip, octet-stream) before declaring an upload route absent.
-- **Timestamps:** v2 `createTime`/`startTime` and activity-log `startTime`/`endTime` were **pod-local time (UTC-4)
-  labelled `Z`** on the pods seen. Use `startTimeUtc`/`endTimeUtc`, and set schedules with both `startTime` and
-  `startTimeUTC` (L-AUTH-014).
+- **Timestamps:** v2 `createTime`/`startTime` and activity-log `startTime`/`endTime` read **UTC-4 labelled `Z`** on
+  every pod seen, a US west pod included, so the offset is not the pod's zone and cannot be derived from it. Use
+  `startTimeUtc`/`endTimeUtc`, set schedules with both `startTime` and `startTimeUTC`, and re-check them after a
+  daylight-saving change (L-AUTH-014, L-AUTH-094).
+- **Full replace:** a v2 POST update resets omitted fields unless the resource supports partial mode; `@type` belongs in
+  v2 JSON bodies only, never in v3 bodies (documented, L-AUTH-127).
 
 ## 7. Checklist before you design a call
 

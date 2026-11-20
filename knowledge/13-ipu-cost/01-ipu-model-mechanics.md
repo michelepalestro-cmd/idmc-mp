@@ -19,7 +19,7 @@ not for what an IPU costs (that is a term of each customer's Order).
 
 **Related:** [02 Metering & Consumption Exports](02-metering-consumption-exports.md) · [03 Entitlement, Licenses & Job Caps](03-entitlement-licenses-job-caps.md) · [IICS-to-IPUs KB](../reference/iics-to-ipus-kb/start-here.md) · [Measurement Guide](https://docs.informatica.com) · [Lessons: IPU, Metering & Licensing](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > An IPU is one fungible credit that every eligible IDMC service draws down at its own published rate (compute hours,
 > rows, GB, API calls, assets, queries). MDM SaaS, Operational Insights and connectors sit outside the pool. Monthly
@@ -187,6 +187,14 @@ never needs a spend gate; the run does (L-IPU-020). Job counts are a separate le
    an ERP REST target a document with nested lines is one call, and its governance limits (a base of 5-20 concurrent
    requests plus 10 per add-on licence) sat orders of magnitude above even peak volume. Below about 1 GB a month, run
    and task counts drive cost, not volume.
+10. **Cut ingestion IPUs by moving less data** (L-IPU-063): Mass Ingestion is metered per GB (loads) or per million
+    rows (CDC), not per runtime hour, so Secure Agent tuning makes loads faster and safer but saves IPUs only by
+    avoiding failed re-runs. The savings are CDC after the initial load, only the tables and columns used, schedules
+    matched to freshness needs and no duplicate tasks; ask for GB or rows per run before sizing an increase.
+11. **Get a metering answer before a full-scale address-verification sweep** (L-IPU-062): its licence can be
+    IPU-metered with no meter visible in the org, and an untuned on-agent engine (about 160 addresses a second) put a
+    hundred-million-address sweep at 10-42 days. Get the spend approval, tune the engine, select only inputs without a
+    stored result, and classify failed rows so they are not re-verified (L-IPU-064).
 
 ## 8. Rules for using these numbers
 

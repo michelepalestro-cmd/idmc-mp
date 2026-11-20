@@ -26,7 +26,7 @@ a shim; registering MCP servers in Claude Code; giving outside agents one MCP en
 [03 CLAIRE GPT - Prompting Rules](03-claire-gpt-prompting-rules-patterns.md) ·
 [CLAIRE DQ Agent](../08-data-quality/03-claire-dq-agent-file-based-profiling-cleansing.md) · [Lessons: CLAIRE & MCP](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Two asynchronous contracts exist: (1) the **CLAIRE agent MCP**
 > (`<claire_api_url>/claire-orchestrator-ai-agent/api/v1/mcp`): `new_conversation` → `OrchestratorSkill` /
@@ -237,6 +237,8 @@ res = post({"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"<tool
 
 - `Accept` must list both `application/json` and `text/event-stream`. Answers may arrive as SSE `data:` lines.
 - Keep the `Mcp-Session-Id` response header from `initialize`, and send it on every later call.
+- Since the October 2026 release the servers also speak the stateless protocol 2026-07-28 in dual-era mode, so
+  2025-06-18 clients like this one keep working (L-MCP-133).
 - A tool result is `result.content[]` (join the `text` parts), `result.structuredContent`, and `result.isError`.
 
 ---
@@ -363,6 +365,10 @@ vendor servers and hand any MCP client the one URL (recipe L-MCP-082). Three thi
 
 ## 7. Wiring MCP servers into Claude Code
 
+- **The plugin's own bridge** (the shim of §6.1, built in): `/idmc-mp:connect-mcp` creates a scoped OAuth client
+  and the plugin starts `toolkit/lib/idmc_mcp_bridge.py`, which offers the org's managed servers as
+  `mcp__plugin_idmc-mp_idmc__<server>_<tool>` tools, read-only by default; no `claude mcp add` is needed
+  ([02](02-mcp-auth-oauth-clients.md) §3.4).
 - **A local stdio shim** (proven):
 
 ```bash
@@ -383,7 +389,8 @@ claude mcp add <name> -s user -- <path to python> -u <path to shim.py>
 - **Interactive clients without a shim.** The vendor's Informatica plugin for Claude Enterprise connects Claude
   Desktop, Cowork and Claude Code to the hosted Catalog Discovery and CLAIRE Data Exploration Agent servers through an
   OAuth 2.1 public client with per-user consent: set-up in [02](02-mcp-auth-oauth-clients.md) §6.1 (documented, not
-  exercised; L-MCP-123).
+  exercised; L-MCP-123). In Claude Code its source ships the two server URLs empty: add your pod's URLs yourself
+  (L-MCP-135).
 - **After wiring,** confirm the target org (§4) and run one read-only tool call before relying on the server.
 
 ---

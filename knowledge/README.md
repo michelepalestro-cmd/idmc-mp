@@ -28,7 +28,7 @@ answer lives.
 [End-to-End Playbook](00-start-here/07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md) ·
 [Capability Map](00-start-here/03-capability-map.md) · [Error Triage](00-start-here/04-error-triage.md)
 
-**Last verified:** 2026-11-17
+**Last verified:** 2026-11-20
 
 ## What this is
 
@@ -45,11 +45,11 @@ rules every session follows: [RULES.md](RULES.md). How the placeholders map onto
 ## The map
 
 One folder per job, in the order you usually build. Each folder starts with a one-page `README.md` cheat sheet and
-holds that job's guides and its `lessons.md`. The "I want to..." router is [00-start-here](00-start-here/README.md).
+holds that job's guides and its `lessons*.md`. The "I want to..." router is [00-start-here](00-start-here/README.md).
 
 | Folder | Read it when you need to… |
 |---|---|
-| [`00-start-here`](00-start-here/README.md) | orient yourself: the router, **the laws of headless IDMC**, the capability map, error triage, glossary, quick start, end-to-end playbook, new-pipeline milestones, what went wrong in production |
+| [`00-start-here`](00-start-here/README.md) | orient yourself: the router, **the laws of headless IDMC**, the capability map, error triage, glossary, quick start, end-to-end playbook, new-pipeline milestones, what went wrong in production, running it in production (Day 2) |
 | [`01-login-and-orgs`](01-login-and-orgs/README.md) | log in, pick the right host and header, handle sessions, lockouts and the JWT change, prove the org before writing, users and roles |
 | [`02-secure-agent`](02-secure-agent/README.md) | install, size, tune, resize or reboot a Secure Agent; enable services and connectors on a runtime environment |
 | [`03-connections`](03-connections/README.md) | create, test, update and delete connections to any system; per-connector settings; fix "the connection is broken" (the four gates) |
@@ -65,7 +65,7 @@ holds that job's guides and its `lessons.md`. The "I want to..." router is [00-s
 | [`13-ipu-cost`](13-ipu-cost/README.md) | the IPU model, metering exports, entitlement vs licence, job caps and budgets |
 | [`14-working-with-claude`](14-working-with-claude/README.md) | how Claude reaches and drives IDMC, evidence discipline, multi-agent work, UI automation, environment traps, secrets hygiene |
 | [`reference`](reference/README.md) | the endpoint-level API and MCP reference, the IICS-to-IPU KB, the compact playbook, the [community code index](reference/community-code-index.md) |
-| [`../lessons`](lessons/README.md) | every lesson in one searchable file (`lessons.jsonl`), the counts, and every overturned belief |
+| [`lessons`](lessons/README.md) | every lesson in one searchable file (`lessons.jsonl`), the counts, and every overturned belief |
 
 ## Create any IDMC asset: where to start
 
@@ -91,7 +91,7 @@ holds that job's guides and its `lessons.md`. The "I want to..." router is [00-s
 | Glossary terms, links, classifications | [Glossary, Links & Classification](09-catalog-lineage/03-glossary-links-classification.md) | CDGC content API |
 | Lineage (scanned and curated) | [Search, Lineage & Marketplace](09-catalog-lineage/04-search-lineage-marketplace.md) | catalog scans + curated edges |
 | MDM business entities, records, a mastered table | [Business 360 Modeling](10-mdm/03-business-360-modeling-match-merge.md), [MDM Records](10-mdm/02-mdm-records-ingest-search-export-cleanup.md), [Mastering a Table](10-mdm/05-mastering-a-table-repeatable-playbook.md) | MDM APIs, or CDI mappings that master a table |
-| MCP access, CLAIRE GPT prompts | [Managed MCP Servers](11-mcp-claire/01-managed-mcp-servers-catalog-access.md), [CLAIRE GPT](11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) | managed MCP + OAuth clients |
+| MCP access, CLAIRE GPT prompts | [Managed MCP Servers](11-mcp-claire/01-managed-mcp-servers-catalog-access.md), [CLAIRE GPT](11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) | `/idmc-mp:connect-mcp` (a scoped OAuth client, and the servers' tools as Claude Code tools through the plugin's bridge), or managed MCP + OAuth clients from the toolkit |
 | A copy, a move, an export / import, a clone of any asset | [Export & Import](12-deploy-migrate/01-export-import-v3-migration-api.md), [Migration-Clone Authoring](12-deploy-migrate/03-migration-clone-authoring.md) | v3 export / import packages; FRS `CopyEntities` / `MoveEntities` |
 | **Anything not in this table** | [Milestones](00-start-here/08-new-pipeline-milestones-any-source-any-target.md): "A system or connector the KB has never seen" and the workaround ladder | the closest pattern here, adapted and proven in your org, then recorded as a lesson |
 

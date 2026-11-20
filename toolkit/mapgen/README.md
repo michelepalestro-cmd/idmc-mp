@@ -5,8 +5,8 @@ field links) into a real IDMC Data Integration mapping and an importable v3 pack
 only. One module per transformation type under `idmc_mapgen/nodes/` (source, target, expression, filter, joiner, lookup, router,
 aggregator, sorter, rank, dedup, normalizer, cleanse, masking, rule spec, SQL, mapplet, sequence, ...).
 
-Background: `knowledge/04-mappings/02 How Claude Builds Mappings Headless` and `05 The Pipeline-Generation
-Pattern` (route 5 = this generator). PROVEN in a real org in 2026-09 (parity with hand-built mappings, then complex
+Background: `knowledge/04-mappings/02-how-claude-builds-mappings-headless.md` (route 5 = this generator) and
+`knowledge/04-mappings/04-the-pipeline-generation-pattern.md`. PROVEN in a real org in 2026-09 (parity with hand-built mappings, then complex
 scenarios); this copy differs only by generic comment wording and one renamed login-body variable. Synced 2026-10-26: Salesforce source `filter` / `sfObject`, rule-specification input scale.
 
 ## Start here
@@ -40,7 +40,7 @@ from idmc_mapgen.package import package_bytes
 ```
 
 **2. Its own CLI** (`python toolkit/mapgen/mapgen.py --help`): `build` and `lint` are offline; `whoami`, `resolve`,
-`import`, `task`, `run` and `deploy` log in through the core library's session (`toolkit/lib/idmc_session.py`: the
+`import`, `task`, `run`, `deploy`, `log` and `jobs` log in through the core library's session (`toolkit/lib/idmc_session.py`: the
 same session cache, file lock and lockout guard, so a rejected login blocks both until the credentials change). It reads
 the login file `~/.idmc_toolkit/IDMC_LOGIN.txt` (nothing to set up; a repo-root `IDMC_LOGIN.txt` is only a git-clone
 legacy fallback), or `IDMC_USER`, `IDMC_PASS` and `IDMC_LOGIN_URL` (`https://<IDMC_LOGIN_HOST>`) from the environment

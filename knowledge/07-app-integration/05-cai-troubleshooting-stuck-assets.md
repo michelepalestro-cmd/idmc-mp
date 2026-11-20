@@ -13,7 +13,7 @@
 
 **Related:** [CAI Asset Lifecycle](01-cai-asset-lifecycle-author-publish-unpublish-delete.md) · [CAI Runtime](02-cai-runtime-invoke-urls-control.md) · [CAI Connections & Connectors](03-cai-connections-connectors-salesforce-oauth.md) · [Process Server on a Secure Agent](04-process-server-on-a-secure-agent.md) · [Lessons: CAI](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Most CAI "walls" were a wrong host, a wrong asset path or a wrong header: check those first. Read
 > every publish item, because failures arrive inside 200 envelopes. Two states cannot be fixed from outside: an asset
@@ -27,7 +27,8 @@
 ## 1. Triage order
 
 1. **Host.** Publish, invoke, restadmin and Operational Insights live on `<pod>-cai.<domain>`, not on the pod base
-   host. Derive it from the login base URL (L-CAI-040).
+   host. Derive it from the login base URL (L-CAI-040). The exception: Data Integration taskflows publish and run on
+   the pod host (L-CAI-164, reported).
 2. **Path.** Publish and unpublish take `Explore/<project>/<folder>/<name>.<TYPE>.xml` (L-CAI-003); invoke takes
    `/public/rt/<orgIdV3>/<name>` for anonymous processes and `/rt/...` for authenticated ones.
 3. **Headers.** `application/vnd.api+json` on both Accept and Content-Type for `asset/v1`; the v3 session for
@@ -55,7 +56,10 @@
 | Designer says "unexpected error when publishing"; assets stuck "Validation in progress.." | Designer first-publish regression (cpfPublish 500 on first publish, 200 on republish) | Publish over `asset/v1/publish`; send the asymmetry evidence to support | L-CAI-013 |
 | Publish of agent-bound assets fails while the engine is down | Process Server not running | Repair the engine first | L-CAI-081 |
 | "singleton sequence... 2 items" on publish and on unpublish | Duplicate runtime catalog rows | Section 3 | L-CAI-078 |
+| `AvrEntryNotFoundFault` on a TASKFLOW item | Data Integration taskflows publish on the pod host, not `-cai` | Publish taskflows in their own batch on the pod host (reported) | L-CAI-164 |
 | `AvrEntryNotFoundFault` | No runtime entry for the asset | Section 3 | L-CAI-078 |
+| Item UNSUPPORTED (no detail), job ERROR | A process object in the publish list | Leave process objects out; they are used by reference | L-CAI-165 |
+| HTTP 500 `RESTEASY003635: No match for accept header` | `Accept` missing or left at a default | `Accept: application/vnd.api+json` (reported) | L-CAI-167 |
 
 ### 2.2 Authoring and import
 

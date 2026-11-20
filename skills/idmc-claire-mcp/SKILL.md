@@ -1,6 +1,6 @@
 ---
 name: idmc-claire-mcp
-description: Use for Informatica IDMC CLAIRE GPT and managed MCP servers: list and call the org's MCP servers, MCP OAuth clients, agent-style async orchestration and custom shims, CLAIRE prompting patterns, and choosing MCP vs REST. Also for connecting Claude or other AI agents to Informatica, and Informatica's own Claude plugin.
+description: Use for Informatica IDMC CLAIRE GPT and managed MCP servers: turn the org's MCP servers into Claude Code tools (/idmc-mp:connect-mcp and the plugin's read-only-by-default MCP bridge), list and call the org's MCP servers, MCP OAuth clients, agent-style async orchestration and custom shims, CLAIRE prompting patterns, and choosing MCP vs REST. Also for connecting Claude or other AI agents to Informatica, and Informatica's own Claude plugin.
 ---
 
 # IDMC co-pilot: CLAIRE and MCP servers
@@ -48,12 +48,15 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | CLAIRE GPT prompting | `knowledge/11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md` |
 | Agent-style MCP and shims | `knowledge/11-mcp-claire/04-agent-style-mcp-async-orchestration-custom-shims.md` |
 | MCP vs REST | `knowledge/11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md` |
+| CLAIRE GPT use cases, ranked by impact | `knowledge/11-mcp-claire/06-claire-gpt-use-cases-ranked-for-retail.md` |
 | Vendor Claude plugin, MCP registries, community CLIs and MCP servers | `knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md` |
 | Someone else's public code for a route or pattern | `knowledge/reference/community-code-index.md` |
 | MCP servers, actions and calls | `knowledge/11-mcp-claire/README.md` |
+| Connect the servers as Claude Code tools, step by step | `commands/connect-mcp.md` (`/idmc-mp:connect-mcp`) |
 
 ## Tools (`--help` on each)
-- `toolkit/lib/idmc_mcp.py`: managed MCP servers: registry, tools, calls, OAuth clients
+- `toolkit/lib/idmc_mcp.py`: managed MCP servers: `servers`, `clients`, `client-create` (`--env-out`, default
+  `~/.idmc_toolkit/mcp_client.env`; `--allow-writes`), `client-delete`, `tools`, `call`
 - `toolkit/lib/idmc_mcp_bridge.py`: the plugin's MCP server; `--check` shows what it would offer
 
 ## When you learn something

@@ -1,5 +1,5 @@
 # Lessons: Mappings & Mapping Tasks (CDI)
-291 lessons: 271 current, 2 disputed, 18 superseded; evidence dated 2026-06-27 to 2026-11-19. Topic docs: [knowledge/04-mappings](.).
+291 lessons: 271 current, 1 disputed, 19 superseded; evidence dated 2026-06-27 to 2026-11-19. Topic docs: [knowledge/04-mappings](.).
 
 ## Current
 
@@ -1315,12 +1315,13 @@ A PDF goes through the `PdfToModel` learner: the document becomes key/value reco
 **Was believed:** 2026-10-06 · **Overturned by:** L-CDI-230
 In a mapping, a Structure Parser transformation keeps `isdModelId` = the intelligent structure model's v2 id (the export's `repoInfo.repoHandle`, not the v3 id) and `modelString` = a copy of the model, with `parserMode` isdMode, `inputType` FILE, `outputType` Relational and an empty `connectionId` for the CLAIRE engine. Its input group takes `FilePath` (string 4096) and `Data` (binary); it has one output group per model group plus `Unidentified`. Because the model is copied, a later edit of the model reaches the mapping only after Synchronize. The designer reads the detail from `GET /da/web.saas.service/saasinfo/structureDiscoveryDetail?id=<v2 id>`, which needs a designer session.
 
+### L-CDI-194  Whether truncateTarget=true on a PostgreSQL target truncates or is ignored, overturned 2026-10-03
+**Was believed:** 2026-09-28 (disputed) · **Overturned by:** L-CDI-331
+Do not rely on either reading. Never set `truncateTarget=true` on a system-of-record table, and make postings idempotent in the database (L-CDI-169).
+
 ## Disputed (evidence conflicts; do not rely on either reading)
 
 ### L-CDI-192  A mapping task can be run through POST /public/core/v3/jobs with taskFederatedId
 **Kind:** ROUTE · **Status:** disputed · **Seen:** 2026-07-04 · **Evidence:** a single report of 22 runs; the same tasks are recorded elsewhere as run through `POST /api/v2/job`
 One July record says `POST /public/core/v3/jobs {"taskFederatedId":"<id>","taskType":"MTT"}` returned a runId, polled at `GET /public/core/v3/jobs/<runId>`. No other source reproduces it. Use `POST /api/v2/job` with the v2 `taskId` (L-CDI-056).
 
-### L-CDI-194  Whether truncateTarget=true on a PostgreSQL target truncates or is ignored
-**Kind:** GOTCHA · **Status:** disputed · **Seen:** 2026-09-28 · **Evidence:** one source states the PostgreSQL target ignores truncateTarget; another flags a task with it as a wipe risk; no observed wipe
-Do not rely on either reading. Never set `truncateTarget=true` on a system-of-record table, and make postings idempotent in the database (L-CDI-169).

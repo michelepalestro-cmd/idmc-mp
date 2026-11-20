@@ -3,6 +3,33 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/reference/kb-changelog.md](../knowledge/reference/kb-changelog.md).
 
+## 1.15.1 (2026-11-20): full documentation audit
+
+Every document (about 170) was checked against the newest lessons and the code; stale claims were fixed and newer
+lessons added where they belong.
+
+- **Data quality:** per-rule pass rates are readable over REST (the stale "console only" claim is gone from four
+  places); new profiling, validation and verification lessons.
+- **Catalog and lineage:** lineage is readable over REST hop by hop; the newer catalog lessons (bulk read, history,
+  export, custom lineage, paging past 10,000) are in the guides, marked where they come from public code.
+- **MDM:** search filters, incremental extract, survivorship before loading, and the new mastering lessons cited in
+  the playbook.
+- **MCP:** 23 servers everywhere the count is current; `/idmc-mp:connect-mcp` and the bridge in the auth, wiring and
+  how-Claude-reaches-IDMC guides; the vendor plugin's search traps.
+- **Secure Agent, connections, CDC, CAI:** the agent tuning form now goes in `configFormJson`; engine start and stop
+  routes; replace-style connection updates and `Update-Mode: PARTIAL`; CDC job and metrics routes; CAI taskflow run
+  control and publish rules.
+- **Mappings, taskflows, deploy, IPU:** PostgreSQL truncate settled (L-CDI-331 supersedes L-CDI-194); four broken
+  code snippets fixed; metering windows, limits and states; schedule PATCH; export limits and package hygiene.
+- **Login and orgs:** the newer auth lessons, timestamps read as UTC-4 (not pod-local), and the org guard's two id forms.
+- **Skills, commands and toolkit docs** match the code (flags, subcommands, defaults); each area skill names its MCP
+  tool prefixes. The endpoint dictionary's builder carries the newer evidence, so rebuilds keep it.
+- **Code:** `idmc_cai_publish.py` publishes Data Integration taskflows on the pod host in their own wave and leaves
+  process objects out (L-CAI-164, L-CAI-165, reported); `idmc_mcp.py` finds the client file written by
+  `/idmc-mp:connect-mcp` without `--env`.
+- **Lessons:** five supersede links corrected, L-CDI-194 superseded, and text refinements to L-AUTH-125, L-CONN-145,
+  L-IPU-035, L-DQ-100 and L-MCP-148.
+
 ## 1.15.0 (2026-11-20): Informatica's MCP servers as Claude's own tools
 
 - **`/idmc-mp:connect-mcp`:** lists the org's managed MCP servers, creates a scoped OAuth client (secret straight to a

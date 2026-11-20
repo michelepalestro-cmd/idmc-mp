@@ -25,7 +25,7 @@ route does which catalog job? What does a CDGC status code mean? How do I prove 
 [05 CDGC Gaps & Gotchas](05-cdgc-gaps-gotchas.md) ·
 [Access, Auth & Orgs](../01-login-and-orgs) · [Lessons: CDGC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Cloud Data Governance & Catalog (CDGC, with Metadata Command Center and Data Marketplace) is driven over
 > two API hosts per domain: `idmc-api.<domain>` for the `data360/*` routes (search, content, scans, jobs, Marketplace) and
@@ -202,6 +202,11 @@ The multipart variant for catalog-source create and update is in
 | Lineage hops (proven 2026-10-08) | `GET /data360/search/v1/assets/<identity>?scheme=internal&segments=all` (the `lineage` and neighborhood segments) | idmc-api | one hop per read; the `/data360/lineage/*` graph routes are not served; MCP `get_asset_details` also reads lineage | 04 |
 | Curated lineage edges (proven 2026-10-08) | `POST /ccgf-contentv2/api/v1/publish` (+ `X-INFA-PRODUCT-ID: CDGC`) with RELATIONSHIP items `core.DataSetDataFlow` / `core.DirectionalDataFlow` | cdgc-api | 207; DELETE items undo | 04 |
 | Cancel a scan | `POST /ccgf-orchestration-management-api-server/api/v1/jobs/<jobId>/operations/cancel` (empty body) | cdgc-api | 200, then CANCEL_REQUESTED; poll for CANCELLED before the next run (1-2 min in Test Connection, 50+ min once extraction runs). Proven from the console and a script, 2026-10-26 (L-CDGC-221, L-CDGC-225) | 02 |
+| Read many assets | `POST /data360/search/v1/assets/details?scheme=internal&segments=<list>` with an id array | idmc-api | about 100 per call; unresolved ids are absent from the reply (L-CDGC-240, L-CDGC-265; code reads) | 04 |
+| Asset change history | `GET /data360/audit/v1/assets[/<id>]/events` with repeated `filter=` params | idmc-api | who changed a term or a certification (L-CDGC-241; code read) | 04 |
+| Bulk import (xlsx template) | `POST /data360/content/import/v1/assets` (multipart `file` + `config`), poll `observable/v1/jobs/<jobId>` | idmc-api | template rules fail silently (L-CDGC-258, L-CDGC-259; code reads) | 03 |
+| Metamodel and import template | `GET /ccgf-modelv2/api/v2/models/<packageName>/export?packageName=<packageName>` | cdgc-api | metamodel JSON; `format=csv` export gives a template zip (L-CDGC-271; code read) | 03 |
+| Asset models, classifications, workflow definitions | `GET /ccgf-metadata-discovery/api/v1/{models,classifications}`, `GET /htm-carbon/api/v1/workflow-definitions?application=CDGC` | cdgc-api | header sets differ per route (L-CDGC-244; code read) | 03 |
 
 ---
 
@@ -316,4 +321,4 @@ L-CDGC-009 org-scoped governance · L-CDGC-010 probe-derived routes · L-CDGC-01
 L-CDGC-013 rate limits · L-CDGC-019 data360 catalog-source prefix · L-CDGC-071 v3 read-only for CDGC ·
 L-CDGC-080 Keyword search · L-CDGC-099/100 MCP · L-CDGC-143/144 catalog DQ · L-CDGC-159 connection assignment ·
 L-CDGC-161 rule-occurrence publish · L-CDGC-163 PUT id · L-CDGC-164 technical-asset descriptions · L-CDGC-165 search
-query types · L-CDGC-168 Snowflake tags partial · L-CDGC-169 sorted search paging · L-CDGC-170 typed rule binding. Full text: [Lessons: CDGC](lessons.md).
+query types · L-CDGC-168 Snowflake tags partial · L-CDGC-169 sorted search paging · L-CDGC-170 typed rule binding · L-CDGC-240/241/244/258/259/265/271 routes from public code (not probed). Full text: [Lessons: CDGC](lessons.md).

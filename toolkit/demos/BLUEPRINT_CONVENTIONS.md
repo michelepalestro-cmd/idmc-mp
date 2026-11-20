@@ -37,8 +37,9 @@ demos/<blueprint>/
 2. **No secrets.** Credentials come only from the toolkit's `.env` (see `toolkit/setup/.env.example`) or the environment.
    Scripts print key names, never values.
 3. **Use the core library.** Scripts import the Script Library, `toolkit/lib/` (`idmc_session`, `idmc_http`, `idmc_mttask`, `idmc_cai_publish`,
-   `idmc_dbmi`, `idmc_cdgc`, `idmc_export_import`, ...). Locate it relative to the script:
-   `sys.path.insert(0, str(Path(__file__).resolve().parents[N] / "knowledge/14-working-with-claude" / "Script Library"))`.
+   `idmc_dbmi`, `idmc_cdgc`, `idmc_export_import`, ...). Locate it relative to the script, from the toolkit root:
+   `sys.path.insert(0, str(Path(__file__).resolve().parents[N] / "lib"))`, where `parents[N]` is `toolkit/` (each
+   blueprint does this once, in its `idmc/lib/*_common.py`).
 4. **Dry run by default.** Anything that changes an org prints the request and stops unless `--execute` is given;
    writes to an org also take `--expect-org <orgIdV3>` (the core library's guard).
 5. **Integration logic lives in IDMC.** If CAI / CDI / CDQ can do a step, the runtime path uses IDMC, not Python.

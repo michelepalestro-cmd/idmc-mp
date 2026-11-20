@@ -1,6 +1,6 @@
 ---
 name: idmc-mp
-description: Use when working with Informatica IDMC / IICS without its UI, or planning, deploying, optimizing or troubleshooting IDMC - REST or MCP calls to CDI, CAI, CDQ, CDGC, MDM, DBMI/CDC, Secure Agents, runtime environments, connections, mappings, taskflows, profiling, data quality rules, catalog, IPU metering - or when an IDMC call returns 401, 403, 404, 405, 500, APP_10519, APP_105060, a zero-byte 200, or readyToRun false. Also the starting point for anything Informatica, Informatica Cloud or IICS: setting it up, logging in, or any error.
+description: Use when working with Informatica IDMC / IICS without its UI, or planning, deploying, optimizing or troubleshooting IDMC - REST or MCP calls to CDI, CAI, CDQ, CDGC, MDM, DBMI/CDC, Secure Agents, runtime environments, connections, mappings, taskflows, profiling, data quality rules, catalog, IPU metering - or when an IDMC call returns 401, 403, 404, 405, 500, APP_10519, APP_105060, a zero-byte 200, or readyToRun false. Also the starting point for anything Informatica, Informatica Cloud or IICS: setting it up, logging in (/idmc-mp:connect), connecting the org's MCP servers as tools (/idmc-mp:connect-mcp), or any error.
 ---
 
 # IDMC MP: the IDMC co-pilot for Claude

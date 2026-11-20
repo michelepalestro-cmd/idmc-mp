@@ -124,6 +124,9 @@ Consequences:
 - The v2 task resources (`/api/v2/dss`, `dtemplate`, `dmask`, `dreplicate`, `plan`, `fileListener`) mount **per pod and per licensed engine**: 200 on one org, 404 on another. Never generalize a v2 inventory from one org (L-CDI-015).
 - Job-history totals can be dominated by old runs of deleted objects (930 of 1,000 rows once). Filter by object and date (L-CDI-019).
 - The activity log is not complete history: a full read of a busy project's log returned 1,076 entries reaching back three weeks, against more than 500 jobs a day, and each task carries `maxLogs: 10`. Counts read from it are lower bounds; keep your own run ledger (L-CDI-288, 2026-11-01).
+- `GET /api/v2/mapping` and `/api/v2/connection` are unpaginated: `limit`, `skip` and `maxRecordsCount` are ignored, so a very large org can time out; page through v3 objects instead (L-CDI-315, reported).
+- A v2 detail by v3 id works only for mapping tasks (`GET /api/v2/mttask/frs/<v3 id>`); `dsstask/<frsId>` and `workflow/<frsId>` answer 500, and v3 `MTT` rows do not name the mapping (enrich with `GET /api/v2/mttask/name/<name>`) (L-CDI-328, L-CDI-318, reported).
+- In an MTT detail `lastRunTime` is epoch milliseconds while `createTime`/`updateTime` are ISO strings; 0 or null means unknown, not never run (L-CDI-329, reported).
 - A v3 query for type `DMAPPINGTASK` or `DMT` returns count 0, like an invented type: Dynamic Mapping Tasks are v3 type `BATCH_MAPPING`, and their sub-jobs log as type MAPPING (L-CDI-289).
 
 ## 7. Where each object lives in FRS

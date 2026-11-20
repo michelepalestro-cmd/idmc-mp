@@ -14,7 +14,7 @@
 
 **Related:** [CAI Asset Lifecycle](01-cai-asset-lifecycle-author-publish-unpublish-delete.md) · [CAI Connections & Connectors](03-cai-connections-connectors-salesforce-oauth.md) · [CAI Troubleshooting](05-cai-troubleshooting-stuck-assets.md) · [Serving Outputs to BI and Apps](../04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) · [Lessons: CAI](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Published processes answer on the `<pod>-cai` host: anonymously at
 > `/active-bpel/public/rt/<orgIdV3>/<process>` (no auth header; runs as the system user `CAI_Anonymous_<orgIdV3>`),
@@ -43,6 +43,16 @@ org id, which the vendor calls `{TenantName}` in anonymous URLs.
 | Runtime control | `/active-bpel/restadmin/...` (section 6) | partly proven |
 | Operational Insights | `GET /active-bpel/opsanalytics-das/metrics?query={...}` with `IDS-SESSION-ID` (section 8) | proven 2026-11-01 (200 with `IDS-SESSION-ID`; the documented Bearer header gets 401) |
 | On a Secure Agent | `http(s)://<agentHost>:<port>/process-engine/rt/<service>`, `/process-engine/public/rt/<service>` (add `?swagger` for its Swagger 2.0), `/process-engine/restadmin/...` | anonymous invoke and `?swagger` proven 2026-10-09 (L-CAI-143); see [Process Server](04-process-server-on-a-secure-agent.md) |
+
+Data Integration taskflows published as services answer on the **pod host** (`https://<pod>.<domain>.informaticacloud.com`,
+the login base URL without `/saas`), not on `-cai`. Reported from client code and vendor docs, not probed here: start
+`POST /active-bpel/rt/<apiName>` (returns a 19-digit `RunId`; republished copies can be named `<name>-1`, `-2`; header
+`TF-INSTANCE-NAME` tags the run) (L-CAI-172, L-CAI-211); status `GET /active-bpel/services/tf/status/<runId>`, or the list
+form with `runStatus`, `startTime`, `endTime`, `offset`, `rowLimit` (max 50) (L-CAI-168, L-CAI-210); resume a SUSPENDED
+run with `PUT /active-bpel/management/runtime/v1/resumeWithFaultRetry/<runId>` (not FAILED ones) (L-CAI-169); terminate
+with `PUT /active-bpel/services/tf/terminate` `{"runid":[...]}`, at most 200, no undo (L-CAI-170). Parse run ids as
+strings or big integers, never floats; a 200 `{"status":"No status available."}` means the run's logs were purged, so
+stop polling (L-CAI-210, L-CAI-213).
 
 A process gets no service URL at all unless it has listed users or groups, or anonymous access (L-CAI-034).
 
@@ -179,6 +189,10 @@ Milestone step with `<httpStatus>`, so a caller gets the reasons of a rejection 
 - Listener-based event sources: `POST.../active-bpel/local/restadmin/eventconnection/stop` and `/start` with
   `?agentName=<agent>` and the `IDS-SESSION-ID` header (proven 2026-10-08; `INFA-SESSION-ID` answers 500
   NullPointerException). Route paths, bodies and the windowed-subscriber pattern: [CAI Event Listeners](06-cai-event-listeners-kafka-amqp-jms.md) §4 (L-CAI-122).
+- In a process, `util:resolveURN('<urn>')` returns the URN string itself when no mapping exists, so a misspelled URN
+  becomes a literal value (an e-mail address, a URL) instead of an error: compare the result with the URN and fall
+  back, and log resolved values at start (L-CAI-178, reported). Leave an agent's system mappings (`ae:internal-reporting`,
+  `ae:task-inbox`, `java:comp/env/jdbc/ActiveVOS`, `urn:aeHostEnvironmentRuntime`) as installed (L-CAI-179, reported).
 
 ---
 
@@ -189,6 +203,7 @@ Milestone step with `<httpStatus>`, so a caller gets the reasons of a rejection 
 | Activity execution limit (default 10,000 BPEL activities per execution) | Invocations return 429 ("The last execution of this process has exceeded the activity execution limit...") and no new instance is created for 15 minutes, or until the process is republished | documented; tech preview (L-CAI-050) |
 | Rate window | REST/SOAP calls return 429 when the window's limit is exceeded | documented (L-CAI-051) |
 | Payload and attachments on the Cloud Server | 5,242,880 bytes (5 MB) | documented |
+| Payload on a Secure Agent's Process Server | 5 MB by default, raisable per agent (Application Integration Console > Server Configuration > Server Settings; one setup used 150 MB), then restart the Process Server | reported (L-CAI-189) |
 | Non-persistent process runtime | terminated after 3,600 s | documented |
 | Retention (automated maintenance) | completed 24 h, faulted 72 h, logs 30 days | documented |
 | Kafka producer request size (Camel `maxRequestSize`) | 1 MB by default; raise it to the broker's limit for large messages (a 4.1 MB message ran after the change) | proven 2026-10-08 (L-CAI-127) |

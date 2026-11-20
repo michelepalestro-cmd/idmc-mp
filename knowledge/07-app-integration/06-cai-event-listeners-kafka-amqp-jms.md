@@ -23,10 +23,10 @@ target, a windowed or late subscriber), and whenever a listener consumes nothing
 [Process Server on a Secure Agent](04-process-server-on-a-secure-agent.md) · [CAI Troubleshooting](05-cai-troubleshooting-stuck-assets.md) ·
 [Lessons: CAI](lessons.md)
 
-**Last verified:** 2026-10-09
+**Last verified:** 2026-11-20
 
 > **Summary.** CAI listens to Kafka and to AMQP 1.0 brokers (a JMS broker such as ActiveMQ Artemis) through Camel-based
-> connections that run only on a Secure Agent's Process Server. Everything is authored as repository-item XML in a v3 import
+> connections that ran on a Secure Agent's Process Server here (the vendor also supports Kafka on the Cloud Server of AWS-hosted pods). Everything is authored as repository-item XML in a v3 import
 > package and published with `asset/v1/publish`, like any other CAI asset. The listener runs one process at a time per consumer
 > thread and commits offsets on a timer, so the design rules are: thin listeners that hand each message to a handler subprocess
 > inside a catch, idempotent targets, hand-offs instead of waits, and one connection per subscriber you want to control on its own.
@@ -45,8 +45,10 @@ target, a windowed or late subscriber), and whenever a listener consumes nothing
 | Handler subprocess | no access configuration: no URL, callable only as a subprocess | L-CAI-130 |
 | Producer call | a Service step on `<conn>:<eventTarget>` with a KafkaMessage (key, value, headers) | L-CAI-124 |
 
-Both connection types run only on a Secure Agent (`agentOnly="true"`, `<agent><agent name></agent>`); the Process Server must
-be running there ([Process Server on a Secure Agent](04-process-server-on-a-secure-agent.md)).
+Both connection types ran on a Secure Agent here (`agentOnly="true"`, `<agent><agent name></agent>`); the Process Server must
+be running there ([Process Server on a Secure Agent](04-process-server-on-a-secure-agent.md)). The vendor guide also
+supports the Kafka connector on the Cloud Server, but only on AWS-hosted pods, and on an agent the Kafka connection and the
+processes that use it must run on the same agent (L-CAI-162, documented, not lab-tested).
 
 ## 2. Authoring the connection (L-CAI-116)
 
@@ -153,6 +155,12 @@ to the broker's and topic's `message.max.bytes` (L-CAI-127).
 These numbers prove the pattern and give a per-agent floor. Scale out with partitions, consumers and agents in an agent group,
 and size production in a proof of concept.
 
+**Count the runs as well as the throughput.** Every process or subprocess run is one CAI API call (connector calls inside
+a run add none): with S subscribers, a separate handler subprocess (h = 1), d delivery-subprocess runs, a bridge (b = 1)
+and r re-runs, a message costs S x (1 + h) + d + b + r calls; count them on the CAI Monitor's run list, not from an event
+ledger (L-CAI-148). Timer-started processes cost runs even when idle: one a minute is about 43,800 a month per process,
+one every 10 s about 262,800, so loop the poll inside a once-a-minute run or use an event source (L-CAI-161).
+
 ## 8. Signatures
 
 | You see | It means | Do | Lesson |
@@ -160,6 +168,7 @@ and size production in a proof of concept.
 | Publish SUCCESS, but callers get 'No consumers available on endpoint: direct://...' | a producer route failed to start | read catalina for 'Failed to start route'; for idempotence set `retries` | L-CAI-125 |
 | HTTP 500 'NullPointerException: Cannot read the array length ...' on eventconnection start or stop | wrong header | send `IDS-SESSION-ID` | L-CAI-122 |
 | Hyphenated JMS properties missing from the AMQP event headers | Qpid validates property names | `jms.validatePropertyNames=false` | L-CAI-123 |
+| A text/XML listener or bridge receives a BytesMessage from a STOMP test publisher | the STOMP frame carried `content-length` | send without it (stomp.py `auto_content_length=False`) | L-CAI-160 |
 | Records processed twice after a stop or republish | the listener resumed from the last auto-commit | idempotent targets; `autoCommitIntervalMs=1000` | L-CAI-121 |
 | Processes read 'out-of-date' after a connection republish | dependent processes are flagged, the runtime is fine | republish the processes last | L-CAI-133 |
 | A record of one partition waits behind another | a Wait or retry inside a Kafka-started process holds the partition | hand-offs; bounded backoff; more partitions and consumers | L-CAI-120 |

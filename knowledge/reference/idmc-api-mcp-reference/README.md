@@ -71,8 +71,9 @@ refused; `untested: PUT, PATCH` means nobody probed them. **`untested` and `reje
 merged**: untested is an admission of ignorance, a 405 is a finding.
 
 MCP has no verb surface of its own: every MCP call is an HTTP POST to one server endpoint carrying a
-JSON-RPC body naming an action. MCP does exactly two things REST cannot: read asset **lineage**, and
-**fuzzy customer identity match**.
+JSON-RPC body naming an action. In this snapshot MCP does exactly two things REST cannot: read asset **lineage**, and
+**fuzzy customer identity match**. Later evidence made lineage readable over REST (L-CDGC-181); the dictionary's
+*Newer evidence* section lists that and the other walls later lessons overturned.
 
 ## Raw evidence and anonymisation
 

@@ -34,7 +34,7 @@ grey referenced nodes; a BigQuery view has no lineage; scripting Marketplace pro
 [05 CDGC Gaps & Gotchas](05-cdgc-gaps-gotchas.md) ·
 [CLAIRE GPT - Prompting Rules](../11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) · [Lessons: CDGC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** The knowledge-query form `POST /data360/search/v1/assets?knowledgeQuery=...` also works once its query
 > parameters are sent. Never treat a free-text hit as a stable handle. Lineage is produced by scans (view SQL, and CDI
@@ -109,7 +109,9 @@ Content-Type: application/json
   `core.origin` + `elementType` OBJECT, instead of a wildcard on `core.externalId` (which also matches relationship
   documents), the read became complete and repeatable: 1,311 fetched, 1,311 unique, twice in a row. A sort on
   `core.externalId` returned no hits at all.
-- **Cap**: totals stop at 10,000 (`gte`), so count per class or per source (L-CDGC-077).
+- **Cap**: totals stop at 10,000 (`gte`), so count per class or per source (L-CDGC-077). To read past 10,000 hits on
+  the knowledge-query path, public clients sort on `core.identity` through `rankingSpec.scoringSpec` and send the last
+  hit's sort values as `after` (L-CDGC-264, code read, not probed here).
 - **Semantic ranking**: the same free-text query can return different hits and order across runs. Never cache "the top
   hit"; resolve by exact externalId or name at use time (L-CDGC-078).
 - **Class filters** (L-CDGC-079): a third-party fleet's `classType` filter parameter was reported as accepted and ignored,
@@ -136,7 +138,13 @@ POST {API}/data360/search/v1/assets?knowledgeQuery=<query or *>&segments=summary
 - `segments=all`, or a list such as `summary,systemAttributes,dataClassification`, controls what comes back.
 - A `*` query's total is a quick "is anything harvested?" check (5,089 assets on one org).
 - A `filterSpec` body (`[{"attribute":"core.classType","values":[...]},{"attribute":"core.origin","values":["<csId>"]}]`)
-  was probed; its effect is not recorded.
+  was probed; its effect is not recorded here. Public clients send `{"type":"simple","attribute":"core.classType",
+  "values":[...]}` entries and get class-filtered hits; check `core.classType` on each hit anyway (L-CDGC-264).
+- The `knowledgeQuery` grammar composes phrases such as `Data Elements related to Classification with Name 'Email'`,
+  `... in resource "<Source>"` or `... with curation status NONE` (pending CLAIRE recommendations are NONE, not
+  PENDING) (L-CDGC-238).
+- `certified:true` applies to datasets only: on terms, domains, policies or columns it returns an empty result, not a
+  gap; filter business assets on `assetLifecycle` Published instead (L-CDGC-247).
 
 ---
 
@@ -147,6 +155,14 @@ POST {API}/data360/search/v1/assets?knowledgeQuery=<query or *>&segments=summary
 `GET {API}/data360/search/v1/assets/<identity>?scheme=internal&segments=<list>` with segments from `summary`,
 `systemAttributes`, `selfAttributes`, `customAttributes`, `neighborhood`, `dataClassification`, or `all`. For slash-free
 external ids use `?scheme=external` (e.g. `DOM-<n>` or a classification id).
+
+Many at once: `POST {API}/data360/search/v1/assets/details?scheme=internal&segments=<list>` with the ids in the body
+(about 100 per call; clients differ between a bare array and `{"assetIds":[...]}`, so test both). Segment qualifiers
+such as `lineage-level:column`, `lineage-direction:inbound` and `hierarchy:selfAttributes` narrow the read. An id that
+cannot be resolved is simply absent from the reply, and an unclassified column omits the `dataClassification` key
+(L-CDGC-240, L-CDGC-265, code reads). Change history is on `GET /data360/audit/v1/assets/<id>/events` with repeated
+`filter=` parameters (L-CDGC-241); a file export runs as a job (`search/export/v1/assets`, then `observable/v1/jobs`)
+(L-CDGC-242).
 
 ### 4.2 Walking Resource > Database > Schema > Table/View > Column
 
@@ -422,7 +438,9 @@ before a target exists stay PENDING and do not recover.
 - `/data360/marketplace/api/v2/delivery-targets/templates` is the wrong plane (GET 400, POST 405) (L-CDGC-094).
 - **UI-only** (L-CDGC-096, L-CDGC-098): delivery template creation (405 on every verb), ratings (`PUT.../ratings` 405),
   stakeholders and comments (405), consumer chat, and approval or access-key verbs on orders (405). `PUT /dataCollections/<id>`
-  with stakeholder ids echoes 200 without persisting.
+  with stakeholder ids echoes 200 without persisting. Public code instead sends `PATCH /api/v2/data-collections/<id>`,
+  which answers 204, or 202 when a category or stakeholder change is queued as a background job: re-read before
+  assuming it landed (L-CDGC-273, code read, not probed here).
 - **Automating the template UI** (L-CDGC-096): the Marketplace app (`https://cdmp-app.<domain>.informaticacloud.com/`) stalls
   headless because of cross-origin bootstrap calls, so drive it in a headed browser (xvfb on servers). Setup > Delivery uses
   react-select dropdowns (options match `[class*='-option']`; `role=option` belongs to a background grid and Escape closes
@@ -459,6 +477,6 @@ agent tools return an empty `END_OF_ANSWER` for assets that are not cataloged (L
 ## Lessons cited in this doc
 
 L-CDGC-012, 013, 032, 046, 057, 064, 065, 069, 073 to 085, 087 to 101, 107, 139, 140, 142 to 149, 159, 160, 161, 165,
-166, 167, 169, 207 to 211, L-DQ-097, and the superseded L-CDGC-086 (superseded by L-CDGC-159), L-CDGC-122 (superseded by L-CDGC-073), 123, 132,
+166, 167, 169, 207 to 211, 238, 240, 241, 242, 247, 264, 265, 273, L-DQ-097, and the superseded L-CDGC-086 (superseded by L-CDGC-159), L-CDGC-122 (superseded by L-CDGC-073), 123, 132,
 137.
 Full text: [Lessons: CDGC](lessons.md).

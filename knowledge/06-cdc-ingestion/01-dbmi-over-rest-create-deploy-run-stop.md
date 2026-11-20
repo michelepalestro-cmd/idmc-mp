@@ -14,7 +14,7 @@
 
 **Related:** [CDC from PostgreSQL](02-cdc-from-postgresql.md) · [DBMI Targets & Drivers](03-dbmi-targets-drivers.md) · [Headless Deletes & Org Cleanup](../12-deploy-migrate/06-headless-deletes-org-cleanup.md) · [Lessons: Mass Ingestion & CDC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > Database Ingestion (DBMI, "Mass Ingestion - Databases") has a complete REST lifecycle on its own host, `https://<pod>-ing.<domain>.informaticacloud.com`. You create a task from JSON, deploy it (which creates a job), then start, stop, resume and undeploy the job, and read its status.
 > There is no update verb. To change a task, re-import an edited export, or create a new task and delete the old one through FRS.
@@ -48,7 +48,7 @@ How to be sure you are on the right host (L-DBMI-001, 2026-07-26):
 | any path | `No static resource <path>` | The route does not exist on this host |
 | `GET /dbmi/public/api/v2/task/create` | 405 `Request method GET is not supported` | The POST verb exists |
 | `POST /dbmi/public/api/v2/task/create` with an empty body | 500 `Cannot invoke "Object.getClass" because "o" is null` | The handler parsed and ran; send a real body |
-| `GET /dbmi/public/api/v2/job/status` | 415 `Content-Type is not supported` (with or without params; POST gives 405) | Live, content-negotiating route. Use the v1 status route below. One 2026-09-22 run reports reading status here with a GET that carried a JSON body `{"jobId":<n>}`; that was not re-verified |
+| `GET /dbmi/public/api/v2/job/status` | 415 `Content-Type is not supported` (with or without params; POST gives 405) | Live, content-negotiating route. Use the v1 status route below. A GET with `Content-Type: application/json` and the body `{"jobId":<n>}` is reported to answer with status, errorMessage, lastAction and jobConfig (one 2026-09-22 run here, and a maintained client: L-DBMI-065, reported); not re-verified here |
 | a DBMI route called with a 22-character GUID | routing 404 | Use the numeric id (section 6) |
 | any call answered by an HTML login page with status 200 | wrong header or wrong plane | Fix the header; never count it as success |
 
@@ -186,7 +186,9 @@ dcall("POST", "/dbmi/public/api/v2/job/start", sid, {"jobId": job_id or j.get("r
 
 - **Status:** `GET /dbmi/api/v1/task/<taskId>/job` returns `status`, `runId` (the job id), `duration`, and `extraData.taskId` (which holds the `frsId`). This is the route every working tool used.
 - **Details:** `GET /dbmi/public/api/v2/task/details?taskId=<n>` or `?pageSize=200` returns `documents[].{name, taskId, dbmiTask}`.
-- **History:** DBMI runs show up in the v2 activity log (`GET /api/v2/activity/activityLog`) and in Monitor. Failed probe instances stay listed in Monitor > Running Jobs until they are undeployed (L-DBMI-031, 2026-09-24).
+- **Ids by name** (L-DBMI-069, reported): `GET /dbmi/public/api/v2/task/fetchId?taskName=<name>&projectId=<frsProjectId>&folderId=<frsFolderId>` returns the numeric `taskId`; `GET /dbmi/public/api/v2/task/fetch/<taskId>/job` returns the job id after a deploy.
+- **Per-table metrics** (L-DBMI-066, reported): `POST /dbmi/public/api/v2/job/metrics` with `{"jobId":<n>,"parameters":{"metricsOptions":{"stateFilter":["FAILED"],"limit":25,"offset":0}}}` returns rows read and written per table and, for CDC, inserts, updates and deletes. `stateFilter` must be an array (a string answers 500); 409 means the job has no statistics in its state.
+- **History:** DBMI runs showed up in the v2 activity log (`GET /api/v2/activity/activityLog`) and in Monitor (L-DBMI-003); a maintained client reports that DBMI jobs never appear in the v2 activity APIs (L-DBMI-065, reported), so check on your pod before a monitor relies on it. Failed probe instances stay listed in Monitor > Running Jobs until they are undeployed (L-DBMI-031, 2026-09-24).
 - **Task logs on the agent:** `<agent_home>/apps/Database_Ingestion/logs/tasks/*_<jobId>-CDC_COMBINED-*.log` (readable by root or the agent user only). A running job's processes show as `PwxAgent_dbmi_<task>_<job>` under the agent's OS user (L-DBMI-030).
 - **Per-table state from the log** (L-DBMI-030). Each table's progress is logged as `transition event [<EVENT>]. Details: [table=<schema>.<table>`. `M4_UNLOAD_COMPLETE` ends a table's initial unload; `NORMAL_CONTINUOUS_CDC_TABLE` means it is streaming. A start, restart or switch is complete when every table's latest event is `NORMAL_CONTINUOUS_CDC_TABLE` and the file has no ` ERROR `, ` SEVERE ` or ` FATAL ` lines: `grep -oE 'transition event \[[A-Z0-9_]+\]. Details: \[table=[a-z_.]+' <log>` lists them (13 tables reached continuous CDC 3 min 13 s after a new job started, initial unload included). Prove an old job is gone by its log's last write time and zero `PwxAgent_dbmi_<task>_<job>` processes.
 
@@ -263,6 +265,12 @@ page) with `IDS-SESSION-ID` and `INFA-SESSION-ID`:
    taskflow only on SUCCESS. A task started from a process has no used-by link: a cleanup that archived it as
    'unused' broke the live flow, so grep process XML for task ids before archiving (L-CLEAN-025). FRS `MoveEntities`
    moves the task between folders (200).
+6. **More `mftsaas` routes** (reported from vendor docs and client code, not probed here): run history and per-file
+   events at `GET mitasks/activityLog?taskId=<id>|runId=<id>` (v1) and `GET /mftsaas/api/v2/mitasks/activityLog` with
+   `fetchFileEvents=true` (L-DBMI-070); file listeners at `filelisteners` with `start`, `stop` and status
+   (L-DBMI-068); ad-hoc transfers without a task, `POST sendfiles/<connId>` and `receivefiles/<connId>` on an Advanced
+   FTP/FTPS/SFTP or AS2 connection (L-DBMI-067). Streaming ingestion has its own `sisvc` routes on the `-ing` host
+   (L-DBMI-071).
 
 ## 10. Error signatures
 
@@ -272,7 +280,7 @@ page) with `IDS-SESSION-ID` and `INFA-SESSION-ID`:
 | `No static resource <path>` | `-ing` or pod host | route absent on that host | check host and prefix |
 | 405 `Request method GET is not supported` | create | GET on a POST route | POST |
 | 500 `... "Object.getClass" because "o" is null` | create | empty body | send the task JSON |
-| 415 `Content-Type is not supported` | `job/status` | content negotiation | use `/dbmi/api/v1/task/<taskId>/job` |
+| 415 `Content-Type is not supported` | `job/status` | content negotiation | use `/dbmi/api/v1/task/<taskId>/job`, or send `Content-Type: application/json` with a `{"jobId":<n>}` body (L-DBMI-065, reported) |
 | 409 `WRONG_ACTION_FOR_DEPLOYED_JOB` | `job/resume` | the job was never started | `job/start` |
 | deploy → `failed`, log `Failed to load driver class com.simba.googlebigquery.jdbc.Driver` | agent | Simba BigQuery JDBC set missing | [DBMI Targets & Drivers](03-dbmi-targets-drivers.md) (L-DBMI-033) |
 | `Mass Ingestion service could not find active agents` | `job/start` or `task/deploy` right after an agent restart | the Mass Ingestion engine is still starting | wait until `Database_Ingestion` and `MassIngestionRuntime` read RUNNING in `GET /api/v2/agent/details/<agentId>`, then retry once (L-DBMI-052) |
@@ -291,7 +299,7 @@ The agent ships `<agent_home>/apps/dbmicli/dbmicli.jar`. Run it with the agent's
 
 ## 12. Entitlement: engines and privileges, not 404s
 
-DBMI is entitled when `GET /api/v2/agent/details/<agentId>` lists the `Database_Ingestion` and `MassIngestionRuntime` engines as RUNNING and the user holds the `create.dbmi.task` and `execute.dbmi.task` privileges. The runtime environment must also have the Mass Ingestion (databases) service selected (see [Secure Agent & Connections](../02-secure-agent)). A 404 on a DBMI path means the wrong host or path, not a missing license (L-DBMI-041, 2026-07-25).
+DBMI is entitled when `GET /api/v2/agent/details/<agentId>` lists the `Database_Ingestion` and `MassIngestionRuntime` engines as RUNNING and the user holds the `create.dbmi.task` and `execute.dbmi.task` privileges. The runtime environment must also have the Mass Ingestion (databases) service selected (see [Secure Agent](../02-secure-agent/README.md)). A 404 on a DBMI path means the wrong host or path, not a missing license (L-DBMI-041, 2026-07-25).
 
 When an org hits its monthly job limit, CDI starts fail within seconds, but a running DBMI CDC job keeps working (L-DBMI-044, 2026-09-28; see [IPU, Metering & Licensing](../13-ipu-cost)).
 
@@ -307,4 +315,4 @@ When an org hits its monthly job limit, CDI starts fail within seconds, but a ru
 
 ## 14. Lessons in this doc
 
-L-DBMI-001 to L-DBMI-010, L-DBMI-023, L-DBMI-028, L-DBMI-030 to L-DBMI-033, L-DBMI-037, L-DBMI-038, L-DBMI-040, L-DBMI-041, L-DBMI-044, L-DBMI-052, L-DBMI-060 to L-DBMI-063, and the superseded L-DBMI-045 to L-DBMI-048. Full text: [Lessons: Mass Ingestion & CDC](lessons.md).
+L-DBMI-001 to L-DBMI-010, L-DBMI-023, L-DBMI-028, L-DBMI-030 to L-DBMI-033, L-DBMI-037, L-DBMI-038, L-DBMI-040, L-DBMI-041, L-DBMI-044, L-DBMI-052, L-DBMI-060 to L-DBMI-063, L-DBMI-065 to L-DBMI-071, and the superseded L-DBMI-045 to L-DBMI-048. Full text: [Lessons: Mass Ingestion & CDC](lessons.md).

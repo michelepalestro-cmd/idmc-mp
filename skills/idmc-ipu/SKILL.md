@@ -43,6 +43,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_metering.py`: the metering export (`export --start --end --out`), IPU by meter; read-only, 0 IPU
 - `toolkit/lib/idmc_session.py`: activity-log and other GET reads (it cannot start the metering export, a POST)
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `ipu_*` (metering
+  exports), `jobs_search_completed_jobs` for run counts
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

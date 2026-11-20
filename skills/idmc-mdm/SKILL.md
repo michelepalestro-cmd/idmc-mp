@@ -47,6 +47,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   DELETE) are hand-built in Python with the headers `knowledge/10-mdm/02-mdm-records-ingest-search-export-cleanup.md`
   lists (Bearer JWT from `Session().jwt()`, IDS-SESSION-ID, X-INFA-ORG-ID). Gate every write like the other tools: a
   dry run that prints the call first, then `--execute` only after `--expect-org` matches (`idmc_http.WriteGate`).
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `cust_*` (fuzzy customer
+  search, golden record, related records; needs MDM)
 - No MDM licence: `toolkit/demos/customer_master_csv/` (clean, deduplicate, customer ids with plain CDI mappings)
 
 ## When you learn something

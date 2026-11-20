@@ -24,7 +24,7 @@ job cap; runs fail with 'exceeded your monthly limit' or stop with zero rows.
 
 **Related:** [01 IPU Model (mechanics)](01-ipu-model-mechanics.md) · [02 Metering & Consumption Exports](02-metering-consumption-exports.md) · [02 Runtime Environments - Services & Connectors](../02-secure-agent/02-runtime-environments-services-connectors.md) · [Performance, Concurrency & Job Caps](../04-mappings/06-performance-concurrency-job-caps.md) · [Lessons: IPU, Metering & Licensing](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > "Is it licensed?" has four layers that fail differently: the licence record, the org's entitlement, the selection on
 > a runtime environment, and a running engine. There is no licence inventory API, every `EffectiveLicenses` limit
@@ -111,6 +111,7 @@ sense: it means the limit is not expressed here (section 5).
 | `GET /api/v2/org/<id>/license[s]` | 404 |
 | `GET /api/v2/org/<id>` from a sub-org user | 403 REPO_10404 (use `GET /api/v2/org`) |
 | `GET /api/v2/org` | 200, but only `maxLogRows`, `subOrgLimit`, `restApiSessionLimit` among limits |
+| `GET /public/core/v3/license/application`, `/license/edition` | Reported candidate routes for application and edition licence definitions; no response captured, probe once before building on them (L-IPU-068) |
 
 For the licence list itself use Administrator > Organization > Licenses (for a sub-org, the parent's Sub-Organizations >
 Licenses) or its CSV export ([doc 02](02-metering-consumption-exports.md) section 6).
@@ -153,8 +154,11 @@ engine and selection lists (L-IPU-053).
   (L-IPU-036). Trial or embedded sub-orgs accrue zero billed IPU even when capabilities run.
 - **Check the parent first**: a sub-org showing one engine looked unlicensed, but the parent's shared agent ran 22
   engines and selecting services on the sub-org's own agent delivered all 22 with no reinstall (L-IPU-034).
-- **Allocating licences to a sub-org** is UI-only: the parent's Administrator > Sub-Organizations > Licenses
-  (L-IPU-035).
+- **Allocating licences to a sub-org** is proven only in the UI: the parent's Administrator > Sub-Organizations >
+  Licenses (L-IPU-035). A REST route is reported but not probed here: logged in to the parent as an admin,
+  `PUT /public/core/v3/license/org/<subOrgIdV3>` with `customLicenses[]`, `assignedEditions[]` and `customLimits[]` is a
+  **full overwrite** (anything omitted is removed), so GET the same path first, edit it, PUT it back and keep the GET as
+  the rollback copy (L-IPU-072).
 - **Shared orgs can licence-lock UI roles**: a demo user could not see Monitor > All Jobs, My Jobs or the Application
   Integration Console, and adding Monitor or Operator roles failed with 'license status is not enabled'; use Monitor >
   Running Jobs, Operational Insights or the job APIs instead (L-IPU-039).

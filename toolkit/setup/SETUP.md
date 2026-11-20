@@ -80,7 +80,7 @@ python3 toolkit/setup/check_setup.py --demo <demo folder name>
 
 It must end with `READY`. Then open Claude Code in the repository and say, for example, "rebuild the
 `<demo>` blueprint in my org", or follow `toolkit/demos/<demo>/BUILD.md` step by step. Every step is a dry run until
-you add `--execute`.
+you add `--execute --expect-org <org id>`.
 
 ## 6. Before you share or commit
 

@@ -24,7 +24,7 @@ is deployed; checking whether an org holds MDM at all.
 [Migration-Clone Authoring](../12-deploy-migrate/03-migration-clone-authoring.md) ·
 [Lessons: MDM](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** MDM SaaS splits cleanly. The runtime plane on `<pod>-mdm.<domain>` (add `-mdm` to the pod label, drop
 > `/saas`) is headless; the design plane (business entity models, source systems, match models, survivorship,
@@ -47,7 +47,7 @@ is deployed; checking whether an org holds MDM at all.
 | Publish or deploy the model | design | no | Modeler (Save or Publish, see section 4) | L-MDM-007 (disputed) |
 | Register source systems | design | no | Business 360 Console or Modeler | L-MDM-004 |
 | Match models, merge and survivorship rules | design | no | Modeler | L-MDM-038 |
-| Run match/merge, ingress, reindex jobs | design | no | Business 360 Console, or job schedules | L-MDM-016 |
+| Run match/merge, ingress, reindex jobs | design | no | Business 360 Console, or job schedules; public design notes name an Egress job route, `POST.../job/public/api/v1/jobInstance/Egress` (unproven) | L-MDM-016, L-MDM-096 |
 | Steward decisions | design | no | Customer 360 steward UI | L-MDM-004 |
 
 The durable plan: do the design clicks once, deliberately, then script everything at run time (L-MDM-004).
@@ -73,6 +73,11 @@ or `<pod>-cs`.
 Bearer alone gets 401 on writes. The JWT expires 30 minutes after it is minted, whatever the activity, so re-mint it
 from the cached identity session at about 25 minutes or on any 401 (no password needed). The MDM session itself times
 out after 30 minutes idle. Details of the identity plane are in the auth lessons linked above.
+
+The three headers always work. Lighter sets have been seen: the proven bulk delete sent `IDS-SESSION-ID` and
+`X-INFA-ORG-ID` alone (L-MDM-070), and public client code calls Search with `IDS-SESSION-ID` alone (L-MDM-091, not
+probed here). For a reachability test from an agent host, a field page uses `GET https://<pod>-mdm.<domain>.informaticacloud.com/healthz`
+(L-MDM-112, low confidence).
 
 ---
 

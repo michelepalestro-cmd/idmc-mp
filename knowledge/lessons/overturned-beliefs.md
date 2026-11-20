@@ -1,11 +1,11 @@
 # Overturned Beliefs
 
-> **Summary.** The corrections log: every IDMC belief this KB once held and later overturned, 185 of them across 14
+> **Summary.** The corrections log: every IDMC belief this KB once held and later overturned, 186 of them across 14
 > domains, each with the dates it was held, the lesson that overturned it and what to do now. Most fell in two waves: June and July 2026 (65, mostly wrong hosts, missing headers, the clone route and CAI publish) and 21–29 September 2026 (90: the MCP registry, packages, DBMI, profiling, catalog writes, the selections PUT, deletes); 8 fell in August and early September, and 11 between 2026-09-30 and 2026-10-01 (CLAIRE GPT behaviour, catalog DQ scoring, a catalog-source scan, the agent downloads cache and BigQuery pushdown), and 3 on 2026-10-08 (Kafka and AMQP listeners authored headless; catalog lineage read and written over REST); later
 > ones include a Databricks catalog type (2026-10-19) and, between 2026-10-26 and 2026-11-02, the REST cancel of a catalog
-> job, ClickHouse profiling through JDBC V2 and the Operational Insights header. Read this page before quoting any wall. The 17 lessons that are still disputed, overturned neither way, are listed at the end.
+> job, ClickHouse profiling through JDBC V2, the Operational Insights header and per-rule profile pass rates read over REST. Read this page before quoting any wall. The 20 lessons that are still disputed, overturned neither way, are listed at the end; three more that a newer proof contradicts are kept as disputed in their domain tables.
 
-Last verified: 2026-11-03, against lessons.jsonl (overturn dates 2026-06-27 to 2026-11-02).
+Last verified: 2026-11-20, against lessons.jsonl (overturn dates 2026-06-27 to 2026-11-02).
 
 Related: [Lessons Learned README](README.md) · [The Laws of Headless IDMC](../00-start-here/02-the-laws-of-headless-idmc.md) ·
 [Capability Map](../00-start-here/03-capability-map.md) · [Changelog](../reference/kb-changelog.md) ·
@@ -40,7 +40,7 @@ search this page for the path, the product or the error code.
 | 5 | Database Ingestion is a UI wizard with no deploy or run verb | 2026-07-26 (host), 2026-09-28 (lifecycle) | L-DBMI-045, L-DBMI-047, L-DBMI-048 → L-DBMI-001, L-DBMI-003 | The whole lifecycle runs on `<pod>-ing` |
 | 6 | CAI publish is a UI click; imported assets need one UI save | 2026-07-09, 2026-09-28 | L-CAI-097, L-CAI-100 → L-CAI-001, L-CAI-003, L-CAI-020 | `asset/v1/publish` with the `Explore/...` asset path |
 | 7 | Agent services and connectors can only be enabled in Administrator | 2026-09-23 (MCP), 2026-09-28 (REST) | L-AGENT-079, L-AGENT-080, L-UI-025 → L-AGENT-039, L-UI-001, L-UI-002 | The selections PUT, found by capturing the UI's own call |
-| 8 | The managed MCP catalog is five servers with one write | 2026-09-23 | L-MCP-069, L-MCP-070, L-MCP-071 → L-MCP-001 | Enumerate the org's registry (19 servers, about 140 tools, on one org) |
+| 8 | The managed MCP catalog is five servers with one write | 2026-09-23 | L-MCP-069, L-MCP-070, L-MCP-071 → L-MCP-001 | Enumerate the org's registry (19 servers, about 140 tools, on one org in September; the October 2026 public registry lists 23 shared servers, L-MCP-132) |
 | 9 | Glossary writes and term-to-column links have no REST route | 2026-09-24 | L-CDGC-125, L-CDGC-126 → L-CDGC-051, L-CDGC-056 | `data360/content/v1/assets` POST and PATCH |
 | 10 | Data Profiling has no API, and profiles can only run from the UI | 2026-07-26 (reads), 2026-09-24 (create and run) | L-DQ-085, L-DQ-087, L-DQ-088 → L-DQ-019, L-DQ-023 | Create, bind rules, execute and poll on `<pod>-dqprofile` |
 | 11 | The headless delete surface is five DELETE endpoints | 2026-09-26/28 | L-CLEAN-028, L-CLEAN-031 → L-CLEAN-006, L-CLEAN-003 | v2 DELETE on seven resources plus FRS `DeleteEntities` and `BaseEntities` |
@@ -60,7 +60,7 @@ search this page for the path, the product or the error code.
 | 03 Data Integration (CDI) | `CDI` | 21 | 2026-07-04 to 2026-10-07 |
 | 04 Mass Ingestion and CDC | `DBMI` | 5 | 2026-07-25 to 2026-09-28 |
 | 05 Application Integration (CAI) | `CAI` | 17 | 2026-07-07 to 2026-11-01 |
-| 06 Data Quality and profiling | `DQ` | 15 | 2026-06-28 to 2026-11-02 |
+| 06 Data Quality and profiling | `DQ` | 16 | 2026-06-28 to 2026-11-02 |
 | 07 Catalog and governance (CDGC) | `CDGC` | 26 | 2026-06-28 to 2026-10-26 |
 | 08 MDM | `MDM` | 11 | 2026-07-06 to 2026-09-28 |
 | 09 CLAIRE and MCP | `MCP` | 14 | 2026-07-09 to 2026-10-01 |
@@ -69,7 +69,7 @@ search this page for the path, the product or the error code.
 | 12 Claude working methods | `METHOD` | 8 | 2026-07-05 to 2026-09-29 |
 | 13 Environment and ops | `ENV` | 3 | 2026-07-08 to 2026-09-24 |
 | 14 UI automation | `UI` | 6 | 2026-07-07 to 2026-09-28 |
-| **Total** | 16 prefixes | **185** | 2026-06-27 to 2026-11-02 |
+| **Total** | 16 prefixes | **186** | 2026-06-27 to 2026-11-02 |
 
 ---
 
@@ -186,7 +186,7 @@ Lessons file: [05 Application Integration (CAI)](../07-app-integration/lessons.m
 | L-CAI-117 | Kafka and JMS event sources, listener processes and fault handling can only be authored in the Process Designer | 2026-09-22 to 2026-10-07 | L-CAI-116 (2026-10-08) | Author Kafka and AMQP connections and event-bound processes in an import package, publish them over REST, and start or stop listeners with restadmin (L-CAI-119, L-CAI-122) |
 | L-CAI-049 | The Operational Insights GraphQL export takes the documented `Authorization: Bearer <session id>` header | 2026-07-25 to 2026-11-01 | L-CAI-159 (2026-11-01; L-CAI-049 is kept as disputed for its header) | Send `IDS-SESSION-ID: <session id>`: 200 with `data.processJobReport[]`, while the Bearer form answered 401 on the same query |
 
-## 06. Data Quality and profiling (15)
+## 06. Data Quality and profiling (16)
 
 Lessons file: [06 Data Quality & Profiling](../08-data-quality/lessons.md)
 
@@ -204,6 +204,7 @@ Lessons file: [06 Data Quality & Profiling](../08-data-quality/lessons.md)
 | L-DQ-092 | Low profiling coverage (~17%) is caused by the connector skipping json/enum/array; casting views take it to ~100% | 2026-06-28 to 2026-07-09 | L-DQ-042 (2026-07-26) | Measure coverage against non-empty tables; casting views recover very little |
 | L-DQ-093 | CDGC catalog scans and profiling are UI-initiated; there is no REST trigger | 2026-07-05 | L-DQ-043 (2026-09-24) | Trigger scans and profiling over REST: `data360/executable/v1/catalogsource/<id>` with `capabilityNames` |
 | L-DQ-044 | Running only the Data Quality capability returns 406 | 2026-07-09 | L-CDGC-143 (2026-09-30) | Run `capabilityNames: ['Data Quality']` once the source's typeCapabilities carry the Data Profiling and Data Quality Scope groups with a runtime environment; a failed job still shows no error text over REST |
+| L-DQ-031 | No REST read of per-rule profile pass rates exists; keep app-facing DQ numbers in your own tables | 2026-09-24 | L-DQ-123 (2026-11-02) | Read each bound rule's `Output` column `ValueFrequencies` (VALID/INVALID) from the profiling metric store |
 | L-DQ-051 | Catalog rule occurrences score 1 of 6, and reading the scores is UI-only | 2026-07-09 | L-DQ-097, L-CDGC-144 (2026-09-30) | All 9 accepted instances scored in one run; read the scores through the `dataQuality` segment or ask CLAIRE, and recompute the rules in the warehouse to check them |
 | L-DQ-052 | Catalog rule occurrences have no create path, and a warehouse source can't be scored | 2026-07-09 | L-CDGC-143, L-MCP-086, L-DQ-097 (2026-09-30) | Create occurrences through CLAIRE GPT's recommend-and-accept with the columns named (no REST create verb seen); a warehouse source scores once its typeCapabilities carry a runtime environment |
 | L-DQ-119 | A REST profile on a JDBC V2 ClickHouse source cannot be created (NSTRING refused with PROFILE_MDL_00006, 'string' hangs), so direct profiling of ClickHouse stays blocked | 2026-10-29 | L-DQ-128 (2026-11-02; L-DQ-119 is kept as disputed: what differed was not isolated) | Clone a profile that has already run on a JDBC V2 connection, with NSTRING fields typed `dataType` varchar; five ClickHouse profiles completed, up to ALL_ROWS over a table of about a hundred million rows |
@@ -357,7 +358,7 @@ Lessons file: [14 UI Automation](../14-working-with-claude/lessons-ui-automation
 | L-UI-027 | Chromium flags that disable Private Network Access are enough to automate the console behind the proxy | 2026-08-18 to 2026-09-13 | L-UI-011 (2026-09-20) | Run UI automation from a host outside the proxy |
 ---
 
-## Still disputed: overturned neither way (18)
+## Still disputed: overturned neither way (20)
 
 These lessons have dated records that disagree. None of them is a belief to quote, and none is settled enough to
 overturn. Each row says what to do until someone settles it with a new dated probe.
@@ -366,6 +367,7 @@ overturn. Each row says what to do until someone settles it with a new dated pro
 |---|---|---|---|
 | L-AUTH-075 | Is `GET /api/v2/auditlog` live? | 404 in one record; live on both orgs in another | use `GET /public/core/v3/securityLog` |
 | L-CDGC-063 | Does the Classification Promotion job work headless? | 200 and a job id once, from a browser session; only Dismiss in another tenant | capture the request body from the browser and test it; meanwhile the auto-accept threshold is the lever |
+| L-CDGC-154 | Does a BigQuery catalog scan fail when the connection points at the account's own project with an include filter on another project's dataset? | the same-project case failed with a `jobs.create` 403 (tested); the cross-project case was never scanned | grant `roles/bigquery.jobUser` in the dataset's project before the scan |
 | L-CDI-192 | Can a mapping task run through `POST /public/core/v3/jobs` with `taskFederatedId`? | one July report of 22 runs; no other source reproduces it | start jobs with `POST /api/v2/job` and the v2 `taskId` |
 | L-CDI-193 | Can an advanced taskflow be published over REST? | API-made and copied ones fail; a designer-made shell is unsettled; one July report named no endpoint | build on linear taskflows or controller-staged runs |
 | L-CDI-194 | Does `truncateTarget=true` truncate a PostgreSQL target? | "ignored" in one source; a wipe risk in another; no wipe observed | never set it on a system-of-record table; make postings idempotent in the database |
@@ -373,6 +375,7 @@ overturn. Each row says what to do until someone settles it with a new dated pro
 | L-CONN-048 | Does JDBC V2 pass a password to the database? | July: no password reached the database; August: tests passed only after one was set | read the database's own auth log; never trust a green test for the password |
 | L-DBMI-035 | Which private-key form does the Simba driver accept? | the reports say escaped PEM; the script probably sent the plain PEM | probe the form on each pod; give DBMI its own connection |
 | L-DQ-008 | Is `<pod>-dqcloud-api` mounted on every pod? | 404 (not mounted) in one record, 401 (a role gap) in another, on the same pod family | resolve the host by DNS and make one authenticated call first |
+| L-DQ-029 | Can data profiles be moved between folders? | FRS_108 and 'cannot move profile' (2026-09-24); 15 profiles moved with FRS_200, FRS_108 only on orphan profile documents (2026-11-02, L-DQ-124) | move with FRS `MoveEntities`; recreate only a profile the profiling service does not list |
 | L-DQ-034 | Must the profiling results store be Amazon S3 V2? | S3 V2 had to be enabled on one org; a later note says ADLS Gen2 or GCS also work | if a profile fails naming `amazons3`, enable S3 V2 first, then check the org's store |
 | L-IPU-037 | Is the API developer portal a missing SKU? | an absent privilege and a 404 only | confirm in Administrator before escalating |
 | L-IPU-040 | Is Database Ingestion priced as a floor plus 24x7 runtime? | a task title says so; the CPDS meters CDC per million rows and bulk per GB | size from the CPDS rates |

@@ -22,9 +22,9 @@ someone else's public code and has not been proven live yet.
 | Scan into the catalog; glossary, classification, lineage | `/idmc-mp:catalog` | [09 Catalog & lineage](../09-catalog-lineage/README.md) | `toolkit/lib/idmc_cdgc.py` |
 | Master records into golden records (MDM) | | [10 MDM](../10-mdm/README.md) | `toolkit/lib/idmc_session.py` |
 | Clean a messy customer CSV, dedupe it, give customer ids (no DQ or MDM licence) | | [Customer CSV blueprint](../../toolkit/demos/customer_master_csv/README.md) | `toolkit/demos/customer_master_csv/check.py` |
-| Use Informatica's MCP servers or CLAIRE GPT | | [11 MCP & CLAIRE](../11-mcp-claire/README.md) | `toolkit/lib/idmc_mcp.py` |
+| Use Informatica's MCP servers or CLAIRE GPT | `/idmc-mp:connect-mcp` | [11 MCP & CLAIRE](../11-mcp-claire/README.md) | `toolkit/lib/idmc_mcp.py` |
 | Promote dev to prod, migrate between orgs, clean up | `/idmc-mp:promote` | [12 Deploy & migrate](../12-deploy-migrate/README.md) | `toolkit/lib/idmc_export_import.py` |
-| See and cut IPU cost, job caps | `/idmc-mp:ipu-report`, `/idmc-mp:optimize` | [13 IPU & cost](../13-ipu-cost/README.md) | `toolkit/lib/idmc_session.py` |
+| See and cut IPU cost, job caps | `/idmc-mp:ipu-report`, `/idmc-mp:optimize` | [13 IPU & cost](../13-ipu-cost/README.md) | `toolkit/lib/idmc_metering.py` |
 | Work safely and fast with Claude on IDMC | | [14 Working with Claude](../14-working-with-claude/README.md) | |
 | Run it in production: alerts, daily check, failed-job runbook | `/idmc-mp:health-check` | [Run it in production](12-run-it-in-production.md) | `toolkit/lib/idmc_export_import.py` (backups) |
 | Understand an error | `/idmc-mp:fix-error` | [Error triage](04-error-triage.md) | `knowledge/lessons/error-index.md` |

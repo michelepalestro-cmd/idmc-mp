@@ -77,6 +77,11 @@ a container or a remote host; after an exposure; before sharing a transcript, do
 | UI capture logs | an XHR capture recorded the identity-service login request, whose body carries the username and password in clear | redact inside the capture hook ([04 UI Automation](04-ui-automation-with-playwright.md), section 8) | rotate the password if an unredacted log was shared | (L-UI-002) |
 | Third-party MCP shims | a field-distributed stdio shim created its HTTPS context with `ssl.CERT_NONE` and `check_hostname=False`, so it would hand the IDMC user's credentials to any certificate | grep shims for `CERT_NONE`, `check_hostname`, `verify=False`, `_create_unverified_context`; restore verification or pin a CA bundle; credentials from a 0600 file or the environment, never arguments ([shim checklist](../11-mcp-claire/04-agent-style-mcp-async-orchestration-custom-shims.md)) | patch before reuse | (L-MCP-124) |
 | Scratch scripts in `/tmp` | admin passwords inside world-readable scratch files on a shared host | write them 0600 and shred them after use | shred; rotate if another user could read them | (L-METHOD-124) |
+| IDMC session logs | the Tableau V3 writer prints its Tableau REST session token in the mapping session log, which anyone who can download the log can read | restrict who can read those logs; lower the connector's log level | let the token expire; rotate the Tableau credential | (L-AUTH-093) |
+| HTTP client logs | `httpx` logs full request URLs at INFO, and a webhook URL is the credential | raise the `httpx`/`httpcore` loggers to WARNING; log the exception type, not the URL | rotate the webhook | (L-ENV-141) |
+| The v2 login answer | it carries the user's e-mails, security question and roles | keep only the fields you need before any log, error or file write | delete the log | (L-AUTH-136) |
+| Community scripts | some public catalog scripts POST the org id, user, pod URL and hostname to a third-party endpoint on every login | grep any community script for hosts other than the vendor's before running it | rotate the credential it used | (L-METHOD-170) |
+| Tool arguments | an MCP tool that takes a password as an argument puts it in the transcript | server-side plan files with name assertions; mask secret keys recursively in tool output | rotate | (L-METHOD-163) |
 
 ## 3. Handling patterns
 

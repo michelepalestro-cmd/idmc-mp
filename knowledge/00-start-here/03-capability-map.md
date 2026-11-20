@@ -28,7 +28,7 @@ choose between CDI, CDC, CAI and an API gateway for a flow.
 [MCP vs REST](../11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md) ·
 [UI Automation with Playwright](../14-working-with-claude/04-ui-automation-with-playwright.md)
 
-**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03; each row carries its own date).
+**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03; each row carries its own date). Rows for users, groups, audit, sub-org licences, JWT, advanced-taskflow runs and MDM jobs were refreshed on 2026-11-20 with lessons up to 2026-11-19.
 
 > One page answering "can I do X without the UI?" for every IDMC service this KB covers. The matrix gives the state per
 > operation; the tables under it give the dated status, the route in one line and the doc and lessons behind it. Most of
@@ -98,13 +98,13 @@ headers.
 | Read the org | P 2026-09-28 | `GET <serverUrl>/api/v2/org` (v2 id, `orgUUID`, parent, sub-orgs; no job limit) | [Identify the Org](../01-login-and-orgs/03-identify-the-org-before-you-write.md) · L-AUTH-049 |
 | Read users, groups, roles, privileges | P 2026-07-25 | `GET /public/core/v3/users`, `/userGroups`, `/roles`, `/privileges` | [Users, Roles & Permissions](../01-login-and-orgs/04-users-roles-permissions.md) · L-AUTH-062 |
 | Create a user | P 2026-07-25 | `POST /public/core/v3/users` (key `name`; `groups` as plain id strings) → 201 | L-AUTH-057 |
-| Edit a user in place | R (405, July) | delete and re-create after a snapshot; `PUT /users/<id>/addRoles` is live but never seen to succeed | L-AUTH-059, L-AUTH-066 |
+| Edit a user in place | R (405, July) · P 2026-10-13 (membership) | delete and re-create after a snapshot for scalar fields; change roles and groups with `PUT /users/<id>/addRoles`, `removeRoles`, `addGroups`, `removeGroups` (204; keep one direct role). The v2 user update failed with `403 REPO_10704` in client code (reported) | [Users, Roles & Permissions](../01-login-and-orgs/04-users-roles-permissions.md) §1 · L-AUTH-059, L-AUTH-066, L-AUTH-090, L-AUTH-100 |
 | Delete a user | P 2026-09-28 | `DELETE /public/core/v3/users/<userId>` → 204 | L-AUTH-058, L-CLEAN-009 |
-| Create or delete a group with roles | P 2026-07-25 | `POST /public/core/v3/userGroups` (`roles` as id strings; read back); DELETE works; PUT and PATCH U | L-AUTH-060 |
-| Read the audit log | P (securityLog) · X (v2 auditlog) | `GET /public/core/v3/securityLog?limit=N` | L-AUTH-075 |
+| Create or delete a group with roles | P 2026-07-25 | `POST /public/core/v3/userGroups` (`roles` as id strings; read back); DELETE works; `GET` and `PUT /userGroups/<id>` answer 405 (reported): change members and roles with `addUsers`/`removeUsers`/`addRoles`/`removeRoles` | L-AUTH-060, L-AUTH-090, L-AUTH-120 |
+| Read the audit log | P (securityLog) · X (v2 auditlog) | `GET /public/core/v3/securityLog?limit=N`; rows under `entries[]`, the last 24 h without `q`, an `entryTime` window of at most 14 days (documented) | L-AUTH-075, L-AUTH-112, L-AUTH-135 |
 | Switch org | R (404 on every path) | an admin action | L-AUTH-050 |
-| Allocate licences to a sub-org | UI | the parent's Administrator > Sub-Organizations > Licenses | L-IPU-035 |
-| Switch the org's REST authentication to JWT | UI (admin setting) · D (session-ID auth deprecated; JWT to become the default) | Administrator settings; put every client behind a `session|jwt` switch with timed refresh; JWT values are capped at 2,000 characters (documented) | [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) §6 · L-AUTH-032, L-AUTH-033 |
+| Allocate licences to a sub-org | UI · U (reported route) | the parent's Administrator > Sub-Organizations > Licenses; client code uses `PUT /public/core/v3/license/org/<subOrgId>`, a full overwrite (GET, edit, PUT back) | L-IPU-035, L-IPU-072 |
+| Switch the org's REST authentication to JWT | UI (admin setting) · D (session-ID auth deprecated; JWT to become the default) | Administrator settings; put every client behind a `session|jwt` switch with timed refresh; JWT values are capped at 2,000 characters (documented; another page gives 16,000 as the maximum session-id length, L-AUTH-125) | [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) §6 · L-AUTH-032, L-AUTH-033 |
 
 ## 2. Secure Agent and runtime environments
 
@@ -207,6 +207,7 @@ headers.
 | Publish | R (API-made or FRS-copied: `AvrEntryNotFoundFault`) · X (a designer-created shell) | `POST https://<pod>-cai.<domain>.informaticacloud.com/active-bpel/asset/v1/publish` with the `.TASKFLOW.xml` path | L-CDI-070, L-CDI-193 |
 | Run through the job API | R (403 UI_13430) | run the member tasks from a controller, or use linear taskflows | L-CDI-071, L-CDI-125 |
 | Run a published one | D | its REST or SOAP endpoint; MCP `run_published_taskflow` | L-CDI-071 |
+| Read run status, resume, terminate | U (reported in client code) | `GET <pod host>/active-bpel/services/tf/status/<runId>`; `PUT .../active-bpel/management/runtime/v1/resumeWithFaultRetry/<runId>`; `PUT .../active-bpel/services/tf/terminate` | L-CAI-168, L-CAI-169, L-CAI-170 |
 | Author parallel paths, decisions, Command Tasks | UI | the designer | L-CDI-082 |
 
 ## 7. Schedules
@@ -391,7 +392,7 @@ address entities by runtime id (for example `c360.person`), never by design GUID
 | Fuzzy identity match | D | MCP `searchcustomer` → `search_master_record`, then `get_master_record_details` | L-MDM-027 |
 | Author or change a business entity | UI (Modeler) · P (clone, July) | v3 package of `BUSINESS_ENTITY`, `MDM_SRC_SYSTEM`, reference entities | [MDM SaaS - Runtime vs Design](../10-mdm/01-mdm-saas-runtime-vs-design.md) · L-MDM-005, L-MDM-013 |
 | Publish or deploy the model | UI · X (Save or Publish) | prove it with the ingest POST gate and a fake-entity control | L-MDM-005, L-MDM-007, L-MDM-008 |
-| Run match/merge, ingress, reindex jobs | UI | the Business 360 Console, or job schedules | [Business 360 Modeling](../10-mdm/03-business-360-modeling-match-merge.md) · L-MDM-016 |
+| Run match/merge, ingress, reindex jobs | UI · U (an Egress job route is reported) | the Business 360 Console, or job schedules; for a bulk file snapshot, client notes name `POST <pod>-mdm/job/public/api/v1/jobInstance/Egress` (L-MDM-096) | [Business 360 Modeling](../10-mdm/03-business-360-modeling-match-merge.md) · L-MDM-016 |
 
 ## 16. Managed MCP, CLAIRE and CLAIRE GPT
 

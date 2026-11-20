@@ -22,7 +22,7 @@ org and what to ask the vendor afterwards.
 
 **Related:** [Org-to-Org Migration Runbook](04-org-to-org-migration-runbook.md) · [CDC from PostgreSQL](../06-cdc-ingestion/02-cdc-from-postgresql.md) · [Headless Deletes & Org Cleanup](06-headless-deletes-org-cleanup.md) · [Entitlement, Licenses & Job Caps](../13-ipu-cost/03-entitlement-licenses-job-caps.md) · [Lessons: Migration & Org Management](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > A cutover between IDMC orgs is six small steps on an explicit GO (snapshot the source bindings, unbind the source
 > schedules, flip the callers, switch CDC, bind the target schedules, verify), plus a seventh that scans for the
@@ -54,19 +54,21 @@ org and what to ask the vendor afterwards.
 | rollback commands | written in the ticket, one per step |
 | the source's job budget | under its monthly cap (a rollback needs it); the target's job ledger running ([Entitlement, Licenses & Job Caps](../13-ipu-cost/03-entitlement-licenses-job-caps.md) § 7.1) |
 | peers | every lane acknowledged the freeze |
+| target release | the target org is on the same or a newer IDMC release than the source, or imports fail (vendor docs; L-MIG-129) |
+| run state | sequence values and last run times do not migrate; carry them with `fetchState` / `loadState` if a task needs them (reported; L-MIG-128) |
 
 ## 3. The sequence (L-MIG-047)
 
 ### Step 1: snapshot the source bindings (the rollback baseline, written once)
 
-For every workflow in scope, `GET /api/v2/workflow/<wfId>` and save `{name: {id, scheduleId, schedule name, endTimeUTC, full body}}` to a timestamped JSON file. Also save every mapping task's detail with a non-null `scheduleId` (the list call hides it; L-MIG-048). Write the file once and never overwrite it.
+For every workflow in scope, `GET /api/v2/workflow/<wfId>` and save `{name: {id, scheduleId, schedule name, endTimeUTC, full body}}` to a timestamped JSON file. Also save every mapping task's detail with a non-null `scheduleId` (the list call hides it; L-MIG-048). Write the file once and never overwrite it. `toolkit/lib/idmc_taskflow_schedule.py snapshot --out <file>` (workflow and task level) and `audit` do this; `restore <file>` is the rollback.
 
 ### Step 2: unbind the source schedules
 
 ```python
 def set_schedule(call, wf_id, schedule_id):         # schedule_id=None unbinds
     st, w = call("GET", f"/api/v2/workflow/{wf_id}")
-    body = {k: v for k, v in w.items if k not in ("createTime", "updateTime", "createdBy", "updatedBy")}
+    body = {k: v for k, v in w.items() if k not in ("createTime", "updateTime", "createdBy", "updatedBy")}
     body["scheduleId"] = schedule_id
     st2, r = call("POST", f"/api/v2/workflow/{wf_id}", body)
     st3, after = call("GET", f"/api/v2/workflow/{wf_id}")
@@ -74,7 +76,7 @@ def set_schedule(call, wf_id, schedule_id):         # schedule_id=None unbinds
 ```
 
 - This is the v2 update idiom: POST the full GET body back to the id. It worked on both pods tested.
-- Unbinding leaves the schedule object itself untouched, which is the simplest way to stop a lane. Disabling a schedule through v3 (`PATCH /public/core/v3/schedule/<id>` with `{"status":"disabled"}`) returned 400 `V3API_007`.
+- Unbinding leaves the schedule object itself untouched, which is the simplest way to stop a lane. Disabling a schedule through v3 (`PATCH /public/core/v3/schedule/<id>` with `{"status":"disabled"}`) returned 400 `V3API_007`; a `schedules[]` wrapper with `id` and `scheduleFederatedId` is reported to be the right body, not retested here (L-CDI-309).
 - To stop a schedule by date instead, set **both** `endTime` (read in pod-local time) and `endTimeUTC`.
 - Task-level bindings use the same idiom on `/api/v2/mttask/<taskId>`.
 
@@ -208,4 +210,4 @@ Announce the window on the epic, post a receipt with UTC times after each step, 
 
 ## 11. Lessons in this doc
 
-L-MIG-040, L-MIG-042, L-MIG-047 to L-MIG-051, L-DBMI-015, L-DBMI-020, L-CLEAN-008, L-CLEAN-012, L-IPU-053, L-MIG-074, L-MIG-073. Full text: [Lessons: Migration & Org Management](lessons.md) and [Lessons: Mass Ingestion & CDC](../06-cdc-ingestion/lessons.md).
+L-MIG-040, L-MIG-042, L-MIG-047 to L-MIG-051, L-DBMI-015, L-DBMI-020, L-CLEAN-008, L-CLEAN-012, L-IPU-053, L-MIG-074, L-MIG-073, L-MIG-128, L-MIG-129, L-CDI-309. Full text: [Lessons: Migration & Org Management](lessons.md) and [Lessons: Mass Ingestion & CDC](../06-cdc-ingestion/lessons.md).

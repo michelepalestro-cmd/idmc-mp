@@ -36,7 +36,7 @@ Salesforce OAuth, the Process Server on a Secure Agent and Kafka / AMQP listener
 |---|---|---|
 | `POST /public/core/v3/objects` (405); `asset/v1/processes`, `/import`, `/deploy`, `/save` author nothing | v3 import package | L-CAI-025 |
 | Re-activating an API that was deactivated in the console | console APIs page only; a republish does not reactivate it | L-CAI-010 |
-| Asset with duplicate runtime rows ("singleton sequence ... 2 items") or no runtime entry (`AvrEntryNotFoundFault`) | Informatica support or a designer attempt; keep it on a stuck list, do not force deletes | L-CAI-078 |
+| Asset with duplicate runtime rows ("singleton sequence ... 2 items") or no runtime entry (`AvrEntryNotFoundFault`, unless it is a taskflow sent to the `-cai` host: L-CAI-164) | Informatica support or a designer attempt; keep it on a stuck list, do not force deletes | L-CAI-078 |
 | File listeners, human tasks | designer only | L-CAI-025 |
 | MCP tool connections (`MigrationSvc_031` on import) | recreate in the designer (private-preview orgs only) | L-CAI-027 |
 | Managed APIs and policies in API Manager (July 2026) | no REST; re-probe | L-CAI-094 |
@@ -55,7 +55,7 @@ Salesforce OAuth, the Process Server on a Secure Agent and Kafka / AMQP listener
    the undo (L-CAI-019, L-CAI-016).
 4. **Edit and import:** change only what you mean (one hit per anchor), re-hash changed files, import OVERWRITE; the
    package carries every connection and connector its processes call. Read-back: import SUCCESSFUL (L-CAI-018, L-CAI-136).
-5. **Publish in order** connectors → connections → processes: `idmc_cai_publish.py plan`, then `publish`. Read-back:
+5. **Publish in order** connectors → connections → processes → guides (never process objects; L-CAI-182): `idmc_cai_publish.py plan`, then `publish`. Read-back:
    every `itemState` SUCCESS (L-CAI-006, L-CAI-002).
 6. **Verify** with side-effect-free calls, one valid and one invalid payload, retrying for about 2 minutes: the
    runtime can serve the old version for about 20 s. On failure, re-import the saved zip and republish (L-CAI-011, L-CAI-018).
@@ -66,6 +66,8 @@ Salesforce OAuth, the Process Server on a Secure Agent and Kafka / AMQP listener
 
 - **Item BAD_REQUEST "Invalid asset path."** → path lacks `Explore/` or `.<TYPE>.xml` → build it from the v3 `path` (L-CAI-003).
 - **HTTP 500 ClassCastException** → `data` sent as an array (L-CAI-004); **500 NotAcceptable** → `Accept: application/json` (L-CAI-005).
+- **Item UNSUPPORTED, job ERROR** → a process object in the publish list → leave it out; **TaskFlow items `AvrEntryNotFoundFault`** →
+  taskflows publish on the pod host, not `-cai` (L-CAI-165, L-CAI-164, reported).
 - **A 202/200 is not success** → items fail inside the envelope → poll and read every item (L-CAI-002).
 - **Item "Publish Error" with no detail** → a process input declared as a field → declare it as a parameter (L-CAI-022).
 - **`MigrationSvc_034` on export** → exported by the GUID inside the XML → use the v3 object id (L-CAI-019).

@@ -254,8 +254,13 @@ Keep those checks in a kept, GET-only-by-default harness rather than in fresh on
 ## 5. Layer 3: MCP servers
 
 - **Enumerate the real registry first**: `GET https://hdm.<domain>.informaticacloud.com/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED`.
-  One org exposed 19 managed servers and about 140 tools, which falsified walls that had been declared from the two
-  servers wired into a session (L-METHOD-011).
+  In September 2026 one org exposed 19 managed servers and about 140 tools, which falsified walls that had been
+  declared from the two servers wired into a session (L-METHOD-011). The October 2026 release lists 23 shared servers
+  in the public registry (no login needed), but only the org registry says what your org exposes (L-MCP-132).
+- **Inside Claude Code**: `/idmc-mp:connect-mcp` creates a scoped OAuth client for the org's servers, and the plugin's
+  bridge (`toolkit/lib/idmc_mcp_bridge.py`, started by the plugin) offers their tools as Claude Code tools
+  (`mcp__plugin_idmc-mp_idmc__*`). It is read-only unless the client was created with writes allowed, and
+  `idmc_mcp_bridge.py --check` lists what it would offer.
 - **What MCP is not.** It is a calling convention: it never replaces a Secure Agent, never reaches a private database
   the agent cannot, and its backing calls still bill IPUs. Read a server's tool list before assuming it can write.
 - **When it helps.** Lineage reads, fuzzy identity matching, the hosted DQ agent on uploaded files, address
@@ -263,7 +268,12 @@ Keep those checks in a kept, GET-only-by-default harness rather than in fresh on
 - **OAuth clients** can be created headless; the secret is shown once, so write it straight to a 0600 file and
   recreate the client if any part of it reaches a log (L-METHOD-089).
 - **Local MCP configs** can point at a different org than the one you are working in; check before trusting an empty
-  answer (L-METHOD-011).
+  answer (L-METHOD-011). Running one MCP server per environment, give each instance its own env files and a distinct
+  server name (L-ENV-142).
+- **Write tools need a human gate.** If you build your own MCP tools, make writes preview-then-confirm and keep secrets
+  in server-side plan files, never in tool arguments (L-METHOD-162, L-METHOD-163). Never put a write-capable IDMC MCP
+  behind an unattended `claude -p --dangerously-skip-permissions` bot: anyone who can post to it, or text it reads,
+  can trigger writes (L-METHOD-164).
 
 Protocol and tool detail: [knowledge/11-mcp-claire](../11-mcp-claire).
 
@@ -291,6 +301,9 @@ See [04 UI Automation with Playwright](04-ui-automation-with-playwright.md) §6.
 
 Rules that apply to every path:
 
+- **Run long orchestrations on a server, not in a Claude session.** A laptop background shell can be reaped under
+  memory pressure, and idle sessions are reaped too; keep a done-ledger, and for a multi-day chain move it into a
+  scheduled IDMC taskflow with a gate mapping (L-METHOD-148, L-METHOD-160).
 - **Ship scripts as files or base64**, never through heredocs, scp or remote editors; verify with a checksum or
   `od -c` (L-ENV-007).
 - **Start long jobs detached** (`setsid` or `nohup... </dev/null > log 2>&1 &`), then poll the log for a done marker;

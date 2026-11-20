@@ -43,7 +43,10 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | Gaps and gotchas | `knowledge/09-catalog-lineage/05-cdgc-gaps-gotchas.md` |
 
 ## Tools (`--help` on each)
-- `toolkit/lib/idmc_cdgc.py`: CDGC: token check, catalog sources, scans, glossary, links, search
+- `toolkit/lib/idmc_cdgc.py`: CDGC: token check, catalog sources, scans and jobs, ES search, glossary (with undo), links
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `catsearch_*`
+  (search, asset details with lineage), `catfind_*` (asset discovery; no lineage, L-MCP-148), `cathist_*`; `catedit_*`
+  writes only when the client allows writes. Lineage over REST: the asset read's lineage segment (L-CDGC-181)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

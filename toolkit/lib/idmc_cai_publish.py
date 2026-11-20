@@ -21,6 +21,10 @@ Rules: asset paths are Explore/<project>/<folder>/<name>.<TYPE>.xml (a bare <pro
   version for ~20 s: verify with side-effect-free calls and retry. FRS refuses to delete published assets
   (FRS_082): unpublish first. Duplicate runtime catalog rows ('singleton sequence ... 2 items') or a missing
   runtime entry (AvrEntryNotFoundFault) make both verbs fault: that needs support or a UI attempt.
+REPORTED 2026-11 (public code and the vendor KB, not probed here): Data Integration TASKFLOW assets publish on the
+  pod host (baseApiUrl without /saas), not on -cai, and fail with AvrEntryNotFoundFault when mixed into a -cai batch,
+  so they go in their own wave on the pod host (L-CAI-164); PROCESS_OBJECT items come back UNSUPPORTED, so they are
+  left out of every publish list (L-CAI-165).
 """
 from __future__ import annotations
 
@@ -33,7 +37,13 @@ import idmc_http as H  # noqa: E402
 from idmc_objects import list_objects  # noqa: E402
 from idmc_session import LoginError, Session  # noqa: E402
 
-RANK = {"AI_SERVICE_CONNECTOR": 0, "AI_CONNECTION": 1, "PROCESS_OBJECT": 2, "PROCESS": 3, "TASKFLOW": 3, "GUIDE": 3}
+RANK = {"AI_SERVICE_CONNECTOR": 0, "AI_CONNECTION": 1, "PROCESS": 3, "TASKFLOW": 3, "GUIDE": 3}
+NOT_PUBLISHABLE = {"PROCESS_OBJECT"}       # publish marks them UNSUPPORTED (L-CAI-165): they need no publish
+
+
+def plane_for(batch):
+    """Taskflows publish on the pod host, everything else on -cai (L-CAI-164); never mixed in one call."""
+    return "pod" if all(t == "TASKFLOW" for _, t, _ in batch) else "cai"
 RUNNING = ("NOT_STARTED", "RUNNING", "IN_PROGRESS", "QUEUED", None)
 MAX_PER_CALL = 199
 
@@ -54,6 +64,9 @@ def select(S, a):
     for p in a.path or []:
         if not p.startswith("Explore/") or not asset_type(p):
             H.die(f"asset path must look like Explore/<project>/<folder>/<name>.<TYPE>.xml: {p}")
+        if asset_type(p) in NOT_PUBLISHABLE:
+            print(f"  leaving out {p}: process objects are not published (L-CAI-165)")
+            continue
         out.append((p, asset_type(p), None))
     for spec in a.resolve or []:
         name, _, t = spec.rpartition(":")
@@ -72,9 +85,10 @@ def select(S, a):
 def waves(items, verb):
     order = sorted({RANK.get(t, 3) for _, t, _ in items}, reverse=(verb == "unpublish"))
     for rank in order:
-        batch = [x for x in items if RANK.get(x[1], 3) == rank]
-        for i in range(0, len(batch), MAX_PER_CALL):
-            yield batch[i:i + MAX_PER_CALL]
+        same = [x for x in items if RANK.get(x[1], 3) == rank]
+        for group in ([x for x in same if x[1] != "TASKFLOW"], [x for x in same if x[1] == "TASKFLOW"]):
+            for i in range(0, len(group), MAX_PER_CALL):
+                yield group[i:i + MAX_PER_CALL]
 
 
 def pub_state(o):
@@ -83,7 +97,8 @@ def pub_state(o):
 
 def run_wave(S, gate, verb, batch):
     body = {"data": {"type": verb, "attributes": {"assetPaths": [p for p, _, _ in batch]}}}
-    r = gate.send(f"{verb} {len(batch)} asset(s) {sorted({t for _, t, _ in batch})}", "cai", "POST",
+    plane = plane_for(batch)
+    r = gate.send(f"{verb} {len(batch)} asset(s) {sorted({t for _, t, _ in batch})} on the {plane} host", plane, "POST",
                   f"/active-bpel/asset/v1/{verb}", body=body)
     if r is None:
         return True
@@ -91,12 +106,12 @@ def run_wave(S, gate, verb, batch):
     if not jid:
         print(f"  {verb} not accepted: HTTP {r.status} {r.head(300)}")
         return False
-    return check_job(S, verb, jid)
+    return check_job(S, verb, jid, plane=plane)
 
 
-def check_job(S, verb, jid, timeout=900):
+def check_job(S, verb, jid, timeout=900, plane="cai"):
     def fetch():
-        r = S.get("cai", f"/active-bpel/asset/v1/{verb}/{jid}/Status")
+        r = S.get(plane, f"/active-bpel/asset/v1/{verb}/{jid}/Status")
         return ((r.json({}) or {}).get("data") or {}).get("attributes") or {} if r.ok else {"jobState": f"HTTP {r.status}"}
     at, done = H.poll(fetch, lambda x: x.get("jobState") not in RUNNING, interval=5, timeout=timeout,
                       describe=lambda x: f"job {jid} {x.get('jobState')}")
@@ -122,11 +137,12 @@ def main():
     stt = sub.add_parser("status")
     stt.add_argument("job")
     stt.add_argument("--kind", required=True, choices=["publish", "unpublish"])
+    stt.add_argument("--host", choices=["cai", "pod"], default="cai", help="pod for a taskflow job (L-CAI-164)")
     a = ap.parse_args()
     try:
         S = Session()
         if a.cmd == "status":
-            ok = check_job(S, a.kind, a.job, timeout=0)
+            ok = check_job(S, a.kind, a.job, timeout=0, plane=a.host)
             sys.exit(0 if ok else 1)
         items = select(S, a)
         if a.cmd == "unpublish" and not a.all:
@@ -138,7 +154,7 @@ def main():
             H.die("nothing selected")
         verb = "unpublish" if a.cmd == "unpublish" else "publish"
         for n, batch in enumerate(waves(items, verb), 1):
-            print(f"wave {n}:")
+            print(f"wave {n} ({plane_for(batch)} host):")
             for p, t, o in batch:
                 print(f"   {t:22} {p}  (now: {pub_state(o) or '?'})")
         if a.cmd == "plan":

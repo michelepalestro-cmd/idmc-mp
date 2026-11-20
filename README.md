@@ -1,7 +1,7 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
 [![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.15.0-blue)](.github/CHANGELOG.md)
+[![version](https://img.shields.io/badge/version-1.15.1-blue)](.github/CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
@@ -18,7 +18,7 @@ known instead of rediscovering it.
 
 | Area | Skill | Commands | For example |
 |---|---|---|---|
-| Rules, login, routing, errors | `idmc-mp` | `connect`, `connect-mcp`, `health-check`, `fix-error`, `save-lesson` | "why does this fail: `<error>`" |
+| Rules, login, routing, errors | `idmc-mp` | `connect`, `health-check`, `fix-error`, `save-lesson` | "why does this fail: `<error>`" |
 | Secure Agent and runtime environments | `idmc-secure-agent` | `tune-agent` | "install an agent on my VM and tune it" |
 | Connections to any system | `idmc-connections` | | "connect to our Snowflake account" |
 | Mappings, tasks, taskflows (CDI) | `idmc-cdi` | `new-pipeline`, `optimize` | "build a nightly pipeline from `<source>` to `<target>`" |
@@ -27,7 +27,7 @@ known instead of rediscovering it.
 | Data quality, profiling, cleaning | `idmc-data-quality` | `add-dq`, `clean-data` | "find the duplicates in `<table>` and clean them" |
 | Catalog, glossary, lineage (CDGC) | `idmc-governance` | `catalog` | "scan `<source>` and show lineage to the report" |
 | Master data (MDM) | `idmc-mdm` | | "master the customer table into golden records" |
-| MCP servers and CLAIRE | `idmc-claire-mcp` | | "connect Claude to our managed MCP servers" |
+| MCP servers and CLAIRE | `idmc-claire-mcp` | `connect-mcp` | "connect Claude to our managed MCP servers" |
 | Deploy, promote, migrate | `idmc-deploy` | `promote` | "promote project `<X>` from dev to prod" |
 | IPU cost and job caps | `idmc-ipu` | `ipu-report` | "what used our IPUs this month?" |
 

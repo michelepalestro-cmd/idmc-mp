@@ -21,9 +21,9 @@ an error names an engine, an adapter id or a driver.
 [02 Runtime Environments](../02-secure-agent/02-runtime-environments-services-connectors.md) ·
 [Connector notes](02-connector-notes-bigquery-postgresql-salesforce-jdbc-flat-file.md) ·
 [Error Triage](../00-start-here/04-error-triage.md) (the org-wide table) ·
-[Lessons: Secure Agent & Connections](lessons.md)
+[Lessons: Connections](lessons.md) · [Lessons: Secure Agent](../02-secure-agent/lessons.md)
 
-**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03).
+**Last verified:** 2026-11-20 (evidence 2026-06-27 to 2026-11-19).
 
 > A working connection or job needs four independent things, established in order: **HOST** (RAM, disk, swap, OS
 > libraries, egress, one healthy agent JVM), **ENGINE** (the service selected and RUNNING on that runtime environment),
@@ -51,7 +51,8 @@ an error names an engine, an adapter id or a driver.
    it? Read `GET /api/v2/agent/<agentId>` per agent; never trust the runtime-environment list's `readyToRun`
    (L-AGENT-021, 2026-07-26).
 2. **Read the engine list.** `GET /api/v2/agent/details/<agentId>`: is the engine the error names present, and RUNNING?
-   DEPLOYING means wait; a changing engine name in successive errors is progress (L-AGENT-026, 2026-07-26).
+   DEPLOYING means wait; a changing engine name in successive errors is progress (L-AGENT-026, 2026-07-26). RUNNING
+   is ready only at `subState` "0", and a stopped engine is simply absent from the list (L-AGENT-125, reported).
 3. **Read the host.** RAM, swap, disk, load, PSI; one agentcore JVM; recent OOM kills (`dmesg`, `journalctl -k`); the
    agentcore.log 'Service Status Distribution' line.
 4. **Read the exact error text.** APP_105060 alone is not a diagnosis: the same code carries the engine gate, the
@@ -88,6 +89,7 @@ an error names an engine, an adapter id or a driver.
 | Connection broken right after an unrelated update | Masked secret posted back and blanked | Re-supply the secret on every update | L-CONN-007 |
 | 500 APP_21000 on `POST /api/v2/connection/test` | Wrong verb or path | `GET /api/v2/connection/test/<connId>` or MCP `test_connection_by_id` | L-CONN-014 |
 | `200 []` from `GET /api/v2/connection/source/<connId>` on a connection that tests green | The browse is not evidence of an empty or unreadable database | Confirm through a profile, preview or scan; prove the test from the database's own counters | L-CONN-016 |
+| 403 'Invalid Object Path Format' on a data preview or field read | Database object given as a bare table name | `DB/SCHEMA/TABLE` (reported) | L-CONN-147 |
 | `403 CONSUMER_INVALID` from a BigQuery connection | The key's cloud project was deleted | A key from a live project | L-ENV-052 |
 | Test times out whatever the credentials | No network route (another cloud's private range; DB firewall allows only tagged hosts) | VPN, peering, or an agent on an allowed host | L-AGENT-037 |
 | 'Connection refused' or 'Connection timed out' naming the database host and port | Nothing listens there, or a firewall drops the agent host | From the agent host: `timeout 5 bash -c '</dev/tcp/<host>/<port>'`; open the port to the agent host's address, not your laptop's | L-AGENT-037, L-CONN-025 |
@@ -186,7 +188,9 @@ an error names an engine, an adapter id or a driver.
 | `SingularApplicationLock: Cannot acquire lock` | Two agent JVMs | One supervisor; no `Restart=` next to a manual start | L-AGENT-008 |
 | `readyToRun: false` in `GET /api/v2/runtimeEnvironment` | Stale list value | `GET /api/v2/agent/<agentId>` | L-AGENT-021 |
 | 403 APP_13401 / 500 CMN_001 under `/api/v2/agent/*` | Router artifacts (bogus twins identical) | Cite neither way; use the selections route | L-AGENT-031 |
-| 403 REPO_38225 on `DELETE /api/v2/agent/<id>`; 405 on `POST /api/v2/agent/<id>` (rename) | The agent is the only member of a runtime that connections or tasks use | Reinstall on the same host into that runtime: the id is reused | L-AGENT-111 |
+| 403 REPO_38225 on `DELETE /api/v2/agent/<id>`; 405 on `POST /api/v2/agent/<id>` (rename) | The agent is the only member of a runtime that connections or tasks use; there is no REST rename | Reinstall on the same host into that runtime: the id is reused; rename through the `agent.do` form's name field | L-AGENT-111, L-AGENT-129 (reported) |
+| 500 `CMN_001` within milliseconds on `POST /runtime/app/agent.do` while the GET works | The property rows were sent flat and exceed the server's parameter limit | Pack them into the `configFormJson` field ([doc 01](../02-secure-agent/01-secure-agent-install-run-tune.md) §6.1) | L-AGENT-127 (reported) |
+| `AgentServiceV3APIError_003` 'Invalid agent' on `POST /public/core/v3/agent/service` | The v2 agent id was sent | The agent's `federatedId` from `GET /api/v2/agent` | L-AGENT-124 (reported) |
 | The login HTML page from `.../selections/ui` | `INFA-SESSION-ID` sent | `IDS-SESSION-ID: <v2 icSessionId>` | L-AGENT-039 |
 | 'You have exceeded your monthly limit of 10,000 jobs.' | Org job cap reached | [11 / 03](../13-ipu-cost/03-entitlement-licenses-job-caps.md) | L-IPU-041 |
 

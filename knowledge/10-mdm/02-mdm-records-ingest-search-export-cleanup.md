@@ -23,7 +23,7 @@ planning an MDM cleanup or decommission.
 [Headless Deletes & Org Cleanup](../12-deploy-migrate/06-headless-deletes-org-cleanup.md) ·
 [Lessons: MDM](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Ingest creates a source record (201 with an `MDM...` id); the master re-survives only when a match/merge
 > job runs. Search and export use `POST .../search/public/api/v1/search`. Deletes are soft, per the Customer 360 guide
@@ -94,6 +94,11 @@ exercised). Never write source data onto the master `entity` resource: that corr
 meaningful only in MDM, on `entity` and `entity-xref`. Request bodies carry `search` or `fields`, never both
 (indicative, from a vendor deck, L-MDM-024).
 
+Public client code (not probed here) adds detail: a master `PATCH .../entity/<be>/<businessId>?sourceSystem=<src>`
+takes a JSON-Patch array (`[{"op":"replace","path":"<field>","value":...}]`) and answers `approvalRequired`;
+`GET .../entity/<be>/<sourceSystem>/<sourcePKey>` reads the master for a source key, and `GET .../entity-member/<be>/<businessId>`
+lists its contributing source records (L-MDM-094, L-MDM-113, L-MDM-114).
+
 ---
 
 ## 5. Search and export (L-MDM-025)
@@ -120,11 +125,17 @@ Page with `recordOffset` and `recordsToReturn`. One query returns at most **10,0
 
 Measured: 19,253 of 19,255 and 7,689 of 7,689 records for two entities, plus two small entities, before a cleanup.
 
+Other ways past the cap, from public code (not probed here): split by a `BETWEEN` filter on `_meta.lastUpdateDate` or
+`_meta.creationDate` (also an incremental extract), sorted pages with typed `filters` (L-MDM-091, L-MDM-118), or an
+Egress job to a file (`POST .../job/public/api/v1/jobInstance/Egress`, L-MDM-096, low confidence). Search hits are not
+records: field names carry the entity prefix and many fields are missing, so read the full record by business id
+(L-MDM-120). Several conditions on one field group match only within a single entry (L-MDM-119).
+
 **Other lookups.**
 
 | Need | Route | Lesson |
 |---|---|---|
-| Reference 360 lookup | `POST .../rdm-service/external/v1/search` (empty body gives 400 `RDM.0040044`: the verb exists) | L-MDM-026 |
+| Reference 360 lookup | `POST .../rdm-service/external/v1/search` (empty body gives 400 `RDM.0040044`: the verb exists); public code pages code values with `POST .../rdm-service/external/v2/search?showAssetDetails=true` and `{"page":0,"pageSize":1000,"search":"*"}` until `lastPage` | L-MDM-026, L-MDM-092 |
 | Fuzzy identity match | Customer Identification MCP server: `search_master_record`, then `get_master_record_details` | L-MDM-027 |
 | Do not use | `.../business-entity/public/api/v1/entity/<be>/search` (404/405, or a 403 role gap) | L-MDM-028 |
 

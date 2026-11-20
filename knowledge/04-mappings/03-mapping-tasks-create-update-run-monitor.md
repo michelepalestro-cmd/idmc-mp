@@ -14,7 +14,7 @@
 
 **Related:** [02 How Claude Builds Mappings Headless](02-how-claude-builds-mappings-headless.md) · [04 Taskflows & Schedules](../05-taskflows-schedules/01-taskflows-schedules.md) · [08 Changing Pipelines Safely](07-changing-pipelines-safely.md) · [09 Source & Target Gotchas](08-source-target-gotchas.md) · [Lessons: CDI](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** A mapping task (MTT) is created with `POST /api/v2/mttask` and updated by POSTing the **full** body back to `/api/v2/mttask/<id>`; there is no PUT. Over a Copy Data template, the body needs complete `$Source$`/`$Target$` parameters. Over a real mapping, `{mappingId, runtimeEnvironmentId}` is enough.
 > BigQuery write behaviour lives in `$Target$.oprRuntimeAttrs` (Bulk + "Write truncate" / "Write append"). On tasks over real mappings, target-parameter POSTs are **silent no-ops**: re-import the mapping instead.
@@ -92,7 +92,7 @@ POST /api/v2/mttask {"@type":"mtTask","name":"mt_<x>","description":"[<tag>]..."
 |---|---|---|---|
 | BigQuery V2 target | `writeMode Bulk` + `writeDisposition "Write truncate"` in `oprRuntimeAttrs`. Needs a GCS staging path on the connection, and the service account needs `roles/storage.objectAdmin` on the bucket (L-CDI-154) | `"Write append"` | **Streaming** mode cannot truncate: a second run doubled the rows (33,106 → 66,230). A **0-row** source leaves the old rows in place, so truncate those targets yourself (L-CDI-088). `truncateTarget=true` alone was ignored on some tasks and targets doubled (July; L-CDI-155) |
 | JDBC V2 target | `runtimeAttrs {"Pre SQL": "TRUNCATE TABLE <t>"}`. The key needs the space: `preSQL` and `PreSQL` are silently ignored | Insert | `truncateTarget` is ignored (L-CDI-171). The connection's bound database wins over the object's schema (L-CDI-040) |
-| PostgreSQL target | Upsert on a key, or Insert with a database-side idempotency trigger | Insert | Whether `truncateTarget=true` truncates or is ignored is **disputed**. Never use it on a system-of-record table (L-CDI-169, L-CDI-194) |
+| PostgreSQL target | Upsert on a key, or Insert with a database-side idempotency trigger | Insert | The task flag and the mapping's `WriteOptions.truncate` are ignored; only the writer attribute `TruncateTable` = `YES` truncates (the generator writes it for `truncate: true`). Never truncate a system-of-record table (L-CDI-331, L-CDI-169) |
 | Salesforce target | Upsert on an external id | — | See [09](08-source-target-gotchas.md) |
 | Any target of a cloned template mapping | The mapping's target session property `TruncateTable` (some packages spell it `Truncate Table`) = YES | Insert | With NO, the mapping appends its full row set on every run, so a re-fired or scheduled task doubles its target (10 → 20). Patch both spellings to YES in the mapping model, recompute the package checksums and re-import; the engine then truncates before load. Proven on create-new-at-runtime targets (L-CDI-166) |
 
@@ -109,6 +109,7 @@ POST /api/v2/mttask/<id>  -> 200
 GET  /api/v2/mttask/<id>  -> compare the changed field   # a 200 whose value reverted is a silent rejection
 ```
 
+- Vendor docs also list a partial update: header `Update-Mode: PARTIAL` (JSON, with `@type`) on v2 `mttask`, `connection`, `schedule`, `workflow`, `fwConfig` and `masterTemplate`; an entry inside a collection is matched by its key fields (a `parameters[]` entry by `name` + `type`). Reported from third-party code, not probed here: read back as for a full POST (L-CDI-321).
 - Save a backup first: the v2 JSON, the old SQL as a file and a v3 export. Undo = POST the saved JSON back ([08](07-changing-pipelines-safely.md), L-CDI-135).
 - Run the changed task once on its own while no taskflow that contains it is running, then patch the generator so that a rebuild produces the same body.
 - **A runtime-only change** (a failover off a downed runtime): drop createTime, updateTime, createdBy, updatedBy, lastRunTime and agentId, set `runtimeEnvironmentId`, POST and read back; 17 tasks moved in seconds with ids, schedules and taskflows unchanged. Move the connections their lookups use too ([knowledge/02-secure-agent](../02-secure-agent); L-ENV-100, L-CONN-132, 2026-11-03).
@@ -132,10 +133,12 @@ POST /api/v2/job  {"@type":"job","taskId":"<v2 taskId | wfId>","taskType":"MTT" 
 -> 200 {"runId": <n>, "taskName": "...",...}
 ```
 
-- Identify the task by its **v2 `taskId`**. `taskFederatedId` worked in one org when given the task's own federated id (2026-09-22). A wrong, stale or foreign id gives `403 REPO_19035` or `UI_13429` (2026-08-19, 2026-09-21; L-CDI-057).
+- Identify the task by its **v2 `taskId`**. `taskFederatedId` worked in one org when given the task's own federated id (2026-09-22); that id is the task's v3 object id, so `POST /public/core/v3/lookup` by path yields it (L-CDI-308, reported). A wrong, stale or foreign id gives `403 REPO_19035` or `UI_13429` (2026-08-19, 2026-09-21; L-CDI-057).
+- The job body also takes `callbackURL` (IDMC POSTs the outcome when the job ends; delivery is at least once with retries for 30 minutes, so the receiver must answer 200 within 30 s and dedupe on `objectId` + `runId`; L-CDI-323) and `runtime.parameterFileName` / `parameterFileDir` to override the parameter file for one run (L-CDI-308, reported).
 - It runs even when the runtime-environment list says `readyToRun:false`. That flag is stale on the list and only mattered for catalog operations (L-CDI-056).
 - `taskType "WORKFLOW"` starts a **linear** taskflow. Advanced taskflows were rejected with `403 UI_13430` (L-CDI-071).
-- Before starting, check the activity monitor: starting something already running, or a taskflow that shares tasks with a running one, fails with `REPO_17314` (L-CDI-078).
+- Before starting, check the activity monitor: starting a taskflow that shares tasks with a running one fails with `REPO_17314` (L-CDI-078). A mapping task runs one instance at a time: an on-demand start while its scheduled or lane run is active returns a `runId`, then ends in about 1 s with state 3, 0 rows and 'Another instance of the task is currently running', and a controller that counts it fails the whole lane. Skip or coalesce instead (L-CDI-304).
+- A **Dynamic Mapping Task** is run, monitored and stopped on `/batch-mapping/api/v1/Job` on the pod host, not through `/api/v2/job` or the activity log (L-CDI-327, L-CDI-289).
 - REST-started runs show a REST context (e.g. `REST_API_V2`) in the activity log; schedule-started runs show the scheduler.
 - The managed **Job Management** MCP server wraps the same plane: `run_mapping_task`, `get_job_status`, `stop_running_job`. REST is equivalent (L-CDI-068).
 - Each run is one job against the org's monthly job cap. So is each taskflow run ([07](06-performance-concurrency-job-caps.md)).
@@ -166,6 +169,7 @@ return "TIMEOUT"
 - **On the agent host:** each run writes `<agent_home>/apps/Data_Integration_Server/logs/s_mtt_<taskId>_<n>.log`. `TM_6014` marks the session start, `PETL_24012`/`PETL_24013` the end (13 = failure), `WRT_8036 Target: <table>` the target, `Applied Rows [N]` the count, and "Session run completed successfully" the verdict. Parsing these gives exact timing and row evidence with no API calls (L-CDI-064).
 - **Health:** a watcher that reads each important taskflow's last runs every 15 minutes and alerts only on state change caught silent hourly failures. Run one watcher per org (L-CDI-067).
 - **The activity log is not complete history** (L-CDI-288, 2026-11-01): `GET /api/v2/activity/activityLog?rowLimit=1000&offset=<n>` returned 1,076 entries reaching back three weeks for a project that started more than 500 jobs a day, and each task carries `maxLogs: 10`. For billing proxies, reconciliation or 'who wrote this row', write your own ledger at completion (task id, run id, start and end from the `*Utc` fields, success and failed rows, error text) and stamp the same run id into the rows written (`$CurrentTaskId` / `$CurrentRunId`).
+- **Longer history:** the vendor-documented Operational Insights read `GET <serverUrl>/cdiinsights-service/api/v1/analytical/Orgs(<orgId>)/JobLogEntries` (header `IDS-SESSION-ID`) returns completed jobs of the last 33 days, at most 500 rows per filter, so slice long windows by `endTime` (L-CDI-322, reported). When paging the v2 log, always send `rowLimit`, page with `offset` back to the window start, filter by `taskId` and allow about 120 s per call: entries carry every transformation's statistics (L-CDI-312).
 - **Before re-arming a job paused for a run:** activity monitor at 0 and no `pmdtm`/DTM process on the agent (L-CDI-065).
 
 **The session log over REST** (L-CDI-211). No shell on the agent host is needed:
@@ -196,7 +200,7 @@ Accept: */*
 | WARNING with rejected rows on a SaaS target (storage full, duplicates, locks) | the target refused writes | alert on the target; do not fail the lane |
 | WARNING with 0 rows written | failure (L-CDI-060) | treat as FAILED |
 
-Use one case-insensitive pattern for the transient class, for example `retrying may solve the problem|[^0-9]50[0234][^0-9]|backend ?error|service unavailable|rate ?limit|connection reset|temp_view[0-9]+|does not exist`, and skip any message containing `monthly limit`. Each retry is one more job against the cap. Without a retry, an event-driven lane leaves its record waiting for the next event: one transient 'does not exist' failure cost a record 28 minutes. Do not auto-retry SaaS writes that failed on target-side limits; they only repeat.
+A longer substring triage table mined from production failures (manual stop, overrun slot, type mismatch, duplicate keys, deadlock, DNS, IICS-side 500s) is in L-CDI-313. Use one case-insensitive pattern for the transient class, for example `retrying may solve the problem|[^0-9]50[0234][^0-9]|backend ?error|service unavailable|rate ?limit|connection reset|temp_view[0-9]+|does not exist`, and skip any message containing `monthly limit`. Each retry is one more job against the cap. Without a retry, an event-driven lane leaves its record waiting for the next event: one transient 'does not exist' failure cost a record 28 minutes. Do not auto-retry SaaS writes that failed on target-side limits; they only repeat.
 
 **Alert rules that do not cry wolf** (L-ENV-077). Derive each freshness SLA from the schedule of the job that loads the table, plus slack (a daily load needs about 26 h, not 90 min); page "no new rows" stalls only on one or two heartbeat tables that always move while the source application is alive, and keep per-table recency as dashboard data; exclude drained-by-design tables (processed queues) from volume-drop alerts and require a minimum previous count (for example ≥ 50); report empty-at-source tables as NO_ACTIVITY; give history and snapshot tables their own scheduled writer; inventory every alert channel (BI alerting and any direct emailers in collector scripts), fix each at its source, and state-dedupe emailers (mail when the red set changes, then one RECOVERED).
 
@@ -212,6 +216,7 @@ Use one case-insensitive pattern for the transient class, for example `retrying 
 | `403 UI_13429` | `/api/v2/job` | Stale or foreign federated id | Re-resolve in this org |
 | `403 REPO_19035` "task does not exist" | job start, `GET /api/v2/mttask/<id>` | Wrong id type, or the id belongs to another org | Look the task up in this org's objects |
 | `REPO_17314` "Another instance … is currently running" | job start | The task or a taskflow sharing tasks is running | Wait; hold a quiet window (L-CDI-078) |
+| 'The Mapping task failed to run. Another instance of the task is currently running.' state 3 in ~1 s, 0 rows | activity log after an on-demand start | The task's scheduled or lane run is active | Check the activity monitor for that task first; skip or coalesce; do not fail the lane (L-CDI-304) |
 | "You have exceeded your monthly limit of 10,000 jobs" | every run, ~5 s | Org job cap | Quota breaker ([07](06-performance-concurrency-job-caps.md)) |
 | Empty error, 0 rows, a state outside 1/2/3 | runs after a cap error | Blocked by the job cap; only the first run of a lane carries the message | Count them as cap blocks (L-IPU-060) |
 | `PLUGIN_1762... OutOfMemoryError: Java heap space`, then `BIGQUERYV2_10000... 5001 - Unexpected error refreshing access token` and `WRT_8044 No data loaded` | run | DTM heap exhausted; the token errors are a cascade | Read the first `[ERROR]`; see [09](08-source-target-gotchas.md) §7 (L-CDI-210) |

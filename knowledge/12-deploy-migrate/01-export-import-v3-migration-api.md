@@ -22,7 +22,7 @@ project is connected to a Git repository.
 
 **Related:** [Editing Packages Safely](02-editing-packages-safely.md) · [Migration-Clone Authoring](03-migration-clone-authoring.md) · [Org-to-Org Migration Runbook](04-org-to-org-migration-runbook.md) · [Headless Deletes & Org Cleanup](06-headless-deletes-org-cleanup.md) · [Lessons: Migration & Org Management](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > The v3 migration API is the write path for IDMC design objects: the v3 objects catalog is read-only, but export and
 > import create, clone and overwrite objects at no IPU cost. Name conflicts resolve by `REUSE` or `OVERWRITE`;
@@ -49,11 +49,16 @@ The objects catalog is **read-only** (L-MIG-001): `GET /public/core/v3/objects` 
 
 | Step | Call | Success | Notes |
 |---|---|---|---|
-| Start | `POST /public/core/v3/export` body `{"name":"<name>","objects":[{"id":"<frsGuid>","includeDependencies":true},...]}` | 200 with the job `id` | bare string ids, or a `type` key, give 400 `V3API_007`; an empty `objects[]` gives 400; `GET /export` is 405 (L-MIG-004) |
+| Start | `POST /public/core/v3/export` body `{"name":"<name>","objects":[{"id":"<frsGuid>","includeDependencies":true},...]}` | 200 with the job `id` | bare string ids, a `type` key, or `includeDependencies` at the request root give 400 `V3API_007`; an empty `objects[]` gives 400; `GET /export` is 405 (L-MIG-004, L-MIG-124) |
 | Poll | `GET /public/core/v3/export/<id>` (add `?expand=objects` for per-object state) | `status.state` = `SUCCESSFUL`, `status.message` = `Export completed successfully` | also IN_PROGRESS, QUEUED, NOT_STARTED, FAILED |
 | Download | `GET /public/core/v3/export/<id>/package` with `Accept: application/zip` | the zip bytes | write it with mode 0600 (section 7) |
 
 (L-MIG-003.) The ids are v3 object ids (`frsGuid`) from `/public/core/v3/objects`. Exporting by a CAI process GUID read from inside the process XML gives 400 `MigrationSvc_034 Object resolution failed` (L-MIG-007).
+
+Limits and options (vendor docs and third-party code, reported): at most 1,000 objects per export or import job; the
+target org must be on the same or a newer IDMC release; under load export and `objects` answer 'too many requests',
+so back off and retry (L-MIG-129). `?includeTagInformation=true` on the start carries tags, and a large start call can
+take over 60 s before it returns the job id, so give it a request timeout of 120 s or more (L-MIG-104).
 
 Measured: a 194-object scope with `includeDependencies` exported 223 objects (a 616 KB zip) in about 20 s. The dependencies it pulled in were runtime environments (including the hosted one), connections, CAI connectors and app connections, an Add-On Bundle mapping template and bundle rule specs.
 
@@ -105,6 +110,13 @@ POST /public/core/v3/import/<jobId>
 - `GET /public/core/v3/import/<jobId>` until `status.state` leaves `IN_PROGRESS`, `QUEUED` or `NOT_STARTED`. It ended `SUCCESSFUL` or `FAILED` in every run recorded here: one object failing validation rolls back all of them (L-MIG-012). Informatica also documents a `PARTIAL` state, never seen here; treat every state but `SUCCESSFUL` as not promoted, and on a poll timeout read the job back instead of importing again (L-MIG-132).
 - `GET /public/core/v3/import/<jobId>?expand=objects` returns the per-object results. `GET /public/core/v3/import/<jobId>/log` with `Accept: */*` returns the log.
 - A 214-object import ran about 3.5 minutes.
+- **The toolkit wraps this lifecycle:** `toolkit/lib/idmc_export_import.py export --id <frsGuid> --out pkg.zip`, then
+  `import pkg.zip --mode REUSE|OVERWRITE` (a dry run that previews each packaged object as NEW or EXISTS, connections
+  and runtime environments by name over v2; pass `--expect-org <target orgIdV3>` on the dry run too), then
+  `--execute --expect-org <orgIdV3>`; `status <jobId> --kind import` and `log <jobId>`. `import` and `log` exit 1
+  unless the job ended `SUCCESSFUL`, and an upload with `checksumValid:false` is never started. Gate a pipeline on
+  that, or on the job state itself: the vendor's Asset Management CLI V2 reportedly exits 0 on a failed export or
+  import (L-MIG-126).
 
 Success envelope (no `expand`):
 
@@ -147,6 +159,12 @@ With `REUSE`:
 - A reused copy may be **older** than the source. Compare every reused pair whose source changed recently, or re-import that one object with `OVERWRITE`.
 - Test-import a small set first (for example the bundle template plus one task).
 
+Never `OVERWRITE` projects, folders, connections or runtime environments; for later redeploys a package without the
+Connections and `SYS` folders keeps the target's own connection settings (L-MIG-121). A per-object form,
+`objectSpecification: [{"sourceObjectId","conflictResolution":"OVERWRITE","additionalProviderFlags":[...]}]` (with
+`mapping_conflict_policy_existing` RETAIN or REPLACE on mapping tasks), is reported from third-party code (L-MIG-115,
+low confidence); it differs from the target-mapping shapes that failed here (L-MIG-013), so probe it once before use.
+
 A target that already holds content can contain objects with the same names in other folders. Import into a dedicated project, and address everything by id afterwards (L-MIG-037).
 
 In a project under source control, an `OVERWRITE` import of a source-controlled asset needs a checkout first (section 11).
@@ -157,7 +175,8 @@ In a project under source control, an `OVERWRITE` import of a source-controlled 
 |---|---|
 | connection passwords and keys (masked; exports never carry them) | set them from host files after import, then `GET /api/v2/connection/test/<connId>` (see [Secure Agent & Connections](../02-secure-agent)) |
 | Secure Agents; runtime-environment service and connector selections | install and register the agent; `GET/PUT.../runtime/api/v2/runtimeEnvironment/<reId>/selections/ui` |
-| schedules and their bindings | create the schedules unbound, then bind at cutover (see [Cutover & Rollback](05-cutover-rollback.md)) |
+| schedules and their bindings | create the schedules unbound, then bind at cutover (see [Cutover & Rollback](05-cutover-rollback.md)); exported schedules arrive unattached (L-MIG-129) |
+| run state (sequence `NEXTVAL`, last run time) | `fetchState` in the source and `loadState` in the target (reported; L-MIG-128) |
 | object tags | `POST /public/core/v3/TagObjects` (section 6) |
 | DBMI deploy and start | `task/deploy` and `job/start` on `-ing` (see [DBMI over REST](../06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md)) |
 | CAI publish | `POST https://<pod>-cai.<domain>.informaticacloud.com/active-bpel/asset/v1/publish` in dependency order (see [Application Integration (CAI)](../07-app-integration)) |
@@ -188,7 +207,7 @@ It answers 204, or a per-item status (200/201/204/207). Folders and projects can
 | Object | Behaviour | Do |
 |---|---|---|
 | runtime environment `Informatica Cloud Hosted Agent` | reserved: import cannot create it (`REPO_38210`) | if the target is not entitled to the hosted runtime, remap the bound objects to a self-hosted runtime environment inside the package (L-MIG-015) |
-| Add-On Bundle templates and bundle rule specs | system content; their export can be 403 `MigrationSvc_038` for a non-admin, depending on org and user | do not export them; import with `REUSE` so the target's copy is used (L-MIG-006) |
+| Add-On Bundle templates and bundle rule specs | system content; their export can be 403 `MigrationSvc_038` for a non-admin, depending on org and user | do not export them; import with `REUSE` so the target's copy is used (L-MIG-006). Tasks over them do not migrate on their own: the export lists the template and its system project but carries no file for them (`MigrationSvc_031`), so remove those entries and rebuild the tasks as user mappings, or recreate them on the target's copy (L-MIG-083) |
 | `TOOL_CONNECTION` (MCP tool connection) | import fails `MigrationSvc_031` 'Internal error', even with the URL and token fixed | recreate it in the Application Integration designer (L-MIG-039), only possible on an org from the AI Agent Engineering private preview; newer orgs have no such type (L-MCP-081) |
 | `MCP_SERVER` | imports | attach the recreated tool connection to it (preview orgs), or expose CAI processes as its tools |
 | DBMI initial-load (UNLOAD) tasks | vendor validation 403 when the target agent has no Database Ingestion engine | enable the engine first, or create them later with `task/create` (L-DBMI-032) |
@@ -199,7 +218,8 @@ It answers 204, or a per-item status (200/201/204/207). Folders and projects can
 | Code | Where | Meaning | Fix |
 |---|---|---|---|
 | 400 on an empty export body | export | the route is writable | send a real body |
-| 400 `V3API_007` | export or import start | body shape: bare ids, a `type` key, `objectSpecification` | `[{"id":...}]`; drop `objectSpecification` |
+| 400 `V3API_007` | export or import start | body shape: bare ids, a `type` key, a root-level `includeDependencies`, `objectSpecification` | `[{"id":...,"includeDependencies":true}]`; drop `objectSpecification` (L-MIG-124) |
+| `OIE_007 'Internal application provider error'`, no detail | import of a mapping or mapping task | a v2 runtime id written into `mtTask.json`, or stale `mappingTemplate.json` `references[]` after pruning | see [Editing Packages Safely](02-editing-packages-safely.md) §1 (L-MIG-100, L-MIG-076) |
 | 400 `MigrationSvc_041 'No asset selected for export operation'` | export | the body parsed, but nothing exportable was selected (for example an empty default project) | pick another object; do not sweep body shapes (L-MIG-005) |
 | 403 `MigrationSvc_038 'User does not have required permissions'` | export | the migration role is missing, or an Add-On Bundle template for a non-admin | grant the role; skip bundle content |
 | 400 `MigrationSvc_034 'Object resolution failed'` | export | not an IDMC object id (for example a process GUID), or a CDGC governance object | use the id from `/public/core/v3/objects` |
@@ -218,7 +238,9 @@ It answers 204, or a per-item status (200/201/204/207). Folders and projects can
 ## 10. Inventory and dependency routes used with migrations
 
 - Page `GET /public/core/v3/objects?limit=200&skip=<n>` until `skip` reaches `count`. The `q` filter is not validated (a fabricated type returns `{"count":0,"objects":[]}`), so filter client-side or use exact type names (L-MIG-002, L-MIG-035).
+- The `q` grammar takes lowercase `and`/`or` only (`AND` gives 400 `V3API_ObjectsListError_04`), and `name` and `path` are not filterable: filter by `location` and `type`, then match the last `path` segment (L-MIG-131, reported).
 - Dependency closure: `GET /public/core/v3/objects/<frsGuid>/references?refType=uses&limit=50&skip=<n>`, and `refType=usedBy` (L-MIG-034).
+- `POST /public/core/v3/lookup` fails the whole batch with `V3API_LookupError_012` when any item is missing; its message lists the missing paths, so mark those and look the rest up again. Check a connection in the target by name over v2 (`GET /api/v2/connection/name/<name>`; 404 or 403 `APP_13436` means missing), not with the v3 lookup (L-MIG-102, L-MIG-103).
 - Move objects between folders, ids preserved: FRS `POST https://<pod>.<domain>.informaticacloud.com/frs/api/v1/MoveEntities` with `IDS-SESSION-ID` (L-MIG-054).
 - Copy objects (for example view-only walk-through copies of mappings) with FRS `POST .../frs/api/v1/CopyEntities`:
   `{"xferSpec": {"targetLocationId": "<folderId>", "sourceSpecArr": [{"sourceEntityId": "<frsId>", "destName": "<new name>",
@@ -301,4 +323,4 @@ POST /public/core/v3/pull
 
 ## 13. Lessons in this doc
 
-L-MIG-001 to L-MIG-018, L-MIG-022, L-MIG-024, L-MIG-028, L-MIG-034, L-MIG-035, L-MIG-037 to L-MIG-039, L-MIG-043, L-MIG-054, and the superseded L-MIG-061 to L-MIG-064, L-MIG-066, L-MIG-067, L-MIG-070. Full text: [Lessons: Migration & Org Management](lessons.md).
+L-MIG-001 to L-MIG-018, L-MIG-022, L-MIG-024, L-MIG-028, L-MIG-034, L-MIG-035, L-MIG-037 to L-MIG-039, L-MIG-043, L-MIG-054, L-MIG-087, L-MIG-102 to L-MIG-104, L-MIG-115, L-MIG-121, L-MIG-124, L-MIG-126, L-MIG-128, L-MIG-129, L-MIG-131, L-MIG-132, and the superseded L-MIG-061 to L-MIG-064, L-MIG-066, L-MIG-067, L-MIG-070. Full text: [Lessons: Migration & Org Management](lessons.md).

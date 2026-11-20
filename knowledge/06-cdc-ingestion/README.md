@@ -21,6 +21,8 @@ a PostgreSQL source, [02 CDC from PostgreSQL](02-cdc-from-postgresql.md) §1 bef
 | Start / stop / resume / undeploy | `POST /dbmi/public/api/v2/job/start` (`stop`, `resume`, `undeploy`) with `{"jobId": <n>}` | L-DBMI-003 |
 | Read status | `GET /dbmi/api/v1/task/<taskId>/job` → `status`, `runId` (= job id) | L-DBMI-003 |
 | Per-table state | task log on the agent: every table's latest transition event is `NORMAL_CONTINUOUS_CDC_TABLE` | L-DBMI-030 |
+| Per-table metrics over REST | `POST /dbmi/public/api/v2/job/metrics` `{"jobId":<n>,"parameters":{"metricsOptions":{"stateFilter":["FAILED"]}}}` (`stateFilter` an array) | L-DBMI-066 (reported) |
+| Task id and job id by name | `GET /dbmi/public/api/v2/task/fetchId?taskName=<name>&projectId=<id>&folderId=<id>`; `GET .../task/fetch/<taskId>/job` | L-DBMI-069 (reported) |
 | Pause without a re-baseline | `job/stop`, then `job/resume`: continues from the stored restart point | L-DBMI-056 |
 | Place it in a folder | create in the project (`general.location`), then FRS `MoveEntities` by `frsId` | L-DBMI-005 |
 | Delete | stop, undeploy, then `DELETE https://<pod>.<domain>.informaticacloud.com/frs/api/v1/BaseEntities('<frsId>')` → 204 | L-DBMI-007 |

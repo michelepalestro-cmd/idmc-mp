@@ -29,7 +29,7 @@ counting profile runs for a job budget; catalog profiling coverage looks wrong.
 [Secure Agent - Install, Run & Tune](../02-secure-agent/01-secure-agent-install-run-tune.md) ·
 [Lessons: Data Quality & Profiling](lessons.md)
 
-**Last verified:** 2026-11-05
+**Last verified:** 2026-11-20
 
 > **Summary.** IDMC has three profiling paths: (1) **Data Profiling profiles** on the `<pod>-dqprofile` service, fully
 > headless (create by cloning a template body, update, bind rule occurrences, execute, poll, read run history);
@@ -102,7 +102,7 @@ Header: IDS-SESSION-ID: <sessionId>
 
 | Purpose | Verb + path (under the base) | Body | Success / read-back | Errors seen | Evidence |
 |---|---|---|---|---|---|
-| List profiles | `GET /profile?limit=200` | none | 200 array of profiles (`id`, `name`,...) | | proven |
+| List profiles | `GET /profile?limit=<well above the count>` | none | 200 array of profiles (`id`, `name`,...) | `offset` is ignored: a pager loops on page one; use one large `limit` and assert the count is below it (L-DQ-155). Name filters `frsProjectName`, `frsFolderName`, `name`, `exactMatch` and recent runs `GET /runDetail/topNrun?limit=10` appear in public code (L-DQ-169, not probed) | proven |
 | Read one | `GET /profile/<id>` | none | 200 full definition (source, fields, rules, profileableFields, runtimeOptions, frsProjectId/frsFolderId) | HTML 200 = wrong session | proven |
 | Create | `POST /profile` | a template profile's body, edited (§2.3) | 200/201; the response carries `id`. If it does not, list by name. | **500 "Row was updated or deleted"** if you send client-side ids (L-DQ-021); **PROFILE_MDL_00006** for unsupported column types (L-DQ-022); **PROFILE_SVC_00014** while the agent's DIS is down | proven |
 | Update | `PUT /profile/<id>` | the full body from GET, edited | 200; GET shows the change | same as create | proven |
@@ -113,6 +113,7 @@ Header: IDS-SESSION-ID: <sessionId>
 | Rule bindings | `GET /ruleOccurrence/...ForProfile_V2_Token/<uuid>` | none | the profile's rule occurrences (scorecard bindings) | | proven reads |
 | DQ dimensions | `GET /ruleOccurrence/ruleType` | none | the six built-in dimensions | | proven reads |
 | Column metrics | `GET https://<pod>-dqprofile.<domain>.informaticacloud.com/metric-store/api/v1/odata/Profiles('<uuid>')/Columns` (also `/Insights`, `/Patterns`, `/ValueFrequencies`) | none | per-column statistics, CLAIRE insights (rule-spec suggestions), patterns, top values | | proven reads |
+| Export results | `GET .../metric-store/api/v1/Profiles('<uuid>')/Export?runKey=<n>&range=ALL_COLUMNS&fileFormat=EXCEL` | none | the results workbook | | public code, not probed (L-DQ-171) |
 
 - The profile's internal UUID differs from the `repoHandle` in the UI URL. Take ids from `GET /profile` (match on
   name), never from the address bar (L-DQ-049).
@@ -267,6 +268,8 @@ scores per dimension, trends or parity checks, the warehouse tables of
 | JDBC V2 profile fails 'Data too long for column error_msg'; the agent log shows '[<db>] was not found', 'Object(s) [<t>] not found', 'Invalid operation field name' or 'cannot be cast to java.sql.Timestamp' | the source must be a real table of the connection's own schema with its real column names, and recognised types must come back natively | one connection per database; real table + column names; DateTime / numbers bare, Date as toDateTime(col), only complex types as text | L-DQ-134 |
 | 500 PROFILE_SVC_00004 'Data too long for column property_value' (ds_adv_properties) on POST /profile | the SQL Override is longer than 4,000 characters | split the columns across profiles, each override under 4,000 characters, same sample clause | L-DQ-133 |
 | 'Invalid operation field name' after the profiled table was recreated with other columns; a new profile on the same table then returns no rule metrics | not isolated | `DELETE /profile/<id>`, recreate the profile on a view over the table | L-DQ-112 |
+| A file profile shows Completed with 0 rows written; log '_3120 Number of column in metadata are more than source file' | the file was replaced by one with a different column count and the stored metadata kept the old count | delete every prior profiling task on that file name and recreate it | L-DQ-170 |
+| `java.io.IOException: Premature EOF` about 90 s into a ClickHouse SQL-override profile | ClickHouse killed the query at the override's own `max_memory_usage` cap (code 241 in `system.query_log`) | raise the cap or read less (no `FINAL` over a just-doubled table) | L-DQ-148 |
 
 ---
 
@@ -503,7 +506,7 @@ Catalog-source APIs (create/update multipart, scans, polling) are documented in 
 ## 9. Open questions
 
 - The vendor paths for profiling **query** CRUD (a separate guide, not held).
-- Any REST read of per-rule pass rates and scorecard values, beyond the metric-store column metrics.
+- Answered 2026-11-02: per-rule pass rates are read from the rule output column in the metric store (§2.7, L-DQ-123).
 - Which results stores (S3 V2, ADLS Gen2, GCS) an org can choose, and where that is configured.
 - Whether a profile schedule set in the UI survives a v3 export/import.
 - Whether `jsonb` and array columns are accepted as profileable fields by the Data Profiling service (path 1), as they

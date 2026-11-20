@@ -18,7 +18,7 @@ settings and the costly errors. A slow or costly pipeline: `/idmc-mp:optimize` (
 | Prove the org | `python3 toolkit/check_login.py`: one attempt only, rejected logins lock the account (IDS_086) | Fast Path §1 |
 | Fill ids from names | `mapgen.py --profile profile.json resolve --write` (every connection has a `kind`) | Fast Path §1 |
 | Create a mapping | spec → lint → package → v3 import → mapping task (`mapgen.py ... deploy <spec>.json`): route 5 | L-CDI-033, L-CDI-204 |
-| A connector or transformation with no template | exemplar route: export a mapping that uses it (`toolkit/lib/idmc_export_import.py export --id <frsGuid>`), read it with `toolkit/mapgen/exemplar.py` | Fast Path §7.0 |
+| A connector or transformation with no template | exemplar route: export a mapping that uses it (`toolkit/lib/idmc_export_import.py export --id <frsGuid> --out exemplar.zip`), read it with `toolkit/mapgen/exemplar.py` | Fast Path §7.0 |
 | Rebuild or retarget a mapping | OVERWRITE import under the same mapping id (the generator finds it by name in the folder) | L-CDI-050, L-CDI-145 |
 | Create a mapping task | `deploy` creates or reuses `taskName`; raw: `POST /api/v2/mttask` with `{mappingId, runtimeEnvironmentId}` | L-CDI-037 |
 | Update a mapping task | POST the full body to `/api/v2/mttask/<id>` and read it back; PUT is 405 | L-CDI-046 |
@@ -27,6 +27,8 @@ settings and the costly errors. A slow or costly pipeline: `/idmc-mp:optimize` (
 | Per-target rows of a multi-target mapping | `transformationEntries` of the activity-log row | L-CDI-198 |
 | Full SQL ELT (pushdown) | three keys on the v2 mapping task; proved only by `OPT_63367` in the session log | L-CDI-202 |
 | Change one template task's SQL | `toolkit/lib/idmc_mttask.py set-query` (anchored replace), with backup and read-back | L-CDI-135, L-CDI-196 |
+| Run a Dynamic Mapping Task (Reported) | `POST /batch-mapping/api/v1/Job {"taskFrsId"}` on the pod host, monitor `.../Job/monitor/task/<taskFrsId>/run/<runId>`, stop `.../Job/stop`; never v2 `job` or `activityLog` | L-CDI-327, L-CDI-289 |
+| Validate an expression before embedding it (Reported) | `POST /api/v2/expression/validate {"@type":"expressionValidation","expr",...}` | L-CDI-311 |
 
 ## What doesn't work, and the workaround
 
@@ -70,7 +72,8 @@ settings and the costly errors. A slow or costly pipeline: `/idmc-mp:optimize` (
 - **Upsert green, 0 rows changed** (PostgreSQL) → writer attributes missing for the operation → let the generator add
   them and test a new-key insert (L-CDI-207).
 - **Target appends every run though truncate is on** → the writer ignores the flag → the per-connector setting in
-  Fast Path §3 (L-CONN-106, L-CDI-171, L-CDI-038, L-CDI-248).
+  Fast Path §3; PostgreSQL truncates only with the writer attribute `TruncateTable` = `YES` (L-CONN-106, L-CDI-171,
+  L-CDI-038, L-CDI-248, L-CDI-331).
 - **A Pre SQL `TRUNCATE` runs before the source is read**: a failed read leaves the target empty (L-CDI-208).
 - **Snowflake:** `Invalid Datatype: timestamp_ntz` → `timestampntz` (L-CONN-093); unbounded `VARCHAR` → writer
   `OutOfMemoryError` → give a length (L-CDI-227); NUMBER into a bigint lookup port → `BigDecimal cannot be cast` →

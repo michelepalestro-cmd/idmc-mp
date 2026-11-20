@@ -18,13 +18,18 @@ password rotated; an MCP call returns 401 or `IDS_085`.
   consumer when that password rotates (L-MCP-020, L-MCP-021).
 - A valid credential on the wrong domain or pod answers 400 `IDS_085`; each managed server holds its own session, so a
   401 on one says nothing about the others (L-MCP-025).
+- In Claude Code, `/idmc-mp:connect-mcp` creates a scoped client-credentials client (dry run, then `--execute
+  --expect-org`), writes it to `~/.idmc_toolkit/mcp_client.env` (0600), and the plugin's bridge
+  (`toolkit/lib/idmc_mcp_bridge.py`) uses that file to offer the servers' tools, read-only by default (§3.4).
+- Since the October 2026 release the two OAuth servers are named "Informatica OAuth Server (Client Credentials Grant)"
+  and "(Authorization Code Grant)"; Authorization Code clients carry `mcp:tools:read|write|execute` scopes (L-MCP-133).
 
 **Related:** [01 Managed MCP Servers](01-managed-mcp-servers-catalog-access.md) ·
 [04 Agent-Style MCP & Custom Shims](04-agent-style-mcp-async-orchestration-custom-shims.md) ·
 [Access, Auth & Orgs](../01-login-and-orgs) ·
 [Secrets Hygiene](../14-working-with-claude/06-secrets-hygiene.md) · [Lessons: CLAIRE & MCP](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Managed MCP servers accept a **session ID** (`IDS-SESSION-ID`), an identity **JWT**
 > (`Authorization: Bearer`, 30 minutes from grant, refreshed from a ~8 h identity session), or an **OAuth token**
@@ -160,6 +165,24 @@ MCP_BASE=https://mcp.<domain>.informaticacloud.com/mcp-servers/public/
 - Keep client secrets in a secret manager or a 0600 env file on the consuming host, one item per role or consumer
   (L-MCP-048).
 
+### 3.4 The plugin does this for you: `/idmc-mp:connect-mcp`
+
+The plugin's command runs §3.1 to §3.3 and §5 with the toolkit, so nobody hand-writes the calls:
+
+1. `python3 toolkit/lib/idmc_mcp.py servers` lists the org's servers (an empty list or 403: MCP is off or the user
+   lacks the AI Agent Engineering privileges).
+2. `python3 toolkit/lib/idmc_mcp.py client-create --name claude-code-mcp --contexts <c1,c2,...>` is a dry run; the
+   same with `--execute --expect-org <orgIdV3>` creates the client and writes the secret straight to
+   `~/.idmc_toolkit/mcp_client.env` (0600, never printed). `--allow-writes` adds `IDMC_MCP_ALLOW_WRITES=1`.
+   `clients` lists clients and `client-delete <clientId> --execute --expect-org <orgIdV3>` removes an old one.
+3. The plugin starts the bridge `toolkit/lib/idmc_mcp_bridge.py` as its MCP server (`plugin.json` `mcpServers`). It
+   reads that file, takes a client-credentials token (Basic auth, `grant_type=client_credentials`) and offers each
+   server's tools as `mcp__plugin_idmc-mp_idmc__<server>_<tool>`. Read-only by default: only reading tools are offered
+   unless the file holds `IDMC_MCP_ALLOW_WRITES=1`. Without the file it offers one status tool and makes no call.
+4. `python3 toolkit/lib/idmc_mcp_bridge.py --check` lists the servers and tools before a restart of Claude Code.
+
+The client stores its creator's password (§4): after that password changes, run the command again.
+
 ---
 
 ## 4. Token lifetime and rotation
@@ -209,6 +232,10 @@ this token served 83 Informatica tools, and `verify_address` answered Status Ok.
 
 ### 6.1 OAuth 2.1 public client for interactive MCP clients (documented by the vendor, not exercised; L-MCP-123)
 
+Since the October 2026 release this server is called "Informatica OAuth Server (Authorization Code Grant)" and its
+clients "Authorization Code" clients, with the scopes `mcp:tools:read`, `mcp:tools:write`, `mcp:tools:execute` (and
+`mcp:resources:read` for resources); clients created earlier inherit the three tool scopes (L-MCP-133).
+
 The vendor publishes an "Informatica" plugin for Claude Enterprise (Claude Desktop, Cowork and Claude Code). It bundles a
 `catalog-and-data-discovery` skill (metadata-first discovery: terms, ownership, certification, PII tags; missing metadata
 is reported as a gap, not guessed) and two connectors to the hosted servers Catalog Discovery and CLAIRE Data Exploration
@@ -235,6 +262,11 @@ Agent. It is the interactive, per-user counterpart of the client-credentials cli
 Prerequisites: a Claude Enterprise plan; an IDMC user with catalog permissions; a runtime environment running the Data
 Gateway (data exploration runs through it, [03](03-claire-gpt-prompting-rules-patterns.md) §6); an IDMC admin to
 create the client. The OAuth 2.1 server for human-in-the-loop clients is documented in the vendor MCP guide (L-MCP-119).
+
+**In Claude Code** the vendor plugin's source ships its two server URLs empty, so it does nothing until you add your
+pod's URLs and a credential yourself (L-MCP-135); `/idmc-mp:connect-mcp` (§3.4) covers every server the org lists.
+Agent platforms built on Microsoft's MCP catalog get five Informatica servers with client-credentials manifests
+(L-MCP-136).
 
 ---
 

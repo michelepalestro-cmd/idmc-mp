@@ -15,7 +15,7 @@ belief.
 [Overturned Beliefs](../lessons/overturned-beliefs.md) · [Lessons Learned](../lessons/README.md) ·
 [KB README](../README.md)
 
-**Last verified:** 2026-11-19.
+**Last verified:** 2026-11-20.
 
 > In July the KB said "read almost everything, run almost everything, design almost nothing"; by late September most
 > design, publish, deploy and delete steps had been proven headless, and the KB was rebuilt around dated lessons so that
@@ -23,6 +23,21 @@ belief.
 > the operating detail (agent tuning, job budgets, latency, serving to BI).
 
 ---
+
+## 2026-11-20: endpoint reference brought up to the current lessons
+
+- The [endpoint dictionary](idmc-api-mcp-reference/claude-idmc-how-to/idmc-endpoint-dictionary.md) gains a *Newer
+  evidence* section and per-entry notes from later lessons, kept in `build/build_dictionary.py` so every rebuild carries
+  them while the dated July corpus stays as probed: lineage hops over REST through the asset read's `lineage` segment
+  (L-CDGC-181, the graph routes stay 404), per-rule DQ pass rates from the metric store (L-DQ-123, superseding
+  L-DQ-031), the 23-server public MCP registry (L-MCP-132), the full metering export cycle that
+  `toolkit/lib/idmc_metering.py` wraps (L-IPU-021), proven `PUT` and `PATCH` routes (L-AUTH-016, L-MIG-105,
+  L-CDGC-053), headless glossary writes (L-CDGC-051), catalog DQ score writes (L-CDGC-243), profile create and update
+  (L-DQ-019), the Operational Insights export header (L-CAI-159) and the v3 user delete (L-AUTH-058).
+- The hand-written guides ([start here](idmc-api-mcp-reference/claude-idmc-how-to/start-here.md),
+  [what IDMC can and cannot do](idmc-api-mcp-reference/claude-idmc-how-to/what-idmc-can-and-cannot-do.md)), the CSV
+  README and the [Reference Library README](README.md) currency list now point to the same lessons where they said
+  lineage was MCP-only, no `PUT` or `PATCH` was proven, or only five managed MCP servers existed.
 
 ## 2026-11-19 (second pass): 106 more lessons from public IDMC code
 

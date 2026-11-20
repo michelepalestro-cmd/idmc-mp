@@ -73,6 +73,8 @@ see `/idmc-mp:optimize` ([command](../../commands/optimize.md)).
 - **`403 UI_10622` 'Interval is not valid'** → `interval` and `frequency` swapped; a string `frequency` gives 400 (L-CDI-195).
 - **`REPO_17314`** → another taskflow sharing tasks is running → one controller owns every start, per-table locks or a
   quiet window (L-CDI-078). **`REPO_17315`** → this taskflow is already running → attach to it, do not retry (L-CDI-253).
+- **On-demand task start fails in ~1 s with 'Another instance of the task is currently running'** → its scheduled run
+  is active → check the activity monitor first, skip or coalesce (L-CDI-304).
 - **Taskflow reported finished too early** → `runId` matched a child entry → poll with `taskId` AND `runId` (L-CDI-252).
 - **Members look never-run** → children log only under the taskflow's `entries[]`; never build a delete list from
   top-level rows (L-CDI-201).

@@ -11,7 +11,9 @@ proxy or a job count from the activity log.
 - Read billed consumption with the async `ExportMeteringData` job (201, poll, download); the summary GETs return 404
   even where it works (L-IPU-021, L-IPU-022).
 - Keep `PROJECT_FOLDER` (and plan `ASSET` the same way) windows at 30 days or less, or the export answers 400
-  `LS_298`; `SUMMARY` accepts longer windows (L-IPU-021).
+  `LS_298`; `SUMMARY` accepts longer windows, up to 180 days per the vendor docs (L-IPU-021, L-IPU-070).
+- At most 5 export jobs can be active per org; a `PARTIAL_SUCCESS` ZIP downloads but may be incomplete, and every ZIP
+  is kept only 3 days (L-IPU-070). The toolkit wraps the job: `toolkit/lib/idmc_metering.py export`.
 - Trial and embedded sub-orgs export a header-only CSV: estimate with a labelled proxy from the activity log
   (L-IPU-023, L-IPU-024).
 - Activity-log rows carry no `runtimeEnvironmentId` and no `agentId`; attribute through `entries[].agentId`, and count
@@ -21,7 +23,7 @@ proxy or a job count from the activity log.
 
 **Related:** [01 IPU Model (mechanics)](01-ipu-model-mechanics.md) · [03 Entitlement, Licenses & Job Caps](03-entitlement-licenses-job-caps.md) · [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) · [IDMC API & MCP Reference: admin and core](../reference/idmc-api-mcp-reference/content/10-admin-core.json) · [Lessons: IPU, Metering & Licensing](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > IPU consumption is readable headless through one asynchronous job that returns a ZIP of CSVs. Trial and embedded
 > sub-orgs accrue zero billed IPU while jobs run, so estimate with a clearly labelled proxy from the activity log. The
@@ -34,7 +36,9 @@ proxy or a job count from the activity log.
 
 | Need | Route or place | State |
 |---|---|---|
-| Billed consumption by meter and day | `POST /public/core/v3/license/metering/ExportMeteringData` -> poll -> download | Proven headless (L-IPU-021) |
+| Billed consumption by meter and day | `POST /public/core/v3/license/metering/ExportMeteringData` -> poll -> download; tool `toolkit/lib/idmc_metering.py export --start --end [--job-type] --out` | Proven headless (L-IPU-021) |
+| Per-job metering | `POST /public/core/v3/license/metering/ExportServiceJobLevelMeteringData` `{startDate,endDate,allMeters:true}`, polled and downloaded like the other export | Reported from third-party code, not probed (L-IPU-065) |
+| Custom IPU alert thresholds | `GET /public/core/v3/metering/ipuAlert/org('<orgId>')` (append `/viewTagsPreference` for project and folder alerts); set in the UI | Reported, read-only (L-IPU-069) |
 | Summary reads | `GET.../metering/MeteringUsageSummary`, `AssetUsageSummary`, `/metering/summary`, `/consumption-summary` | 404 'No static resource' (L-IPU-022) |
 | Per-run duration and rows (estimates) | `GET /api/v2/activity/activityLog` | Proven; retention is short (days) |
 | Usage dashboard, threshold alerts | Administrator Metering console | UI (documented) |
@@ -79,7 +83,8 @@ Content-Type: application/json
 {"jobType": "SUMMARY", "startDate": "2026-06-01T00:00:00Z", "endDate": "2026-07-26T00:00:00Z"}
 -> 201 {"jobId": "<id>",...}
 
-GET  <serverUrl>/public/core/v3/license/metering/ExportMeteringData/<jobId>     # poll every ~20 s until SUCCESS (3-5 min)
+GET  <serverUrl>/public/core/v3/license/metering/ExportMeteringData/<jobId>     # poll every ~20 s: CREATED or PROCESSING,
+                                                                                 # then SUCCESS or PARTIAL_SUCCESS (3-5 min)
      (also recorded as GET.../license/metering/jobs/<jobId>; try the first, then the second)
 GET  <serverUrl>/public/core/v3/license/metering/ExportMeteringData/<jobId>/download
      (the jobs form is recorded as.../license/metering/jobs/<jobId>/download)
@@ -89,8 +94,10 @@ GET  <serverUrl>/public/core/v3/license/metering/ExportMeteringData/<jobId>/down
 | Detail | Value |
 |---|---|
 | `jobType` | `SUMMARY`, `ASSET`, `PROJECT_FOLDER` |
+| Optional body fields | `allLinkedOrgs` ("TRUE"/"FALSE") to include linked sub-orgs; `combinedMeterUsage` for SUMMARY and project exports; `meterId` (a global vendor constant) for a single-meter ASSET or job-level export (reported: L-IPU-066, L-IPU-071) |
 | Dates | Full ISO-8601 with a zone. A bare `2026-06-01` gives 400 `V3API_007`; `jobType` alone gives 400 `LS_147` |
-| Window | `SUMMARY`: 33 and 90 days worked. `PROJECT_FOLDER`: at most 30 days, or 400 `LS_298` and no job; plan `ASSET` the same way (L-IPU-021) |
+| Window | `SUMMARY`: 33 and 90 days worked; vendor docs allow up to 180 days for SUMMARY and job-level exports. `PROJECT_FOLDER` and `ASSET`: at most 30 days, or 400 `LS_298` and no job (L-IPU-021, L-IPU-070) |
+| Limits | At most 5 active (CREATED or PROCESSING) export jobs per org, so queue further requests; the ZIP is kept 3 days after SUCCESS or PARTIAL_SUCCESS; SUMMARY needs access to the parent org and every linked org (L-IPU-070) |
 | Cost | The export and its reads cost 0 IPU and need no extra entitlement |
 | CSV columns | `OrgId,MeterId,MeterName,Date,BillingPeriodStartDate,BillingPeriodEndDate,MeterUsage,IPU,Scalar,MetricCategory,OrgName,OrgType,IPURate` |
 
@@ -100,16 +107,16 @@ import io, json, time, urllib.request, zipfile
 B = f"{server_url}/public/core/v3/license/metering/ExportMeteringData"
 H = {"INFA-SESSION-ID": v3_session, "Content-Type": "application/json", "Accept": "application/json"}
 def req(url, body=None, method="GET"):
-    r = urllib.request.Request(url, data=json.dumps(body).encode if body else None, headers=H, method=method)
+    r = urllib.request.Request(url, data=json.dumps(body).encode() if body else None, headers=H, method=method)
     with urllib.request.urlopen(r, timeout=120) as x:
-        return x.status, x.read
+        return x.status, x.read()
 st, raw = req(B, {"jobType": "SUMMARY", "startDate": "2026-06-01T00:00:00Z",
                   "endDate": "2026-09-01T00:00:00Z"}, "POST")
 job = json.loads(raw)["jobId"]
-while json.loads(req(f"{B}/{job}")[1]).get("status") not in ("SUCCESS", "FAILED"):
+while json.loads(req(f"{B}/{job}")[1]).get("status") in ("CREATED", "PROCESSING"):   # anything else is final
     time.sleep(20)
 st, zbytes = req(f"{B}/{job}/download")
-for name in zipfile.ZipFile(io.BytesIO(zbytes)).namelist:
+for name in zipfile.ZipFile(io.BytesIO(zbytes)).namelist():
     print(name)                      # one CSV per org
 ```
 
@@ -122,6 +129,8 @@ for name in zipfile.ZipFile(io.BytesIO(zbytes)).namelist:
 | 400 `LS_298` '... can not be apart 30 days', no job created | a `PROJECT_FOLDER` window longer than 30 days (plan `ASSET` the same way) | split into windows of 30 days or less; `SUMMARY` accepted 33 days with the same dates (L-IPU-021) |
 | 404 'No static resource' on a summary GET | the summary reads are not served | use the export; the 404 says nothing about entitlement (L-IPU-022) |
 | SUCCESS, header-only CSV | a trial or embedded sub-org | use the proxy (section 5; L-IPU-023) |
+| PARTIAL_SUCCESS | some data could not be exported | download it, but flag the totals as possibly incomplete (L-IPU-070) |
+| A sixth export will not start | 5 jobs already active in the org | wait for one to finish, then retry (L-IPU-070) |
 
 The summary GETs 404 even where this works (L-IPU-022): an earlier session concluded from those 404s that a
 Consumption API entitlement had to be requested, and was wrong within hours (L-IPU-045, superseded by L-IPU-021).
@@ -156,7 +165,9 @@ Consumption API entitlement had to be requested, and was wrong within hours (L-I
 `WORKFLOW`, `MAPPING`), `runId`, `startTimeUtc` / `endTimeUtc`, `state`, the row counts, `startedBy` (the user) and
 `runContextType` (`REST_API_V2` for API starts, `SCHEDULER` for schedule starts). They carry **no**
 `runtimeEnvironmentId` and **no** `agentId`. Each row's `entries[]` (one per mapping run, or a taskflow's children)
-carries `agentId`, `subTaskEntries`, `transformationEntries` and `logEntryItemAttrs`. So attribute usage to a runtime
+carries `agentId`, `subTaskEntries`, `transformationEntries` and `logEntryItemAttrs`. `logEntryItemAttrs` is a map of
+string values (for example `CONSUMED_COMPUTE_UNITS`, `IS_SERVER_LESS`, `ERROR_CODE`), so parse the numbers yourself and
+use the first two to attribute serverless runs (L-IPU-067). So attribute usage to a runtime
 environment by mapping `entries[].agentId` to its environment, or by object-name prefix. The log pages 1,000 rows per
 call; on a busy org about 3,700-3,800 rows covered the last ~4 days. Profile runs and catalog jobs are not in this log
 at all (L-IPU-055). The log is not complete history either: a full read for one busy project held 1,076 entries

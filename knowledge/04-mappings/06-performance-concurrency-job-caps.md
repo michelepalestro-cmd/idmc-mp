@@ -205,7 +205,8 @@ It un-paused by itself when the cap was lifted. Keep this reactive breaker as th
 4. Count jobs per day for every trigger, against the org's monthly cap (ask the admin; the API will not tell you).
 5. Before switching a mapping to full SQL ELT, estimate `3 s + 5.4 s × targets` and require parity 0/0 plus a measured gain of at least 20% or 10 s over at least 3 runs ([02](02-how-claude-builds-mappings-headless.md) §9; L-CDI-203).
 6. Measure the current path per record (below), find the step that dominates, and work on that step, not on steps that are already fast.
-7. If the answer is still too slow, the task is CDC or CAI, not a CDI lane. 'Seconds end to end' through batch CDI is not reachable when each lane is 85-150 s; real-time paths must carry the per-event story (L-CDI-206).
+7. Extra on-demand starts cannot shorten a chain whose floor is a task's own runtime: a mapping task runs one instance at a time, and a start while its scheduled run is active fails in about 1 s (L-CDI-304).
+8. If the answer is still too slow, the task is CDC or CAI, not a CDI lane. 'Seconds end to end' through batch CDI is not reachable when each lane is 85-150 s; real-time paths must carry the per-event story (L-CDI-206).
 
 ### 8.1 Measure source event → governed table per record (L-CDI-206)
 

@@ -412,16 +412,17 @@ byte counters on its existing sockets or a reversible stop test, never with the 
 
 The org's managed servers are listed at
 `GET https://hdm.<domain>.informaticacloud.com/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED` with the v3
-session in `IDS-SESSION-ID`. One org exposed 19 servers and about 140 tools where the April 2026 guide listed five
-servers and eleven actions, and two same-day verdicts built only on the servers wired into one session ("MCP is DQ-only")
-were wrong. MCP now writes (connections, runtime-environment selections, glossary and classification, users and roles,
+session in `IDS-SESSION-ID`. In September 2026 one org exposed 19 servers and about 140 tools where the April 2026 guide
+listed five servers and eleven actions, and two same-day verdicts built only on the servers wired into one session ("MCP
+is DQ-only") were wrong. The October 2026 release lists 23 shared servers in the public registry, which needs no login
+but does not say what your org exposes (L-MCP-132). MCP now writes (connections, runtime-environment selections, glossary and classification, users and roles,
 export and import), but no MCP verb authors a CDI field mapping, deploys a DBMI task or publishes a CAI process. A local
 MCP configuration can silently point at a different org.
 
 - **Test:** `tools/list` against each server's `serverEndpointUrl`, and print which identity URL and org any local shim
   logs into.
 - **See:** [Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md) ·
-  L-MCP-001 (2026-09-23), L-MCP-003, L-MCP-033, L-MCP-005.
+  L-MCP-001 (2026-09-23), L-MCP-003, L-MCP-033, L-MCP-005, L-MCP-132 (2026-11-19).
 
 ### Law 23. Every service selection costs RAM, disk and an engine rollover: select only what the scope needs
 
@@ -451,13 +452,14 @@ Rejected logins from every session and tool add up against one account: about si
 locked one, and each attempt during a lock can restart it. `IDS_086` is the only lock code; `IDS_085` usually means
 valid credentials sent to the wrong domain host, or a truncated user name. The v2 session and JWTs die 30 minutes after
 grant however busy you are (the July "30-minute idle" belief is overturned), so cache the session with its grant time,
-refresh at about 25 minutes, and on a 401 log in exactly once more. Serialize logins with a file lock and write a block
+refresh at about 25 minutes, and on a 401 (or a 403 whose v3 code is `AUTH_01`, reported in client code) log in exactly
+once more. Serialize logins with a file lock and write a block
 file on any rejected login, so nothing retries until the credentials change. A Secure Agent keeps running scheduled work
 while its user is locked.
 
 - **Test:** on a mocked network, after one rejection, ten further attempts make zero network logins.
 - **See:** [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) §5–7 ·
-  L-AUTH-027 (2026-09-28), L-AUTH-034, L-AUTH-035, L-AUTH-036, L-AUTH-041, L-METHOD-070.
+  L-AUTH-027 (2026-09-28), L-AUTH-034, L-AUTH-035, L-AUTH-036, L-AUTH-041, L-METHOD-070, L-AUTH-124 (2026-11-19).
 
 ### Law 25. One writer per org; prove the org before any destructive call; a rejected call may already have run
 

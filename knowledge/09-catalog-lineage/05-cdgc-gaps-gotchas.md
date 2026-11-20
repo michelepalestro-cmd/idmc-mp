@@ -26,7 +26,7 @@ answer; when planning a migration or a demo that depends on lineage or CLAIRE.
 [04 Search, Lineage & Marketplace](04-search-lineage-marketplace.md) ·
 [CLAIRE & MCP](../11-mcp-claire) · [Lessons: CDGC](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** CDGC is the most headless IDMC family: catalog-source create, update, rename and purge, scans, search,
 > glossary, links, dictionary, manual classification, lineage connection assignment, catalog DQ rule occurrences and
@@ -76,6 +76,11 @@ answer; when planning a migration or a demo that depends on lineage or CLAIRE.
 | Marketplace ratings, stakeholders, chat, approvals | UI-ONLY | - | L-CDGC-097, 098 |
 | QuickLook | CLIENT INSTALL | browser extension | L-CDGC-070 |
 | Carry CDGC content in a v3 package | NO (`MigrationSvc_034`) | rebuild through the APIs | L-CDGC-071, 104 |
+| Bulk import of business assets (xlsx template) | HEADLESS per public code, not probed here | `data360/content/import/v1/assets` (multipart), poll `observable/v1/jobs` | L-CDGC-258, 259 |
+| Push external DQ scores onto rule occurrences | HEADLESS per public code, not probed here | multipart CSV to `data-quality/v1/rule-occurrences/runs` (said to replace the `publishScore` PATCH) | L-CDGC-263, 243 |
+| Asset change history, asset export to file | HEADLESS per public code, not probed here | `data360/audit/v1/assets[/<id>]/events`; `search/export/v1/assets` then the job's output file | L-CDGC-241, 242 |
+| Custom data-element classifications, lookup tables | HEADLESS per public code, not probed here | `ccgf-metadata-discovery/api/v1/{classifications,lookuptables}` | L-CDGC-272 |
+| Custom lineage from a CSV | HEADLESS per public code, not probed here | staged `links.csv` zip, then a Custom catalog source | L-CDGC-269 |
 
 ---
 
@@ -189,6 +194,9 @@ The same mistake cost days more than once. What it looked like, and what was act
   connection URL fails the scan with AADSTS500011 (resource principal not found), a relative subsite with 'no protocol:
   sites/<site>/_api/web'; a create that omits any Scanner Configuration option answers 500 (L-CDGC-162).
 - The list can come back empty (L-CDGC-018).
+- Since 2026 the catalog-source payload needs `Runtime Environment` in Execution > Runtime Settings (empty = 500), and
+  the `Execution Mode` option and `Metadata Schedule Settings` block were dropped; rebuild old bodies from a fresh GET
+  (L-CDGC-270, public code).
 - PostgreSQL filters are `schema.*` (L-CDGC-026); use the native connector (L-CDGC-023).
 - `Retain` keeps dead objects; set `Delete` before rescans (L-CDGC-028).
 - Profiling PARTIAL_COMPLETED: pgvector, a column named `rows`, transient 503s; the job API shows no error (L-CDGC-043).
@@ -241,6 +249,9 @@ The same mistake cost days more than once. What it looked like, and what was act
 
 **Search**
 - Unknown field = 500 (L-CDGC-076); totals cap at 10,000 (L-CDGC-077).
+- `certified:true` covers datasets only: on terms, domains, policies or columns it returns zero, not a gap (L-CDGC-247).
+- AI System and AI Model class searches were reported to return 0 on a sub-organization even after an import; check
+  the UI (L-CDGC-268, public code).
 - Views are cataloged as `View`, not `Table`: a Table-only count says "never scanned" (L-CDGC-139).
 - Unstable paging duplicates and drops rows (L-CDGC-078): sort on `core.identity` and filter on `core.origin` +
   `elementType` OBJECT; a sort on `core.externalId` returns no hits (L-CDGC-169).
@@ -358,7 +369,10 @@ The same mistake cost days more than once. What it looked like, and what was act
 
 ## Lessons cited in this doc
 
-Every current CDGC lesson appears in the matrix or the gotcha list; the superseded ones are L-CDGC-031, L-CDGC-082,
+Every current CDGC lesson up to L-CDGC-237 appears in the matrix or the gotcha list. L-CDGC-238 to L-CDGC-277
+(2026-11-19, read from public code or the vendor's own skills, not probed here) are cited where they apply, in this doc
+and in [01](01-cdgc-apis-auth.md) to [04](04-search-lineage-marketplace.md); the read-only answer patterns among them
+(L-CDGC-249 to L-CDGC-257) live in [lessons](lessons.md). The superseded ones are L-CDGC-031, L-CDGC-082,
 L-CDGC-086 (superseded by L-CDGC-159) and L-CDGC-120 to L-CDGC-138 (L-CDGC-120 superseded by L-CDGC-034, L-CDGC-138 by
 L-CDGC-105) plus L-DQ-044 (superseded by L-CDGC-143).
 Full text: [Lessons: CDGC](lessons.md).

@@ -54,6 +54,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   runtime EXISTS or MISSING in the target; it exits 1 unless the job ends SUCCESSFUL)
 - `toolkit/lib/idmc_package_edit.py`: edit a package offline and keep it importable
 - `toolkit/lib/idmc_frs_delete.py`: dependency-checked, leaf-first deletes
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `promo_*` (export and
+  import status and logs; start an export or import only when the client allows writes, then read it back over REST)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

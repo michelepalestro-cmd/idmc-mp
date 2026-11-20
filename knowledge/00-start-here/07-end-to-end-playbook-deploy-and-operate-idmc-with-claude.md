@@ -270,7 +270,8 @@ query of the stored values.
    want IDMC-side schedules (L-CDGC-143, L-CDGC-152).
 6. Test the CLAIRE GPT prompts you will rely on, after the index has caught up with the last scan (L-MCP-062, L-MCP-091;
    [CLAIRE GPT - Prompting Rules & Patterns](../11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md));
-   enumerate the org's managed MCP registry before planning MCP work (L-MCP-001).
+   enumerate the org's managed MCP registry before planning MCP work (L-MCP-001), and use `/idmc-mp:connect-mcp` to
+   offer its tools to Claude Code (read-only by default).
 
 **Done when:** scans complete (a PARTIAL_COMPLETED counts only after the agent-side scanner log shows a benign cause, such as unreadable warehouse tags, L-CDGC-168), lineage resolves from source to golden table, and the agreed
 CLAIRE prompt set passes in fresh conversations.

@@ -29,7 +29,7 @@ the data service connection is unavailable; deciding whether CLAIRE can act on d
 [DQ Scorecards](../08-data-quality/04-dq-scorecards-warehouse-pattern-and-data-profiling-scorecards.md) ·
 [Lessons: CLAIRE & MCP](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** CLAIRE GPT is the conversational UI over an org's CDGC catalog: glossary, classifications (PII), lineage
 > and impact. It also runs NL-to-SQL ("Query the data") on cataloged **warehouse** tables through a Secure Agent's Data
@@ -308,6 +308,11 @@ the data" prompts (rule 3): there it sent one of two runs to a same-named view (
   base64 key that CDI accepted gave "Invalid PKCS#8 data" in the gateway, and the full PEM with literal `\n` escapes
   worked. Key formats are pod- and engine-dependent: test CDI, the ingestion driver and the gateway
   separately ([Secure Agent & Connections](../02-secure-agent)).
+- **The gateway picks the BigQuery connection itself (L-MCP-125, L-MCP-126, L-MCP-127).** It tries the org's
+  connections for the table's project one after another and runs on the first it can open; each one it cannot open
+  adds 1.3 to 3.5 s to every data prompt of that project, so give every connection to the project the gateway's key
+  form, or keep CDI-only connections on another project. A gateway-only connection can fail the v2 connection test and
+  still serve the prompts: prove it with a data prompt and the gateway log.
 - Data exploration ran on **BigQuery** (row counts, group-bys, joins) and not on **PostgreSQL** (L-MCP-061). Point
   data questions at warehouse copies.
 - **No gateway, no data answers; add the licence and it works (L-MCP-090).** Without the service, CLAIRE answers
@@ -409,7 +414,8 @@ the data" prompts (rule 3): there it sent one of two runs to a same-named view (
     (two retries were enough).
 
   See [04](04-agent-style-mcp-async-orchestration-custom-shims.md) and
-  [01](01-managed-mcp-servers-catalog-access.md) (20 managed servers in the vendor guide, L-MCP-119).
+  [01](01-managed-mcp-servers-catalog-access.md) (20 managed servers in the vendor guide, L-MCP-119; the October 2026
+  release lists 23 in the public registry, L-MCP-132).
 
 ---
 

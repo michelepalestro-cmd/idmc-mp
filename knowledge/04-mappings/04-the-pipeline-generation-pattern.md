@@ -125,7 +125,7 @@ for e in topo_sort(spec.tasks, by="reads"):               # upstream first
 
 # ---------- 4. special shapes (section 5), 5. plan file, 6. lanes, 7. schedules ----------
 if not partial_build: write_json(f"plan_{mode}.json", plan)      # a --only build never overwrites the plan
-for lane, tasks in orchestrator_lane_order.items:            # landing -> raw -> medallion waves; SaaS last
+for lane, tasks in orchestrator_lane_order.items():            # landing -> raw -> medallion waves; SaaS last
     upsert_linear_taskflow(f"wf_<app>_{lane}", tasks, keep_schedule=True)   # 04 §2
 bind_schedules(created_unbound=True)                             # 04 §4-5
 ```

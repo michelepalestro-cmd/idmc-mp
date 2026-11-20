@@ -11,9 +11,9 @@
 - A CDC target dataset also holds `<table>_EXT` and `INFORMATICA_CDC_RECOVERY`: leave them alone and filter them out of BI, catalog and counts (L-DBMI-050, L-ENV-082).
 - Never let several native-CDC streams share one target dataset with the same source schema name (L-ENV-075).
 
-**Related:** [DBMI over REST](01-dbmi-over-rest-create-deploy-run-stop.md) · [CDC from PostgreSQL](02-cdc-from-postgresql.md) · [Serving Outputs to BI and Apps](../04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) · [Secure Agent & Connections](../02-secure-agent) · [Lessons: Mass Ingestion & CDC](lessons.md)
+**Related:** [DBMI over REST](01-dbmi-over-rest-create-deploy-run-stop.md) · [CDC from PostgreSQL](02-cdc-from-postgresql.md) · [Serving Outputs to BI and Apps](../04-mappings/09-serving-outputs-to-bi-and-apps-freshness-latency-reverse-etl.md) · [Secure Agent](../02-secure-agent/README.md) · [Lessons: Mass Ingestion & CDC](lessons.md)
 
-**Last verified:** 2026-10-08
+**Last verified:** 2026-11-20
 
 > A BigQuery target for Database Ingestion needs three things: the Simba BigQuery JDBC driver set on the agent (about 73 jars plus `GoogleBigQueryJDBC42.jar`, then an agent restart), a GCS staging bucket the connection's service account can write, and a private key in the form the Simba driver accepts.
 > On one pod the CDI BigQuery V2 connector and DBMI's Simba driver wanted different key forms, so give DBMI its own BigQuery connection. The exact PEM form Simba took is disputed.
@@ -66,7 +66,7 @@ initial load then ended `warning`: small tables landed and every larger table fa
 from an agent where DBMI to BigQuery is proven rather than mixing in a newer download, and judge any driver change by an
 initial load of your largest table.
 
-Related agent facts (see [Secure Agent & Connections](../02-secure-agent)):
+Related agent facts (see [Secure Agent](../02-secure-agent/README.md)):
 
 - DBMI needs the Mass Ingestion (databases) service selected on the runtime environment, with `Database_Ingestion` and `MassIngestionRuntime` RUNNING in `GET /api/v2/agent/details/<agentId>` (L-DBMI-041).
 - Every service-selection change can also roll DIS, Mass Ingestion and the connector service to their newest versions; a lane can queue for about 5 minutes behind that rollover. Re-check your jar folders after an upgrade.
@@ -152,6 +152,7 @@ Read the newest task log first: `<agent_home>/apps/Database_Ingestion/logs/tasks
 ## 9. Target-side conventions (BigQuery)
 
 - **Current state, not a change log:** the tables are typed and merged on the primary key; each row carries audit columns with the `INFA_` prefix (`auditColumnsPrefix`). Build consumer views over them, with the same names and SQL as any batch marts they replace.
+- **Deletes are hard deletes:** a source DELETE removes the target rows (there are no soft-delete columns); a bulk purge of about 607,000 rows reached the target within about 2 minutes, but allow one full apply cycle of the slowest task (L-DBMI-057).
 - **Re-baselines rewrite the tables:** a CDC_COMBINED task started with LATEST (a first start, a redeploy, or a handover to another org) re-runs the initial unload into the existing tables before it streams. Readers see a short gap (about 3 minutes in the runs measured), not wrong data.
 - **One staging directory per task** (`target.directory` and `targetDirectory`), so split tasks do not collide.
 - **The deploy needs project-level metadata:** it runs `SELECT ... FROM region-<location>.INFORMATION_SCHEMA.SCHEMATA`, so an identity with dataset-level roles only gets 403; grant project-level metadata read or use an identity that has it (L-DBMI-054).
@@ -171,4 +172,4 @@ Read the newest task log first: `<agent_home>/apps/Database_Ingestion/logs/tasks
 
 ## 11. Lessons in this doc
 
-L-DBMI-023, L-DBMI-024, L-DBMI-028, L-DBMI-030, L-DBMI-032 to L-DBMI-039, L-DBMI-041, L-DBMI-052 and L-DBMI-053. Full text: [Lessons: Mass Ingestion & CDC](lessons.md).
+L-DBMI-023, L-DBMI-024, L-DBMI-028, L-DBMI-030, L-DBMI-032 to L-DBMI-039, L-DBMI-041, L-DBMI-050, L-DBMI-052 to L-DBMI-055 and L-DBMI-057. Full text: [Lessons: Mass Ingestion & CDC](lessons.md).

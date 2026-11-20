@@ -53,6 +53,8 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   (`--save-to <file>` keeps a secret such as the install token out of the output)
 - `toolkit/lib/idmc_runtime_selections.py`: services and connectors of a runtime environment
 - `toolkit/lib/idmc_probe.py`: route discovery that cannot fool itself (bogus-twin check)
+- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `agent_*` (agents,
+  runtime environments; selection changes only when the client allows writes), `trouble_*` (agent health)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to

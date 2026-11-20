@@ -11,7 +11,7 @@ OAuth client (secret written straight to a 0600 file, never printed), and call M
   python idmc_mcp.py call  --server <context> --tool <name> (--args-json '{..}' | --args-file f) [--nested] [--poll]
                            [--env PATH | --auth session]    (a tool can act: --execute --expect-org <orgIdV3>)
 
-Routes. PROVEN 2026-09 (production org, 19 managed servers, ~140 tools):
+Routes. PROVEN 2026-09 (production org, 19 managed servers, ~140 tools; 23 servers in the October 2026 release):
   GET  https://hdm.<domain>.informaticacloud.com/a2e-mcp-asset-mgmt-svc/api/v1/mcp-servers?type=MANAGED[&expandTools=true]
        header IDS-SESSION-ID: <v3 session> -> servers[]{id, mcpServerName, serverEndpointUrl, context, toolsDetails}
   POST .../a2e-mcp-asset-mgmt-svc/api/v1/oauth2clients {"providerType":"IDMC_MCP","clientName","description",
@@ -161,7 +161,9 @@ def main():
     for c in ("tools", "call"):
         p = H.add_gate_args(sub.add_parser(c)) if c == "call" else sub.add_parser(c)
         p.add_argument("--server", required=True, help="the server context, e.g. dqverifyaddress")
-        p.add_argument("--env", default=os.environ.get("IDMC_MCP_ENV_FILE"))
+        dflt = os.path.expanduser(os.path.join("~", ".idmc_toolkit", "mcp_client.env"))
+        p.add_argument("--env", default=os.environ.get("IDMC_MCP_ENV_FILE") or (dflt if os.path.exists(dflt) else None),
+                       help="the OAuth client file (default $IDMC_MCP_ENV_FILE, else ~/.idmc_toolkit/mcp_client.env)")
         p.add_argument("--auth", choices=["oauth", "session"], default="oauth")
         if c == "call":
             p.add_argument("--tool", required=True)

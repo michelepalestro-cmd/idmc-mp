@@ -135,7 +135,7 @@ A sub-org exposing a single engine looked unlicensed. The parent org enumerated 
 
 ### L-IPU-035  Sub-org licence allocation is UI-only
 **Kind:** WALL · **Proven:** 2026-07-26 · **Evidence:** UI-only walls list (2026-07-26)
-Licences are allocated down to a sub-org in the parent org: Administrator > Sub-Organizations > Licenses. No REST verb was found and no receipt text has been captured.
+Licences are allocated down to a sub-org in the parent org: Administrator > Sub-Organizations > Licenses. No REST verb was found here and no receipt text has been captured. Third-party code later reported a full-overwrite `PUT /public/core/v3/license/org/<subOrgId>` from the parent (L-IPU-072), not yet probed here: until it is, the UI path is the proven one.
 
 ### L-IPU-036  Sub-orgs inherit entitlements from the parent org
 **Kind:** LAW · **Proven:** 2026-07-04 · **Evidence:** Sub-org runs succeeded with 0 billed IPU (2026-07-04)

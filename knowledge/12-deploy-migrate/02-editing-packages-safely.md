@@ -19,10 +19,12 @@ mapping task, or change a DBMI runtime property?
 - Retarget a mapping task by re-importing its mapping with `OVERWRITE` under the same GUID; the v2 target-parameter
   update is a silent no-op (L-MIG-030).
 - Never print package contents: packages can carry plaintext secrets (L-MIG-018).
+- Prefer the offline editor `toolkit/lib/idmc_package_edit.py` (`inspect`, `verify`, `replace`, `sub`, `drop`,
+  `remap`; dry run until `--execute`), which applies these rules for you; the snippets below show what it does.
 
 **Related:** [Export & Import](01-export-import-v3-migration-api.md) · [Migration-Clone Authoring](03-migration-clone-authoring.md) · [Org-to-Org Migration Runbook](04-org-to-org-migration-runbook.md) · [DBMI over REST](../06-cdc-ingestion/01-dbmi-over-rest-create-deploy-run-stop.md) · [Lessons: Migration & Org Management](lessons.md)
 
-**Last verified:** 2026-10-03
+**Last verified:** 2026-11-20
 
 > An export package can be edited and re-imported; that is how headless clones, retargets, repairs and in-place
 > changes are made. Get the consistency rules wrong and the import fails with `MigrationSvc_073` (a hash not updated)
@@ -53,8 +55,9 @@ mapping task, or change a DBMI runtime property?
 ├─ exportMetadata.v2.json                exportedObjects[]: objectGuid, objectName, objectType, path,
 │                                        metadata.objectRefs (dependency guids), additionalInfo,
 │                                        repoInfo.repoHandle (= the v2 id)
-├─ exportPackage.chksum                  one line per file: <path>=<SHA-256 hex, upper case>,
-│                                        plus a few opaque object-hash lines
+├─ exportPackage.chksum                  Java properties format: optional '#' header lines, then one
+│                                        line per file: <path>=<SHA-256 hex, upper case>,
+│                                        plus (in most packages) a few opaque object-hash lines
 └─ <export>.csv                          one row per object
 ```
 
@@ -62,7 +65,9 @@ Notes:
 
 - The DBMI `.dat` and the tool-connection `.dat` are plain JSON; CAI assets are XML. The September mapping exports held IMF JSON text in `bin/@<n>.bin`, not an opaque binary (L-MIG-029).
 - `repoInfo.repoHandle` gives each object's **v2 id** in the source org. Keep it for the id map.
-- Paths with spaces are escaped as `\ ` in the checksum keys.
+- Paths with spaces are escaped as `\ ` in the checksum keys. Keep any `#` comment lines at the top of the checksum file as they are: they are not entries (L-MIG-122).
+- A mapping task's `mtTask.json` holds `runtimeEnvironmentId` as an `@<22-character FRS id>` reference. Writing the v2 runtime id there makes the task import fail with `OIE_007 'Internal application provider error'` (L-MIG-100).
+- Pruning a mapping (for example to one lane) must also prune `mappingTemplate.json` `references[]` to match the package's `objectRefs`, or the import fails with the same bare `OIE_007` (L-MIG-076).
 
 ## 2. The three rules
 
@@ -216,6 +221,12 @@ The clone imported with `checksumValid:true` and ran 52/52 rows into a warehouse
 
 Changing a mapping task's target through the v2 update idiom (`POST /saas/api/v2/mttask/<taskId>` with new target parameters) returns 200 and changes **nothing**: the task re-derives its targets from the mapping. Retarget by editing the mapping's package and re-importing it with `OVERWRITE` under the **same GUID**, then read the task back.
 
+Moving a package to **another org** means re-pointing every file, nested zips included: connection and runtime
+federated and v2 ids, the old org's v2 and v3 ids, `SYS/<re>.AgentGroup.zip` entries for every target runtime, and
+`pre`/`postProcessingCmd` values that call hosts the target cannot reach; then re-hash. After the import compare each
+connection's host and database with the intended values (L-MIG-082). For later redeploys, a package that leaves out
+the Connections and `SYS` folders keeps the settings made by hand in the target (L-MIG-121, reported).
+
 ## 9. Security while editing
 
 - Packages can carry plaintext secrets (a CAI app connection with `encrypted="false"`). Never print file contents, diff outputs or package dumps into a transcript or log; print names, sizes and hashes only (L-MIG-018).
@@ -233,7 +244,9 @@ Changing a mapping task's target through the v2 update idiom (`POST /saas/api/v2
 | `MigrationSvc_031` 'Internal error' on a `TOOL_CONNECTION` | a platform limit | recreate it in the designer (L-MIG-039) |
 | `MigrationSvc_030` | the upload is not a valid package (empty or malformed zip) | rebuild the zip; keep the Folder/Project JSON entries |
 | `SUCCESSFUL`, but the change is not visible | you edited a copy the target reused (`REUSE`) | import with `OVERWRITE` |
+| `OIE_007 'Internal application provider error'`, nothing more in the log | a v2 runtime id in `mtTask.json`, or stale `mappingTemplate.json` `references[]` after pruning | keep the `@<FRS id>` form; prune `references[]` (L-MIG-100, L-MIG-076) |
+| Every export shows every CAI file as changed in Git, or reused checksum lines fail after a commit | the `CurrentServerDateTime` line, or CRLF conversion | strip that one line before committing and re-hash what you changed; commit with line-ending conversion off (L-MIG-125, L-MIG-123) |
 
 ## 11. Lessons in this doc
 
-L-MIG-015, L-MIG-018 to L-MIG-022, L-MIG-027, L-MIG-029, L-MIG-030, L-MIG-039, L-DBMI-007. Full text: [Lessons: Migration & Org Management](lessons.md).
+L-MIG-015, L-MIG-018 to L-MIG-022, L-MIG-027, L-MIG-029, L-MIG-030, L-MIG-039, L-MIG-076, L-MIG-082, L-MIG-100, L-MIG-121 to L-MIG-123, L-MIG-125, L-DBMI-007. Full text: [Lessons: Migration & Org Management](lessons.md).

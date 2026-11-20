@@ -21,7 +21,7 @@ or metering definition; you are about to regenerate one of the reference sub-lib
 [IPU Model](../13-ipu-cost/01-ipu-model-mechanics.md) ·
 [Lessons Learned](../lessons/README.md)
 
-**Last verified:** 2026-11-19 (structure and links). Live API evidence in the corpus 2026-06-28 to 2026-07-26; vendor
+**Last verified:** 2026-11-20 (structure, links and the currency list). Live API evidence in the corpus 2026-06-28 to 2026-07-26; vendor
 guides April 2026 (CPDS and Measurement Guide v39.1); IICS-to-IPUs KB 2026-09-03; de-identified and rebuilt
 2026-09-29 and 2026-10-03.
 
@@ -34,7 +34,7 @@ licensing rule). For "how do I do X", start with the topic folders.
 
 | Sub-library | What it is | Open first |
 |---|---|---|
-| `idmc-api-mcp-reference/` | Every IDMC REST endpoint and MCP action the corpus has seen: 167 endpoints, 11 MCP actions, 28 operations with no endpoint (generated set, 2026-10-03 rebuild). For each one it gives the verbs in one of four states (**Works** = a live status code was seen, **Documented** = vendor-documented but unexercised, **Rejected** = refused with a code, **Untested**), the auth plane, the host pattern, the header and the evidence. The source of truth is `content/*.json` (30 sections); the dictionary and CSVs are generated from it. | [claude-idmc-how-to/start-here.md](idmc-api-mcp-reference/claude-idmc-how-to/start-here.md) |
+| `idmc-api-mcp-reference/` | Every IDMC REST endpoint and MCP action the corpus has seen: 167 endpoints, 11 MCP actions, 28 operations with no endpoint (generated set, rebuilt 2026-11-20 with *Newer evidence* notes from later lessons). For each one it gives the verbs in one of four states (**Works** = a live status code was seen, **Documented** = vendor-documented but unexercised, **Rejected** = refused with a code, **Untested**), the auth plane, the host pattern, the header and the evidence. The source of truth is `content/*.json` (30 sections); the dictionary and CSVs are generated from it. | [claude-idmc-how-to/start-here.md](idmc-api-mcp-reference/claude-idmc-how-to/start-here.md) |
 | `iics-to-ipus-kb/` | A customer-facing KB on the move from legacy IICS licensing (per-service subscriptions, connector tiers) to the IDMC IPU consumption model, anchored on CPDS v39.1. 13 section files plus a citation registry. | [start-here.md](iics-to-ipus-kb/start-here.md) |
 | `community-code-index.md` | For each of the 292 lessons mined from public IDMC code on 2026-11-19 (two passes), the repository and file it came from, grouped by area. | [community-code-index.md](community-code-index.md) |
 
@@ -66,7 +66,20 @@ All CSV paths below are under `idmc-api-mcp-reference/claude-idmc-how-to/csv-eve
 2026-06-28 to 2026-07-26, taken on two orgs: **Org A**, an org on a dm-us pod, and **Org B**, a sub-org on a
 dmp-us pod. Later evidence in the topic folders overturns some of its walls:
 
-- The corpus says no `PUT` is proven anywhere. A `PUT` on runtime-environment service selections was later proven (2026-09-28).
+- The corpus says no `PUT` and no `PATCH` is proven anywhere. A `PUT` on runtime-environment service selections was later
+  proven (2026-09-28, L-AUTH-016), and `PATCH` on v3 folders and projects (L-MIG-105) and on data360 content assets
+  (L-CDGC-053).
+- The corpus says every REST lineage path returns 404, so lineage is MCP-only. Lineage hops are readable over REST
+  through the asset read's `lineage` segment (`GET /data360/search/v1/assets/<identity>?scheme=internal&segments=all`);
+  only the `/data360/lineage/*` graph routes stay 404 (L-CDGC-181).
+- The corpus has no REST read of DQ scores. Per-rule pass rates are read from the metric store's rule `Output` column
+  `ValueFrequencies` (L-DQ-123, superseding L-DQ-031), and catalog DQ scores with `segments=dataQuality` (L-CDGC-266).
+- The corpus counts five managed MCP servers (April 2026). The vendor's public MCP registry listed 23 as of the October
+  2026 release (L-MCP-132), and an org's own registry is read with the MCP asset-management service (L-MCP-001).
+- The corpus calls glossary writes and term-to-column binding UI-only. Terms and domains are created and edited through
+  `data360/content/v1/assets` (L-CDGC-051, L-CDGC-053) and linked to assets with a `glossary` segment PATCH (L-CDGC-056).
+- The corpus marks the Operational Insights GraphQL export as documented only. It answers 200 with the `IDS-SESSION-ID`
+  header; the documented Bearer header gets 401 (L-CAI-159).
 - The corpus calls design-time authoring a UI wall and treats cloning through v3 export, package edit and import as a narrow exception. Later work made that clone path the standard headless authoring route: a CDI mapping-template clone on 2026-08-19, and org-to-org migration clones from 2026-09-22.
 - The corpus left the DBMI create body unknown. The full DBMI task lifecycle (create, deploy, start, stop, undeploy) was proven headless on 2026-09-28.
 - The corpus lists "rich transforms (joiner, aggregator, expression, pushdown)" as Mapping Designer only. Full SQL ELT
@@ -80,7 +93,8 @@ dmp-us pod. Later evidence in the topic folders overturns some of its walls:
   `WORKFLOW` and `MAPPING`, carry no `runtimeEnvironmentId` or `agentId` at the top level (the agent id sits in
   `entries[]`), and never include profile runs or catalog jobs (L-IPU-024, L-IPU-055).
 - The corpus lists `ExportMeteringData` job types without window limits. A `PROJECT_FOLDER` window longer than 30 days
-  is refused with 400 `LS_298` and creates no job, while `SUMMARY` accepts longer windows (L-IPU-021).
+  is refused with 400 `LS_298` and creates no job, while `SUMMARY` accepts longer windows (L-IPU-021). The full export
+  cycle (start, poll, download) is wrapped by `toolkit/lib/idmc_metering.py`.
 - The corpus treats the agent's `downloads/` folder as installer packages that only must not be bulk-deleted
   mid-deployment. Installed services run from it: never clean or move it (L-AGENT-094).
 
@@ -99,7 +113,9 @@ python3 build/build_dictionary.py --csv    # -> claude-idmc-how-to/idmc-endpoint
 python3 build/build_master.py              # optional -> idmc-api-mcp-master-reference.docx (needs python-docx; not committed)
 ```
 
-- Edit only `content/*.json`. All three scripts read and write only inside `idmc-api-mcp-reference/`.
+- Edit only `content/*.json`. The one exception: notes from later lessons that overturn a row live in the
+  `LATER_LESSONS` tables of `build/build_dictionary.py`, so every rebuild carries them without rewriting the dated
+  corpus. All three scripts read and write only inside `idmc-api-mcp-reference/`.
   `build_dictionary.py --check` renders and prints the counts without writing anything. The first two
   scripts are standard library only.
 - The `content/` files were seeded on 2026-07-25 from probe evidence kept outside this repo.

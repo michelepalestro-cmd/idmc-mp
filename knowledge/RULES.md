@@ -1,8 +1,8 @@
 # Rules for any Claude session working with the IDMC MP plugin
 
-Paths in inline code are relative to the plugin root. The plugin holds the knowledge base (topic folders `00`-`12` and
-`14` under `knowledge/`), the lessons (`knowledge/lessons/`), the skills and commands, and a Python toolkit (`toolkit/lib/`, a
-mapping generator in `toolkit/mapgen/` and three demo blueprints in `toolkit/demos/`) for building and running
+Paths in inline code are relative to the plugin root. The plugin holds the knowledge base (topic folders `00`-`14` under
+`knowledge/`), the lessons (`knowledge/lessons/`), the skills and commands, and a Python toolkit (`toolkit/lib/`, a
+mapping generator in `toolkit/mapgen/` and four demo blueprints in `toolkit/demos/`) for building and running
 Informatica IDMC **headless** (REST, no UI), in the user's own IDMC org.
 
 ## The goal and the two rules (they override everything below)
@@ -47,7 +47,7 @@ that. The README's "Create any IDMC asset" table says where each asset type star
    (the ten commands, per-connector settings, the costly errors), then ONE example from `toolkit/mapgen/examples/` and
    `toolkit/mapgen/docs/SPEC_REFERENCE.md` for options. Open the long `03` docs only when the fast path points there.
 5. **Live production system, or a build someone else made:** `knowledge/00-start-here/09-what-went-wrong-production-deployment-post-mortem.md` (each failure with the
-   check that catches it)
+   check that catches it), and `knowledge/00-start-here/12-run-it-in-production.md` (the Day-2 runbook)
 6. `knowledge/00-start-here/04-error-triage.md` when anything fails
 7. The blueprint's `README.md` then `BUILD.md` (`toolkit/demos/<name>/`)
 8. Before any IDMC call, search the lessons first: `grep -i "<thing>" knowledge/lessons/lessons.jsonl` and the user's own
@@ -83,4 +83,4 @@ This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, play
 ## When you learn something
 Save it as a generic lesson (no org ids, hosts, people or secrets) in the user's `~/.idmc_toolkit/lessons-local.jsonl`
 with `/idmc-mp:save-lesson`: the plugin folder is replaced on every update, so never write into it. To share a lesson
-with everyone, follow `CONTRIBUTING.md` (an issue or a pull request).
+with everyone, follow `.github/CONTRIBUTING.md` (an issue or a pull request).

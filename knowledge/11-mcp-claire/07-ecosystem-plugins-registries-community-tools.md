@@ -111,6 +111,23 @@ From the vendor plugin's skill (documented, not probed here). It complements the
 4. Read `issues[].code`: `term_not_found`, `term_not_wired`, `ambiguous_term`, `permission_denied`, `query_too_heavy`,
    `no_data`, `partial_result`, `timeout`, `metric_version_break`.
 
+**Traps from the same skill (documented, not probed here).**
+
+| Trap | Do this | Lesson |
+|---|---|---|
+| `filterSpec.types` is stripped server-side: a silent no-op | filter on `classType` (multivalued) and `resourceType` | L-MCP-140 |
+| A multi-word phrase in KEYWORD mode returns 0 | split into single-word searches, or send one concept in NL mode | L-MCP-141 |
+| NL mode drops `filterSpec` silently | on zero hits, retry the same mode without the filter first | L-MCP-142 |
+| Counting with large pages | `origin`, `resourceType` and `assetLifecycle` buckets come free and are complete at any size | L-MCP-143 |
+| Same-name staging duplicates | scope follow-ups with `filterSpec.origin` | L-MCP-144 |
+| Fiscal periods read from the calendar | resolve them from the column's glossary or a Published term, else report FISCAL_TERM_MISSING | L-MCP-146 |
+| A raw question sent to `data_explore` | rewrite it with resolved measure, members and dates first | L-MCP-147 |
+| Lineage from `get_asset_details` | the neighborhood excludes DataFlow: use `get_asset_lineage` or the REST lineage segment | L-MCP-148 |
+| A dead-end failure | answer each issue code with its owner and a next step | L-MCP-150 |
+
+Segment sets per intent are in L-MCP-145 and the response contract in L-MCP-149; the read-only verdict and gap rules
+(field reliability, trust score, sensitivity, policy, consent, gap codes) are L-CDGC-249 to L-CDGC-257.
+
 The gateway, connection and wording lessons in [03](03-claire-gpt-prompting-rules-patterns.md) and L-MCP-122 to
 L-MCP-127 still apply.
 

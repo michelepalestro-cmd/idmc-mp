@@ -47,6 +47,8 @@ or you need to change one of them in place.
 3. **Edit the package** (see [Editing Packages Safely](02-editing-packages-safely.md)):
    - in `exportMetadata.v2.json`: a new `objectName` and a fresh 22-character `objectGuid` (random alphanumerics) for the clone, so the template is not overwritten;
    - in the inner file: the same name and GUID where they appear, plus the retargeted references (connection ids or names, namespace, `frsID`, business logic);
+   - for a mapping and its task: fresh GUIDs **everywhere** the source ones occur (`exportMetadata` `objectGuid`, `mappingTemplate.json` `assetFrsGuid`, the task's mapping reference, files inside the DTEMPLATE and MTT zips), then check that no old GUID is left, or a clone of a still-existing object can land on it (L-MIG-077);
+   - names: no parentheses in task names (`APP_13500`) or FRS renames (`FRS_082`), no dot in v3 project or folder names (create with `_`, then rename through FRS) (L-CDI-280, L-MIG-080, L-MIG-078, L-MIG-079);
    - in `exportPackage.chksum`: upper-case SHA-256 lines for the changed files only.
 4. **Upload**: `POST /public/core/v3/import/package` (multipart, part `package`), and expect 200 `checksumValid:true`.
 5. **Start**: `POST /public/core/v3/import/<jobId>` with `{"importSpecification":{"defaultConflictResolution":"OVERWRITE"}}` (or `REUSE` for the dependencies), then poll until `SUCCESSFUL`.
@@ -132,7 +134,7 @@ Goal: a new rule spec from an existing one, headless and free.
 ```python
 import json, secrets, string
 
-def new_guid:                                   # IDMC GUIDs are 22 alphanumerics
+def new_guid():                                 # IDMC GUIDs are 22 alphanumerics
     return "".join(secrets.choice(string.ascii_letters + string.digits) for _ in range(22))
 
 # 1. find a template of the exact type

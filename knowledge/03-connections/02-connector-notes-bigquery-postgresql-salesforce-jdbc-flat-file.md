@@ -23,9 +23,9 @@ designing a reload or a reverse-ETL into a SaaS target.
 [Source & Target Gotchas](../04-mappings/08-source-target-gotchas.md) (task-side write options) ·
 [DBMI Targets & Drivers](../06-cdc-ingestion/03-dbmi-targets-drivers.md) ·
 [CAI Connections & Connectors](../07-app-integration/03-cai-connections-connectors-salesforce-oauth.md) (real-time Salesforce writes) ·
-[Lessons: Secure Agent & Connections](lessons.md)
+[Lessons: Connections](lessons.md) · [Lessons: Secure Agent](../02-secure-agent/lessons.md)
 
-**Last verified:** 2026-11-03 (evidence 2026-06-27 to 2026-11-03).
+**Last verified:** 2026-11-20 (evidence 2026-06-27 to 2026-11-19).
 
 > Per-connector field names, formats and traps, each with the dates of its evidence. Catalog scans of these sources:
 > [Catalog Sources](../09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md).
@@ -309,6 +309,7 @@ Evidence: 2026-06-27 to 2026-09-28.
 | Catalog scanners | the Metadata engines' `drivers` folders | L-CONN-031 |
 | Database Ingestion (Simba BigQuery) | `apps/Database_Ingestion/ext/connectors/thirdparty` + `<ver>/dbmi_libs/libs` | Restart the agent (L-CONN-045) |
 | CAI process-engine JDBC | `<agent_home>/apps/process-engine/ext` when 'JDBC Jar Directory' is blank | |
+| SAP BAPI/RFC libraries (reported, not probed here) | CAI: `sapjco3.jar` and `libsapjco3.so` in `apps/process-engine/ext`; CDI: the SAP NW RFC libraries and `sapnwrfc.ini` in `apps/Data_Integration_Server/ext/deploy_to_main/bin/rdtm`, `sapjco3.jar` and `libsapjco3.so` in `.../deploy_to_main/bin/rdtm-extra/tpl/sap` | Add both jars to the DIS Tomcat `JAVA_LIBS` property, restart; copy the `ext` trees to every agent of the group, since upgrades do not ship them (L-CONN-150) |
 
 The `common/` directory exists only after the engine deploys; stage the jar afterwards. Guessed folders
 (`ext/jdbc/`, `apps/Data_Integration_Server/ext/drivers/`) were ignored. A DIS auto-upgrade leaves jars in the old

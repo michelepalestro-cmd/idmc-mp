@@ -13,7 +13,7 @@
 
 **Related:** [CAI Runtime](02-cai-runtime-invoke-urls-control.md) · [CAI Event Listeners](06-cai-event-listeners-kafka-amqp-jms.md) · [CAI Connections & Connectors](03-cai-connections-connectors-salesforce-oauth.md) · [CAI Troubleshooting](05-cai-troubleshooting-stuck-assets.md) · [Export & Import](../12-deploy-migrate/01-export-import-v3-migration-api.md) · [Lessons: CAI](lessons.md)
 
-**Last verified:** 2026-11-03
+**Last verified:** 2026-11-20
 
 > **Summary.** Every step of a CAI asset's life is headless. Authoring goes through a v3 import
 > package (a clone, an in-place change, or a package built from scratch); publishing and unpublishing go through
@@ -30,7 +30,9 @@
 | Service connector | `AI_SERVICE_CONNECTOR` | `application/xml+businesssconnector` (three s) | The API definition: connection attributes and actions. It has no endpoint of its own (L-CAI-026). |
 | App connection | `AI_CONNECTION` | `application/xml+connection` | Attribute values for one connector, and where it runs (an empty `<agent/>` means the Cloud Server). |
 | Process | `PROCESS` | `application/xml+process` | Inputs, outputs, temp fields, the step flow, and the deployment settings (REST binding, access). |
-| Guide | `GUIDE` | not exercised here | Publishes the same way per the vendor guide. |
+| Guide | `GUIDE` | `application/xml+screenflow` (reported, L-CAI-174) | Publishes the same way per the vendor guide, after the processes (L-CAI-182). Its repository Name replaces spaces with underscores, so build its asset path from the v3 catalog or the package file name, never from the Name (L-CAI-187). |
+| Process object | `PROCESS_OBJECT` | `application/xml+processobject` (reported, L-CAI-174) | A data type used by reference. It goes in the import package but never in a publish list: a publish job marks it UNSUPPORTED and ends ERROR (L-CAI-165, L-CAI-182, reported). Keep its `<description>` on one line (L-CAI-186). |
+| Taskflow (Data Integration) | `TASKFLOW` | `application/xml+taskflow` (reported, L-CAI-174) | Published with the same body on the **pod host** (`https://<pod>.<domain>.informaticacloud.com/active-bpel/asset/v1/publish`), not on `<pod>-cai`; mixed into a `-cai` batch its items fail with `AvrEntryNotFoundFault` (L-CAI-164, reported). |
 
 Inside a package each asset is a file named `Explore/<project>/<folder>/<name>.<TYPE>.xml`. The same string is the
 **asset path** that publish and unpublish expect (L-CAI-003, 2026-09-28). Where a process runs is covered in
@@ -137,11 +139,16 @@ Content-Type: application/vnd.api+json
 
 Success is **202** with the job id in `data.id` (and `links.status`). Derive the `-cai` host from the login base URL
 by inserting `-cai` after the pod label; never hard-code it (L-CAI-040). `data` must be an object, not an array
-(500 ClassCastException, L-CAI-004), and `Accept: application/json` gives 500 NotAcceptable (L-CAI-005).
+(500 ClassCastException, L-CAI-004), and `Accept: application/json` gives 500 NotAcceptable (L-CAI-005); a missing or
+default `Accept` gives the same 500 (`RESTEASY003635: No match for accept header`), a client header problem, not an outage
+(L-CAI-167, reported). Ignore `links.self` and `links.status` in the answers: they use `http://` and a different path
+(a vendor bug); build the status URL from `data.id` (L-CAI-166, reported).
 
 ### 3.2 Poll the job and read every item (L-CAI-002)
 
-`GET .../active-bpel/asset/v1/publish/<id>/Status` (same headers) every 4-5 s, for up to about 3 minutes.
+`GET .../active-bpel/asset/v1/publish/<id>/Status` (same headers) every 4-5 s. Size the deadline to the batch: single
+assets finish in one or two polls, but a 199-process batch had only 72 done after 5 minutes (L-CAI-165, reported);
+`jobStatusDetail.itemStateSummary` and `processedCount`/`totalCount` show progress.
 
 | Field | Values | Meaning |
 |---|---|---|
@@ -160,7 +167,10 @@ The 202 and the 200 envelopes only confirm that the job was accepted; items fail
    match the last `path` segment to the asset name, and build `Explore/<path>.<TYPE>.xml`. Refuse to publish when zero
    or several objects match. A project name containing a space published fine.
 2. Publish in dependency order: service connectors, then app connections, then processes without connection
-   references, then processes that call the connection.
+   references, then processes that call the connection, then guides (L-CAI-182). Leave process objects out of the
+   list, and publish Data Integration taskflows in their own batch on the pod host, after the CAI assets (L-CAI-164,
+   L-CAI-165, reported). `idmc_cai_publish.py --folder` selects process objects and taskflows too and sends every wave
+   to the `-cai` host, so use `--path` or `--resolve` for those folders.
 3. One call accepts at most 199 paths and processes them in payload order. One asset per call, stopping at the first
    job that is not SUCCESS or WARNING, keeps failures easy to read.
 
@@ -171,6 +181,8 @@ The 202 and the 200 envelopes only confirm that the job was accepted; items fail
 | Item BAD_REQUEST "Invalid asset path." | Path without `Explore/` or without `.<TYPE>.xml` | Build the path from the v3 object `path` |
 | HTTP 500 ClassCastException | `data` sent as an array | Send one object |
 | HTTP 500 NotAcceptable | `Accept: application/json` | `application/vnd.api+json` on both headers |
+| Item UNSUPPORTED (no detail), job ERROR | A `.PROCESS_OBJECT.xml` path in the list | Leave process objects out (L-CAI-165, reported) |
+| TaskFlow items fail with `AvrEntryNotFoundFault` | A taskflow sent to the `-cai` host | Publish taskflows on the pod host, in their own batch (L-CAI-164, reported) |
 | HTTP 403 on `/active-bpel/asset/publish` | Legacy path (no `/v1/`) or the pod host instead of `<pod>-cai` | Correct path and host |
 | Item "Publish Error" with no detail | An input declared as a field element | Declare inputs as parameters (L-CAI-022) |
 | Item ERROR naming a dependent or missing entry | Dependency not yet published | Publish in order (3.3) |
@@ -269,7 +281,7 @@ Date every wall in your own notes and re-test it whenever the path, host, header
 **Publish or redeploy**
 - [ ] Session is a v3 session for the right org; the `-cai` host is derived from the login base URL.
 - [ ] Every asset path resolved from the v3 catalog, exactly one match each.
-- [ ] Order: connectors, connections, processes without references, processes with references.
+- [ ] Order: connectors, connections, processes without references, processes with references, guides; no process objects; taskflows on the pod host.
 - [ ] Each job polled to a final state and every item read.
 - [ ] Verification cases pass (with retries); the undo zip is kept until they do.
 

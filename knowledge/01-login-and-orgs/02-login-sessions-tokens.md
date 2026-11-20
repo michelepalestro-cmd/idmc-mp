@@ -24,7 +24,7 @@ when an org moves to JWT authentication?
 [Secrets Hygiene](../14-working-with-claude/06-secrets-hygiene.md) ·
 [Lessons: Access & Auth](lessons.md)
 
-**Last verified:** 2026-10-03 (evidence 2026-06-27 to 2026-10-02).
+**Last verified:** 2026-11-20 (evidence 2026-06-27 to 2026-11-19).
 
 > There are three logins (v3, v2, identity-service), all at the domain host. A session is an opaque value sent in a
 > plane-specific header, and a JWT is minted from a session for the identity-protected APIs. Automation logs in rarely,
@@ -119,7 +119,7 @@ An org administrator chooses the org's REST authentication type in Administrator
 | Session-ID REST authentication | Deprecated since the October 2025 release; support is dropped in a later release |
 | Default | Session-based stays the default until JWT becomes the default "sometime after the October 2026 release" (the timeline has slipped once already) |
 | Headers | Unchanged (`icSessionId`, `INFA-SESSION-ID`); the value becomes a JWT with a fixed expiry set in Administrator |
-| Token length | From the October 2026 release JWT values are capped at 2,000 characters and longer values are truncated; a ~1,700-character value was observed, so check clients that add claims or wrap tokens |
+| Token length | From the October 2026 release JWT values are capped at 2,000 characters and longer values are truncated; a ~1,700-character value was observed, so check clients that add claims or wrap tokens. Another vendor page gives 16,000 characters as the maximum session-id length under JWT, and one client measured 2,075 characters: size header buffers, columns and log masks for the larger figure (L-AUTH-125, L-AUTH-115) |
 | Do not enable JWT | while API Manager or the REST V2 Connector calls IDMC APIs; API Center and B2B Gateway support JWT |
 
 Before an org flips (or is flipped by default):
@@ -128,7 +128,10 @@ Before an org flips (or is flipped by default):
 - pause schedulers for the switch;
 - keep the switch reversible.
 
-The effect on session-header clients was predicted but has not been verified on an org that switched.
+The effect on session-header clients was predicted but has not been verified on an org that switched. Client code
+read in November 2026 adds (not probed here): no org field says which mode is on, so detect a JWT from the token's
+shape (three base64url segments) and re-login 60 s before its `exp` (L-AUTH-114); send one session header per path
+family, because the same JWT in three headers approaches common 8 KB header limits (L-AUTH-115).
 
 ## 7. Lockouts: how they happen and how to avoid them
 
@@ -185,3 +188,19 @@ user session stops: REST triggers, exports, UI (L-AUTH-044).
 4. Delete the lockout block file and the session caches.
 5. **Verify with exactly one login**, then restart the dependent services, then recreate or update the catalog sources
    and OAuth clients (L-AUTH-043).
+
+## 9. Session and login routes from client code and vendor docs (2026-11-19, not probed here)
+
+These come from maintained public clients and vendor documentation read on 2026-11-19; none was exercised on a live
+org for this KB, so prove each one before you build on it.
+
+| Need | Route or rule | Lesson |
+|---|---|---|
+| Check a session before reuse | `POST <serverUrl>/api/v2/user/validSessionId` with `{"@type":"validatedToken","userName":"<user>","icToken":"<sid>"}`; re-login when `timeUntilExpire` is 0, not when `isValidToken` turns false | L-AUTH-117, L-AUTH-126 |
+| Retry policy | one re-login on 401, or on 403 whose v3 `error.code` is `AUTH_01`; bounded 429 backoff; after a dropped connection resend only read-only calls | L-AUTH-102, L-AUTH-124 |
+| Parse errors | v2 `{"@type":"error","code","description","statusCode"}` and v3 `{"error":{"code","message","requestId","details"}}`; log `requestId` | L-AUTH-113 |
+| Log out | v3 `POST .../public/core/v3/logout` with `INFA-SESSION-ID`; never call v2 `logoutall`, which ends every v2 session in the org | L-AUTH-123, L-AUTH-132 |
+| Log in without a password | `POST /ma/api/v2/user/loginOAuth` with an identity-provider JWT (OIDC provider registered first; single-use token), or `loginSaml` / `loginSf` | L-AUTH-118, L-AUTH-130, L-AUTH-131 |
+| Login host per region | a region-code table exists, but the org's working host is still `products[].baseApiUrl` | L-AUTH-103 |
+| Keep PII out of logs | the v2 login answer carries e-mails, the security question and roles: keep only the fields you need | L-AUTH-136 |
+| Session lifetime in the docs | the vendor describes Session ID expiry as 30 minutes idle plus up to 2 minutes' grace; the live tests in §5 saw 30 minutes from grant, so keep refreshing at about 25 minutes | L-AUTH-125, L-AUTH-027 |
