@@ -3,6 +3,16 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/reference/kb-changelog.md](../knowledge/reference/kb-changelog.md).
 
+## 1.14.1 (2026-11-20): golden-record and DQ lessons from a production mastering build
+
+- **16 new lessons** (2,358 in total), mostly mastering: measure precision per match class before auto-merging
+  (L-MDM-121), the source id is the identity inside one source (L-MDM-122), survivorship when the loser is newer
+  (L-MDM-125), cluster merges (L-MDM-126), daily merge checks (L-MDM-127), safe re-keying (L-MDM-128), blocking size
+  (L-MDM-124), change events (L-MDM-129); CLAIRE rules as governed warehouse rows and sample-bias fixes (L-DQ-173 to
+  L-DQ-176); sort-key forks in a replacing golden table (L-ENV-145).
+- L-MDM-075 and L-DQ-166 refined: exact id bytes and exact names are safe merge keys, fuzzy name similarity is not.
+- The MDM and data-quality cheat sheets list the new traps.
+
 ## 1.14.0 (2026-11-20): fixes from six user-story walkthroughs
 
 Six beginner journeys were walked end to end (install and log in, Secure Agent, connections, a nightly pipeline,

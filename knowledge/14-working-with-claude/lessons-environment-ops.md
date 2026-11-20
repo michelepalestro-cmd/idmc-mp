@@ -1,5 +1,5 @@
 # Lessons: Environment & Ops
-144 lessons: 141 current (26 of the current ones are general, not IDMC-specific), 0 disputed, 3 superseded; evidence dated 2026-07-04 to 2026-11-19.
+145 lessons: 142 current (26 of the current ones are general, not IDMC-specific), 0 disputed, 3 superseded; evidence dated 2026-07-04 to 2026-11-19.
 IDs are stable; generic docs cite them as (ID, date). Provenance for every ID is kept outside this KB.
 
 Related: [Environment traps](05-environment-traps-windows-git-bash-az-gcloud-docker.md) · [How Claude reaches and drives IDMC](01-how-claude-reaches-and-drives-idmc.md) · [Secrets hygiene](06-secrets-hygiene.md) · [Claude Working Methods lessons](lessons.md) · [UI Automation lessons](lessons-ui-automation.md)
@@ -465,6 +465,10 @@ One codebase serves prod and dev. An env variable selects the environment, and e
 ### L-ENV-144  Org encryption key rotation interval: GET/PATCH /public/core/v3/key/rotationSettings (Key Admin role)
 **Kind:** ROUTE · **Reported:** 2026-11-19 · **Evidence:** Public third-party code read 2026-11-19 (confidence medium: code or a guide); not probed here
 `GET <baseApiUrl>/public/core/v3/key/rotationSettings` (INFA-SESSION-ID) returns {orgId, validRotationIntervals:["90_DAYS","120_DAYS","180_DAYS","365_DAYS"], rotationInterval}. Change it with `PATCH` on the same path, body {"rotationInterval":"120_DAYS"} (the doc's example line says POST; the method table says PATCH). Both need the Key Admin role, which ordinary org admins do not hold by default.
+
+### L-ENV-145  Mutable columns in a replacing table's sort key fork entities when corrected, and a load-time version lets a worse re-ingest win
+**Kind:** GOTCHA · **Proven:** 2026-07-19 · **Evidence:** a production warehouse feeding a golden table, 2026-07
+On a ClickHouse ReplacingMergeTree golden table whose ORDER BY included mutable attributes (locality, normalized address), correcting one of them did not update the row: it inserted a second live row under a new sort key, with no error, and a 'plain count = FINAL count' check still passed because two different sort keys are not versions of each other. Separately, a version column set to the load time made a re-ingest of poorer data win the merge and replace better rows (a coordinate fill rate fell from 98.0 % to 97.4 %). Keep only immutable identity in the sort key, change identity as a new id plus an alias, gate on one row per entity id at FINAL, and version rows by data quality or source rank rather than load time. This matters for IDMC targets too: an upsert of a changed key column writes a fork.
 
 ## Superseded / overturned (kept so nobody re-learns them)
 

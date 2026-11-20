@@ -86,6 +86,10 @@ target (L-DQ-001, L-DQ-002). SQL that imitates cleansing is not IDMC DQ: label e
   the current export; copy field precision and scale (L-DQ-126, L-DQ-113).
 - DQ agent upload PUT 409 -> HTTP/2 or `Expect: 100-continue` used the single-use URL -> `curl --http1.1 -H "Expect:"`,
   unique filename, re-mint (L-DQ-072).
+- CLAIRE rules built from a small profile slice break in production -> take bounds from percentiles, check the slice's
+  bias, write year windows relative to today (L-DQ-174); keep recommendations as governed rule rows (L-DQ-173).
+- The same rule gives different numbers in different engines -> one counting convention: NULL fails, uniqueness counts
+  surplus copies, a finding is not a failed run (L-DQ-175). On BigQuery pack rules into one query per table (L-DQ-176).
 
 ## Go deeper
 

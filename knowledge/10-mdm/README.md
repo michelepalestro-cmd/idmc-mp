@@ -79,6 +79,16 @@ source systems, match models, survivorship, publish and job runs are Business 36
 - Logic as a long Source query is not mastering, and IDMC decisions nobody reads change nothing -> transformations, and
   prove each output has a consumer (L-MDM-081, L-MDM-087).
 - Calling a SQL dedup layer "golden record" or "MDM" -> say trusted curated layer (L-MDM-052).
+- One 0.90 threshold looked 77 % precise but hid classes from 100 % down to 2.5 % -> hand-check each match class and
+  auto-merge only the classes that clear the bar (L-MDM-121).
+- Address matching inside one source mostly pairs distinct records -> two ids from one source are two entities; compare
+  ids by raw bytes (L-MDM-122, L-MDM-123).
+- Survivor keeps old values when the loser is newer -> rank per field, then recency; store the winning source per field
+  (L-MDM-125). A pair-merge tool run on groups writes competing survivors -> merge clusters (L-MDM-126).
+- Merged records come back or old ids stop resolving -> check the merge invariants daily (L-MDM-127); re-key retired
+  ids one-to-one only (L-MDM-128).
+- Blocking on one coarse key explodes into hundreds of millions of pairs -> union of tighter blocks, proven lossless
+  (L-MDM-124).
 
 ## Go deeper
 
