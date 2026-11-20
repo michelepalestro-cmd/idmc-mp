@@ -1,0 +1,176 @@
+{
+ "name": "m_probe_ops_bq2",
+ "description": "[mapgen probe] BigQuery Upsert (UpdateMode Update Else Insert, with and without Enable Merge) and Data Driven (Enable Merge + Enable Data Driven)",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_UP",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n UNION ALL SELECT 'K3', 'new', 30",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_UPSERT_MERGE",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_upsert",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1",
+    "UpdateMode": "Update Else Insert",
+    "isMergeEnabled": "YES"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1",
+    "UpdateMode": "Update Else Insert",
+    "Enable Merge": "YES"
+   },
+   "op": "Upsert",
+   "updateColumns": [
+    "k"
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_UPSERT_MODE",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_upsert2",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1",
+    "UpdateMode": "Update Else Insert"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1",
+    "UpdateMode": "Update Else Insert"
+   },
+   "op": "Upsert",
+   "updateColumns": [
+    "k"
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_DD",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n, 'U' AS op_flag UNION ALL SELECT 'K2', 'gone', 0, 'D' UNION ALL SELECT 'K4', 'new', 40, 'I' UNION ALL SELECT 'K5', 'bad', 0, 'R'",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ],
+    [
+     "op_flag",
+     "STRING",
+     4
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_DD",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_dd",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1",
+    "isMergeEnabled": "YES",
+    "isDataDrivenEnabled": "YES"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1",
+    "Enable Merge": "YES",
+    "Enable Data Driven": "YES"
+   },
+   "op": "Data Driven",
+   "updateColumns": [
+    "k"
+   ],
+   "updateStrategy": "DECODE(op_flag, 'I', DD_INSERT, 'U', DD_UPDATE, 'D', DD_DELETE, DD_REJECT)"
+  }
+ ],
+ "links": [
+  [
+   "SRC_UP",
+   "TGT_UPSERT_MERGE"
+  ],
+  [
+   "SRC_UP",
+   "TGT_UPSERT_MODE"
+  ],
+  [
+   "SRC_DD",
+   "TGT_DD"
+  ]
+ ]
+}

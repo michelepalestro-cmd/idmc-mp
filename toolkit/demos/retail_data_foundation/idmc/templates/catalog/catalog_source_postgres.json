@@ -1,0 +1,189 @@
+{
+ "name": "${NAME}",
+ "description": "[${TAG}] operational Postgres ${PG_DB}: schemas ${PG_SCHEMA} + ${PG_ACT_SCHEMA} (control schema excluded)",
+ "type": "PostgreSQL",
+ "endOfLife": false,
+ "custom": false,
+ "typeOptions": {
+  "configurationProperties": [
+   {
+    "optionGroupName": "PostgreSQL OptionGroup",
+    "configOptions": [
+     {
+      "key": "ConnectionId",
+      "values": [
+       "${CONN_ID}"
+      ],
+      "additionalMetadata": null
+     }
+    ]
+   }
+  ]
+ },
+ "capabilities": [
+  {
+   "capabilityName": "Metadata Extraction",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Metadata Extraction OptionGroup",
+     "configOptions": [
+      {
+       "key": "Type of scan",
+       "values": [
+        "Full"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Metadata Change Option",
+       "values": [
+        "Delete"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "capabilityName": "Data Profiling",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Data Profiling Scope",
+     "configOptions": [
+      {
+       "key": "Modes of Run",
+       "values": [
+        "Keep Signatures and Values"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "capabilityName": "Data Classification",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Data Classification Scope",
+     "configOptions": [
+      {
+       "key": "Data Classification Inference Type",
+       "values": [
+        "Auto Classification"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "typeCapabilities": [
+  {
+   "capabilityName": "Data Classification",
+   "configurationProperties": []
+  },
+  {
+   "capabilityName": "Metadata Extraction",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Metadata Filter Config",
+     "configOptions": [
+      {
+       "key": "Filter Pivot",
+       "values": [
+        "Include Metadata"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Type",
+       "values": [
+        "Tables"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Value",
+       "values": [
+        "${PG_SCHEMA}.*"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    },
+    {
+     "optionGroupName": "Metadata Filter Config",
+     "configOptions": [
+      {
+       "key": "Filter Pivot",
+       "values": [
+        "Include Metadata"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Type",
+       "values": [
+        "Tables"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Value",
+       "values": [
+        "${PG_ACT_SCHEMA}.*"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    },
+    {
+     "optionGroupName": "Scanner Configuration Options",
+     "configOptions": []
+    },
+    {
+     "optionGroupName": "Additional settings",
+     "configOptions": []
+    }
+   ]
+  },
+  {
+   "capabilityName": "Data Profiling",
+   "configurationProperties": []
+  }
+ ],
+ "globalConfigOptions": [
+  {
+   "globalConfigurationName": "Execution",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Runtime Settings",
+     "configOptions": [
+      {
+       "key": "Runtime Environment",
+       "values": [
+        "${RE_ID}"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    },
+    {
+     "optionGroupName": "Metadata Sync Settings",
+     "configOptions": [
+      {
+       "key": "Mode of Execution",
+       "values": [
+        "Full Sync"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

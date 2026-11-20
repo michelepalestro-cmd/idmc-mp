@@ -1,0 +1,53 @@
+{
+ "name": "m_ex_fix_mask_passthrough",
+ "description": "[mapgen fix types_nodes#3] Data Masking with passthrough: the e-mail is masked, and an Expression downstream uses the ORIGINAL names (name, email) next to the out_ ports - the shape that failed with TE_7002 before. Target ex_fix_mask_out (out_email, email, name, out_name, id INT64, out_id INT64, label).",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_PEOPLE",
+   "conn": "BQ",
+   "query": "SELECT 'Jane.Doe@example.com' AS email, 'Jane Doe' AS name, 101 AS id UNION ALL SELECT 'bob.roe@example.org', 'Bob Roe', 102",
+   "fields": [
+    ["email", "STRING", 64],
+    ["name", "STRING", 32],
+    ["id", "INTEGER"]
+   ]
+  },
+  {
+   "type": "masking",
+   "name": "DM_PEOPLE",
+   "entries": [
+    {"field": "email", "type": "Email address", "prec": 64}
+   ],
+   "passthrough": true
+  },
+  {
+   "type": "expression",
+   "name": "EXP_LABEL",
+   "fields": [
+    {"name": "label", "type": "STRING", "expr": "name || ' <' || email || '>'", "kind": "OUTPUT", "prec": 128}
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_PEOPLE",
+   "conn": "BQ",
+   "object": "${DATASET}/ex_fix_mask_out",
+   "truncate": true,
+   "fields": [
+    ["out_email", "STRING"],
+    ["email", "STRING"],
+    ["name", "STRING"],
+    ["out_name", "STRING"],
+    ["id", "INTEGER"],
+    ["out_id", "INTEGER"],
+    ["label", "STRING"]
+   ]
+  }
+ ],
+ "links": [
+  ["SRC_PEOPLE", "DM_PEOPLE"],
+  ["DM_PEOPLE", "EXP_LABEL"],
+  ["EXP_LABEL", "TGT_PEOPLE"]
+ ]
+}

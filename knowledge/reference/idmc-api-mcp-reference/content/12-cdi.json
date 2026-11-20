@@ -1,0 +1,206 @@
+{
+ "id": "12-cdi",
+ "title": "CDI - Cloud Data Integration",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/api/v2/connection",
+     "GET, POST",
+     "Connection list; Create a connection",
+     "200 — 10 connections  —  untested: PUT, PATCH, DELETE; 200/201; 403 if connector type unregistered  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/connection/{id}",
+     "GET, POST, DELETE",
+     "Update a connection",
+     "200  —  untested: PUT, PATCH"
+    ],
+    [
+     "/api/v2/connection/test/{id}",
+     "GET",
+     "Test connection — metadata handshake, 0 IPU",
+     "200 — 4/4 green  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/connection/source/{cid}",
+     "GET",
+     "Browse source metadata",
+     "200 / 403 per connection  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/connector",
+     "GET",
+     "Licensed connector catalog",
+     "200 — 153 connectors  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/connector/metadata?connectorName=",
+     "GET",
+     "Connector schema; 200 [] = not activated",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/runtimeEnvironment",
+     "GET, POST",
+     "Runtime environments; Create a runtime environment",
+     "200 — 2 REs  —  untested: PUT, PATCH, DELETE; 400 on empty body = verb exists  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/agent/details/{agentId}",
+     "GET",
+     "17 agent engines — ENTITLEMENT GROUND TRUTH",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/agent/installerInfo/linux64",
+     "GET",
+     "downloadUrl + installToken (headless install)",
+     "200"
+    ],
+    [
+     "/api/v2/agent/service",
+     "none proven",
+     "Enable / disable an agent service",
+     "403 APP_13401 / 500 CMN_001  —  rejected: POST 403; untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/mttask",
+     "GET, POST",
+     "Mapping-task list; Create a mapping task from an existing mappingId",
+     "200 — 78 tasks  —  rejected: PUT 405; untested: PATCH, DELETE; 200/201; 403 APP_13533 without mappingId  —  rejected: PUT 405; untested: PATCH, DELETE"
+    ],
+    [
+     "/api/v2/job",
+     "GET, POST",
+     "RunAJob — execute a task",
+     "200 + runId (135 runs)  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/mapping",
+     "GET",
+     "Create a MAPPING (the designer canvas); Read mappings",
+     "400 HTML Internal error (337 hits)  —  rejected: POST 400; untested: PUT, PATCH, DELETE; 200  —  rejected: POST 400; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/schedule",
+     "GET, POST",
+     "Schedule list; Create a schedule",
+     "200 — 11  —  untested: PUT, PATCH, DELETE; 200 — refutes 'scheduling is UI-only'  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/activity/activityLog?rowLimit=N",
+     "GET",
+     "Job telemetry (mapping-task rows only)",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/activity/activityMonitor",
+     "GET",
+     "Currently-running jobs",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/task?type=X",
+     "GET",
+     "Task list by type",
+     "200; 403 for MI_TASK / DVT  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/taskflow",
+     "GET",
+     "Taskflow read",
+     "200  —  rejected: POST 404; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/taskflow/publish",
+     "POST",
+     "Publish taskflow -> REST/SOAP run URL",
+     "404 — use RunAJob waves"
+    ],
+    [
+     "/api/v2/workflow",
+     "GET",
+     "Workflow read",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "Rich transform design (joiner, aggregator, expression, pushdown)",
+     "UI only",
+     "Author transform logic",
+     "Mapping Designer canvas"
+    ],
+    [
+     "/api/v2/agent",
+     "GET",
+     "Agent list",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/agent/installerInfo/{platform}",
+     "GET",
+     "downloadUrl + installToken for headless install",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/mttask/{id}",
+     "GET, POST",
+     "POST with id = update. No PUT on the v2 plane",
+     "rejected: PUT 405; untested: PATCH, DELETE"
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "MCP coverage for this service",
+   "intro": "The Job Management MCP server covers CDI. Three actions, all thin wrappers over the v2 job plane - it can run, watch and stop a task, exactly as REST can. It cannot create a connection, author a mapping or set a schedule.",
+   "header": [
+    "MCP action",
+    "Verb",
+    "Server",
+    "What it does",
+    "REST equivalent"
+   ],
+   "rows": [
+    [
+     "run_mapping_task",
+     "POST",
+     "Job Management",
+     "Triggers a mapping task with runtime parameters.",
+     "Wraps POST /api/v2/job. REST is equivalent."
+    ],
+    [
+     "get_job_status",
+     "POST",
+     "Job Management",
+     "Live execution state, row counts and error logs for one job.",
+     "Wraps GET /api/v2/activity/activityLog. REST returns full history, MCP one job."
+    ],
+    [
+     "stop_running_job",
+     "POST",
+     "Job Management",
+     "Immediate termination request to the Secure Agent.",
+     "Wraps the v2 Stop Job resource."
+    ]
+   ]
+  }
+ ],
+ "notes": [],
+ "open_questions": [
+  "Taskflow publish: recorded as having no REST path, but a later note reports a Data Integration taskflow publishing successfully with its status confirmed over REST - without naming the endpoint. Find the endpoint or disprove the report."
+ ]
+}

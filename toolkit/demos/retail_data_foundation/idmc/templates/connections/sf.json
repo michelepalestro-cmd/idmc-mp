@@ -1,0 +1,8 @@
+{
+ "@type": "connection",
+ "name": "${CONN_SF}",
+ "description": "[${TAG}] Salesforce CRM (CDI reverse ETL, API-only user)",
+ "type": "Salesforce",
+ "runtimeEnvironmentId": "${RE_ID}",
+ "serviceUrl": "${SF_SOAP_URL}"
+}

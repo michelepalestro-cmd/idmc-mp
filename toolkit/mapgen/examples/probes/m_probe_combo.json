@@ -1,0 +1,124 @@
+{
+ "name": "m_probe_combo",
+ "description": "[mapgen probe] composition: connected lookup with Use All Values (fan-out), $$ parameter in an expression, Data Driven insert/reject",
+ "inOutParameters": [
+  {
+   "name": "p_unit_price",
+   "type": "INTEGER",
+   "default": "7"
+  }
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_ORD",
+   "conn": "BQ",
+   "query": "SELECT 'O1' AS order_id, 'SKU1' AS sku, 2 AS qty UNION ALL SELECT 'O2', 'SKU2', 1 UNION ALL SELECT 'O3', 'SKU3', 4",
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     16
+    ],
+    [
+     "sku",
+     "STRING",
+     16
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_PROMO",
+   "connected": true,
+   "conn": "BQ",
+   "policy": "Use All Values",
+   "query": "SELECT 'SKU1' AS lk_sku, 'P10' AS promo_code UNION ALL SELECT 'SKU1', 'P20' UNION ALL SELECT 'SKU2', 'P10'",
+   "fields": [
+    [
+     "lk_sku",
+     "STRING",
+     16
+    ],
+    [
+     "promo_code",
+     "STRING",
+     16
+    ]
+   ],
+   "cond": [
+    [
+     "lk_sku",
+     "sku"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_NET",
+   "fields": [
+    {
+     "name": "net",
+     "type": "INTEGER",
+     "expr": "qty * $$p_unit_price"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_COMBO",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_combo",
+   "truncate": false,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "sku",
+     "STRING"
+    ],
+    [
+     "promo_code",
+     "STRING"
+    ],
+    [
+     "net",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "op": "Data Driven",
+   "updateColumns": [
+    "order_id",
+    "promo_code"
+   ],
+   "updateStrategy": "IIF(ISNULL(promo_code), DD_REJECT, DD_INSERT)"
+  }
+ ],
+ "links": [
+  [
+   "SRC_ORD",
+   "LKP_PROMO"
+  ],
+  [
+   "LKP_PROMO",
+   "EXP_NET"
+  ],
+  [
+   "EXP_NET",
+   "TGT_COMBO"
+  ]
+ ]
+}

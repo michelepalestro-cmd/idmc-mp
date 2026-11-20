@@ -1,0 +1,29 @@
+﻿Service,Operation,What it does,Status,Evidence
+CAI - Cloud Application Integration (asset lifecycle),API activate / deactivate,Activate a published API,UI only,Console click only; republish does NOT activate
+CAI - Cloud Application Integration (asset lifecycle),"Event sources (Kafka, JMS), file listeners",Author an event source,UI only,designer canvas
+CAI - Cloud Application Integration (asset lifecycle),"Human tasks, fault and retry design",Author human task + fault handling,UI only,designer canvas
+CAI - Cloud Application Integration (asset lifecycle),Service connectors and app connections,Author a connector or connection,UI only,designer canvas
+CAI - invocation & runtime administration,API activate / deactivate,No verb at any path. Console click only,none proven,
+CAI - invocation & runtime administration,Secure Agent equivalents,Same paths under /process-engine/restadmin/…,none proven,on <agent>:<httpPort>
+CDGC - Cloud Data Governance & Catalog,CLAIRE auto-classification,Generated automatically inside a scan,none proven,"2,572 columns classified"
+CDGC - Cloud Data Governance & Catalog,Profiling coverage read,core.profiled facet via search,none proven,"200 — 671–1,755 profiled"
+CDI - Cloud Data Integration,"Rich transform design (joiner, aggregator, expression, pushdown)",Author transform logic,UI only,Mapping Designer canvas
+CDQ - Cloud Data Quality,Rule-spec CLONE via v3 migration,Copy a rule-spec template,none proven,count went 4 -> 12
+CDQ - Cloud Data Quality,Rule-spec LOGIC authoring,Write the actual rule expression,UI only,rulebuilder canvas
+Data Marketplace,Delivery TEMPLATE create,Author a delivery template,UI only,405 on every verb; headed browser only
+Data Profiling,Create / delete / update profiles and queries,Full profile CRUD,none proven,documented; paths in a separate guide
+Data Profiling,Profiling execution,Runs as a CDGC catalog-source capability,none proven,via the executable API
+Data Profiling,Query CRUD  (create / update / delete queries),Vendor-stated. Paths are in a guide not held locally,"Documented only: GET, POST, PUT, PATCH, DELETE",
+"MDM, Customer 360, Business 360 & Reference 360",Business entity / source system / ref entity authoring,Author MDM design objects,none proven,v3 migration clone — design layer only
+"MDM, Customer 360, Business 360 & Reference 360",Business-entity EXISTENCE test (idiom),Determine whether a business entity is deployed,Works: POST,"THE reliable probe. POST .../entity/{be}?sourceSystem=X returns 404 'The requested metadata with GUID {be} cannot be found during load' when the entity is not deployed, and that fired IDENTICALLY for Person, person, c360.person AND ZZFAKEENTITY - i.e. the org has nothing modeled. Do NOT use GET entity/{be}/{id} for this (its 403 precedes metadata lookup). Corroborate with unfiltered GET /public/core/v3/objects?limit=5, which returned count=1 (one Project named Default). When a model IS deployed this POST flips 404 -> 201, making it a clean automated gate check."
+"MDM, Customer 360, Business 360 & Reference 360",Business-entity MODEL authoring (plane sweep),Create / alter a business entity definition,UI only,"12 candidate host+path shapes swept live 2026-07-26, ALL 404 or DNS-dead, every one matching its bogus twin: .../model/businessEntity, /mdm-model/, /model/public/, /cs/public/, /business-entity/{private,internal}/api/v1/businessEntities, /data360/mdm-model/, /data360/businessentity/, /saas/public/mdm/v1/, plus hosts <pod>-mdm-model, <pod>-b360 and <pod>-cs (all NXDOMAIN). No 405 anywhere => no route, not a verb limit. Whatever B360 Modeler calls is not on a public plane."
+"MDM, Customer 360, Business 360 & Reference 360","Match, merge and survivorship configuration",Configure matching + survivorship,UI only,B360 Modeler
+"MDM, Customer 360, Business 360 & Reference 360",search  (documented resource),Search across or within business entities,Documented only: POST,
+"MDM, Customer 360, Business 360 & Reference 360",searchmatch  (documented resource),Match against the published match model,Documented only: POST,
+"Mass Ingestion - CMI, DBMI, file, application, streaming",DBMI task authoring,Build a database-ingestion task,UI only,"UI wizard — engines RUNNING, not a licence gap"
+"Mass Ingestion - CMI, DBMI, file, application, streaming",Ingestion run monitoring,Watch an ingestion job,none proven,via /api/v2/activity/activityLog
+"Mass Ingestion - CMI, DBMI, file, application, streaming",Run monitoring,Via /api/v2/activity/activityLog,Works: GET,
+"Mass Ingestion - CMI, DBMI, file, application, streaming",Task authoring,Wizard only. Engines ARE running: this is not a licence gap,UI only,
+Operational Insights,"Alert rules, MDM monitoring, DI job export",Console only. Metrics refresh once a week,UI only,
+Operational Insights,Full GraphQL schema,All other query options,none proven,withheld — see Informatica KB 000259754
+Operational Insights,"MDM SaaS monitoring, alert rules, DI job export",Everything else in Operational Insights,UI only,console only; metrics refresh once a week

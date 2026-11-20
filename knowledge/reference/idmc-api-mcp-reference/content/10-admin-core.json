@@ -1,0 +1,192 @@
+{
+ "id": "10-admin-core",
+ "title": "Administration & Core platform",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/saas/public/core/v3/login",
+     "POST",
+     "Session + product list + baseApiUrl",
+     "200 — issues sessionId  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/ma/api/v2/user/login",
+     "POST",
+     "Legacy v2 login -> icSessionId + serverUrl",
+     "200  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/identity-service/api/v1/Login",
+     "POST",
+     "sessionId + orgId (the IDS flow)",
+     "200 — vendor-documented  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/identity-service/api/v1/jwt/Token",
+     "POST",
+     "Mint JWT (client_id=idmc_api | cdlg_app)",
+     "200 — token lives 30 min  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/identity-service/api/v1/CurrentUserInfo",
+     "GET",
+     "Current user identity",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/identity-service/api/v1/Orgs",
+     "GET",
+     "Org list",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/objects",
+     "GET",
+     "Design-asset inventory (?q=type==...); Create any design object",
+     "200 — 164–200 objects  —  rejected: POST 405, PATCH 404; untested: PUT, DELETE; 405 Method not supported (246 hits)  —  rejected: POST 405, PATCH 404; untested: PUT, DELETE"
+    ],
+    [
+     "/public/core/v3/users",
+     "GET, POST, DELETE",
+     "User list; Create user",
+     "200  —  rejected: PUT 405, PATCH 405; 201 — identity key is name, NOT userName  —  rejected: PUT 405, PATCH 405"
+    ],
+    [
+     "/public/core/v3/users/{id}",
+     "GET, DELETE",
+     "Edit a user in place",
+     "405 — delete + recreate instead  —  rejected: PUT 405, PATCH 405; untested: POST"
+    ],
+    [
+     "/public/core/v3/userGroups",
+     "GET, POST, DELETE",
+     "Group list; Create group + bind roles",
+     "200  —  untested: PUT, PATCH; 200 — roles = list of id STRINGS  —  untested: PUT, PATCH"
+    ],
+    [
+     "/public/core/v3/roles",
+     "GET",
+     "59 roles (35 system + 24 custom)",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/privileges",
+     "GET",
+     "897 effective privileges",
+     "200 — entitlement ground truth  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/securityLog?limit=N",
+     "GET",
+     "Canonical audit log (limit 100–1000)",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/auditlog",
+     "GET",
+     "Legacy audit log",
+     "404 — superseded by v3 securityLog"
+    ],
+    [
+     "/public/core/v3/activityLog",
+     "GET",
+     "v3 activity log",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/schedule",
+     "GET",
+     "Schedule list",
+     "200 — 10–11 schedules  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/license/metering/ExportMeteringData",
+     "POST",
+     "Async IPU export -> jobId",
+     "201 — jobType SUMMARY|ASSET|PROJECT_FOLDER  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/license/metering/MeteringUsageSummary",
+     "GET",
+     "IPU summary read",
+     "404 — use the async export"
+    ],
+    [
+     "/public/core/v3/license/org/{id}",
+     "GET",
+     "Per-org license detail",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/licenses",
+     "GET",
+     "License listing",
+     "404 No static resource"
+    ],
+    [
+     "/api/v2/org",
+     "GET",
+     "Org id / name",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/api/v2/alerts",
+     "POST",
+     "Platform alerts",
+     "200  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/frs/v1/BaseEntities?$filter=...",
+     "GET",
+     "OData asset repo (PROCESS 53, GUIDE 10)",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/runtimeEnvironments",
+     "GET",
+     "v3 runtime list",
+     "404 — v2 only"
+    ],
+    [
+     "/public/core/v3/connections",
+     "GET",
+     "v3 connection list",
+     "404 — v2 only"
+    ],
+    [
+     "/public/core/v3/jobs",
+     "GET",
+     "v3 job list",
+     "404 — v2 only"
+    ],
+    [
+     "/public/core/v3/{licenses, jobs, connections, runtimeEnvironments}",
+     "none proven",
+     "These four live on the v2 plane only",
+     "rejected: GET 404; untested: POST, PUT, PATCH, DELETE"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No MCP server covers this service. Everything here is REST-only."
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

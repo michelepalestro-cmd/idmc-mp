@@ -1,0 +1,88 @@
+{
+ "_comment": "Copy to profile.json (or pass --profile). Run `python mapgen.py resolve --write` to fill every id from the names. Credentials are NOT stored here: auth names the environment variables (or a KEY=VALUE envFile) that hold them. These entries are examples of connectors, not recommendations: keep only the ones you use, add your own, and set 'kind' on every one (no kind = treated as BigQuery, lint warns CONN_KIND_MISSING); each needs its own placeholders until resolve fills them (two equal placeholders fail lint). SNOW and DBX lint with WARN CONN_KIND: expected (generic adapter path).",
+ "org": {
+  "v2Id": "<v2 org id, 6 chars>",
+  "guid": "<22-char org guid>",
+  "name": "<org name>"
+ },
+ "auth": {
+  "loginUrl": "https://dm-us.informaticacloud.com",
+  "userEnv": "IDMC_USER",
+  "passwordEnv": "IDMC_PASS",
+  "loginUrlEnv": "IDMC_LOGIN_URL",
+  "envFile": null
+ },
+ "runtimeEnvironment": {
+  "name": "<Secure Agent group (runtime environment) name>",
+  "id": "<v2 runtime environment id>"
+ },
+ "folder": {
+  "project": "<project>",
+  "projectGuid": "<filled by resolve>",
+  "name": "<scratch folder>",
+  "guid": "<filled by resolve>"
+ },
+ "connections": {
+  "BQ": {
+   "name": "<BigQuery V2 connection name>",
+   "guid": "<filled by resolve: BQ guid>",
+   "repoHandle": "<filled by resolve: BQ id>",
+   "kind": "BQ"
+  },
+  "PG": {
+   "name": "<PostgreSQL connection name>",
+   "guid": "<filled by resolve: PG guid>",
+   "repoHandle": "<filled by resolve: PG id>",
+   "kind": "PG"
+  },
+  "SF": {
+   "name": "<Salesforce connection name>",
+   "guid": "<filled by resolve: SF guid>",
+   "repoHandle": "<filled by resolve: SF id>",
+   "kind": "SF",
+   "typeSystem": "Salesforce"
+  },
+  "SNOW": {
+   "name": "<Snowflake Data Cloud connection name>",
+   "guid": "<filled by resolve: SNOW guid>",
+   "repoHandle": "<filled by resolve: SNOW id>",
+   "kind": "SNOW"
+  },
+  "DBX": {
+   "name": "<Databricks connection name>",
+   "guid": "<filled by resolve: DBX guid>",
+   "repoHandle": "<filled by resolve: DBX id>",
+   "kind": "DBX"
+  },
+  "FF": {
+   "name": "<Flat file connection name>",
+   "guid": "<filled by resolve: FF guid>",
+   "repoHandle": "<filled by resolve: FF id>",
+   "kind": "FF"
+  }
+ },
+ "vars": {
+  "BQ_PROJECT": "<gcp project of the BigQuery connection>",
+  "DATASET": "<scratch dataset>",
+  "SNOW_DB": "<DATABASE>",
+  "SNOW_SCHEMA": "<SCHEMA>",
+  "DBX_SCHEMA": "<schema>"
+ },
+ "guards": {
+  "_comment": "regexes. lint and deploy refuse matching folders / targets unless --allow-live. Targets are matched as '<object>', '<alias>:<object>' and '<connection name>:<object>'. busyTaskPrefixes: runs wait while tasks with these name prefixes are running on the shared agent. Add one protectedTargets pattern for EVERY connection alias you write to (for example '^ORA:(?!<scratch schema>/)' or '^FF:(?!<scratch file prefix>)'): a target on an alias with no pattern is not protected.",
+  "protectedFolders": [
+   "^(?!<project>/<scratch folder>$)"
+  ],
+  "protectedTargets": [
+   "^BQ:(?!<scratch dataset>/)",
+   "^PG:(?!<scratch schema>/)",
+   "^SF:"
+  ],
+  "busyTaskPrefixes": []
+ },
+ "sourceControl": {
+  "enabled": true,
+  "checkinNew": false
+ },
+ "workDir": "build"
+}

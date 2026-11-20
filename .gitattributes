@@ -1,0 +1,16 @@
+* text=auto eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+*.pdf binary
+*.png binary
+*.jpg binary
+*.zip binary
+*.docx binary
+*.xlsx binary
+*.pptx binary
+
+# Generated files: collapsed in GitHub diffs and left out of language stats
+knowledge/lessons/error-index.md linguist-generated=true
+knowledge/reference/idmc-api-mcp-reference/claude-idmc-how-to/idmc-endpoint-dictionary.md linguist-generated=true
+knowledge/reference/idmc-api-mcp-reference/claude-idmc-how-to/csv-every-endpoint/*.csv linguist-generated=true

@@ -1,0 +1,16 @@
+﻿Code / error,What it actually means,Seen on
+"404, empty body",The route is genuinely not mounted — a real UI-only wall,"glossary, classification accept"
+"404, with a JSON or text body",Wrong path or wrong host — keep hunting,CAI publish: asset/publish vs asset/v1/publish
+405 Method not supported,Read-only resource. This is NOT an entitlement problem,POST /public/core/v3/objects
+403,"Missing service-account role, or an unregistered connector type","APP_105054, no connector with type"
+406,Business state — a job is already running for that source,re-firing a CDGC scan
+409 Conflict,Conflicts with the current state of the resource,CDQ dictionary operations
+413 Payload Too Large,You exceeded a documented cap,"CDQ, more than 10,000 dictionary rows"
+424 Failed Dependency,A prerequisite call was skipped,CDQ rows without finishUpload
+200 returning login HTML,You hit identity-service — wrong host or plane,profiling-service with INFA-SESSION-ID
+200 but the value reverts,Silent write rejection,mapping-task connection retarget
+MigrationSvc_030,Invalid import package — hand-built zips are rejected,v3 import
+MigrationSvc_038,"403 permission, not a missing route",v3 export (since granted)
+APP_13533,Specify a mapping ID — mttask only WRAPS an existing mapping,POST /api/v2/mttask
+APP_13400,Compute capacity exceeded,Fabric connection source fetch
+exit 127 (agent side),Native loader failure — a missing OS library,pmdtm and libidn.so.11 on Debian 12

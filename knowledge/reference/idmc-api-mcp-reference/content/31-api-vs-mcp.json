@@ -1,0 +1,91 @@
+{
+ "id": "31-api-vs-mcp",
+ "title": "API vs MCP - the comparison",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "migrated",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "REST-versus-MCP coverage delta",
+   "header": [
+    "Capability",
+    "Over REST",
+    "Over MCP",
+    "Which to use"
+   ],
+   "rows": [
+    [
+     "Catalog search / asset detail",
+     "READ (data360 search + catalog)",
+     "READ — search_metadata, get_asset_details",
+     "MCP. Natural-language query is a real gain over building a query envelope."
+    ],
+    [
+     "Address validation / geocoding",
+     "READ (Cloud Address Verification)",
+     "READ — verify_address",
+     "Either. MCP is simpler for one address; REST batches 1,000."
+    ],
+    [
+     "Master-record lookup",
+     "MDM SaaS APIs (host-mounted, 404 on Org B)",
+     "READ — search_master_record, get_master_record_details",
+     "MCP. Fuzzy match is the whole value, and it is not trivial to replicate."
+    ],
+    [
+     "Marketplace order / provisioning",
+     "WRITE — full chain proven",
+     "WRITE — checkout_data_order (the only MCP write)",
+     "REST for the full chain; MCP for a conversational just-in-time request."
+    ],
+    [
+     "Run / monitor / stop a CDI task",
+     "RUN — v2 job, activityLog",
+     "EXECUTE — run_mapping_task, get_job_status, stop_running_job",
+     "Either. MCP is the cleaner surface for an operator agent."
+    ],
+    [
+     "Create a connection",
+     "WRITE — proven, §17",
+     "no action",
+     "REST only. Nothing in MCP touches connections."
+    ],
+    [
+     "Publish CAI assets in bulk",
+     "RUN — asset/v1/publish, 199 max",
+     "no action",
+     "REST only."
+    ],
+    [
+     "CAI suspend / resume / terminate",
+     "RUN — restadmin, §16",
+     "no action",
+     "REST only. Note Job Management MCP stops CDI jobs, not CAI instances."
+    ],
+    [
+     "Schedule anything",
+     "WRITE — v2 schedule + CAI restadmin scheduler",
+     "no action",
+     "REST only."
+    ],
+    [
+     "Users, groups, roles, agents",
+     "WRITE — v2 and v3 admin",
+     "no action",
+     "REST only. No MCP server fronts administration."
+    ],
+    [
+     "Glossary, classification accept, stewardship",
+     "UI-ONLY",
+     "no action",
+     "Neither. Still the most stubbornly UI-bound part of the platform."
+    ]
+   ],
+   "_migrated_from": "capref#37"
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

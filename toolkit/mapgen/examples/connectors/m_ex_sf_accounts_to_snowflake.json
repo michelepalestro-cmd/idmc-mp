@@ -1,0 +1,141 @@
+{
+ "name": "m_ex_sf_accounts_to_snowflake",
+ "taskName": "mt_ex_sf_accounts_to_snowflake",
+ "description": "[example] Salesforce Account -> Snowflake, full reload every run (writer presql TRUNCATE), one load timestamp per run.",
+ "layout": {
+  "auto": true,
+  "dx": 200,
+  "dy": 110,
+  "x0": 40,
+  "y0": 40
+ },
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_SALESFORCE_ACCOUNT",
+   "conn": "SF",
+   "object": "Account",
+   "sfObject": true,
+   "fields": [
+    [
+     "Id",
+     "STRING",
+     18,
+     "id",
+     0
+    ],
+    [
+     "Name",
+     "STRING",
+     255,
+     "string",
+     0
+    ],
+    [
+     "Type",
+     "STRING",
+     255,
+     "picklist",
+     0
+    ],
+    [
+     "AnnualRevenue",
+     "NUMERIC",
+     18,
+     "currency",
+     2
+    ],
+    [
+     "LastModifiedDate",
+     "TIMESTAMP",
+     24,
+     "datetime",
+     0
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_LOAD_STAMP",
+   "fields": [
+    {
+     "name": "x_loaded_at",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_SNOWFLAKE_ACCOUNTS",
+   "conn": "SNOW",
+   "object": "${SNOW_DB}/${SNOW_SCHEMA}/ACCOUNTS",
+   "op": "Insert",
+   "writerAttrs": {
+    "opr": {
+     "presql": "TRUNCATE TABLE ${SNOW_DB}.${SNOW_SCHEMA}.ACCOUNTS"
+    },
+    "rt": {
+     "Pre SQL": "TRUNCATE TABLE ${SNOW_DB}.${SNOW_SCHEMA}.ACCOUNTS"
+    }
+   },
+   "fields": [
+    [
+     "ACCOUNT_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "ACCOUNT_NAME",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "ACCOUNT_TYPE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "ANNUAL_REVENUE",
+     "NUMERIC",
+     18,
+     "number",
+     2
+    ],
+    [
+     "LAST_MODIFIED_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ],
+    [
+     "LOADED_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_SALESFORCE_ACCOUNT",
+   "EXP_LOAD_STAMP"
+  ],
+  [
+   "EXP_LOAD_STAMP",
+   "TGT_SNOWFLAKE_ACCOUNTS",
+   {
+    "Id": "ACCOUNT_ID",
+    "Name": "ACCOUNT_NAME",
+    "Type": "ACCOUNT_TYPE",
+    "AnnualRevenue": "ANNUAL_REVENUE",
+    "LastModifiedDate": "LAST_MODIFIED_AT",
+    "x_loaded_at": "LOADED_AT"
+   }
+  ]
+ ]
+}

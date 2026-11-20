@@ -1,0 +1,16 @@
+{
+ "@type": "connection",
+ "name": "${CONN_BQ_DBMI}",
+ "description": "[${TAG}] BigQuery warehouse (Database Ingestion CDC target; its own key format)",
+ "type": "TOOLKIT_CCI",
+ "instanceName": "Google BigQuery V2",
+ "runtimeEnvironmentId": "${RE_ID}",
+ "connParams": {
+  "connectorType": "Simple",
+  "projectId": "${WH_PROJECT}",
+  "storagePath": "gs://${GCS_BUCKET}",
+  "datasetNameForCustomQuery": "${DS_STAGING}",
+  "useLegacySQLForCustomQuery": "false",
+  "regionId": "${BQ_LOCATION}"
+ }
+}

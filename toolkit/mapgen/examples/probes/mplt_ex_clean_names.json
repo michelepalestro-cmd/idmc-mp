@@ -1,0 +1,68 @@
+{
+ "name": "mplt_ex_clean_names",
+ "documentType": "DMAPPLET",
+ "description": "[mapgen probe] reusable mapplet: trim + upper-case names, title-case cities",
+ "connections": {},
+ "nodes": [
+  {
+   "type": "input",
+   "name": "Input",
+   "fields": [
+    [
+     "in_name",
+     "STRING",
+     256
+    ],
+    [
+     "in_city",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_CLEAN",
+   "fields": [
+    {
+     "name": "clean_name",
+     "type": "STRING",
+     "prec": 256,
+     "expr": "UPPER(LTRIM(RTRIM(in_name)))"
+    },
+    {
+     "name": "clean_city",
+     "type": "STRING",
+     "prec": 256,
+     "expr": "INITCAP(LTRIM(RTRIM(in_city)))"
+    }
+   ]
+  },
+  {
+   "type": "output",
+   "name": "Output",
+   "fields": [
+    [
+     "clean_name",
+     "STRING",
+     256
+    ],
+    [
+     "clean_city",
+     "STRING",
+     256
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "Input",
+   "EXP_CLEAN"
+  ],
+  [
+   "EXP_CLEAN",
+   "Output"
+  ]
+ ]
+}

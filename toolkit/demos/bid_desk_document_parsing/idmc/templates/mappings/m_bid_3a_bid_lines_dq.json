@@ -1,0 +1,513 @@
+{
+ "name": "${idmc.project} - 3a Bid Lines Data Quality",
+ "status": "PROVEN (2026-10-13, same shape); toolkit/mapgen build ADAPTED (compiles offline; not yet imported in this form)",
+ "description": "SILVER, 9 steps: every bid-form line CLAIRE read -> standardized (product number re-joined where the PDF broke it, pack size, quantity and price typed) -> rule specifications: price filled in, price with at most two decimals, brand filled in -> line status -> Snowflake (full reload).",
+ "task": {
+  "folder": "f3",
+  "runtime": "main"
+ },
+ "notes": [
+  "TGT_SLV_BID_LINES: the target columns are those of BID_SLV_BID_LINES in infra/snowflake/03_silver_gold.sql (keep the two in step)"
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_BID_LINES",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_V_BID_LINES_SRC",
+   "fields": [
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "ITEM_NO",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "ITEM_DESCRIPTION",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "UNIT",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "QTY_NEEDED",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "CURRENT_PRODUCT",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "BID_NOTES",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "UNIT_PRICE",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "BRAND_BID",
+     "STRING",
+     2000,
+     "varchar"
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_STANDARDIZE",
+   "fields": [
+    {
+     "name": "x_product",
+     "type": "STRING",
+     "prec": 255,
+     "expr": "LTRIM(RTRIM(REPLACESTR(1, CURRENT_PRODUCT, '- ', '-')))"
+    },
+    {
+     "name": "x_notes",
+     "type": "STRING",
+     "prec": 255,
+     "expr": "LTRIM(RTRIM(REPLACESTR(1, BID_NOTES, '- ', '-')))"
+    },
+    {
+     "name": "x_brand",
+     "type": "STRING",
+     "prec": 60,
+     "expr": "IIF(INSTR(LTRIM(CURRENT_PRODUCT), ' ') > 0, SUBSTR(LTRIM(CURRENT_PRODUCT), 1, INSTR(LTRIM(CURRENT_PRODUCT), ' ') - 1), LTRIM(CURRENT_PRODUCT))"
+    },
+    {
+     "name": "x_pack",
+     "type": "INTEGER",
+     "expr": "DECODE(UPPER(LTRIM(RTRIM(UNIT))), '5-PK', 5, '2-PK', 2, NULL)"
+    },
+    {
+     "name": "x_qty",
+     "type": "INTEGER",
+     "expr": "IIF(REG_MATCH(LTRIM(RTRIM(QTY_NEEDED)), '^[0-9]+$'), TO_INTEGER(LTRIM(RTRIM(QTY_NEEDED))), NULL)"
+    },
+    {
+     "name": "x_pref",
+     "type": "STRING",
+     "prec": 60,
+     "expr": "IIF(INSTR(BID_NOTES, 'brand preferred') > 0, LTRIM(RTRIM(SUBSTR(BID_NOTES, 1, INSTR(BID_NOTES, 'brand preferred') - 1))), NULL)"
+    },
+    {
+     "name": "x_price_text",
+     "type": "STRING",
+     "prec": 40,
+     "expr": "LTRIM(RTRIM(UNIT_PRICE))"
+    },
+    {
+     "name": "x_price",
+     "type": "NUMERIC",
+     "prec": 12,
+     "scale": 2,
+     "expr": "IIF(REG_MATCH(REPLACESTR(1, LTRIM(RTRIM(UNIT_PRICE)), '$', ''), '^[0-9]+([.][0-9]+)?$'), TO_DECIMAL(REPLACESTR(1, LTRIM(RTRIM(UNIT_PRICE)), '$', ''), 2), NULL)"
+    },
+    {
+     "name": "x_one_line",
+     "type": "STRING",
+     "prec": 10,
+     "expr": "IIF(INSTR(CURRENT_PRODUCT, '- ') > 0, 'FIXED', 'VALID')"
+    }
+   ]
+  },
+  {
+   "type": "rulespec",
+   "name": "RS_PRICE_FILLED",
+   "asset": "${state:rulespecs.Required value filled in}",
+   "inputs": [
+    [
+     "Text",
+     "STRING",
+     2000
+    ]
+   ],
+   "map": {
+    "Text": "x_price_text"
+   }
+  },
+  {
+   "type": "expression",
+   "name": "EXP_PRICE_FILLED",
+   "fields": [
+    {
+     "name": "o_price_filled",
+     "type": "STRING",
+     "prec": 10,
+     "expr": "Output"
+    }
+   ]
+  },
+  {
+   "type": "rulespec",
+   "name": "RS_PRICE_DECIMALS",
+   "asset": "${state:rulespecs.Price with at most two decimals}",
+   "inputs": [
+    [
+     "Text",
+     "STRING",
+     40
+    ]
+   ],
+   "map": {
+    "Text": "x_price_text"
+   }
+  },
+  {
+   "type": "expression",
+   "name": "EXP_PRICE_DECIMALS",
+   "fields": [
+    {
+     "name": "o_price_decimals",
+     "type": "STRING",
+     "prec": 10,
+     "expr": "Output"
+    }
+   ]
+  },
+  {
+   "type": "rulespec",
+   "name": "RS_BRAND_FILLED",
+   "asset": "${state:rulespecs.Required value filled in}",
+   "inputs": [
+    [
+     "Text",
+     "STRING",
+     2000
+    ]
+   ],
+   "map": {
+    "Text": "BRAND_BID"
+   }
+  },
+  {
+   "type": "expression",
+   "name": "EXP_LINE_STATUS",
+   "fields": [
+    {
+     "name": "x_run",
+     "type": "STRING",
+     "expr": "TO_CHAR(SESSSTARTTIME, 'YYYYMMDDHH24MISS')",
+     "prec": 20
+    },
+    {
+     "name": "x_ts",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    },
+    {
+     "name": "o_brand_filled",
+     "type": "STRING",
+     "prec": 10,
+     "expr": "Output"
+    },
+    {
+     "name": "x_value",
+     "type": "NUMERIC",
+     "prec": 14,
+     "scale": 2,
+     "expr": "x_price * x_qty"
+    },
+    {
+     "name": "x_status",
+     "type": "STRING",
+     "prec": 20,
+     "expr": "IIF(o_price_filled = 'INVALID' AND Output = 'INVALID', 'TO PRICE', IIF(o_price_filled = 'INVALID' OR Output = 'INVALID' OR o_price_decimals = 'INVALID', 'FIX', 'READY'))"
+    },
+    {
+     "name": "x_issue",
+     "type": "STRING",
+     "prec": 255,
+     "expr": "DECODE(TRUE, o_price_filled = 'INVALID' AND Output = 'INVALID', 'Not priced yet', o_price_decimals = 'INVALID', 'Price ' || x_price_text || ' has 3 decimals: the agency rounds it up', Output = 'INVALID', 'No brand and product number bid', o_price_filled = 'INVALID', 'No unit price', '')"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_SLV_BID_LINES",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_SLV_BID_LINES",
+   "op": "Insert",
+   "writerAttrs": {
+    "opr": {
+     "presql": "TRUNCATE TABLE ${snowflake.database}.${snowflake.schema}.BID_SLV_BID_LINES"
+    },
+    "rt": {
+     "Pre SQL": "TRUNCATE TABLE ${snowflake.database}.${snowflake.schema}.BID_SLV_BID_LINES"
+    }
+   },
+   "fields": [
+    [
+     "SOLICITATION_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "AGENCY",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "CONTENT_VERSION_ID",
+     "STRING",
+     18,
+     "varchar"
+    ],
+    [
+     "VERSION_NUMBER",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "ITEM_NO",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "ITEM_DESCRIPTION",
+     "STRING",
+     2000,
+     "varchar"
+    ],
+    [
+     "UNIT",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "PACK_SIZE",
+     "NUMERIC",
+     4,
+     "number",
+     0
+    ],
+    [
+     "QTY_NEEDED",
+     "NUMERIC",
+     10,
+     "number",
+     0
+    ],
+    [
+     "CURRENT_PRODUCT_RAW",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "CURRENT_PRODUCT",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "CURRENT_BRAND",
+     "STRING",
+     60,
+     "varchar"
+    ],
+    [
+     "BID_NOTES",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "BRAND_PREFERRED",
+     "STRING",
+     60,
+     "varchar"
+    ],
+    [
+     "UNIT_PRICE_TEXT",
+     "STRING",
+     40,
+     "varchar"
+    ],
+    [
+     "UNIT_PRICE",
+     "NUMERIC",
+     12,
+     "number",
+     2
+    ],
+    [
+     "LINE_VALUE",
+     "NUMERIC",
+     14,
+     "number",
+     2
+    ],
+    [
+     "BRAND_BID",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "DQ_PRODUCT_ONE_LINE",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "DQ_PRICE_FILLED",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "DQ_PRICE_DECIMALS",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "DQ_BRAND_FILLED",
+     "STRING",
+     10,
+     "varchar"
+    ],
+    [
+     "LINE_STATUS",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "LINE_ISSUE",
+     "STRING",
+     255,
+     "varchar"
+    ],
+    [
+     "IDMC_RUN_ID",
+     "STRING",
+     20,
+     "varchar"
+    ],
+    [
+     "LOADED_AT",
+     "TIMESTAMP",
+     null,
+     "timestampntz"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_BID_LINES",
+   "EXP_STANDARDIZE"
+  ],
+  [
+   "EXP_STANDARDIZE",
+   "RS_PRICE_FILLED"
+  ],
+  [
+   "RS_PRICE_FILLED",
+   "EXP_PRICE_FILLED"
+  ],
+  [
+   "EXP_PRICE_FILLED",
+   "RS_PRICE_DECIMALS",
+   {
+    "exclude": [
+     "Output"
+    ]
+   }
+  ],
+  [
+   "RS_PRICE_DECIMALS",
+   "EXP_PRICE_DECIMALS"
+  ],
+  [
+   "EXP_PRICE_DECIMALS",
+   "RS_BRAND_FILLED",
+   {
+    "exclude": [
+     "Output"
+    ]
+   }
+  ],
+  [
+   "RS_BRAND_FILLED",
+   "EXP_LINE_STATUS"
+  ],
+  [
+   "EXP_LINE_STATUS",
+   "TGT_SLV_BID_LINES",
+   {
+    "SOLICITATION_NO": "SOLICITATION_NO",
+    "AGENCY": "AGENCY",
+    "CONTENT_VERSION_ID": "CONTENT_VERSION_ID",
+    "VERSION_NUMBER": "VERSION_NUMBER",
+    "ITEM_NO": "ITEM_NO",
+    "ITEM_DESCRIPTION": "ITEM_DESCRIPTION",
+    "UNIT": "UNIT",
+    "x_pack": "PACK_SIZE",
+    "x_qty": "QTY_NEEDED",
+    "CURRENT_PRODUCT": "CURRENT_PRODUCT_RAW",
+    "x_product": "CURRENT_PRODUCT",
+    "x_brand": "CURRENT_BRAND",
+    "x_notes": "BID_NOTES",
+    "x_pref": "BRAND_PREFERRED",
+    "x_price_text": "UNIT_PRICE_TEXT",
+    "x_price": "UNIT_PRICE",
+    "x_value": "LINE_VALUE",
+    "BRAND_BID": "BRAND_BID",
+    "x_one_line": "DQ_PRODUCT_ONE_LINE",
+    "o_price_filled": "DQ_PRICE_FILLED",
+    "o_price_decimals": "DQ_PRICE_DECIMALS",
+    "o_brand_filled": "DQ_BRAND_FILLED",
+    "x_status": "LINE_STATUS",
+    "x_issue": "LINE_ISSUE",
+    "x_run": "IDMC_RUN_ID",
+    "x_ts": "LOADED_AT"
+   }
+  ]
+ ]
+}

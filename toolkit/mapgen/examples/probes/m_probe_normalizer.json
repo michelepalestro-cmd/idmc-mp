@@ -1,0 +1,91 @@
+{
+ "name": "m_probe_normalizer",
+ "description": "[mapgen probe] Normalizer: three monthly quantity columns become three rows (GCID_qty = month index)",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_MONTHLY",
+   "conn": "BQ",
+   "query": "SELECT 'S1' AS store_id, 10 AS q_jan, 20 AS q_feb, 30 AS q_mar UNION ALL SELECT 'S2', 1, CAST(NULL AS INT64), 3",
+   "fields": [
+    [
+     "store_id",
+     "STRING",
+     16
+    ],
+    [
+     "q_jan",
+     "INTEGER"
+    ],
+    [
+     "q_feb",
+     "INTEGER"
+    ],
+    [
+     "q_mar",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "normalizer",
+   "name": "NRM_QTY",
+   "fields": [
+    {
+     "name": "store_id",
+     "type": "STRING",
+     "prec": 16
+    },
+    {
+     "name": "qty",
+     "type": "INTEGER",
+     "occurs": 3
+    }
+   ],
+   "map": {
+    "store_id": "store_id",
+    "qty_1": "q_jan",
+    "qty_2": "q_feb",
+    "qty_3": "q_mar"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_NRM",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_normalizer",
+   "truncate": true,
+   "fields": [
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "GCID_qty",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_MONTHLY",
+   "NRM_QTY"
+  ],
+  [
+   "NRM_QTY",
+   "TGT_NRM"
+  ]
+ ]
+}

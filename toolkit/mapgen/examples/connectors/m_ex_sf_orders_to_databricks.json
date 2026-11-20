@@ -1,0 +1,116 @@
+{
+ "name": "m_ex_sf_orders_to_databricks",
+ "taskName": "mt_ex_sf_orders_to_databricks",
+ "description": "[example] Salesforce custom object -> one row per order number (Aggregator) -> Databricks, full reload (writeDisposition Truncate).",
+ "layout": {
+  "auto": true,
+  "dx": 220,
+  "dy": 110,
+  "x0": 40,
+  "y0": 40
+ },
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_SALESFORCE_ORDERS",
+   "conn": "SF",
+   "object": "Order__c",
+   "sfObject": true,
+   "fields": [
+    [
+     "Name",
+     "STRING",
+     80,
+     "string",
+     0
+    ],
+    [
+     "Channel__c",
+     "STRING",
+     255,
+     "picklist",
+     0
+    ],
+    [
+     "Amount__c",
+     "NUMERIC",
+     10,
+     "currency",
+     2
+    ]
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_ONE_ROW_PER_ORDER",
+   "groupBy": [
+    "Name"
+   ],
+   "fields": [
+    {
+     "name": "x_channel",
+     "type": "STRING",
+     "prec": 255,
+     "expr": "MAX(Channel__c)"
+    },
+    {
+     "name": "x_amount",
+     "type": "NUMERIC",
+     "prec": 10,
+     "scale": 2,
+     "expr": "MAX(Amount__c)"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_DATABRICKS_ORDERS",
+   "conn": "DBX",
+   "object": "${DBX_SCHEMA}/orders",
+   "writerAttrs": {
+    "opr": {
+     "writeDisposition": "Truncate"
+    },
+    "rt": {
+     "writeDisposition": "Truncate"
+    }
+   },
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     255,
+     "string"
+    ],
+    [
+     "channel",
+     "STRING",
+     255,
+     "string"
+    ],
+    [
+     "amount",
+     "NUMERIC",
+     10,
+     "decimal",
+     2
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_SALESFORCE_ORDERS",
+   "AGG_ONE_ROW_PER_ORDER"
+  ],
+  [
+   "AGG_ONE_ROW_PER_ORDER",
+   "TGT_DATABRICKS_ORDERS",
+   {
+    "Name": "order_id",
+    "x_channel": "channel",
+    "x_amount": "amount"
+   }
+  ]
+ ]
+}

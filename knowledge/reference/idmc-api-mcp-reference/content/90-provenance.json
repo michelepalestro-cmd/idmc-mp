@@ -1,0 +1,129 @@
+{
+ "id": "90-provenance",
+ "title": "Sources, provenance and how to re-verify",
+ "owner": "fable",
+ "last_verified": "2026-07-25",
+ "status": "verified",
+ "intro": "Every claim in this document belongs to one of three evidence classes, and they are kept labelled because they do not always agree. Vendor documentation is durable. Live testing is a dated snapshot against a specific org and pod. Where the two conflict, both are shown and the conflict is itself recorded as a finding.",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "The three evidence classes",
+   "header": [
+    "Class",
+    "What it is",
+    "How far to trust it"
+   ],
+   "rows": [
+    [
+     "Vendor documentation",
+     "Official Informatica April-2026 product guides (docs.informatica.com).",
+     "Authoritative on intended behaviour, documented caps, headers and error codes. Durable - will not change when a pod is reconfigured."
+    ],
+    [
+     "Live testing, org A",
+     "~250 verb-and-path combinations against Org A, a trial org on a dm-us pod, 28 June to 25 July 2026, with the returned HTTP status recorded.",
+     "Authoritative on what actually happens on that org. A dated snapshot: verdicts in this corpus flipped on a three-to-five-day cadence."
+    ],
+    [
+     "Live testing, org B",
+     "~110 combinations against Org B, a sub-org on a dmp-us pod, on 25 July 2026, including a create-then-delete write round trip.",
+     "The independent second data point. It is what turns 'works' into 'works on both pods', or exposes a finding as pod-specific."
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "Primary vendor sources",
+   "header": [
+    "Document",
+    "What it establishes"
+   ],
+   "rows": [
+    [
+     "Getting Started with Informatica MCP Servers - Headless Data Management, April 2026",
+     "The MCP catalog: 5 servers, 11 actions, protocol 2025-06-18, three auth methods, OAuth client lifecycle, required privileges."
+    ],
+    [
+     "Cloud Data Quality API Reference, April 2026",
+     "The dictionary API - six endpoints, the 42-column and 10,000-row caps, and the full response-code list."
+    ],
+    [
+     "Cloud Application Integration - Invoke, April 2026",
+     "Bulk publish and unpublish (max 199 assets), every invocation URL pattern, the activity circuit breaker."
+    ],
+    [
+     "Cloud Application Integration - Monitor, April 2026",
+     "The restadmin plane: schedules, URN mappings, process suspend/resume/terminate, paging parameters."
+    ],
+    [
+     "Cloud Application Integration - Asset Management / Design, April 2026",
+     "The asset status listing API, the asset/v1/update PUT resource, Data Marketplace GET/POST/PUT."
+    ],
+    [
+     "Cloud Address Verification API, July 2025",
+     "The canonical two-step auth flow, the regional base URLs, and the 30-minute token lifetime."
+    ],
+    [
+     "Cloud Data Profiling, October 2025",
+     "Confirms profile and query CRUD exists over REST, and names the separate guide that holds the paths."
+    ],
+    [
+     "Operational Insights, April 2026",
+     "The two GraphQL resources, the 13-month history limit, and the one-active-request-per-org rule."
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "Named by the vendor guides but NOT held locally",
+   "header": [
+    "Missing document",
+    "What it would close"
+   ],
+   "rows": [
+    [
+     "REST API Reference (Administrator help)",
+     "THE keystone. The only place the platform v2 and v3 paths and the v3 session header are defined. Cross-referenced by at least eight documents we do hold."
+    ],
+    [
+     "Getting Started with Cloud Data Profiling REST API",
+     "The profiling endpoint paths, which is why profiling write verbs are marked DOC rather than YES."
+    ],
+    [
+     "Business 360 REST API Reference",
+     "The MDM resource model. The shipped Customer 360 guide contains no REST content at all."
+    ],
+    [
+     "Data Marketplace help (API section)",
+     "The marketplace base URL and the full resource list."
+    ],
+    [
+     "Any CDGC API guide",
+     "Every data360 path in this document is probe-derived and has never been vendor-confirmed."
+    ],
+    [
+     "Any Data Ingestion and Replication API guide",
+     "Whether the documented DBMI create endpoint is real on other pods."
+    ]
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "label": "How to re-date any live row.",
+   "text": "Run the probe harness probe_idmc_surface.py. It is org-specific (it reads a local credential file), so it is not shipped with this KB; reproduce its calls for your own org. It is GET-only by default, builds all the auth planes and mints the JWT, probes the endpoint set, and classifies each response into the status vocabulary. Pass --grep <service> to narrow it, or --allow-write to add the connection create-and-delete round trip. Then update the row and stamp last_verified."
+  },
+  {
+   "label": "The caution that governs the whole document.",
+   "text": "Endpoint availability genuinely varies by pod, org and entitlement. That is not a hedge - it is the single most repeated lesson in this project, and the org-A-versus-org-B section exists to prove it. Re-probe any specific row before putting it in front of a customer."
+  },
+  {
+   "label": "De-identified 2026-09-29 and 2026-10-03.",
+   "text": "This reference is part of the shareable Master IDMC KB, so org names, pod names, org and object IDs, IP addresses, VM and database names and people's names were replaced with neutral labels and placeholders. Org A is an org on a dm-us pod; Org B is a sub-org on a dmp-us pod; 'the parent org' is Org B's parent on the same pod. Placeholders: <org>, <pod>, <orgIdV2>, <orgIdV3>, <parentOrgIdV3>, <agentId>, <reId>, <connId>, <private-ip>, <db>. Every status code, count, date and verdict is unchanged. The un-redacted evidence, the org-specific probe harness and the org-specific skill builds are not part of this KB."
+  }
+ ],
+ "open_questions": [
+  "Obtain the Administrator REST API Reference - it is the one document that would resolve the largest number of remaining unknowns at once."
+ ]
+}

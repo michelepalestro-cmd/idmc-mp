@@ -1,0 +1,104 @@
+{
+ "name": "${idmc.project} - 2a Read the Bid Packet",
+ "status": "PROVEN (2026-10-13) as a designer-built exemplar that was then package-cloned; the generator has NOT built a Structure Parser (KB CDI 02 section 8): author 2a once in the designer (BUILD step 9), then clone it for 2b",
+ "description": "BRONZE, 5 steps, CLAIRE: the bid packet in play -> its bytes (DEC_BASE64 into a binary port) -> Structure Parser with the CLAIRE model '${claire.bid.model}' (Data input, BUFFER) -> canonical Bronze fields -> Snowflake.",
+ "task": {
+  "folder": "f2",
+  "runtime": "main"
+ },
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_BID",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_V_DOCUMENTS",
+   "objkind": "VIEW",
+   "filter": "DOC_TYPE = 'Bid packet'",
+   "_note": "on Snowflake the Advanced filter is sent verbatim as the WHERE clause; Preview Data ignores it (L-CDI-233)"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_BID_PDF_BYTES",
+   "fields": [
+    {
+     "name": "x_bytes",
+     "type": "BINARY",
+     "prec": 8388608,
+     "expr": "DEC_BASE64(CONTENT_B64)"
+    }
+   ]
+  },
+  {
+   "type": "structure_parser",
+   "name": "CLAIRE_BID",
+   "model": "${state:claire.bid.v3}",
+   "inputType": "BUFFER",
+   "input": {
+    "Data": [
+     "BINARY",
+     8388608
+    ]
+   },
+   "map": {
+    "x_bytes": "Data"
+   },
+   "passthrough": true,
+   "_note": "keep CONTENT_B64 OUT of the parser's input group (exclude rule on the link), or the base64 text repeats on every parsed row (L-CDI-244); the parser stores '@<v3 model id>' plus a copy of the model: Synchronize after a model edit"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_BID_BRONZE_FIELDS",
+   "fields": [
+    {
+     "name": "x_run",
+     "type": "STRING",
+     "expr": "TO_CHAR(SESSSTARTTIME, 'YYYYMMDDHH24MISS')",
+     "prec": 20
+    },
+    {
+     "name": "x_ts",
+     "type": "TIMESTAMP",
+     "expr": "SESSSTARTTIME"
+    },
+    {
+     "name": "x_ism",
+     "type": "STRING",
+     "prec": 100,
+     "expr": "'${claire.bid.model}'"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_BID_BRZ_BID_PACKET",
+   "conn": "WH",
+   "object": "${snowflake.database}/${snowflake.schema}/BID_BRZ_BID_PACKET",
+   "op": "Insert",
+   "fields": "the columns of BID_BRZ_BID_PACKET in infra/snowflake/02_bronze.sql"
+  }
+ ],
+ "links": [
+  [
+   "SRC_BID",
+   "EXP_BID_PDF_BYTES"
+  ],
+  [
+   "EXP_BID_PDF_BYTES",
+   "CLAIRE_BID",
+   {
+    "exclude": [
+     "CONTENT_B64"
+    ]
+   }
+  ],
+  [
+   "CLAIRE_BID",
+   "EXP_BID_BRONZE_FIELDS"
+  ],
+  [
+   "EXP_BID_BRONZE_FIELDS",
+   "TGT_BID_BRZ_BID_PACKET",
+   "${state:claire_field_map.bid}"
+  ]
+ ]
+}

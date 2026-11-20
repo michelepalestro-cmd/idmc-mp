@@ -1,0 +1,51 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Credentials and per-user files: never commit
+IDMC_LOGIN.txt
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*service-account*.json
+*_creds*
+*.creds
+**/tools/secret_scan_extra.txt
+.idmc_session*
+*.session.json
+*.block
+
+# Per-user demo and generator files: they hold your org's ids
+toolkit/demos/*/config.json
+toolkit/demos/*/state/*
+!toolkit/demos/*/state/README.md
+!toolkit/demos/*/state/.gitignore
+toolkit/demos/*/build/
+toolkit/mapgen/profile.json
+toolkit/demos/customer_master_csv/data/
+toolkit/demos/customer_master_csv/expected/
+
+# Run output
+_output/
+*.log
+mapgen_out/
+*.zip
+**/build/_kb_render.html
+# Reference-library outputs built on demand
+knowledge/reference/iics-to-ipus-kb/iics-to-ipus-knowledge-base.md
+knowledge/reference/iics-to-ipus-kb/iics-to-ipus-knowledge-base.pdf
+knowledge/reference/idmc-api-mcp-reference/idmc-api-mcp-master-reference.docx
+
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.vscode/
+.idea/

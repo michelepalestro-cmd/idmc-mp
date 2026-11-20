@@ -1,0 +1,126 @@
+{
+ "id": "01-executive-summary",
+ "title": "Executive summary - every service, its verbs and its MCP cover",
+ "owner": "fable",
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "One row per IDMC service. The verbs column is what has actually been proven to work; the quirk column is the thing about that service's verb behaviour that will trip you up; the MCP column says whether any MCP server reaches this service at all.",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "",
+   "header": [
+    "IDMC service",
+    "Verbs proven",
+    "The verb quirk to know",
+    "MCP cover",
+    "Where the ceiling is"
+   ],
+   "rows": [
+    [
+     "Administration & Core",
+     "GET, POST, DELETE",
+     "405 on PUT/PATCH for users",
+     "none",
+     "Users, groups, roles, schedules, metering, audit. v3 objects is GET-only."
+    ],
+    [
+     "Migration (export/import)",
+     "GET, POST",
+     "GET on /export is 405",
+     "none",
+     "Clone-only. A hand-built package is always rejected."
+    ],
+    [
+     "CDI - Data Integration",
+     "GET, POST",
+     "no PUT anywhere; POST /{id} is the update",
+     "Job Management (3 actions)",
+     "Run, schedule, connect, monitor. Mapping design is canvas-only."
+    ],
+    [
+     "CAI - asset lifecycle",
+     "GET, POST, PUT",
+     "GET on /publish is 405 (POST-only)",
+     "none",
+     "Bulk publish and unpublish, max 199 assets."
+    ],
+    [
+     "CAI - runtime admin",
+     "GET, POST, PUT, DELETE",
+     "URN uses PUT for add AND update",
+     "none",
+     "The richest runtime-control plane: suspend, resume, terminate, schedule."
+    ],
+    [
+     "CDGC - Catalog",
+     "GET, POST, DELETE",
+     "GET on scan + search is 405",
+     "CDGC Metadata Search (2 actions)",
+     "Scan and search are scriptable. Glossary, classification accept and lineage are not."
+    ],
+    [
+     "CDQ - Data Quality",
+     "POST, PUT, DELETE",
+     "NO GET ANYWHERE in the API",
+     "Address Verification (1 action)",
+     "Dictionaries are write-only. Rule logic and scoring are UI."
+    ],
+    [
+     "Data Profiling",
+     "GET (writes documented)",
+     "write paths not published locally",
+     "via CDGC get_asset_details",
+     "Rich read of profiles, metrics and patterns."
+    ],
+    [
+     "Mass Ingestion",
+     "none proven",
+     "every path 404 on this org",
+     "none",
+     "Engines running; authoring is a wizard. Not a licence gap."
+    ],
+    [
+     "Data Marketplace",
+     "GET, POST, PUT",
+     "405 on ratings and templates",
+     "Data Provisioning (3 actions)",
+     "Broadest verb coverage in the governance family."
+    ],
+    [
+     "MDM / C360 / B360 / R360",
+     "GET, POST, PUT, PATCH",
+     "the ONLY service where PATCH matters",
+     "Customer Identification (2 actions)",
+     "Record ingest works. Business-entity deploy has no verb."
+    ],
+    [
+     "Operational Insights",
+     "GET",
+     "GraphQL, not REST",
+     "none",
+     "Two resources. One active request per org, no pagination."
+    ],
+    [
+     "DAM / API Manager / CLAIRE",
+     "none proven",
+     "404 on every verb, every path",
+     "none",
+     "Engines deployed, REST planes absent."
+    ]
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "label": "Read the MCP column first if you are choosing an interface.",
+   "text": "Only five of the thirteen services have any MCP coverage at all, and every MCP action is an HTTP POST regardless of what it does - the read-or-write intent lives in the action name. So MCP is not a verb-level alternative to REST; it is a small curated subset with two capabilities REST lacks."
+  },
+  {
+   "label": "Two verb quirks that hold across the whole platform.",
+   "text": "The v2 plane has almost no PUT - you POST to /api/v2/<resource>/{id} to update, so an absent PUT is usually correct behaviour rather than a gap. And PATCH is only meaningful in MDM; elsewhere it is 405 or undefined."
+  }
+ ],
+ "open_questions": []
+}

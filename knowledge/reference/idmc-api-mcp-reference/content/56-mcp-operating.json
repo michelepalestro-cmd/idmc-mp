@@ -1,0 +1,272 @@
+{
+  "id": "56-mcp-operating",
+  "title": "Operating an IDMC MCP server — the call protocol",
+  "owner": null,
+  "last_verified": "2026-07-26",
+  "status": "migrated",
+  "intro": "Section 30 is the MCP *catalog* (which servers exist, which actions, how to authenticate). This section is the *operating manual*: the exact call sequence, the async poll loop, and the argument rules that decide whether a first call succeeds or silently loses context.\n\n**Evidence class: live tool schemas, read directly from a connected CLAIRE MCP server on 2026-07-26.** Higher-grade than vendor doc for these specifics — it is the server describing itself. It corrected one row in section 30 (`working` takes NO arguments; the earlier note said `conversation_id`).\n\n**The one-sentence model:** an IDMC MCP action is **asynchronous** — you submit a natural-language prompt, then poll a separate action until a sentinel line appears. Treat it as job submission, not a function call. This mirrors the REST platform exactly: POST to start, GET to poll.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "The call sequence — in this order, every session",
+      "header": [
+        "#",
+        "Call",
+        "Rule"
+      ],
+      "rows": [
+        [
+          "1",
+          "new_conversation  (no arguments)",
+          "MUST be the very first action of every new chat session, BEFORE any skill call. It returns a fresh conversation id so the agent has clean context. Do NOT call it again mid-conversation unless deliberately resetting. Skipping it is the usual cause of a failed first call."
+        ],
+        [
+          "2",
+          "OrchestratorSkill | MdmOrchestratorSkill  (prompt=...)",
+          "Submit ONE natural-language prompt. `prompt` is the only required argument. Returns immediately — this is a submission, not an answer. Pick the MDM twin for mastered entities, business entities, golden records, hierarchies, match/merge and cross-entity relationships; the general one for everything else (metadata discovery, exploration, DQ, rule generation, cleansing, profiling, enrichment, integration, product docs)."
+        ],
+        [
+          "3",
+          "working  (no arguments)",
+          "Poll at roughly 1-second intervals until a sentinel arrives. Cursor-based server-side: each call returns only what queued since your last call, so there are no duplicates and you must not skip calls. Takes NO arguments — passing conversation_id is wrong."
+        ],
+        [
+          "4",
+          "stop on a sentinel",
+          "Do not poll past one. See the sentinel table."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Poll sentinels — what each returned line means",
+      "header": [
+        "Line starts with",
+        "Meaning",
+        "Do"
+      ],
+      "rows": [
+        [
+          "ANSWER:",
+          "Final result. JSON with `responseType=FINAL_BUNDLE`, carrying `artifact`, `plan` and `human_probe` fields.",
+          "Render it and STOP polling."
+        ],
+        [
+          "PROBE:",
+          "CLAIRE needs clarification — it could not resolve the request.",
+          "Ask the human the question and STOP polling. Usually caused by a vague prompt."
+        ],
+        [
+          "done",
+          "Finished with no further output.",
+          "STOP polling."
+        ],
+        [
+          "Error: <msg>",
+          "The task failed.",
+          "Report the message and STOP. Do not retry blindly."
+        ],
+        [
+          "Still working...",
+          "Nothing ready yet.",
+          "Poll again SILENTLY — do not surface this to the human."
+        ],
+        [
+          "(any other plain text)",
+          "Live execution progress and reasoning.",
+          "Display each line VERBATIM to the human — do not rephrase or summarise — then keep polling."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Argument rules that silently cost you context",
+      "header": [
+        "Argument",
+        "Rule",
+        "Failure if you get it wrong"
+      ],
+      "rows": [
+        [
+          "conversation_id",
+          "OMIT it on the first call — do NOT generate your own. The server mints one and returns it at `response.context.conversation_id`. Pass that exact value on every subsequent call.",
+          "Omitting it on a FOLLOW-UP call is treated as a brand-new session and **all prior context is lost** — silently. No error is raised."
+        ],
+        [
+          "conversation_id vs history",
+          "Use ONE or the other, never both in the same request. `conversation_id` is preferred; `history` exists for stateless or embedded callers that manage their own state.",
+          "Sending both is out of contract."
+        ],
+        [
+          "history",
+          "An ordered list of `{role, content}` where role is user | assistant | system.",
+          "—"
+        ],
+        [
+          "artifacts",
+          "Only names CLAIRE has ALREADY returned (e.g. an asset name from a discovery result). **Never invent or guess an artifact name.**",
+          "A guessed name is a fabricated reference — the exact failure mode this whole knowledge base exists to prevent."
+        ],
+        [
+          "prompt",
+          "Be specific about the data source, the entity name and the action. Good: 'Show customer datasets in the Snowflake_Prod connection' · 'Profile the ORDERS table and list columns with null values'. Bad: 'show data'.",
+          "A vague prompt returns a HUMAN_PROBE clarification instead of an answer — costing a full round trip."
+        ],
+        [
+          "reasoning",
+          "true exposes WHY: how intent was interpreted and which sub-skill was chosen (REASONING_TRACE items).",
+          "Debugging prompt interpretation and skill routing."
+        ],
+        [
+          "events",
+          "true exposes WHAT: a sequential log of which sub-skills ran, in what order, with outcomes (EXECUTION_INSIGHT items).",
+          "Auditing the execution pipeline. Distinct from `reasoning`."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "What this changes about the MCP verdict",
+      "header": [
+        "Earlier framing",
+        "Refinement from the live server",
+        "So"
+      ],
+      "rows": [
+        [
+          "'MCP is 11 actions, all POST, one write' — a thin wrapper over REST.",
+          "Still true for the five vendor servers. But the CLAIRE agent server is a different shape: it exposes only 4 actions, and they are an *orchestration* interface, not endpoint wrappers. One free-text prompt is routed across metadata discovery, profiling, DQ, rule generation, cleansing, enrichment and integration.",
+          "Judge an MCP server by its action list, not by the word 'MCP'. Two IDMC MCP servers can differ more from each other than from REST."
+        ],
+        [
+          "'Verb matrices do not apply to MCP.'",
+          "Confirmed and sharpened: there is no verb surface AND no endpoint surface. The unit of work is a natural-language prompt plus a poll loop.",
+          "Never promise MCP parity with a REST endpoint list. The comparison is category-mismatched — say so first, or the conversation confuses."
+        ],
+        [
+          "'MCP is free in preview.'",
+          "Unchanged and worth repeating: the MCP layer is not monetised during the AI Agent Engineering preview, but every backing CDGC / CDI / Marketplace / MDM call still bills IPUs.",
+          "An agent that loops on an orchestration prompt can generate real consumption while the MCP line reads zero."
+        ],
+        [
+          "'MCP could replace the Secure Agent.'",
+          "No — MCP is a calling convention, not a network position. It cannot reach a private database that a Secure Agent reaches, and no MCP action authors a design-time asset.",
+          "The UI-only authoring wall applies identically to MCP. MCP does not widen the write surface."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Rendering the ANSWER: bundle - one contract per viewType",
+      "header": [
+        "viewType",
+        "How to render it",
+        "Fields to read"
+      ],
+      "rows": [
+        [
+          "GridView",
+          "Tabular discovery/search results. Build column headers from schema_definitions[].label IN ORDER, then map each items[] row by fieldName position. If key_insights is present, show it BELOW the table as a callout.",
+          "schema_definitions[].label, items[], key_insights"
+        ],
+        [
+          "null or DataExploreResult",
+          "A data preview WITH the SQL. Same header/row build as GridView. Render a null cell as an em dash, not the word 'null'. Show the generated SQL below the table in a sql code fence, then a footer line: Rows: <row_count_total> | Execution time: <execution_time_ms>ms.",
+          "schema_definitions[].label, items[][], execution_context.generated_sql, row_count_total, execution_time_ms"
+        ],
+        [
+          "PropertiesView",
+          "Asset metadata. A two-column table: Property | Value. If there are multiple property groups, separate them with subheadings.",
+          "property groups, name/value pairs"
+        ],
+        [
+          "GraphView",
+          "Lineage and relationships. Use arrows for direction (SourceTable -> TransformLayer -> TargetTable), one node per line, indent branches for hierarchy.",
+          "nodes, edges/direction"
+        ],
+        [
+          "AnalyticsView",
+          "Metrics and aggregates. Lead with the single most important metric in bold, then highlight trends and comparisons. Keep commentary minimal - do not narrate the numbers.",
+          "metrics, comparisons"
+        ],
+        [
+          "TreeView",
+          "Hierarchies (catalog / schema / folder). Render as an indented tree with folder and table glyphs.",
+          "nested nodes"
+        ],
+        [
+          "BlockText",
+          "Plain prose. Display as-is; do not reformat.",
+          "text"
+        ]
+      ],
+      "_source": "packaged claire-idmc-agent skill, SKILL.md 2026-06-01"
+    },
+    {
+      "type": "table",
+      "title": "Local CLAIRE agent server - install and wiring",
+      "header": [
+        "Item",
+        "Value / rule",
+        "Note"
+      ],
+      "rows": [
+        [
+          "MCP endpoint shape",
+          "<claire_api_url>/claire-orchestrator-ai-agent/api/v1/mcp",
+          "Built by the shim from claire_api_url. The agent is a PATH on the CLAIRE API host, not its own hostname."
+        ],
+        [
+          "Config keys required",
+          "claire_api_url, identity_url, username, password, client_id",
+          "Credentials come from config/env - never inline, never in chat."
+        ],
+        [
+          "Auth chain (2 calls)",
+          "POST <identity_url>/api/v1/Login -> sessionId (read from userInfo.sessionId, or sessionId, or session_id) ; then GET <identity_url>/api/v1/jwt/Token?client_id=<id>&nonce=<uuid> with header IDS-SESSION-ID -> jwt_token",
+          "Same identity plane the data360/CDGC calls use. The nonce is a fresh uuid per request."
+        ],
+        [
+          "Token lifetime",
+          "30 minutes, self-refreshed by the shim",
+          "Matches the documented platform JWT lifetime. A long session MUST re-auth."
+        ],
+        [
+          "Install layout",
+          "skill folder at ~/.claude/skills/claire-idmc-agent/ ; python .venv created by the installer ; register with `claude mcp add`",
+          "The skill and the MCP server are two separate registrations - the skill tells Claude HOW to call, the server IS the callable."
+        ],
+        [
+          "Session isolation gotcha",
+          "Claude Desktop keeps the MCP server running ACROSS chats - clicking New Chat does NOT reset CLAIRE's context",
+          "This is exactly why new_conversation must be the first action every chat. Skipping it leaks context between conversations."
+        ]
+      ],
+      "_source": "the packaged python MCP shim + setup.sh"
+    }
+  ],
+  "notes": [
+    {
+      "label": "Availability is per-org and per-machine — check, do not assume",
+      "text": "`GET /public/core/v3/mcpServers` returned a populated registry on one org and 404 on another, and only 2 of the 5 vendor servers were exposed on the lab org. A locally-connected agent server (like CLAIRE here) is a separate thing again: it appears as tools in the host application, not in that registry. Before designing on MCP, enumerate what your host actually has AND probe the org registry — they answer different questions."
+    },
+    {
+      "label": "The poll loop is the whole integration",
+      "text": "Most MCP integration bugs here are loop bugs, not auth bugs: self-generating a conversation id, dropping it on the second call, passing arguments to `working`, surfacing 'Still working...' to the user, or stopping before a sentinel. Get the four-step sequence right and the rest is prompt quality."
+    },
+    {
+      "label": "`working` is explicitly temporary",
+      "text": "The server documents it as a local polling shim that will be REMOVED when the MCP server provides native progress streaming. Any client built on it should isolate the poll behind one function, so the swap is a single edit rather than a rewrite."
+    },
+    {
+      "label": "Relationship to the shipped claire-idmc-agent skill",
+      "text": "A packaged `claire-idmc-agent` skill exists (SKILL.md + a python MCP shim + setup script) whose whole job is to OPERATE the CLAIRE agent server well: skill selection, the poll loop, and the seven viewType rendering contracts above. This section absorbs its operational contract so a single skill can both decide WHETHER to use MCP and then call it correctly. It does NOT replace the shim - you still need that MCP server registered for the tools to exist. Keep both: their skill is the transport, this is the judgement."
+    }
+  ],
+  "open_questions": [
+    "Does the CLAIRE agent MCP server carry any write capability at all, or is every route through OrchestratorSkill read-only? The action descriptions name cleansing, rule generation and integration, which imply writes, but none was exercised.",
+    "How does the CLAIRE agent server authenticate in practice in a given host (IDS-SESSION-ID, JWT or OAuth), and does it inherit the host's IDMC session or hold its own?",
+    "Whether `artifacts` accepts only asset names or any prior artifact reference, and what happens on an unrecognised name (silent drop vs error) — untested.",
+    "The shipped claire-idmc-agent skill lists trigger phrases like 'prepare me for the meeting' / 'prepare me for the day' that imply agenda-style composite queries. Whether those route to any distinct capability, or are just prompt sugar over OrchestratorSkill, is unverified."
+  ]
+}

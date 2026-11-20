@@ -1,0 +1,24 @@
+name: security-scan
+on:
+  push:
+  pull_request:
+permissions:
+  contents: read
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
+        with:
+          python-version: "3.12"
+      - name: "Install pinned scanners (CI only; the plugin itself needs no packages)"
+        run: python -m pip install --no-cache-dir "bandit==1.9.4" "detect-secrets==1.5.0"
+      - name: Python security lint (fails on medium or high severity)
+        run: bandit -q -r toolkit tests knowledge -ll -ii
+      - name: Secrets (fails on anything not in the audited baseline)
+        run: git ls-files -z | grep -zv '^.github/secrets.baseline$' | xargs -0 detect-secrets-hook --baseline .github/secrets.baseline
+      - name: "Repository secret scan (own rules for credentials, org ids, IPs, e-mails, local paths)"
+        run: python toolkit/tools/secret_scan.py .

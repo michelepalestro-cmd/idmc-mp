@@ -1,0 +1,264 @@
+{
+  "id": "57-custom-mcp-fleet",
+  "title": "Custom MCP fleets — building your own servers over the IDMC APIs",
+  "owner": null,
+  "last_verified": "2026-07-26",
+  "status": "migrated",
+  "intro": "The five Informatica-managed MCP servers (section 30) are not the ceiling. Because the IDMC REST surface is broad, you can wrap it in **your own** MCP servers and get a far larger tool surface than the vendor ships. This section records a working reference architecture of that kind, plus the patterns worth copying.\n\n**Evidence class: a colleague's internal architecture document (IDMC Multi-Agent MCP Architecture & Setup Guide v1.0, 2026-07-16), describing a fleet running against a separate demo org.** Not probed by us. The ARCHITECTURE patterns are the durable value and transfer directly; the specific tool inventory is that author's own code, and several of its claims **conflict with paths this corpus recorded as 404 on a different org** — see the reconciliation table. Treat the conflicts as an org/pod difference to verify, not as a settled contradiction.\n\n**Why it matters for the count question:** anyone saying IDMC has \"5 or 10 MCP servers\" may be describing a fleet like this — 9 custom servers — rather than the 5 vendor-managed ones. Always ask which kind.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "Reference fleet — 9 custom servers, ~110 tools, split by IDMC product",
+      "header": [
+        "Server",
+        "Tools",
+        "Covers"
+      ],
+      "rows": [
+        [
+          "idmc-core",
+          "15",
+          "Platform: connections, mappings, mapping tasks, taskflows, start/stop job, activity log, schedules, object lookup, org licence, roles"
+        ],
+        [
+          "idmc-mdm",
+          "17",
+          "MDM: search, search_match, entity read by id / xref / members, create, update, patch, delete, merge, unmerge, relationships, xref, metadata, jobs"
+        ],
+        [
+          "idmc-cdgc",
+          "20",
+          "CDGC: asset search, find-by-name, business-term search, asset get/create/update/delete, catalog-source list + run, DQ scores, audit history, export"
+        ],
+        [
+          "idmc-cdmp",
+          "8",
+          "Data Marketplace: data-product search/get, collection get, access request create/approve/reject, asset usage"
+        ],
+        [
+          "idmc-cdam",
+          "10",
+          "Data Access Management: policy list/get/create/update/delete, evaluate access, classifications, entitlements"
+        ],
+        [
+          "idmc-profiling",
+          "8",
+          "Profiling: create, run, list profiles, get definition, per-column stats, patterns, value frequencies, job"
+        ],
+        [
+          "idmc-dbmi",
+          "10",
+          "Database ingestion: task create/deploy/get, job start/stop/resume/undeploy, status, metrics, job id"
+        ],
+        [
+          "idmc-file-ingestion",
+          "9",
+          "File pipelines: task create/update/delete, run job, job status + logs, list/get task, activity log"
+        ],
+        [
+          "idmc-streaming",
+          "9",
+          "Streaming: task deploy/undeploy, start/stop, job get/list/status/statistics/history"
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Architecture patterns worth copying",
+      "header": [
+        "Pattern",
+        "How it works",
+        "Why it pays"
+      ],
+      "rows": [
+        [
+          "One server per IDMC product",
+          "9 servers split along product lines rather than one monolith, each with its own auth session.",
+          "Keeps tool lists small enough for a model to choose well, and isolates a broken product plane from the rest. The trade-off is stated below: each server logs in independently."
+        ],
+        [
+          "Stateless servers + session cache on disk",
+          "Session written to `.idmc_sessions/<server>_session_<item>.json` holding JWT, org id, base URL and the IDS session; loaded on server startup.",
+          "Cold start ~6-8 s (login), warm start ~0 s. Survives a server restart, so a fleet of 9 does not mean 9 logins per query."
+        ],
+        [
+          "Two-tier token lifetime",
+          "IDS session ~8 h (full re-login needed after), JWT ~30 min (auto-refreshed FROM the IDS session, no credential prompt). Refresh ~0.5 s every ~25 min.",
+          "Matches the platform's documented 30-min JWT. The insight is that the long-lived IDS session is what lets you refresh silently — cache both, not just the JWT."
+        ],
+        [
+          "Credentials from a secret manager, never a file",
+          "1Password CLI (`op read \"op://<vault>/<item>/<field>\"`) with biometric prompt on first access, ~2-3 s.",
+          "The right shape: the MCP server holds no plaintext credential and each org/role is a separate vault item. Directly matches this corpus's secrets rule."
+        ],
+        [
+          "One vault item per ROLE, not per person",
+          "Separate items for the parent org, the governance sub-org (holds CDGC Admin), an MDM analyst and an MDM developer — pick the item that has the privilege the task needs.",
+          "Turns 'why does this 403' into a login choice instead of a debugging session. Ties directly to the three-layer gate: a role gap is not an entitlement gap."
+        ],
+        [
+          "Sub-agents per domain, spawned in parallel",
+          "4 orchestrating sub-agents (platform / mdm / cdgc / ingestion) each scoped to its own tool namespace; multi-domain questions fan out concurrently.",
+          "Reported ~28 s parallel vs ~60 s sequential for a 3-domain query. The real win is prompt scoping — a specialist agent sees 15-46 tools, not 110."
+        ],
+        [
+          "Route by query shape",
+          "Simple single-domain question -> call the tool directly (~3-5 s). Multi-domain -> parallel agents. Multi-phase workflow -> sequential agents with a barrier between phases.",
+          "Explicitly notes the monolith WINS for simple queries (3-5 s vs 8 s for an agent). Do not spawn an agent to list connections."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Base URLs — per-product, and they differ in shape",
+      "header": [
+        "Product",
+        "Base URL pattern",
+        "Note"
+      ],
+      "rows": [
+        [
+          "Platform (v2/v3)",
+          "https://<pod>.<domain>.informaticacloud.com/saas",
+          "The only one with /saas."
+        ],
+        [
+          "CDGC / CDMP / CDAM",
+          "https://idmc-api.<domain>.informaticacloud.com",
+          "The identity plane host, not the pod host. Three headers."
+        ],
+        [
+          "MDM",
+          "https://<pod>-mdm.<domain>.informaticacloud.com",
+          "Add -mdm to the pod label and DROP /saas. ⚠️ Recorded as 404-not-mounted on a different org — per-org."
+        ],
+        [
+          "Database ingestion (DBMI)",
+          "https://<pod>-ing.<domain>.informaticacloud.com",
+          "NEW to this corpus: an `-ing` suffix host. Not previously recorded."
+        ],
+        [
+          "File + streaming ingestion",
+          "https://<pod>.<domain>.informaticacloud.com",
+          "Pod host but WITHOUT /saas — a third shape."
+        ],
+        [
+          "Login (identity)",
+          "https://<domain>.informaticacloud.com/identity-service/api/v1/Login then /jwt/Token?client_id=idmc_api",
+          "Unprefixed domain host. Same chain the CLAIRE shim uses."
+        ],
+        [
+          "API Manager (APIM)",
+          "https://<pod>-apim.<domain>.informaticacloud.com",
+          "NEW host found 2026-07-26 by DNS sweep, distinct from <pod>-apigw. Both return an nginx 503 for every path including bogus ones = no backend attached."
+        ],
+        [
+          "Host-family sweep result",
+          "Live on this pod: -ing, -apigw, -apim, -mdm, -dqcloud-api, -dqprofile, -cai. NO DNS: -dam, -prep, -dataprep, -clairegpt, -ai",
+          "Do this DNS sweep FIRST on a new org - it is free, needs no auth, and tells you which product planes can possibly exist. A name with no DNS is a genuine absence."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Reconciliation — where this fleet's tools meet our recorded 404s",
+      "header": [
+        "Claimed tool",
+        "What this corpus recorded",
+        "How to resolve"
+      ],
+      "rows": [
+        [
+          "dbmi_create_task / deploy / job status (10 tools)",
+          "`/dbmi/public/api/v2/task/create` = documented but **404 on our org**; `task/details`, `job/status` 404; `/api/v2/miTask` 404 across 7 variants; MI authoring listed as a UI-only wall.",
+          "The `-ing` host is the likely explanation — we may have probed DBMI on the wrong base URL entirely. **Highest-value single thing to re-probe** from this document: `https://<pod>-ing.<domain>/dbmi/public/api/v2/...`. If it answers, our Mass Ingestion wall is a host error, not a platform limit."
+        ],
+        [
+          "cdam_create_policy / update / delete",
+          "~40 `/data360/dam/v1/policies` variants **404 on our org** while the DAM engine was RUNNING; recorded as a UI-only wall.",
+          "Different org may have the plane mounted, or the fleet uses a path we never tried. Re-probe before repeating 'DAM has no REST plane' as a platform fact — our evidence is org-scoped."
+        ],
+        [
+          "mdm_create / update / patch / delete / merge / unmerge",
+          "Ingest via `POST .../entity/{be}?sourceSystem=X` is proven 201; `PUT`/`PATCH` on `{be}/{id}` are documented-only, 0 proven; public search 404/405; **model deploy is a hard UI wall**.",
+          "Consistent, not contradictory: entity-level CRUD is plausible; MODEL authoring/deploy is the wall. Note this fleet claims no model-deploy tool either — agreement, once you separate the two."
+        ],
+        [
+          "cdgc_create_asset / update_asset / delete_asset",
+          "The proven CDGC write plane is `POST /ccgf-contentv2/api/v1/publish` (207 + jobId). Glossary-term binding and steward assignment are UI-only walls.",
+          "Likely the same publish plane wrapped in friendlier tool names. Verify which underlying path the tool calls before assuming a new capability exists."
+        ],
+        [
+          "profiling_create / profiling_run",
+          "Profiling reads are LIVE on `<pod>-dqprofile`; profile+query CRUD is 'documented, paths not held'.",
+          "This fleet may hold the paths we lacked. Worth asking the author for the exact endpoints — it closes a known gap."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Operational traps this fleet reports",
+      "header": [
+        "Symptom",
+        "Cause",
+        "Fix"
+      ],
+      "rows": [
+        [
+          "`401 Unauthorized` on one product but not others",
+          "Each MCP server holds an INDEPENDENT session. Logging into core does not authenticate cdgc.",
+          "Log in per server. This is the cost of the one-server-per-product split."
+        ],
+        [
+          "`IDS_085 User name or password is not valid`, HTTP 400",
+          "Wrong pod — credentials issued for one pod used against another.",
+          "Check the pod/domain in the stored credential item. A valid credential on the wrong pod looks exactly like a bad password."
+        ],
+        [
+          "CDGC `classType` filter silently ignored",
+          "Known API bug: the filter is accepted and has no effect.",
+          "Use find-by-name with exact match, or filter client-side on `core.classType` after fetching. **A filter that is ignored rather than rejected is the worst kind — it returns plausible wrong results.**"
+        ],
+        [
+          "First query takes 6-8 s",
+          "Cold-start login (1Password prompt + dual login).",
+          "Expected. Subsequent queries are ~0 s from the disk cache."
+        ],
+        [
+          "`Agent type '<name>' not found`",
+          "Agent definition files missing, or the host was not restarted after adding them.",
+          "Confirm `.claude/agents/*.md` exist, then restart the host."
+        ],
+        [
+          "Cached CDGC asset ids stop resolving",
+          "CDGC search returns SEMANTIC results — ids are not stable handles to re-use later.",
+          "Re-resolve by name at use time rather than caching an id."
+        ]
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "label": "The count question, settled",
+      "text": "Three different things get called 'IDMC MCP servers'. (1) FIVE Informatica-MANAGED servers, vendor-enumerated for April 2026, 11 actions, one write. (2) CLAIRE / AI-agent servers — a separate class reached on the CLAIRE API host, appearing as host tools rather than in the org registry. (3) CUSTOM fleets like this one — 9 servers and ~110 tools of somebody's own code over the same REST APIs, unbounded in principle. When someone quotes a number, ask which class they mean and which release. Only (1) is a vendor fact."
+    },
+    {
+      "label": "What a custom fleet does and does not change",
+      "text": "It changes ERGONOMICS, not capability. Every tool is a wrapper over the same REST surface, so the platform boundary is unmoved: design-time authoring (mapping design, taskflow publish, MDM model deploy, DQ rule authoring) still has no REST verb, and no amount of MCP wrapping creates one. A 110-tool fleet cannot do anything the API cannot. What it genuinely buys is discoverability, session handling, role selection and parallelism."
+    },
+    {
+      "label": "Do not spawn an agent for a simple query",
+      "text": "This architecture's own measurements say the direct tool call wins on single-domain questions (3-5 s vs ~8 s for a sub-agent) and only pays off on multi-domain fan-out (~28 s vs ~60 s) or phased workflows. Worth stating because the temptation with a 4-agent fleet is to route everything through an agent."
+    },
+    {
+      "label": "Treat the tool inventory as one author's code, not a spec",
+      "text": "The tool names in this section exist in that author's repository, not in Informatica's product. Someone reading this skill should not expect `mcp__idmc-cdgc__cdgc_create_asset` to exist in their own environment. The transferable content is the architecture, the base-URL shapes, and the traps."
+    }
+  ],
+  "open_questions": [
+    "~~Does DBMI answer on <pod>-ing?~~ **RESOLVED YES, 2026-07-26.** The -ing host is real (DNS resolves; bogus sibling does not) and serves live DBMI handlers. Our entire Mass Ingestion 'wall' was a wrong-host error. Body shapes still unmapped, and job/status needs an unknown Content-Type. A second prefix /mi/public/api/v2/* is also live on that host and unmapped.",
+    "Are the DAM policy and CDGC asset-CRUD tools calling paths we never probed, or a different org where those planes are mounted? Ask the author for the exact endpoint each tool hits.",
+    "What are the Data Profiling profile+query CRUD paths this fleet uses? Our corpus records them as 'documented, paths not held' — this would close that gap.",
+    "Is the reported ~2x parallel speedup measured or estimated? No methodology is given, and 4 concurrent agents also multiply IPU-billing on the backing calls."
+  ]
+}

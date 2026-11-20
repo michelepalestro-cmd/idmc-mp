@@ -1,0 +1,311 @@
+{
+ "name": "m_ex_type_fidelity",
+ "description": "[mapgen-suite S10] Type round-trip diagnostic: unicode, 255-char text, empty vs NULL, quotes and embedded newlines, NUMERIC at scale 9, 64-bit integers above 2^53, doubles, booleans, microsecond timestamps and DATE columns read and written.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_TYPES",
+   "conn": "BQ",
+   "query": "SELECT id AS src_id, s_unicode AS src_s_unicode, s_long AS src_s_long, s_empty AS src_s_empty, s_quote AS src_s_quote, n_dec AS src_n_dec, i_big AS src_i_big, f_val AS src_f_val, b_flag AS src_b_flag, ts_micro AS src_ts_micro, CAST(d_date AS TIMESTAMP) AS src_d_date, s_emoji AS src_s_emoji FROM `${BQ_PROJECT}.${DATASET}.type_edges`",
+   "fields": [
+    [
+     "src_id",
+     "INTEGER"
+    ],
+    [
+     "src_s_unicode",
+     "STRING",
+     256
+    ],
+    [
+     "src_s_long",
+     "STRING",
+     256
+    ],
+    [
+     "src_s_empty",
+     "STRING",
+     256
+    ],
+    [
+     "src_s_quote",
+     "STRING",
+     256
+    ],
+    [
+     "src_n_dec",
+     "NUMERIC"
+    ],
+    [
+     "src_i_big",
+     "INTEGER"
+    ],
+    [
+     "src_f_val",
+     "FLOAT"
+    ],
+    [
+     "src_b_flag",
+     "BOOLEAN"
+    ],
+    [
+     "src_ts_micro",
+     "TIMESTAMP"
+    ],
+    [
+     "src_d_date",
+     "TIMESTAMP"
+    ],
+    [
+     "src_s_emoji",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_TYPES",
+   "fields": [
+    {
+     "name": "id",
+     "type": "INTEGER",
+     "expr": "src_id",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "s_unicode",
+     "type": "STRING",
+     "expr": "src_s_unicode",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "s_long",
+     "type": "STRING",
+     "expr": "src_s_long",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "s_empty",
+     "type": "STRING",
+     "expr": "src_s_empty",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "s_quote",
+     "type": "STRING",
+     "expr": "src_s_quote",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "n_dec",
+     "type": "NUMERIC",
+     "expr": "src_n_dec",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "i_big",
+     "type": "INTEGER",
+     "expr": "src_i_big",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "f_val",
+     "type": "FLOAT",
+     "expr": "src_f_val",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "b_str",
+     "type": "STRING",
+     "expr": "src_b_flag",
+     "kind": "OUTPUT",
+     "prec": 10
+    },
+    {
+     "name": "ts_micro",
+     "type": "TIMESTAMP",
+     "expr": "src_ts_micro",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "d_date",
+     "type": "STRING",
+     "expr": "TO_CHAR(src_d_date, 'YYYY-MM-DD') || ' 00:00:00'",
+     "kind": "OUTPUT",
+     "prec": 19
+    },
+    {
+     "name": "s_emoji",
+     "type": "STRING",
+     "expr": "src_s_emoji",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "s_upper",
+     "type": "STRING",
+     "expr": "UPPER(src_s_unicode)",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "s_len",
+     "type": "INTEGER",
+     "expr": "LENGTH(src_s_unicode)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "empty_kind",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(src_s_empty), 'NULL', IIF(src_s_empty = '', 'EMPTY', 'VALUE'))",
+     "kind": "OUTPUT",
+     "prec": 8
+    },
+    {
+     "name": "quoted",
+     "type": "STRING",
+     "expr": "CHR(39) || src_s_quote || CHR(39)",
+     "kind": "OUTPUT",
+     "prec": 256
+    },
+    {
+     "name": "n_plus",
+     "type": "NUMERIC",
+     "expr": "src_n_dec + 1",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "i_plus",
+     "type": "INTEGER",
+     "expr": "src_i_big + 1",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "ts_str",
+     "type": "STRING",
+     "expr": "TO_CHAR(src_ts_micro, 'YYYY-MM-DD HH24:MI:SS.US')",
+     "kind": "OUTPUT",
+     "prec": 32
+    },
+    {
+     "name": "d_str",
+     "type": "STRING",
+     "expr": "TO_CHAR(src_d_date, 'YYYY-MM-DD')",
+     "kind": "OUTPUT",
+     "prec": 10
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_TYPE_FIDELITY",
+   "conn": "BQ",
+   "object": "${DATASET}/out_type_fidelity",
+   "truncate": true,
+   "fields": [
+    [
+     "id",
+     "INTEGER"
+    ],
+    [
+     "s_unicode",
+     "STRING"
+    ],
+    [
+     "s_long",
+     "STRING"
+    ],
+    [
+     "s_empty",
+     "STRING"
+    ],
+    [
+     "s_quote",
+     "STRING"
+    ],
+    [
+     "n_dec",
+     "NUMERIC"
+    ],
+    [
+     "i_big",
+     "INTEGER"
+    ],
+    [
+     "f_val",
+     "FLOAT"
+    ],
+    [
+     "b_str",
+     "STRING"
+    ],
+    [
+     "ts_micro",
+     "TIMESTAMP"
+    ],
+    [
+     "d_date",
+     "STRING"
+    ],
+    [
+     "s_emoji",
+     "STRING"
+    ],
+    [
+     "s_upper",
+     "STRING"
+    ],
+    [
+     "s_len",
+     "INTEGER"
+    ],
+    [
+     "empty_kind",
+     "STRING"
+    ],
+    [
+     "quoted",
+     "STRING"
+    ],
+    [
+     "n_plus",
+     "NUMERIC"
+    ],
+    [
+     "i_plus",
+     "INTEGER"
+    ],
+    [
+     "ts_str",
+     "STRING"
+    ],
+    [
+     "d_str",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_TYPES",
+   "EXP_TYPES"
+  ],
+  [
+   "EXP_TYPES",
+   "TGT_TYPE_FIDELITY"
+  ]
+ ]
+}

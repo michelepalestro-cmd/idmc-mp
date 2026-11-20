@@ -1,0 +1,99 @@
+{
+ "name": "m_probe_ff_target",
+ "description": "[probe] flat file -> flat file passthrough; the target file is created at run time (createTarget). Proven 2026-11-03: 189/189 rows in 8 s, header + rows written in the connection's directory, every value double-quoted.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_FF",
+   "conn": "FF",
+   "object": "orders_in.csv",
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     255
+    ],
+    [
+     "customer_email",
+     "STRING",
+     255
+    ],
+    [
+     "order_date",
+     "STRING",
+     255
+    ],
+    [
+     "store_code",
+     "STRING",
+     255
+    ],
+    [
+     "amount",
+     "STRING",
+     255
+    ],
+    [
+     "status",
+     "STRING",
+     255
+    ],
+    [
+     "notes",
+     "STRING",
+     255
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_FF",
+   "conn": "FF",
+   "object": "orders_out.csv",
+   "createTarget": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     255
+    ],
+    [
+     "customer_email",
+     "STRING",
+     255
+    ],
+    [
+     "order_date",
+     "STRING",
+     255
+    ],
+    [
+     "store_code",
+     "STRING",
+     255
+    ],
+    [
+     "amount",
+     "STRING",
+     255
+    ],
+    [
+     "status",
+     "STRING",
+     255
+    ],
+    [
+     "notes",
+     "STRING",
+     255
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_FF",
+   "TGT_FF"
+  ]
+ ]
+}

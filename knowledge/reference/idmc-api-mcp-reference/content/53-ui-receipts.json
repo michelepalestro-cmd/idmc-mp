@@ -1,0 +1,63 @@
+{
+  "id": "53-ui-receipts",
+  "title": "UI receipts — what the console says when it commits a UI-only action",
+  "owner": null,
+  "last_verified": "2026-07-26",
+  "status": "migrated",
+  "intro": "Fourteen operations in this platform have NO REST verb (see 51-ui-only-walls). For those, the console's own confirmation text is the only machine-checkable proof the action committed — a screenshot proves a click, not a commit. This section records those strings verbatim, each paired with the REST read that independently verifies the change landed.\n\nEvidence class is USER-CAPTURED, not probed: an agent cannot generate these, only a human who clicked can paste them. Never invent one. A wall with no receipt is left blank on purpose — an absent row means nobody has captured it yet, not that the dialog is silent.\n\nWhy it matters: the confirmation text also tells you WHICH dialog ran. Several IDMC walls have near-identical click paths with very different effects, and the toast is what distinguishes them.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "Captured receipts",
+      "header": ["Wall / action", "UI path", "Confirmation text (verbatim)", "Substitutes for (REST failure)", "Verify it landed"],
+      "rows": [
+        [
+          "Agent service / engine enablement",
+          "Administrator → Runtime Environments → <agent> → edit components / services",
+          "\"Changes successful. The selected components are enabled for the runtime environment, and all unselected components are disabled for the runtime environment.\"",
+          "POST /api/v2/agent/service → 403 APP_13401 / 500 CMN_001 (both are router artifacts — they prove nothing either way). POST /api/v2/agent/{id} with agentEngines[] → 500 and a silent no-op on read-back.",
+          "GET /api/v2/agent/details/{agentId} → agentEngines[] grows, each with agentEngineStatus.status DEPLOYING then RUNNING. Confirmed live 2026-07-26: 1 engine → 23 (9 RUNNING incl. Data_Integration_Server 77.0.2, Connector_Service 21.0.2). On-host: ls ~/infaagent/apps/ gains a directory per engine."
+        ]
+      ]
+    },
+    {
+      "type": "table",
+      "title": "Walls with no receipt captured yet",
+      "header": ["Wall / action", "Where the human clicks", "Status"],
+      "rows": [
+        ["CDI mapping design", "Mapping Designer canvas", "UNCAPTURED"],
+        ["Taskflow publish", "DI designer Publish click", "UNCAPTURED"],
+        ["Mass Ingestion authoring", "Mass Ingestion wizard", "UNCAPTURED"],
+        ["CDQ rule + scorecard authoring", "rulebuilder + DQO wizard", "UNCAPTURED"],
+        ["CLAIRE classification accept", "auto-accept threshold + re-scan", "UNCAPTURED"],
+        ["MDM business-entity deploy", "Business 360 Modeler Publish", "UNCAPTURED"],
+        ["MDM ingress / match-merge run", "B360 Console click", "UNCAPTURED"],
+        ["Glossary term to column binding", "CDGC UI", "UNCAPTURED"],
+        ["Steward / data-owner assignment", "CDGC UI", "UNCAPTURED"],
+        ["Marketplace delivery template", "Marketplace UI, headed browser", "UNCAPTURED"],
+        ["DAM masking policy", "Data Access Management UI", "UNCAPTURED"],
+        ["Connector type registration", "one UI Save in Administrator", "UNCAPTURED"],
+        ["CDQ dictionary Convert to API", "Data Quality → dictionary → Convert to API", "UNCAPTURED"],
+        ["Sub-org license allocation", "parent → Sub-Organizations → Licenses", "UNCAPTURED"]
+      ]
+    }
+  ],
+  "notes": [
+    {
+      "label": "How to add a receipt",
+      "text": "Paste the toast verbatim, including punctuation — the exact wording is the identifying fingerprint. Record the UI path you actually used, the REST call it substitutes for, and the read that confirms it. Then move the row out of the UNCAPTURED table. Do not paraphrase and do not reconstruct one from memory."
+    },
+    {
+      "label": "A confirmation is not a completion",
+      "text": "The enablement toast fired immediately, but engines then sat in DEPLOYING for 20+ minutes while packages downloaded, and connection tests kept failing during that window with errors that CHANGED between attempts (Data_Integration_Server 77.* → Connector_Service 21.* → driver-level errors). A shifting error is deployment progress, not a new wall. Always re-read the verify column before concluding the UI action failed."
+    },
+    {
+      "label": "Watch the agent host's disk",
+      "text": "Enabling many services at once downloads GBs of packages. On a live enablement the root filesystem went 79% → 95% (8.5 GB free) in about 30 minutes with 14 engines still deploying. ~/infaagent/downloads reached 19 GB of installers. Check free space BEFORE enabling, and note that installer directories under downloads/ do not map cleanly onto apps/ names — so do not bulk-delete them by name match to reclaim space mid-deployment."
+    }
+  ],
+  "open_questions": [
+    "Do the other 13 walls emit a confirmation string at all, or do some commit silently? Unknown until each is clicked and captured.",
+    "Are failure/warning toasts worth tracking too? A silent no-op and a success look identical in a screenshot, so the negative strings may be as diagnostic as the positive ones."
+  ]
+}

@@ -1,0 +1,80 @@
+{
+ "name": "m_ex_combo_watermark",
+ "description": "[mapgen-combo] Incremental load, watermark inside the BigQuery source query: in-out parameter p_last_ts (STRING, MAX) is substituted into WHERE updated_at > TIMESTAMP(...), so BigQuery filters; an Expression advances it with SETMAXVARIABLE on TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS.US'); the target appends.",
+ "inOutParameters": [
+  {
+   "name": "p_last_ts",
+   "type": "STRING",
+   "prec": 32,
+   "default": "1970-01-01 00:00:00.000000",
+   "aggregation": "MAX",
+   "retention": "ON_SUCCESS_OR_WARNING",
+   "description": "high-water mark: max updated_at loaded so far, UTC text YYYY-MM-DD HH24:MI:SS.US (text order = time order; BigQuery TIMESTAMP() parses it back exactly)"
+  }
+ ],
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_WM_EVENTS",
+   "conn": "BQ",
+   "query": "SELECT event_id, updated_at, amount, store_id, FORMAT_TIMESTAMP('%Y-%m-%d %H:%M:%E6S', updated_at, 'UTC') AS wm_txt_bq, '$$p_last_ts' AS wm_from FROM `${BQ_PROJECT}.${DATASET}.combo_wm_events` WHERE updated_at > TIMESTAMP('$$p_last_ts')",
+   "fields": [
+    ["event_id", "STRING", 32],
+    ["updated_at", "TIMESTAMP"],
+    ["amount", "NUMERIC"],
+    ["store_id", "STRING", 16],
+    ["wm_txt_bq", "STRING", 32],
+    ["wm_from", "STRING", 32]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_WATERMARK",
+   "fields": [
+    {
+     "name": "wm_txt_dtm",
+     "type": "STRING",
+     "prec": 32,
+     "expr": "TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS.US')",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "wm_running",
+     "type": "STRING",
+     "prec": 32,
+     "expr": "SETMAXVARIABLE($$p_last_ts, TO_CHAR(updated_at, 'YYYY-MM-DD HH24:MI:SS.US'))",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_WM_OUT",
+   "conn": "BQ",
+   "object": "${DATASET}/combo_wm_out",
+   "truncate": false,
+   "disposition": "Write append",
+   "fields": [
+    ["event_id", "STRING"],
+    ["updated_at", "TIMESTAMP"],
+    ["amount", "NUMERIC"],
+    ["store_id", "STRING"],
+    ["wm_txt_bq", "STRING"],
+    ["wm_txt_dtm", "STRING"],
+    ["wm_running", "STRING"],
+    ["wm_from", "STRING"]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  ["SRC_WM_EVENTS", "EXP_WATERMARK"],
+  ["EXP_WATERMARK", "TGT_WM_OUT"]
+ ]
+}

@@ -1,0 +1,162 @@
+{
+ "id": "13-cai",
+ "title": "CAI - Cloud Application Integration (asset lifecycle)",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/active-bpel/asset/v1/publish",
+     "POST",
+     "BULK PUBLISH processes / guides / connections",
+     "202 + jobId; max 199 assets  —  rejected: GET 405; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/v1/publish/{id}",
+     "GET",
+     "Publish job information",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/v1/publish/{id}/Status",
+     "GET",
+     "Per-asset itemState SUCCESS / ERROR",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/v1/unpublish",
+     "POST",
+     "Bulk unpublish (same body shape)",
+     "202; max 199  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/v1/status?MimeType=",
+     "GET",
+     "List assets by type + publication status",
+     "200 — published|unpublished|out-of-date  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/rt",
+     "GET",
+     "List deployed processes",
+     "200 — 54–68 processes"
+    ],
+    [
+     "/active-bpel/rt/{Process}",
+     "POST",
+     "Invoke a process (HTTP Basic / OAuth2); Swagger discovery for a process",
+     "200; 403 if the service ACL is unset; vendor-documented"
+    ],
+    [
+     "/active-bpel/public/rt/{Tenant}/{Process}",
+     "POST",
+     "Invoke ANONYMOUSLY",
+     "200 — 473 real runs"
+    ],
+    [
+     "/active-bpel/public/rt/{Tenant}/{Proc}/event/{Msg}",
+     "POST",
+     "Anonymous message event",
+     "vendor-documented"
+    ],
+    [
+     "/active-bpel/soap/{Process}",
+     "GET",
+     "SOAP endpoint (append ?wsdl for the contract)",
+     "vendor-documented"
+    ],
+    [
+     "/active-bpel/asset/v1/update?assetType=Process",
+     "PUT [doc]",
+     "Update allowed users/groups, anon access, tracing; Update connection / sensitive attribute values",
+     "documented — Design p.210  —  untested: GET, POST, PATCH, DELETE; documented — needs a UI republish after  —  untested: GET, POST, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/v1/processes",
+     "none proven",
+     "Create a process definition",
+     "500 — designer canvas only  —  rejected: POST 500; untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/publish",
+     "none proven",
+     "Legacy publish path (origin of the myth)",
+     "403 — use asset/v1/publish  —  rejected: POST 403; untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/process-engine/status",
+     "GET",
+     "Process-engine health",
+     "200"
+    ],
+    [
+     "/process-engine/rt/{serviceName}",
+     "GET",
+     "On-prem Process Developer invoke",
+     "vendor-documented (IPD)"
+    ],
+    [
+     "/public/core/v3/objects?q=type==PROCESS",
+     "GET",
+     "Process census",
+     "200 — count 68"
+    ],
+    [
+     "Service connectors and app connections",
+     "UI only",
+     "Author a connector or connection",
+     "designer canvas"
+    ],
+    [
+     "Event sources (Kafka, JMS), file listeners",
+     "UI only",
+     "Author an event source",
+     "designer canvas"
+    ],
+    [
+     "Human tasks, fault and retry design",
+     "UI only",
+     "Author human task + fault handling",
+     "designer canvas"
+    ],
+    [
+     "API activate / deactivate",
+     "UI only",
+     "Activate a published API",
+     "Console click only; republish does NOT activate"
+    ],
+    [
+     "/active-bpel/asset/v1/unpublish/{id}",
+     "GET [doc]",
+     "Unpublish job information",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/asset/v1/unpublish/{id}/Status",
+     "GET [doc]",
+     "Unpublish status",
+     "untested: POST, PUT, PATCH, DELETE"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No MCP server covers this service. Everything here is REST-only."
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

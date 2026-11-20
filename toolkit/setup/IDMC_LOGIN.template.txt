@@ -1,0 +1,22 @@
+# YOUR IDMC LOGIN
+#
+# Fill in the 3 lines at the bottom, after the "=" sign. No quotes. No spaces around "=". Then save the file.
+#
+#   IDMC_USER        The user name you type on the IDMC sign-in page, exactly (it may not be your e-mail).
+#                    It must have its own IDMC password: if you sign in with your company's single sign-on
+#                    button, ask your IDMC admin for a "native" IDMC user (a service user is best).
+#   IDMC_PASS        The password of that user.
+#   IDMC_LOGIN_HOST  Sign in to IDMC in your web browser, copy the whole address from the top of the browser,
+#                    and paste it here as it is. Example: https://usw5.dm-us.informaticacloud.com/cloudUX/home
+#
+# Example of a filled-in file:
+#   IDMC_USER=svc_claude
+#   IDMC_PASS=MyS3cretPassw0rd
+#   IDMC_LOGIN_HOST=https://usw5.dm-us.informaticacloud.com/cloudUX/home
+#
+# This file stays in your home folder (~/.idmc_toolkit/), never inside the plugin, so updates never touch it.
+# It holds your password: never share it, never paste it into a chat, never commit it to git.
+
+IDMC_USER=
+IDMC_PASS=
+IDMC_LOGIN_HOST=

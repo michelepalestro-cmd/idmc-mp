@@ -1,0 +1,30 @@
+name: Bug report
+description: The plugin, a command or a toolkit script did not do what it should.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please never paste a password, token, session id or org id. For a security problem, do not open an issue:
+        see SECURITY.md.
+  - type: input
+    id: version
+    attributes:
+      label: Plugin version
+      description: From `/plugin` in Claude Code, or `.claude-plugin/plugin.json`.
+    validations:
+      required: true
+  - type: dropdown
+    id: os
+    attributes:
+      label: Operating system
+      options: [macOS, Windows, Linux]
+    validations:
+      required: true
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what you expected
+      description: The command you ran and the message you saw (with secrets and ids removed).
+    validations:
+      required: true

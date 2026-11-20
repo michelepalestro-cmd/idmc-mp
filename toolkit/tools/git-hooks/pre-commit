@@ -1,0 +1,18 @@
+#!/bin/sh
+# Blocks a commit when toolkit/tools/secret_scan.py finds a credential, a filled-in IDMC_LOGIN.txt, an IP,
+# an email or a local path in the STAGED files (the whole repository when the staged list cannot be read).
+# Install once per clone:  git config core.hooksPath toolkit/tools/git-hooks
+PY=python3; command -v "$PY" >/dev/null 2>&1 || PY=python
+cd "$(git rev-parse --show-toplevel)" || exit 1
+FILES=$(git diff --cached --name-only --diff-filter=ACMR -z | tr '\0' '\n')
+if [ -n "$FILES" ]; then
+  # one path per line; paths with newlines are not supported (none exist in this repository).
+  # Word splitting on newlines only (IFS) with globbing off (set -f) is intended here.
+  # shellcheck disable=SC2046
+  printf '%s\n' "$FILES" | (IFS='
+'; set -f; set -- $(cat); "$PY" toolkit/tools/secret_scan.py --files "$@") || {
+    echo "pre-commit: secret_scan failed on staged files; fix the hits above (or empty IDMC_LOGIN.txt)."; exit 1; }
+else
+  "$PY" toolkit/tools/secret_scan.py . || {
+    echo "pre-commit: secret_scan failed; fix the hits above (or empty IDMC_LOGIN.txt)."; exit 1; }
+fi

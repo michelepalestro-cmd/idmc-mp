@@ -1,0 +1,102 @@
+{
+  "id": "18-mass-ingestion",
+  "title": "Mass Ingestion - CMI, DBMI, file, application, streaming",
+  "owner": null,
+  "last_verified": "2026-07-26",
+  "status": "restructured",
+  "intro": "",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "",
+      "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+      "header": [
+        "Endpoint",
+        "Verbs supported",
+        "What it does",
+        "Notes & evidence"
+      ],
+      "rows": [
+        [
+          "/dbmi/public/api/v2/task/create",
+          "POST",
+          "Create a DBMI / AppMI task",
+          "LIVE 2026-07-26: THE 404s WERE A WRONG-HOST ERROR. DBMI is served on a dedicated <pod>-ing.<domain> host, NOT the pod/saas host. Proven with controls: <pod>-ing resolves (a public A record) while <pod>-bogusZZZ has no DNS, and the SAME path returns a bare 404 on the pod host but a real DBMI error envelope on -ing. GET -> 405 'Request method GET is not supported' = the POST verb EXISTS. POST with an empty body -> 500 'Cannot invoke Object.getClass() because o is null' = the handler PARSED and RAN our request (a null-deref on a missing body, not a routing miss). Body shape still unknown - run the validator loop against this host."
+        ],
+        [
+          "/dbmi/public/api/v2/task/details",
+          "GET",
+          "Task details",
+          "LIVE 2026-07-26: THE 404s WERE A WRONG-HOST ERROR. DBMI is served on a dedicated <pod>-ing.<domain> host, NOT the pod/saas host. Proven with controls: <pod>-ing resolves (a public A record) while <pod>-bogusZZZ has no DNS, and the SAME path returns a bare 404 on the pod host but a real DBMI error envelope on -ing. Returns {errorCode:404, errorMessage:'DBMI_TASK_WAS_NOT_FOUND'} for a bogus id - a DOMAIN 404 from a live handler, not an absent route. Discriminator on this host: 'No static resource <path>' = route ABSENT; any typed DBMI errorMessage = handler present."
+        ],
+        [
+          "/dbmi/public/api/v2/job/status",
+          "GET [doc]",
+          "Ingestion job status",
+          "LIVE 2026-07-26: THE 404s WERE A WRONG-HOST ERROR. DBMI is served on a dedicated <pod>-ing.<domain> host, NOT the pod/saas host. Proven with controls: <pod>-ing resolves (a public A record) while <pod>-bogusZZZ has no DNS, and the SAME path returns a bare 404 on the pod host but a real DBMI error envelope on -ing. Consistently 415 'Content-Type is not supported' on GET, with and without query params, and 405 on POST. 415 means the route is LIVE and content-negotiating - it is rejecting our media type, not the path. Unresolved: which Content-Type/Accept it wants (stripping our headers did not clear it). Real progress vs the previous bare 404."
+        ],
+        [
+          "/api/v2/miTask",
+          "none proven",
+          "v2 mass-ingestion task (+6 name variants)",
+          "404 — POST returns login HTML  —  rejected: GET 404, POST 500; untested: PUT, PATCH, DELETE  ALSO 2026-07-26: this v2 family is genuinely absent, but that verdict now only applies to the PLATFORM host - DBMI has its own -ing host (see rows above)."
+        ],
+        [
+          "/public/mi/v1/tasks",
+          "none proven",
+          "v3 MI plane (+8 variants)",
+          "404 No static resource  —  rejected: GET 404, POST 404; untested: PUT, PATCH, DELETE"
+        ],
+        [
+          "/public/core/v3/objects?q=type==MI_TASK",
+          "GET",
+          "MI task census",
+          "200 — count 0, nothing to clone"
+        ],
+        [
+          "/public/core/v3/objects {type:MI_TASK}",
+          "POST",
+          "Create an MI task via v3",
+          "405 Method not supported"
+        ],
+        [
+          "DBMI task authoring",
+          "UI only",
+          "Build a database-ingestion task",
+          "UI wizard — engines RUNNING, not a licence gap"
+        ],
+        [
+          "Ingestion run monitoring",
+          "none proven",
+          "Watch an ingestion job",
+          "via /api/v2/activity/activityLog"
+        ],
+        [
+          "Task authoring",
+          "UI only",
+          "Wizard only. Engines ARE running: this is not a licence gap",
+          ""
+        ],
+        [
+          "Run monitoring",
+          "GET",
+          "Via /api/v2/activity/activityLog",
+          "untested: POST, PUT, PATCH, DELETE"
+        ],
+        [
+          "/mi/public/api/v2/task/details",
+          "GET",
+          "Mass-ingestion task details (non-'dbmi' prefix)",
+          "LIVE 2026-07-26: THE 404s WERE A WRONG-HOST ERROR. DBMI is served on a dedicated <pod>-ing.<domain> host, NOT the pod/saas host. Proven with controls: <pod>-ing resolves (a public A record) while <pod>-bogusZZZ has no DNS, and the SAME path returns a bare 404 on the pod host but a real DBMI error envelope on -ing. NEW: a SECOND live prefix on the same -ing host. Returns a typed DBMI error, not 'No static resource', so the /mi/ family exists alongside /dbmi/. Unmapped - worth a sweep."
+        ]
+      ]
+    },
+    {
+      "type": "callout",
+      "label": "MCP coverage for this service:",
+      "text": "No MCP server covers this service. Everything here is REST-only."
+    }
+  ],
+  "notes": [],
+  "open_questions": []
+}

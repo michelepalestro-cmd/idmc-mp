@@ -1,0 +1,127 @@
+{
+ "id": "02-authentication",
+ "title": "Authentication - the planes and the token flow",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "migrated",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "Authentication — six planes, and never mix them",
+   "header": [
+    "Plane",
+    "Login call",
+    "Header(s) it issues / needs",
+    "Base host",
+    "Serves"
+   ],
+   "rows": [
+    [
+     "v2 platform",
+     "POST /ma/api/v2/user/login",
+     "icSessionId",
+     "<pod>.dm-us.informaticacloud.com/saas",
+     "/api/v2/*"
+    ],
+    [
+     "v3 platform",
+     "POST /saas/public/core/v3/login",
+     "INFA-SESSION-ID",
+     "<pod>.dm-us.informaticacloud.com/saas",
+     "/public/core/v3/*"
+    ],
+    [
+     "Identity / CDGC",
+     "identity-service Login, then /jwt/Token",
+     "Bearer + IDS-SESSION-ID + X-INFA-ORG-ID",
+     "idmc-api.dm-<region>.informaticacloud.com",
+     "data360/*, marketplace, MDM control"
+    ],
+    [
+     "CDGC write plane",
+     "same three-header flow",
+     "Bearer + IDS-SESSION-ID + X-INFA-ORG-ID",
+     "cdgc-api.dm-us.informaticacloud.com",
+     "ccgf-*, cdmp-marketplace"
+    ],
+    [
+     "CAI runtime",
+     "v3 session",
+     "INFA-SESSION-ID (+ vnd.api+json to publish)",
+     "<pod>-cai.dm-us.informaticacloud.com",
+     "/active-bpel/*"
+    ],
+    [
+     "MDM runtime",
+     "three-header flow",
+     "Bearer + IDS-SESSION-ID + X-INFA-ORG-ID",
+     "<pod>-mdm.dm-us.informaticacloud.com",
+     "business-entity/public/api/v1/*"
+    ],
+    [
+     "CDQ dictionaries",
+     "either method",
+     "Bearer JWT or IDS-SESSION-ID",
+     "<pod>-dqcloud-api.dm-us.informaticacloud.com",
+     "/quality/public/v2/*"
+    ],
+    [
+     "Data Profiling",
+     "SPA session",
+     "IDS-SESSION-ID, SPA-injected",
+     "<pod>-dqprofile.dm-us.informaticacloud.com",
+     "profiling-service, metric-store"
+    ],
+    [
+     "MCP servers",
+     "three options",
+     "IDS-SESSION-ID | Bearer JWT | OAuth2 client credentials",
+     "a2e-prod-<pod>-mcp.dm-us.informaticacloud.com",
+     "/mcp-servers/public/*"
+    ],
+    [
+     "Anonymous CAI",
+     "none",
+     "none",
+     "<pod>-cai.dm-us.informaticacloud.com",
+     "/active-bpel/public/rt/*"
+    ]
+   ],
+   "_migrated_from": "capref#2"
+  },
+  {
+   "type": "table",
+   "title": "Regional base URLs",
+   "header": [
+    "Region",
+    "Base API URL"
+   ],
+   "rows": [
+    [
+     "North America",
+     "https://idmc-api.dm-us.informaticacloud.com/"
+    ],
+    [
+     "EMEA",
+     "https://idmc-api.dm-em.informaticacloud.com/"
+    ],
+    [
+     "APJ",
+     "https://idmc-api.dm-ap.informaticacloud.com/"
+    ],
+    [
+     "Canada",
+     "https://idmc-api.dm-na.informaticacloud.com/"
+    ],
+    [
+     "United Kingdom",
+     "https://idmc-api.dm-uk.informaticacloud.com/"
+    ]
+   ],
+   "_migrated_from": "capref#3"
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

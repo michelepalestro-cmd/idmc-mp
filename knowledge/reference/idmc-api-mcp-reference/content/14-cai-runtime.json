@@ -1,0 +1,138 @@
+{
+ "id": "14-cai-runtime",
+ "title": "CAI - invocation & runtime administration",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/active-bpel/restadmin/urn/{OrgID}",
+     "GET",
+     "Read all URN mappings for the org",
+     "200 — Monitor p.55  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/restadmin/urn/",
+     "PUT [doc], DELETE [doc]",
+     "Add or update a URN mapping; Delete one or more URN mappings",
+     "documented — Monitor p.56  —  untested: GET, POST, PATCH; documented — Monitor p.57  —  untested: GET, POST, PATCH"
+    ],
+    [
+     "/active-bpel/restadmin/scheduler/schedules/?tenantContextId=",
+     "GET  ·  POST [doc], PUT [doc], DELETE [doc]",
+     "List / get process schedules; Create a process schedule; Update a schedule; Delete schedules (body: scheduleId[])",
+     "200 — verified live  —  untested: PATCH; 204  —  untested: PATCH"
+    ],
+    [
+     "/active-bpel/restadmin/processes/",
+     "GET",
+     "List all process instances; Execution status for one run; Filtered query (listStart, maxReturn, state…); Advanced filter on process properties",
+     "200 — default page size 20  —  untested: POST, PUT, PATCH, DELETE; 200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/restadmin/processes/{id}/suspend",
+     "PUT [doc]",
+     "Suspend a running process",
+     "204  —  untested: GET, POST, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/restadmin/processes/{id}/resume",
+     "PUT [doc]",
+     "Resume a suspended process",
+     "204  —  untested: GET, POST, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/restadmin/processes/{id}/terminate",
+     "PUT [doc]",
+     "Terminate a process",
+     "204  —  untested: GET, POST, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/local/restadmin/eventconnection/start",
+     "POST [doc]",
+     "Start a listener-based event source",
+     "documented — Monitor p.122  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/local/restadmin/eventconnection/stop",
+     "POST [doc]",
+     "Stop a listener event source",
+     "documented — Monitor p.123  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/odata/v4/{connection}/$metadata",
+     "GET",
+     "OData v2/v4 service metadata",
+     "documented"
+    ],
+    [
+     "Secure Agent equivalents",
+     "none proven",
+     "Same paths under /process-engine/restadmin/…",
+     "on <agent>:<httpPort>"
+    ],
+    [
+     "/active-bpel/rt",
+     "GET",
+     "List deployed processes",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/rt/{Process}",
+     "GET, POST  ·  PUT [doc], PATCH [doc], DELETE [doc]",
+     "A process can be exposed on ANY of the five verbs",
+     ""
+    ],
+    [
+     "/active-bpel/public/rt/{Tenant}/{Process}",
+     "GET, POST  ·  PUT [doc], PATCH [doc], DELETE [doc]",
+     "Anonymous. No auth header at all",
+     ""
+    ],
+    [
+     "/active-bpel/public/rt/{Tenant}/{Proc}/event/{Msg}",
+     "POST [doc]",
+     "Anonymous message event",
+     "untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/rt/{Process}?swagger",
+     "GET [doc]",
+     "Spec discovery. ?wsdl on the soap path",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/active-bpel/odata/v4/{connection}",
+     "GET",
+     "OData v2 and v4. $metadata for the contract",
+     "untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "API activate / deactivate",
+     "none proven",
+     "No verb at any path. Console click only",
+     "all five verbs untested"
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No MCP server covers this service. Everything here is REST-only."
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

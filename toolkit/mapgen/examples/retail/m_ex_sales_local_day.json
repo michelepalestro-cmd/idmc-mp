@@ -1,0 +1,423 @@
+{
+ "name": "m_ex_sales_local_day",
+ "description": "[mapgen-suite S09] Store-local business day across daylight-saving switches: an inner Joiner adds the store time zone, two unconnected Lookups with two-column keys return the UTC offset (per zone + UTC hour) and the FX rate (per currency + day), Expression date maths builds the local time, an Aggregator rolls up per store-day.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_ORDERS",
+   "conn": "BQ",
+   "query": "SELECT order_id, store_id AS o_store_id, order_ts, order_total, currency, loaded_at, status FROM `${BQ_PROJECT}.${DATASET}.orders`",
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     256
+    ],
+    [
+     "o_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "order_total",
+     "NUMERIC"
+    ],
+    [
+     "currency",
+     "STRING",
+     256
+    ],
+    [
+     "loaded_at",
+     "TIMESTAMP"
+    ],
+    [
+     "status",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_STORES",
+   "conn": "BQ",
+   "query": "SELECT store_id AS st_store_id, region AS st_region, timezone AS st_timezone FROM `${BQ_PROJECT}.${DATASET}.stores`",
+   "fields": [
+    [
+     "st_store_id",
+     "STRING",
+     256
+    ],
+    [
+     "st_region",
+     "STRING",
+     256
+    ],
+    [
+     "st_timezone",
+     "STRING",
+     256
+    ]
+   ]
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_STORE",
+   "master": "SRC_STORES",
+   "detail": "SRC_ORDERS",
+   "cond": [
+    [
+     "st_store_id",
+     "o_store_id"
+    ]
+   ],
+   "join": "NORMAL"
+  },
+  {
+   "type": "filter",
+   "name": "FIL_BOOKED",
+   "cond": "status = 'COMPLETED' OR status = 'REFUNDED'"
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_TZ_OFFSET",
+   "conn": "BQ",
+   "query": "SELECT timezone AS lk_tz, hour_key AS lk_hour, offset_min AS lk_offset FROM `${BQ_PROJECT}.${DATASET}.tz_offsets`",
+   "fields": [
+    [
+     "lk_tz",
+     "STRING",
+     64
+    ],
+    [
+     "lk_hour",
+     "STRING",
+     64
+    ],
+    [
+     "lk_offset",
+     "INTEGER"
+    ]
+   ],
+   "cond": [
+    [
+     "lk_tz",
+     "IN_tz"
+    ],
+    [
+     "lk_hour",
+     "IN_hour"
+    ]
+   ],
+   "ret": "lk_offset"
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_FX",
+   "conn": "BQ",
+   "query": "SELECT currency AS lk_cur, rate_day AS lk_day, usd_rate AS lk_rate FROM `${BQ_PROJECT}.${DATASET}.fx_rates`",
+   "fields": [
+    [
+     "lk_cur",
+     "STRING",
+     64
+    ],
+    [
+     "lk_day",
+     "STRING",
+     64
+    ],
+    [
+     "lk_rate",
+     "NUMERIC"
+    ]
+   ],
+   "cond": [
+    [
+     "lk_cur",
+     "IN_cur"
+    ],
+    [
+     "lk_day",
+     "IN_day"
+    ]
+   ],
+   "ret": "lk_rate"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_LOCAL",
+   "fields": [
+    {
+     "name": "v_offset",
+     "type": "INTEGER",
+     "expr": ":LKP.LKP_TZ_OFFSET(st_timezone, TO_CHAR(order_ts, 'YYYY-MM-DD HH24'))",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_local",
+     "type": "TIMESTAMP",
+     "expr": "ADD_TO_DATE(order_ts, 'MI', v_offset)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_rate",
+     "type": "NUMERIC",
+     "expr": ":LKP.LKP_FX(currency, TO_CHAR(order_ts, 'YYYY-MM-DD'))",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "store_id",
+     "type": "STRING",
+     "expr": "st_store_id",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "region",
+     "type": "STRING",
+     "expr": "st_region",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "offset_min",
+     "type": "INTEGER",
+     "expr": "v_offset",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "local_ts",
+     "type": "TIMESTAMP",
+     "expr": "v_local",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "local_date",
+     "type": "STRING",
+     "expr": "TO_CHAR(TRUNC(v_local, 'DD'), 'YYYY-MM-DD HH24:MI:SS')",
+     "kind": "OUTPUT",
+     "prec": 19
+    },
+    {
+     "name": "local_hour",
+     "type": "INTEGER",
+     "expr": "TO_INTEGER(TO_CHAR(v_local, 'HH24'))",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "usd_total",
+     "type": "NUMERIC",
+     "expr": "ROUND(order_total * v_rate, 2)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "is_late",
+     "type": "INTEGER",
+     "expr": "IIF(DATE_DIFF(loaded_at, order_ts, 'HH') > 48, 1, 0)",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_STORE_DAY",
+   "groupBy": [
+    "store_id",
+    "region",
+    "local_date"
+   ],
+   "fields": [
+    {
+     "name": "orders",
+     "type": "INTEGER",
+     "expr": "COUNT(order_id)"
+    },
+    {
+     "name": "sales_usd",
+     "type": "NUMERIC",
+     "expr": "SUM(usd_total)"
+    },
+    {
+     "name": "agg_refunds",
+     "type": "NUMERIC",
+     "expr": "SUM(usd_total, usd_total < 0)"
+    },
+    {
+     "name": "late_orders",
+     "type": "INTEGER",
+     "expr": "COUNT(order_id, is_late = 1)"
+    },
+    {
+     "name": "first_local_hour",
+     "type": "INTEGER",
+     "expr": "MIN(local_hour)"
+    },
+    {
+     "name": "last_local_hour",
+     "type": "INTEGER",
+     "expr": "MAX(local_hour)"
+    }
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_DAY",
+   "fields": [
+    {
+     "name": "refunds_usd",
+     "type": "NUMERIC",
+     "expr": "IIF(ISNULL(agg_refunds), 0, agg_refunds)",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_ORDER_LOCAL_TIME",
+   "conn": "BQ",
+   "object": "${DATASET}/out_order_local_time",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "region",
+     "STRING"
+    ],
+    [
+     "order_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "offset_min",
+     "INTEGER"
+    ],
+    [
+     "local_ts",
+     "TIMESTAMP"
+    ],
+    [
+     "local_date",
+     "STRING"
+    ],
+    [
+     "local_hour",
+     "INTEGER"
+    ],
+    [
+     "usd_total",
+     "NUMERIC"
+    ],
+    [
+     "is_late",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_STORE_LOCAL_DAY",
+   "conn": "BQ",
+   "object": "${DATASET}/out_store_local_day",
+   "truncate": true,
+   "fields": [
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "region",
+     "STRING"
+    ],
+    [
+     "local_date",
+     "STRING"
+    ],
+    [
+     "orders",
+     "INTEGER"
+    ],
+    [
+     "sales_usd",
+     "NUMERIC"
+    ],
+    [
+     "refunds_usd",
+     "NUMERIC"
+    ],
+    [
+     "late_orders",
+     "INTEGER"
+    ],
+    [
+     "first_local_hour",
+     "INTEGER"
+    ],
+    [
+     "last_local_hour",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_STORES",
+   "JNR_STORE.Master"
+  ],
+  [
+   "SRC_ORDERS",
+   "JNR_STORE.Detail"
+  ],
+  [
+   "JNR_STORE",
+   "FIL_BOOKED"
+  ],
+  [
+   "FIL_BOOKED",
+   "EXP_LOCAL"
+  ],
+  [
+   "EXP_LOCAL",
+   "TGT_ORDER_LOCAL_TIME"
+  ],
+  [
+   "EXP_LOCAL",
+   "AGG_STORE_DAY"
+  ],
+  [
+   "AGG_STORE_DAY",
+   "EXP_DAY"
+  ],
+  [
+   "EXP_DAY",
+   "TGT_STORE_LOCAL_DAY"
+  ]
+ ]
+}

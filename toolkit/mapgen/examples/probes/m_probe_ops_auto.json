@@ -1,0 +1,272 @@
+{
+ "name": "m_probe_ops_auto",
+ "description": "[mapgen probe] automatic writer defaults: BigQuery Upsert + Data Driven, PostgreSQL truncate + Pre/Post SQL, BigQuery Pre SQL two ways",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_UP",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n UNION ALL SELECT 'K3', 'new', 30",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_BQ_UPSERT",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_upsert3",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "op": "Upsert",
+   "updateColumns": [
+    "k"
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_BQ_PRE_ADV",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_pre1",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "pre_sql": "DELETE FROM `${BQ_PROJECT}.${DATASET}.probe_pre1` WHERE k = 'Z9'"
+  },
+  {
+   "type": "target",
+   "name": "TGT_BQ_PRE_ATTR",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_pre2",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "writerAttrs": {
+    "opr": {
+     "preSQLWriter": "DELETE FROM `${BQ_PROJECT}.${DATASET}.probe_pre2` WHERE k = 'Z9'"
+    },
+    "rt": {
+     "pre SQL": "DELETE FROM `${BQ_PROJECT}.${DATASET}.probe_pre2` WHERE k = 'Z9'"
+    }
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_TRUNC",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/probe_trunc3",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ],
+    [
+     "v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ],
+    [
+     "n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ]
+   ],
+   "truncate": true
+  },
+  {
+   "type": "target",
+   "name": "TGT_PG_PREPOST",
+   "conn": "PG",
+   "object": "${PG_SCRATCH}/probe_pre",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16,
+     "character_varying",
+     0
+    ],
+    [
+     "v",
+     "STRING",
+     64,
+     "character_varying",
+     0
+    ],
+    [
+     "n",
+     "INT32",
+     10,
+     "integer",
+     0
+    ]
+   ],
+   "pre_sql": "DELETE FROM ${PG_SCRATCH}.probe_pre WHERE k = 'Z9'",
+   "post_sql": "UPDATE ${PG_SCRATCH}.probe_pre SET v = 'post' WHERE k = 'Z8'"
+  },
+  {
+   "type": "source",
+   "name": "SRC_DD",
+   "conn": "BQ",
+   "query": "SELECT 'K1' AS k, 'new' AS v, 10 AS n, 'U' AS op_flag UNION ALL SELECT 'K2', 'gone', 0, 'D' UNION ALL SELECT 'K4', 'new', 40, 'I' UNION ALL SELECT 'K5', 'bad', 0, 'R'",
+   "fields": [
+    [
+     "k",
+     "STRING",
+     16
+    ],
+    [
+     "v",
+     "STRING",
+     64
+    ],
+    [
+     "n",
+     "INTEGER"
+    ],
+    [
+     "op_flag",
+     "STRING",
+     4
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_BQ_DD",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_ops_dd2",
+   "truncate": false,
+   "fields": [
+    [
+     "k",
+     "STRING"
+    ],
+    [
+     "v",
+     "STRING"
+    ],
+    [
+     "n",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   },
+   "op": "Data Driven",
+   "updateColumns": [
+    "k"
+   ],
+   "updateStrategy": "DECODE(op_flag, 'I', DD_INSERT, 'U', DD_UPDATE, 'D', DD_DELETE, DD_REJECT)"
+  }
+ ],
+ "links": [
+  [
+   "SRC_UP",
+   "TGT_BQ_UPSERT"
+  ],
+  [
+   "SRC_UP",
+   "TGT_BQ_PRE_ADV"
+  ],
+  [
+   "SRC_UP",
+   "TGT_BQ_PRE_ATTR"
+  ],
+  [
+   "SRC_UP",
+   "TGT_PG_TRUNC"
+  ],
+  [
+   "SRC_UP",
+   "TGT_PG_PREPOST"
+  ],
+  [
+   "SRC_DD",
+   "TGT_BQ_DD"
+  ]
+ ]
+}

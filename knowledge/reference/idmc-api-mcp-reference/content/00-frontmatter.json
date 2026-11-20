@@ -1,0 +1,78 @@
+{
+ "id": "00-frontmatter",
+ "title": "How to read this document",
+ "owner": "fable",
+ "last_verified": "2026-07-25",
+ "status": "verified",
+ "intro": "This is the single master reference for what Informatica IDMC can do over its APIs and over MCP. It is organised by product: one section per IDMC service, each containing one big table of every endpoint in that service, the exact HTTP verbs it accepts, and what it does. The MCP coverage for that same service sits immediately underneath, so you can see both interfaces for one product side by side.",
+ "blocks": [
+  {
+   "type": "bullets",
+   "title": "The five verbs, as used throughout",
+   "items": [
+    "GET - retrieves data from the server without changing anything.",
+    "POST - sends new data to create a new resource.",
+    "PUT - replaces an existing resource entirely with updated data.",
+    "PATCH - applies partial updates to an existing resource.",
+    "DELETE - removes a specific resource from the server."
+   ]
+  },
+  {
+   "type": "table",
+   "title": "How to read the Verbs supported column",
+   "intro": "Each service table has one row per endpoint. The verbs column lists EVERY verb that endpoint accepts - if it takes three, all three are named.",
+   "header": [
+    "What you see",
+    "What it means"
+   ],
+   "rows": [
+    [
+     "GET, POST, DELETE",
+     "All three verbs verified working against a live IDMC org."
+    ],
+    [
+     "PUT [doc]",
+     "Informatica documents this verb but it was not exercised here. Unproven."
+    ],
+    [
+     "UI only",
+     "The operation exists, but only in the interface. No verb reaches it."
+    ],
+    [
+     "none proven",
+     "No verb has been shown to work on this path. Read the notes for why."
+    ],
+    [
+     "rejected: PUT 405",
+     "That verb was explicitly refused with that code. 405 = read-only, a hard no."
+    ],
+    [
+     "untested: PUT, PATCH",
+     "Nobody has probed those verbs here. UNKNOWN, not unsupported."
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "The distinction that matters most.",
+   "text": "'untested' and 'rejected' are not the same thing and are never merged. Untested means nobody probed that verb and Informatica has not published it. A 405 is a hard no from the server: the resource is read-only at any permission level. Conflating the two is what produced every wrong conclusion this project has had to walk back."
+  },
+  {
+   "type": "callout",
+   "label": "On MCP and verbs.",
+   "text": "MCP has no verb surface of its own. Every MCP call is an HTTP POST to a single server endpoint carrying a JSON-RPC body that names an action, so the read-or-write intent lives in the action name rather than in a verb. That is why each service's MCP table lists actions, and why the Verb column there always reads POST. Only five of the thirteen services have any MCP coverage at all."
+  },
+  {
+   "type": "callout",
+   "label": "The one rule that governs the whole platform.",
+   "text": "Across every IDMC service, reading metadata and running the data plane work over REST. Publishing, deploying and serving very often do not. Informatica's own headless team confirmed this in July 2026: the API story is incomplete and gappy, write is weak across the board, and Data Integration exposes operational APIs only with no design-time asset creation. API-based mapping design is previewed for late 2026, GA around 2027."
+  },
+  {
+   "type": "callout",
+   "label": "This document is generated.",
+   "text": "The master .docx is built from content/*.json by build/build_master.py. Do not edit the document - edits there are destroyed on the next build. See AGENTS.md in this folder for how to contribute, and the contents table for which sections need work."
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

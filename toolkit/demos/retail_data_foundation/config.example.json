@@ -1,0 +1,125 @@
+{
+  "_readme": "Copy to config.json (same folder) and edit. Names only: no secrets here (they come from the toolkit .env, see ENV_KEYS.md). Ids the build creates are written to state/ids.json, not here.",
+  "prefix": "rdf",
+  "idmc": {
+    "project": "Retail Data Foundation",
+    "folder": "rdf",
+    "tag": "rdf",
+    "runtimeEnvironment": "<name of your Secure Agent group (runtime environment)>",
+    "hostedRuntimeEnvironment": "",
+    "podOffsetHours": null
+  },
+  "source": {
+    "_comment": "The Postgres stand-in in infra/. host/port/db/users come from .env (PG_*), because the Secure Agent may reach it on a different host than your laptop.",
+    "schema": "public",
+    "activationSchema": "activation",
+    "_tls": "IDMC PostgreSQL connections: auto = TLS on (encryptionMethod SSL, TLS 1.2, server certificate validated) for any PG_HOST except loopback; TLS off only for the loopback stand-in in infra/docker-compose.yml (plain postgres image, no server certificate, published on 127.0.0.1 only). on = TLS always.",
+    "tls": "auto",
+    "tables": ["stores", "products", "customers", "memberships", "orders", "order_lines", "payments", "visits"]
+  },
+  "warehouse": {
+    "type": "bigquery",
+    "_comment": "BigQuery is the proven path. project, key file and staging bucket come from .env (BQ_PROJECT, BQ_KEY_FILE, GCS_STAGING_BUCKET).",
+    "location": "US",
+    "datasets": {
+      "land": "rdf_land",
+      "staging": "rdf_staging",
+      "gold": "rdf_gold",
+      "cdc": "rdf_cdc"
+    }
+  },
+  "crm": {
+    "type": "salesforce",
+    "apiVersion": "64.0",
+    "contactExternalId": "Rdf_Customer_Id__c",
+    "membershipObject": "Rdf_Membership__c",
+    "membershipExternalId": "Rdf_Membership_Id__c",
+    "countGate": 0.8,
+    "testIdentityRegex": "(^qa\\.|^e2e_|@test\\.invalid$)"
+  },
+  "connections": {
+    "pg": "rdf_pg_retail",
+    "pgCdc": "rdf_pg_retail_cdc",
+    "bq": "rdf_bq_warehouse",
+    "bqDbmi": "rdf_bq_warehouse_dbmi",
+    "sf": "rdf_sf_crm"
+  },
+  "cdc": {
+    "tasks": {
+      "hot": {
+        "name": "dbmi_rdf_cdc_hot",
+        "slot": "rdf_cdc_hot",
+        "publication": "rdf_cdc_pub_hot",
+        "tables": ["customers", "memberships", "orders", "payments", "visits"],
+        "applyCycleSecs": "5",
+        "flushPeriod": "2"
+      },
+      "cold": {
+        "name": "dbmi_rdf_cdc_cold",
+        "slot": "rdf_cdc_cold",
+        "publication": "rdf_cdc_pub_cold",
+        "tables": ["stores", "products", "order_lines"],
+        "applyCycleSecs": "10",
+        "flushPeriod": "5"
+      }
+    },
+    "gcsDirectory": "rdf_dbmi_cdc"
+  },
+  "mappings": [
+    "m_rdf_ingest_customers",
+    "m_rdf_ingest_activity",
+    "m_rdf_customer_golden",
+    "m_rdf_dq_scorecard",
+    "m_rdf_sales_facts",
+    "m_rdf_crm_sync"
+  ],
+  "taskflows": {
+    "tf_rdf_full": ["mt_rdf_ingest_customers", "mt_rdf_ingest_activity", "mt_rdf_customer_golden",
+                    "mt_rdf_dq_scorecard", "mt_rdf_sales_facts", "mt_rdf_crm_sync"],
+    "tf_rdf_customer": ["mt_rdf_ingest_customers", "mt_rdf_customer_golden", "mt_rdf_crm_sync"]
+  },
+  "schedules": {
+    "sch_rdf_every_4h": {
+      "taskflow": "tf_rdf_full",
+      "interval": "Hourly",
+      "frequency": 4,
+      "startTimeUTC": "2026-01-01T00:35:00Z"
+    }
+  },
+  "cai": {
+    "serviceConnector": "rdf_sfdc_rest",
+    "appConnection": "rdf_sfdc_rest_conn",
+    "processes": ["rdf_cai_customer_to_crm", "rdf_cai_membership_to_crm"],
+    "_access": "Who may call the processes (Basic Authentication on https://<pod>-cai.<domain>/active-bpel/rt/<process>): IDMC user names and/or user group names. anonymous=true removes all authentication (anyone with the URL can write to the CRM): throwaway test orgs only.",
+    "allowedUsers": ["<IDMC user that calls the processes = RDF_CAI_USER>"],
+    "allowedGroups": [],
+    "anonymous": false
+  },
+  "dq": {
+    "_comment": "Rule specifications are org assets (see BUILD step 7). Put the frsId of each one you have (or imported) here; leave empty to skip that binding.",
+    "templateProfileName": "",
+    "ruleSpecs": {
+      "email":   {"frsId": "", "name": "rdf_rs_email_validity", "in": "Email",   "out": "Output", "dimension": "VALIDITY"},
+      "phone":   {"frsId": "", "name": "rdf_rs_phone_completeness", "in": "Phone", "out": "Output", "dimension": "COMPLETENESS"},
+      "notnull": {"frsId": "", "name": "rdf_rs_not_null", "in": "In_Field1",       "out": "Output", "dimension": "COMPLETENESS"}
+    },
+    "profiles": {
+      "rdf_prof_customers":   {"table": "customers",   "bindings": [["email", "email"], ["phone", "phone"], ["full_name", "notnull"]]},
+      "rdf_prof_payments":    {"table": "payments",    "bindings": [["status", "notnull"], ["processor", "notnull"]]},
+      "rdf_prof_memberships": {"table": "memberships", "bindings": [["tier", "notnull"]]}
+    },
+    "addressVerification": {
+      "mcpContext": "dqverifyaddress",
+      "tool": "verify_address",
+      "maxCallsPerRun": 25
+    }
+  },
+  "catalog": {
+    "sources": {
+      "rdf_cat_pg": {"template": "catalog_source_postgres.json"},
+      "rdf_cat_bq": {"template": "catalog_source_bigquery.json"},
+      "rdf_cat_cdi": {"template": "catalog_source_iics.json"}
+    },
+    "glossaryFile": "idmc/catalog/glossary.json"
+  }
+}

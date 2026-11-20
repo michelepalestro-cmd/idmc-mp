@@ -1,0 +1,315 @@
+{
+ "name": "m_probe_lookup_running",
+ "description": "[mapgen probe] connected Lookup (2-column equality + range conditions, 2 lookups chained) and the sorted VARIABLE-port running total / LAG pattern",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_ORDERS",
+   "conn": "BQ",
+   "query": "SELECT 'O1' AS order_id, 'S1' AS store_id, 'US' AS region, 'SKU1' AS sku, 2 AS qty UNION ALL SELECT 'O2', 'S2', 'US', 'SKU2', 1 UNION ALL SELECT 'O3', 'S1', 'EU', 'SKU1', 5 UNION ALL SELECT 'O4', 'S9', 'US', 'SKU3', 1 UNION ALL SELECT 'O5', 'S1', 'US', 'SKU2', 3",
+   "fields": [
+    [
+     "order_id",
+     "STRING",
+     64
+    ],
+    [
+     "store_id",
+     "STRING",
+     64
+    ],
+    [
+     "region",
+     "STRING",
+     8
+    ],
+    [
+     "sku",
+     "STRING",
+     64
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_STORE",
+   "connected": true,
+   "conn": "BQ",
+   "query": "SELECT 'S1' AS lk_store_id, 'US' AS lk_region, 'Downtown' AS store_name, 'NYC' AS city UNION ALL SELECT 'S2', 'US', 'Mall', 'LA' UNION ALL SELECT 'S1', 'EU', 'Paris Centre', 'Paris'",
+   "fields": [
+    [
+     "lk_store_id",
+     "STRING",
+     64
+    ],
+    [
+     "lk_region",
+     "STRING",
+     8
+    ],
+    [
+     "store_name",
+     "STRING",
+     128
+    ],
+    [
+     "city",
+     "STRING",
+     64
+    ]
+   ],
+   "cond": [
+    [
+     "lk_store_id",
+     "store_id"
+    ],
+    [
+     "lk_region",
+     "=",
+     "region"
+    ]
+   ],
+   "policy": "Use First Value"
+  },
+  {
+   "type": "lookup",
+   "name": "LKP_BAND",
+   "connected": true,
+   "conn": "BQ",
+   "query": "SELECT 0 AS band_lo, 2 AS band_hi, 'small' AS band UNION ALL SELECT 3, 99, 'large'",
+   "fields": [
+    [
+     "band_lo",
+     "INTEGER"
+    ],
+    [
+     "band_hi",
+     "INTEGER"
+    ],
+    [
+     "band",
+     "STRING",
+     16
+    ]
+   ],
+   "cond": [
+    [
+     "band_lo",
+     "<=",
+     "qty"
+    ],
+    [
+     "band_hi",
+     ">=",
+     "qty"
+    ]
+   ],
+   "policy": "Use Any Value"
+  },
+  {
+   "type": "target",
+   "name": "TGT_LKP",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_lkp_conn",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "store_id",
+     "STRING"
+    ],
+    [
+     "region",
+     "STRING"
+    ],
+    [
+     "sku",
+     "STRING"
+    ],
+    [
+     "qty",
+     "INTEGER"
+    ],
+    [
+     "store_name",
+     "STRING"
+    ],
+    [
+     "city",
+     "STRING"
+    ],
+    [
+     "band",
+     "STRING"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "source",
+   "name": "SRC_TXN",
+   "conn": "BQ",
+   "query": "SELECT 'C1' AS customer_id, 1 AS seq, 10 AS amount UNION ALL SELECT 'C1', 2, 5 UNION ALL SELECT 'C2', 1, 7 UNION ALL SELECT 'C1', 3, 20 UNION ALL SELECT 'C2', 2, 3",
+   "fields": [
+    [
+     "customer_id",
+     "STRING",
+     64
+    ],
+    [
+     "seq",
+     "INTEGER"
+    ],
+    [
+     "amount",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_TXN",
+   "keys": [
+    "customer_id",
+    "seq"
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_RUNNING",
+   "fields": [
+    {
+     "name": "v_same",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(customer_id = v_prev_cust, 1, 0)"
+    },
+    {
+     "name": "v_run",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(v_same = 1, v_run + amount, amount)"
+    },
+    {
+     "name": "v_lag",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(v_same = 1, v_prev_amt, NULL)"
+    },
+    {
+     "name": "v_rown",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "IIF(v_same = 1, v_rown + 1, 1)"
+    },
+    {
+     "name": "v_prev_amt",
+     "type": "INTEGER",
+     "kind": "VARIABLE",
+     "expr": "amount"
+    },
+    {
+     "name": "v_prev_cust",
+     "type": "STRING",
+     "prec": 64,
+     "kind": "VARIABLE",
+     "expr": "customer_id"
+    },
+    {
+     "name": "running_total",
+     "type": "INTEGER",
+     "expr": "v_run"
+    },
+    {
+     "name": "prev_amount",
+     "type": "INTEGER",
+     "expr": "v_lag"
+    },
+    {
+     "name": "row_in_customer",
+     "type": "INTEGER",
+     "expr": "v_rown"
+    }
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_RUN",
+   "conn": "BQ",
+   "object": "${DATASET}/probe_running",
+   "truncate": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING"
+    ],
+    [
+     "seq",
+     "INTEGER"
+    ],
+    [
+     "amount",
+     "INTEGER"
+    ],
+    [
+     "running_total",
+     "INTEGER"
+    ],
+    [
+     "prev_amount",
+     "INTEGER"
+    ],
+    [
+     "row_in_customer",
+     "INTEGER"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_ORDERS",
+   "LKP_STORE"
+  ],
+  [
+   "LKP_STORE",
+   "LKP_BAND"
+  ],
+  [
+   "LKP_BAND",
+   "TGT_LKP"
+  ],
+  [
+   "SRC_TXN",
+   "SRT_TXN"
+  ],
+  [
+   "SRT_TXN",
+   "EXP_RUNNING"
+  ],
+  [
+   "EXP_RUNNING",
+   "TGT_RUN"
+  ]
+ ]
+}

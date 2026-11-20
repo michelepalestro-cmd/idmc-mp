@@ -1,0 +1,460 @@
+{
+ "name": "m_customer_master_csv",
+ "description": "Customer mastering from a CSV with native transformations only: standardize names, e-mails, phones, addresses, states and ZIPs; group candidates by name + ZIP and start a new customer only when a known e-mail or phone conflicts; assign a stable CUST-###### id; keep the most complete, most recent record as each customer's survivor; write the golden customers and a source-to-customer cross-reference as CSV files on the Secure Agent.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_CUSTOMERS_RAW",
+   "conn": "FF",
+   "object": "customers_raw.csv",
+   "fields": [
+    [
+     "source_id",
+     "STRING",
+     255
+    ],
+    [
+     "full_name",
+     "STRING",
+     255
+    ],
+    [
+     "email",
+     "STRING",
+     255
+    ],
+    [
+     "phone",
+     "STRING",
+     255
+    ],
+    [
+     "address",
+     "STRING",
+     255
+    ],
+    [
+     "city",
+     "STRING",
+     255
+    ],
+    [
+     "state",
+     "STRING",
+     255
+    ],
+    [
+     "zip",
+     "STRING",
+     255
+    ],
+    [
+     "updated_at",
+     "STRING",
+     255
+    ]
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_STANDARDIZE",
+   "fields": [
+    {
+     "name": "v_sp",
+     "type": "STRING",
+     "expr": "LTRIM(RTRIM(REG_REPLACE(IIF(ISNULL(full_name) OR LTRIM(RTRIM(full_name)) = '(blank)', '', full_name), '\\s+', ' ')))",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_comma",
+     "type": "INTEGER",
+     "expr": "INSTR(v_sp, ',')",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_name",
+     "type": "STRING",
+     "expr": "LTRIM(RTRIM(IIF(v_comma > 0, LTRIM(RTRIM(SUBSTR(v_sp, v_comma + 1))) || ' ' || LTRIM(RTRIM(SUBSTR(v_sp, 1, v_comma - 1))), v_sp)))",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_name_key",
+     "type": "STRING",
+     "expr": "UPPER(REG_REPLACE(v_name, '[^A-Za-z]', ''))",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_email",
+     "type": "STRING",
+     "expr": "LOWER(LTRIM(RTRIM(IIF(ISNULL(email) OR LTRIM(RTRIM(email)) = '(blank)', '', email))))",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_email_ok",
+     "type": "INTEGER",
+     "expr": "IIF(REG_MATCH(v_email, '^[a-z0-9._%+\\-]+@[a-z0-9.\\-]+\\.[a-z]{2,}$'), 1, 0)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_digits",
+     "type": "STRING",
+     "expr": "REG_REPLACE(IIF(ISNULL(phone) OR LTRIM(RTRIM(phone)) = '(blank)', '', phone), '[^0-9]', '')",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_phone",
+     "type": "STRING",
+     "expr": "IIF(LENGTH(v_digits) = 11 AND SUBSTR(v_digits, 1, 1) = '1', SUBSTR(v_digits, 2, 10), v_digits)",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_phone_ok",
+     "type": "INTEGER",
+     "expr": "IIF(LENGTH(v_phone) = 10, 1, 0)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_addr",
+     "type": "STRING",
+     "expr": "UPPER(LTRIM(RTRIM(REG_REPLACE(IIF(ISNULL(address) OR LTRIM(RTRIM(address)) = '(blank)', '', address), '\\s+', ' '))))",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_addr2",
+     "type": "STRING",
+     "expr": "REG_REPLACE(REG_REPLACE(REG_REPLACE(REG_REPLACE(v_addr, '\\.$', ''), ' STREET$', ' ST'), ' AVENUE$', ' AVE'), ' ROAD$', ' RD')",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_state",
+     "type": "STRING",
+     "expr": "UPPER(LTRIM(RTRIM(IIF(ISNULL(state) OR LTRIM(RTRIM(state)) = '(blank)', '', state))))",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_zipd",
+     "type": "STRING",
+     "expr": "REG_REPLACE(IIF(ISNULL(zip) OR LTRIM(RTRIM(zip)) = '(blank)', '', zip), '[^0-9]', '')",
+     "kind": "VARIABLE",
+     "prec": 64
+    },
+    {
+     "name": "v_zip5",
+     "type": "STRING",
+     "expr": "IIF(LENGTH(v_zipd) >= 5, SUBSTR(v_zipd, 1, 5), IIF(LENGTH(v_zipd) = 4, '0' || v_zipd, IIF(LENGTH(v_zipd) = 3, '00' || v_zipd, '')))",
+     "kind": "VARIABLE",
+     "prec": 16
+    },
+    {
+     "name": "customer_name",
+     "type": "STRING",
+     "expr": "INITCAP(v_name)",
+     "prec": 255
+    },
+    {
+     "name": "customer_email",
+     "type": "STRING",
+     "expr": "IIF(v_email_ok = 1, v_email, '')",
+     "prec": 255
+    },
+    {
+     "name": "customer_phone",
+     "type": "STRING",
+     "expr": "IIF(v_phone_ok = 1, '(' || SUBSTR(v_phone, 1, 3) || ') ' || SUBSTR(v_phone, 4, 3) || '-' || SUBSTR(v_phone, 7, 4), '')",
+     "prec": 32
+    },
+    {
+     "name": "customer_address",
+     "type": "STRING",
+     "expr": "v_addr2",
+     "prec": 255
+    },
+    {
+     "name": "customer_city",
+     "type": "STRING",
+     "expr": "INITCAP(LTRIM(RTRIM(IIF(ISNULL(city) OR LTRIM(RTRIM(city)) = '(blank)', '', city))))",
+     "prec": 255
+    },
+    {
+     "name": "customer_state",
+     "type": "STRING",
+     "expr": "DECODE(v_state, 'ALABAMA', 'AL', 'ALASKA', 'AK', 'ARIZONA', 'AZ', 'ARKANSAS', 'AR', 'CALIFORNIA', 'CA', 'COLORADO', 'CO', 'CONNECTICUT', 'CT', 'DELAWARE', 'DE', 'DISTRICT OF COLUMBIA', 'DC', 'FLORIDA', 'FL', 'GEORGIA', 'GA', 'HAWAII', 'HI', 'IDAHO', 'ID', 'ILLINOIS', 'IL', 'INDIANA', 'IN', 'IOWA', 'IA', 'KANSAS', 'KS', 'KENTUCKY', 'KY', 'LOUISIANA', 'LA', 'MAINE', 'ME', 'MARYLAND', 'MD', 'MASSACHUSETTS', 'MA', 'MICHIGAN', 'MI', 'MINNESOTA', 'MN', 'MISSISSIPPI', 'MS', 'MISSOURI', 'MO', 'MONTANA', 'MT', 'NEBRASKA', 'NE', 'NEVADA', 'NV', 'NEW HAMPSHIRE', 'NH', 'NEW JERSEY', 'NJ', 'NEW MEXICO', 'NM', 'NEW YORK', 'NY', 'NORTH CAROLINA', 'NC', 'NORTH DAKOTA', 'ND', 'OHIO', 'OH', 'OKLAHOMA', 'OK', 'OREGON', 'OR', 'PENNSYLVANIA', 'PA', 'RHODE ISLAND', 'RI', 'SOUTH CAROLINA', 'SC', 'SOUTH DAKOTA', 'SD', 'TENNESSEE', 'TN', 'TEXAS', 'TX', 'UTAH', 'UT', 'VERMONT', 'VT', 'VIRGINIA', 'VA', 'WASHINGTON', 'WA', 'WEST VIRGINIA', 'WV', 'WISCONSIN', 'WI', 'WYOMING', 'WY', v_state)",
+     "prec": 64
+    },
+    {
+     "name": "customer_zip",
+     "type": "STRING",
+     "expr": "v_zip5",
+     "prec": 16
+    },
+    {
+     "name": "last_updated",
+     "type": "STRING",
+     "expr": "LTRIM(RTRIM(IIF(ISNULL(updated_at) OR LTRIM(RTRIM(updated_at)) = '(blank)', '', updated_at)))",
+     "prec": 32
+    },
+    {
+     "name": "completeness",
+     "type": "INTEGER",
+     "expr": "v_email_ok + v_phone_ok + IIF(LENGTH(v_addr2) > 0, 1, 0) + IIF(LENGTH(v_zip5) = 5, 1, 0)"
+    },
+    {
+     "name": "block_key",
+     "type": "STRING",
+     "expr": "v_name_key || '|' || v_zip5",
+     "prec": 255
+    },
+    {
+     "name": "email_missing",
+     "type": "INTEGER",
+     "expr": "IIF(v_email_ok = 1, 0, 1)"
+    },
+    {
+     "name": "phone_digits",
+     "type": "STRING",
+     "expr": "IIF(v_phone_ok = 1, v_phone, '')",
+     "prec": 16
+    },
+    {
+     "name": "phone_missing",
+     "type": "INTEGER",
+     "expr": "IIF(v_phone_ok = 1, 0, 1)"
+    }
+   ]
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_BY_BLOCK",
+   "keys": [
+    "block_key",
+    "email_missing",
+    "customer_email",
+    "phone_missing",
+    "phone_digits",
+    "source_id"
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_CLUSTER",
+   "fields": [
+    {
+     "name": "v_new",
+     "type": "INTEGER",
+     "expr": "IIF(block_key != v_prev_block, 1, IIF(LENGTH(customer_email) > 0 AND LENGTH(v_cl_email) > 0 AND customer_email != v_cl_email, 1, IIF(LENGTH(phone_digits) > 0 AND LENGTH(v_cl_phone) > 0 AND phone_digits != v_cl_phone, 1, 0)))",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_rule",
+     "type": "STRING",
+     "expr": "IIF(v_new = 1, 'FIRST', IIF(LENGTH(customer_email) > 0 AND customer_email = v_cl_email, 'EMAIL', IIF(LENGTH(phone_digits) > 0 AND phone_digits = v_cl_phone, 'PHONE', 'NAME+ZIP')))",
+     "kind": "VARIABLE",
+     "prec": 16
+    },
+    {
+     "name": "v_grp",
+     "type": "INTEGER",
+     "expr": "IIF(v_new = 1, v_grp + 1, v_grp)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_cl_email",
+     "type": "STRING",
+     "expr": "IIF(v_new = 1, customer_email, IIF(LENGTH(v_cl_email) > 0, v_cl_email, customer_email))",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "v_cl_phone",
+     "type": "STRING",
+     "expr": "IIF(v_new = 1, phone_digits, IIF(LENGTH(v_cl_phone) > 0, v_cl_phone, phone_digits))",
+     "kind": "VARIABLE",
+     "prec": 16
+    },
+    {
+     "name": "v_prev_block",
+     "type": "STRING",
+     "expr": "block_key",
+     "kind": "VARIABLE",
+     "prec": 255
+    },
+    {
+     "name": "customer_id",
+     "type": "STRING",
+     "expr": "'CUST-' || LPAD(TO_CHAR(v_grp), 6, '0')",
+     "prec": 32
+    },
+    {
+     "name": "match_rule",
+     "type": "STRING",
+     "expr": "v_rule",
+     "prec": 16
+    }
+   ]
+  },
+  {
+   "type": "sorter",
+   "name": "SRT_BY_CUSTOMER",
+   "keys": [
+    "customer_id",
+    "-completeness",
+    "-last_updated",
+    "source_id"
+   ]
+  },
+  {
+   "type": "expression",
+   "name": "EXP_SURVIVOR",
+   "fields": [
+    {
+     "name": "v_first",
+     "type": "INTEGER",
+     "expr": "IIF(customer_id = v_prev_cust, 0, 1)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_prev_cust",
+     "type": "STRING",
+     "expr": "customer_id",
+     "kind": "VARIABLE",
+     "prec": 32
+    },
+    {
+     "name": "is_survivor",
+     "type": "INTEGER",
+     "expr": "v_first"
+    }
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_SURVIVORS",
+   "cond": "is_survivor = 1"
+  },
+  {
+   "type": "target",
+   "name": "TGT_CUSTOMERS_GOLDEN",
+   "conn": "FF",
+   "object": "customers_golden.csv",
+   "createTarget": true,
+   "fields": [
+    [
+     "customer_id",
+     "STRING",
+     255
+    ],
+    [
+     "customer_name",
+     "STRING",
+     255
+    ],
+    [
+     "customer_email",
+     "STRING",
+     255
+    ],
+    [
+     "customer_phone",
+     "STRING",
+     255
+    ],
+    [
+     "customer_address",
+     "STRING",
+     255
+    ],
+    [
+     "customer_city",
+     "STRING",
+     255
+    ],
+    [
+     "customer_state",
+     "STRING",
+     255
+    ],
+    [
+     "customer_zip",
+     "STRING",
+     255
+    ],
+    [
+     "last_updated",
+     "STRING",
+     255
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_CUSTOMER_XREF",
+   "conn": "FF",
+   "object": "customer_xref.csv",
+   "createTarget": true,
+   "fields": [
+    [
+     "source_id",
+     "STRING",
+     255
+    ],
+    [
+     "customer_id",
+     "STRING",
+     255
+    ],
+    [
+     "match_rule",
+     "STRING",
+     255
+    ],
+    [
+     "is_survivor",
+     "INTEGER"
+    ]
+   ]
+  }
+ ],
+ "links": [
+  [
+   "SRC_CUSTOMERS_RAW",
+   "EXP_STANDARDIZE"
+  ],
+  [
+   "EXP_STANDARDIZE",
+   "SRT_BY_BLOCK"
+  ],
+  [
+   "SRT_BY_BLOCK",
+   "EXP_CLUSTER"
+  ],
+  [
+   "EXP_CLUSTER",
+   "SRT_BY_CUSTOMER"
+  ],
+  [
+   "SRT_BY_CUSTOMER",
+   "EXP_SURVIVOR"
+  ],
+  [
+   "EXP_SURVIVOR",
+   "FIL_SURVIVORS"
+  ],
+  [
+   "FIL_SURVIVORS",
+   "TGT_CUSTOMERS_GOLDEN"
+  ],
+  [
+   "EXP_SURVIVOR",
+   "TGT_CUSTOMER_XREF"
+  ]
+ ]
+}

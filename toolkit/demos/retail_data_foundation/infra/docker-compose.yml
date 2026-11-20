@@ -1,0 +1,42 @@
+# Stand-in operational source for the Retail Data Foundation blueprint: one PostgreSQL 16 with logical decoding on,
+# so IDMC Database Ingestion (CDC) can read it. Web / mobile / store front ends are OUT OF SCOPE: infra/traffic.py
+# stands in for them by writing sign-ups, orders, payments and visits straight into the database.
+#
+#   PG_USER, PG_PASS, PG_DB in a local .env next to this file (chmod 600, never shared) or exported from a file you
+#   source; do not type the password on a command line (shell history)
+#   docker compose -p rdf up -d
+#   docker compose -p rdf exec -T postgres psql -U "$PG_USER" -d "$PG_DB" < sql/01_schema.sql
+#
+# The port is published on 127.0.0.1 ONLY: run the Secure Agent on this docker host and set PG_HOST=127.0.0.1 (or
+# localhost) in the toolkit .env. This stand-in has no TLS (plain postgres image, no server certificate), so the IDMC
+# connections turn encryption off for a loopback PG_HOST only (config.json source.tls, idmc/lib/rdf_common.py).
+# If the agent runs on another host, do NOT publish this port on a network address: use a real PostgreSQL with
+# ssl=on and a server certificate the agent trusts (the connections then use TLS + certificate validation), or an SSH
+# tunnel from the agent host (see BUILD.md step 1).
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${PG_DB:-rdf_retail}
+      POSTGRES_USER: ${PG_USER:-rdf_app}
+      POSTGRES_PASSWORD: ${PG_PASS:?set PG_PASS before docker compose up}
+    command:
+      - postgres
+      - -c
+      - wal_level=logical
+      - -c
+      - max_replication_slots=6
+      - -c
+      - max_wal_senders=6
+      - -c
+      - max_slot_wal_keep_size=4GB
+    ports:
+      - "127.0.0.1:${PG_PORT:-5432}:5432"   # loopback only (logical replication is on: never expose it)
+    volumes:
+      - rdf_pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER:-rdf_app} -d ${PG_DB:-rdf_retail}"]
+      interval: 5s
+      retries: 20
+volumes:
+  rdf_pg_data:

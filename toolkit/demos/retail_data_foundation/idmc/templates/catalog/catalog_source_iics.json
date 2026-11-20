@@ -1,0 +1,142 @@
+{
+ "name": "${NAME}",
+ "description": "[${TAG}] IDMC Data Integration assets of project ${PROJECT} (mapping lineage)",
+ "type": "IICS",
+ "endOfLife": false,
+ "custom": false,
+ "typeOptions": {
+  "configurationProperties": [
+   {
+    "optionGroupName": "IICS OptionGroup",
+    "configOptions": [
+     {
+      "key": "IICS URL",
+      "values": [
+       "https://${IDMC_LOGIN_HOST}"
+      ],
+      "additionalMetadata": null
+     },
+     {
+      "key": "IICS User",
+      "values": [
+       "${IICS_USER}"
+      ],
+      "additionalMetadata": null
+     },
+     {
+      "key": "IICS Password",
+      "values": [
+       "${IICS_PASSWORD_INJECTED_AT_SEND}"
+      ],
+      "additionalMetadata": null
+     }
+    ]
+   }
+  ]
+ },
+ "capabilities": [
+  {
+   "capabilityName": "Metadata Extraction",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Metadata Extraction OptionGroup",
+     "configOptions": [
+      {
+       "key": "Type of scan",
+       "values": [
+        "Full"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Metadata Change Option",
+       "values": [
+        "Delete"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "capabilityName": "Lineage Discovery",
+   "configurationProperties": []
+  }
+ ],
+ "typeCapabilities": [
+  {
+   "capabilityName": "Lineage Discovery",
+   "configurationProperties": []
+  },
+  {
+   "capabilityName": "Metadata Extraction",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Metadata Filter Config",
+     "configOptions": [
+      {
+       "key": "Filter Pivot",
+       "values": [
+        "Include Metadata"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Type",
+       "values": [
+        "Data Integration"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Value",
+       "values": [
+        "${PROJECT}"
+       ],
+       "additionalMetadata": null
+      },
+      {
+       "key": "Filter Conditions",
+       "values": [
+        "All Types"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "globalConfigOptions": [
+  {
+   "globalConfigurationName": "Execution",
+   "configurationProperties": [
+    {
+     "optionGroupName": "Runtime Settings",
+     "configOptions": [
+      {
+       "key": "Runtime Environment",
+       "values": [
+        "${RE_ID}"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    },
+    {
+     "optionGroupName": "Metadata Sync Settings",
+     "configOptions": [
+      {
+       "key": "Mode of Execution",
+       "values": [
+        "Full Sync"
+       ],
+       "additionalMetadata": null
+      }
+     ]
+    }
+   ]
+  }
+ ]
+}

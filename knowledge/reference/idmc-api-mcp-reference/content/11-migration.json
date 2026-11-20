@@ -1,0 +1,83 @@
+{
+ "id": "11-migration",
+ "title": "Migration - export & import",
+ "owner": null,
+ "last_verified": "2026-07-26",
+ "status": "verified",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/public/core/v3/export",
+     "POST",
+     "Start an export job for named objects",
+     "200 on submission. Empty objects[] -> 400. TWO DISTINCT 400s worth telling apart, live 2026-07-26: MigrationSvc_041 'No asset selected for export operation' means the body shape was ACCEPTED but the named object contributes no exportable asset (e.g. an empty Project) - it is a CONTENT verdict, not a shape error; V3API_007 'Bad Request' means the body shape itself is wrong. objects[] takes OBJECTS ({\"id\": \"...\"}), never bare id strings, and adding a 'type' key produces V3API_007. rejected: GET 405; untested: PUT, PATCH, DELETE."
+    ],
+    [
+     "/public/core/v3/export/{id}",
+     "GET",
+     "Export job status",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/export/{id}/package",
+     "GET",
+     "Download the round-trippable .zip",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/import/package",
+     "POST",
+     "Import a GENUINE export zip",
+     "200 on a genuine package. THE TRAP IS CONTENT-TYPE, verified live 2026-07-26 across four encodings on one org: application/json -> 404 MigrationSvc_025 'Import request with identifier [package] doesnt exist' (reads as a DEAD ROUTE and is not - the service is parsing 'package' as an importId); application/zip -> 415; application/octet-stream -> 415; multipart/form-data -> 400 MigrationSvc_030 'Invalid import package' = the handler parsed the upload and rejected the CONTENT. So MigrationSvc_030 is the SUCCESS signal for route discovery and only means the zip was hand-built. Send multipart/form-data with a genuine export zip. untested: GET, PUT, PATCH, DELETE."
+    ],
+    [
+     "/public/core/v3/import/{jobId}",
+     "GET",
+     "Import job status",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/import",
+     "none proven",
+     "Bare import",
+     "404 No static resource core/v3/import  —  rejected: POST 404; untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/public/core/v3/import/upload",
+     "none proven",
+     "Upload a package",
+     "415 Unsupported Media Type on application/json, and 404 MigrationSvc_025 'Import request with identifier [upload] doesnt exist' - i.e. the segment after /import/ is read as an importId, so this is not a separate upload route. The real path is /public/core/v3/import/package with multipart/form-data. rejected: POST; untested: GET, PUT, PATCH, DELETE."
+    ]
+   ]
+  },
+  {
+   "type": "callout",
+   "label": "MCP coverage for this service:",
+   "text": "No MCP server covers this service. Everything here is REST-only."
+  }
+ ],
+ "notes": [
+  {
+   "label": "A 404 that names your path segment is not a dead route.",
+   "text": "MigrationSvc_025 'Import request with identifier [X] doesnt exist' means the service read X as an importId and looked it up. That is a live handler answering a lookup, not a missing route - and because it is a 404 it is very easy to file under Law 3 as 'wrong path' and walk away. Before concluding a write route is absent, vary the CONTENT-TYPE as well as the path: on this endpoint json gives 404, zip and octet-stream give 415, and only multipart reaches the validator."
+  },
+  {
+   "label": "MigrationSvc_041 vs V3API_007 - a content verdict is not a shape error.",
+   "text": "On /v3/export, MigrationSvc_041 'No asset selected' means your body parsed fine and the target simply holds nothing exportable; V3API_007 means the body shape is wrong. Reading 041 as a shape error sends you sweeping body variants against an endpoint that already accepted your request - the fix is to pick a different object, not a different body."
+  }
+ ],
+ "open_questions": [
+  "Whether the multipart field name matters. 'package' was used and reached MigrationSvc_030; no other field name was tried, so a cleaner 200 path may exist."
+ ]
+}

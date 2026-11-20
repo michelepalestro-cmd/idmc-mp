@@ -1,0 +1,150 @@
+{
+ "id": "19-marketplace",
+ "title": "Data Marketplace",
+ "owner": null,
+ "last_verified": "2026-07-25",
+ "status": "restructured",
+ "intro": "",
+ "blocks": [
+  {
+   "type": "table",
+   "title": "",
+   "intro": "Every endpoint in this service, with the exact HTTP verbs it accepts. Where an endpoint accepts more than one verb they are all listed.",
+   "header": [
+    "Endpoint",
+    "Verbs supported",
+    "What it does",
+    "Notes & evidence"
+   ],
+   "rows": [
+    [
+     "/data360/marketplace/api/v1/dataAssets",
+     "GET, POST  ·  PUT [doc]",
+     "Data-asset list; Create a data asset",
+     "200 — totalCount 5  —  untested: PATCH, DELETE; 400 on a bad body = verb exists  —  untested: PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v1/dataCollections",
+     "GET, POST",
+     "Collection list; CREATE a data collection",
+     "200  —  untested: PUT, PATCH, DELETE; 201  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v1/categories",
+     "GET, POST",
+     "Category read + create",
+     "200 / 201  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v1/orders",
+     "GET, POST",
+     "Read + PLACE an order",
+     "201 — ORD-3 reached COMPLETE  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v1/termsOfUse",
+     "GET, POST",
+     "Terms-of-use read + create",
+     "200 / 201  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v2/data-collections",
+     "GET",
+     "v2 collection plane",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v2/delivery-targets",
+     "GET, POST",
+     "CREATE a delivery target",
+     "201 — DTG-1..5  —  untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v2/orders",
+     "POST",
+     "Place an order on the v2 plane",
+     "201  —  untested: GET, PUT, PATCH, DELETE"
+    ],
+    [
+     "/cdmp-marketplace/api/v1/provisioning/deliveryTemplates",
+     "GET",
+     "Read delivery templates",
+     "200 — on the cdgc-api host  —  rejected: POST 405; untested: PUT, PATCH, DELETE"
+    ],
+    [
+     "/cdmp-marketplace/api/v1/provisioning/deliveryFormats",
+     "GET",
+     "Read delivery formats",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "/cdmp-marketplace/api/v1/provisioning/deliveryMethods",
+     "GET",
+     "Read delivery methods",
+     "200  —  untested: POST, PUT, PATCH, DELETE"
+    ],
+    [
+     "Delivery TEMPLATE create",
+     "UI only",
+     "Author a delivery template",
+     "405 on every verb; headed browser only"
+    ],
+    [
+     "/data360/marketplace/api/v1/dataAssets/{id}/dataElements",
+     "GET [doc], POST [doc], PUT [doc]",
+     "GET, POST, PUT per the CAI Design guide",
+     "untested: PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v1/dataAssets/{id}/ratings",
+     "none proven",
+     "Ratings have no write verb",
+     "rejected: PUT 405; untested: GET, POST, PATCH, DELETE"
+    ],
+    [
+     "/data360/marketplace/api/v2/delivery-targets/templates",
+     "none proven",
+     "Wrong plane. Templates live on cdmp-marketplace",
+     "rejected: GET 400, POST 405; untested: PUT, PATCH, DELETE"
+    ]
+   ]
+  },
+  {
+   "type": "table",
+   "title": "MCP coverage for this service",
+   "intro": "The Data Provisioning MCP server covers Data Marketplace, and it holds the only write action in the entire MCP catalog: checkout_data_order.",
+   "header": [
+    "MCP action",
+    "Verb",
+    "Server",
+    "What it does",
+    "REST equivalent"
+   ],
+   "rows": [
+    [
+     "list_data_collections",
+     "POST",
+     "Data Provisioning",
+     "Lists marketplace data collections; optional name and search filters.",
+     "Wraps GET /data360/marketplace/api/v1/dataCollections."
+    ],
+    [
+     "list_delivery_targets",
+     "POST",
+     "Data Provisioning",
+     "Returns collection detail. Despite the name it does NOT return a target list.",
+     "Wraps the cdmp-marketplace provisioning reads."
+    ],
+    [
+     "checkout_data_order",
+     "POST",
+     "Data Provisioning",
+     "Raises a formal access request. Requires a business justification.",
+     "The only MCP action that persists anything new. Wraps POST .../orders."
+    ]
+   ]
+  }
+ ],
+ "notes": [],
+ "open_questions": []
+}

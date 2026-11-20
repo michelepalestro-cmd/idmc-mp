@@ -1,0 +1,376 @@
+{
+ "name": "m_ex_order_return_recon",
+ "description": "[mapgen-suite S05] Sold quantities vs POS returns: two Aggregators feed a full-outer Joiner on a two-column key; an Expression classifies each order/product; the Router's DEFAULT1 group must stay empty.",
+ "nodes": [
+  {
+   "type": "source",
+   "name": "SRC_LINES",
+   "conn": "BQ",
+   "query": "SELECT order_id AS s_order_id, product_id AS s_product_id, line_no AS s_line_no, qty AS s_qty FROM `${BQ_PROJECT}.${DATASET}.order_lines`",
+   "fields": [
+    [
+     "s_order_id",
+     "STRING",
+     256
+    ],
+    [
+     "s_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "s_line_no",
+     "INTEGER"
+    ],
+    [
+     "s_qty",
+     "INTEGER"
+    ]
+   ]
+  },
+  {
+   "type": "filter",
+   "name": "FIL_SOLD",
+   "cond": "s_qty > 0"
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_SOLD",
+   "groupBy": [
+    "s_order_id",
+    "s_product_id"
+   ],
+   "fields": [
+    {
+     "name": "agg_sold_qty",
+     "type": "INTEGER",
+     "expr": "SUM(s_qty)"
+    },
+    {
+     "name": "agg_sold_lines",
+     "type": "INTEGER",
+     "expr": "COUNT(s_line_no)"
+    }
+   ]
+  },
+  {
+   "type": "source",
+   "name": "SRC_RETURNS",
+   "conn": "BQ",
+   "query": "SELECT order_id AS r_order_id, product_id AS r_product_id, qty AS r_qty, refund_amount AS r_refund FROM `${BQ_PROJECT}.${DATASET}.returns_pos`",
+   "fields": [
+    [
+     "r_order_id",
+     "STRING",
+     256
+    ],
+    [
+     "r_product_id",
+     "STRING",
+     256
+    ],
+    [
+     "r_qty",
+     "INTEGER"
+    ],
+    [
+     "r_refund",
+     "NUMERIC"
+    ]
+   ]
+  },
+  {
+   "type": "aggregator",
+   "name": "AGG_RETURNED",
+   "groupBy": [
+    "r_order_id",
+    "r_product_id"
+   ],
+   "fields": [
+    {
+     "name": "agg_returned_qty",
+     "type": "INTEGER",
+     "expr": "SUM(r_qty)"
+    },
+    {
+     "name": "agg_refund",
+     "type": "NUMERIC",
+     "expr": "SUM(r_refund)"
+    },
+    {
+     "name": "agg_return_count",
+     "type": "INTEGER",
+     "expr": "COUNT(r_qty)"
+    }
+   ]
+  },
+  {
+   "type": "joiner",
+   "name": "JNR_RECON",
+   "master": "AGG_RETURNED",
+   "detail": "AGG_SOLD",
+   "cond": [
+    [
+     "r_order_id",
+     "s_order_id"
+    ],
+    [
+     "r_product_id",
+     "s_product_id"
+    ]
+   ],
+   "join": "FULL_OUTER"
+  },
+  {
+   "type": "expression",
+   "name": "EXP_RECON",
+   "fields": [
+    {
+     "name": "v_sold",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(agg_sold_qty), 0, agg_sold_qty)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "v_ret",
+     "type": "INTEGER",
+     "expr": "IIF(ISNULL(agg_returned_qty), 0, agg_returned_qty)",
+     "kind": "VARIABLE"
+    },
+    {
+     "name": "order_id",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(agg_sold_qty), r_order_id, s_order_id)",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "product_id",
+     "type": "STRING",
+     "expr": "IIF(ISNULL(agg_sold_qty), r_product_id, s_product_id)",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "sold_qty",
+     "type": "INTEGER",
+     "expr": "v_sold",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "returned_qty",
+     "type": "INTEGER",
+     "expr": "v_ret",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "refund_total",
+     "type": "NUMERIC",
+     "expr": "IIF(ISNULL(agg_refund), 0, agg_refund)",
+     "kind": "OUTPUT"
+    },
+    {
+     "name": "recon_status",
+     "type": "STRING",
+     "expr": "DECODE(TRUE, v_sold = 0 AND v_ret > 0, 'ORPHAN_RETURN', v_ret > v_sold, 'OVER_RETURN', v_ret = v_sold AND v_ret > 0, 'FULL_RETURN', v_ret > 0, 'PARTIAL_RETURN', 'NO_RETURN')",
+     "kind": "OUTPUT",
+     "prec": 16
+    },
+    {
+     "name": "return_rate",
+     "type": "NUMERIC",
+     "expr": "IIF(v_sold > 0, ROUND(TO_DECIMAL(v_ret) / v_sold, 4), NULL)",
+     "kind": "OUTPUT"
+    }
+   ]
+  },
+  {
+   "type": "router",
+   "name": "RTR_RECON",
+   "groups": [
+    [
+     "OK",
+     "recon_status = 'NO_RETURN' OR recon_status = 'PARTIAL_RETURN' OR recon_status = 'FULL_RETURN'"
+    ],
+    [
+     "EXCEPTION",
+     "recon_status = 'OVER_RETURN' OR recon_status = 'ORPHAN_RETURN'"
+    ]
+   ]
+  },
+  {
+   "type": "target",
+   "name": "TGT_RECON_OK",
+   "conn": "BQ",
+   "object": "${DATASET}/out_recon_ok",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "sold_qty",
+     "INTEGER"
+    ],
+    [
+     "returned_qty",
+     "INTEGER"
+    ],
+    [
+     "refund_total",
+     "NUMERIC"
+    ],
+    [
+     "recon_status",
+     "STRING"
+    ],
+    [
+     "return_rate",
+     "NUMERIC"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_RECON_EXCEPTIONS",
+   "conn": "BQ",
+   "object": "${DATASET}/out_recon_exceptions",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "sold_qty",
+     "INTEGER"
+    ],
+    [
+     "returned_qty",
+     "INTEGER"
+    ],
+    [
+     "refund_total",
+     "NUMERIC"
+    ],
+    [
+     "recon_status",
+     "STRING"
+    ],
+    [
+     "return_rate",
+     "NUMERIC"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  },
+  {
+   "type": "target",
+   "name": "TGT_RECON_UNEXPECTED",
+   "conn": "BQ",
+   "object": "${DATASET}/out_recon_unexpected",
+   "truncate": true,
+   "fields": [
+    [
+     "order_id",
+     "STRING"
+    ],
+    [
+     "product_id",
+     "STRING"
+    ],
+    [
+     "sold_qty",
+     "INTEGER"
+    ],
+    [
+     "returned_qty",
+     "INTEGER"
+    ],
+    [
+     "refund_total",
+     "NUMERIC"
+    ],
+    [
+     "recon_status",
+     "STRING"
+    ],
+    [
+     "return_rate",
+     "NUMERIC"
+    ]
+   ],
+   "oprAttrs": {
+    "jobPollInterval": "1",
+    "pollInterval": "1"
+   },
+   "rtAttrs": {
+    "Job Poll Interval In Seconds": "1"
+   }
+  }
+ ],
+ "links": [
+  [
+   "SRC_LINES",
+   "FIL_SOLD"
+  ],
+  [
+   "FIL_SOLD",
+   "AGG_SOLD"
+  ],
+  [
+   "SRC_RETURNS",
+   "AGG_RETURNED"
+  ],
+  [
+   "AGG_RETURNED",
+   "JNR_RECON.Master"
+  ],
+  [
+   "AGG_SOLD",
+   "JNR_RECON.Detail"
+  ],
+  [
+   "JNR_RECON",
+   "EXP_RECON"
+  ],
+  [
+   "EXP_RECON",
+   "RTR_RECON"
+  ],
+  [
+   "RTR_RECON.OK",
+   "TGT_RECON_OK"
+  ],
+  [
+   "RTR_RECON.EXCEPTION",
+   "TGT_RECON_EXCEPTIONS"
+  ],
+  [
+   "RTR_RECON.DEFAULT1",
+   "TGT_RECON_UNEXPECTED"
+  ]
+ ]
+}

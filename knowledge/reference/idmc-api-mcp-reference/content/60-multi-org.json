@@ -1,0 +1,336 @@
+{
+  "id": "60-multi-org",
+  "title": "Multi-org validation - per-pod differences",
+  "owner": "claude-opus5 (connector run 2026-07-26)",
+  "last_verified": "2026-07-26",
+  "status": "in-progress",
+  "intro": "Two orgs on two pods, compared. Org A is an org on a dm-us pod; Org B is a sub-org on a dmp-us pod whose runtime environments are inherited from a parent org on the same pod. Org names, pod names, org and object IDs, host IPs and database names from the live runs are replaced with placeholders (<pod>, <orgIdV2>, <orgIdV3>, <parentOrgIdV3>, <agentId>, <reId>, <connId>, <private-ip>, <db>); every status code, count and verdict is kept exactly as observed.",
+  "blocks": [
+    {
+      "type": "table",
+      "title": "The org under test",
+      "header": [
+        "Property",
+        "Value",
+        "Why it matters"
+      ],
+      "rows": [
+        [
+          "Org name",
+          "<org> (Org B: a sub-org on a dmp-us pod)",
+          "The org that needed connections to an external application's PostgreSQL, MongoDB and ClickHouse stores."
+        ],
+        [
+          "Org ID (v1 / v3)",
+          "<orgIdV3> (22 characters)",
+          "The 22-char form. Use this for JWT X-INFA-ORG-ID and CAI URN paths."
+        ],
+        [
+          "Org ID (v2 plane)",
+          "<orgIdV2> (6 characters)",
+          "The SAME org reports a different ID shape on the v2 plane. This is not a mismatch and not a bug — do not 'fix' it. v2 object IDs are prefixed with it (<orgIdV2>0B000000000002)."
+        ],
+        [
+          "Parent org",
+          "<parentOrgIdV3>",
+          "Org B is a sub-org. All four runtime environments are inherited from the parent, which is why they show zero agents."
+        ],
+        [
+          "Pod / identity host",
+          "dmp-us.informaticacloud.com",
+          "Not dm-us. A one-character difference that silently 404s every borrowed URL."
+        ],
+        [
+          "v2 + v3 base",
+          "https://<pod>.dmp-us.informaticacloud.com/saas",
+          "Both planes share one base on this pod."
+        ],
+        [
+          "Privileges / roles",
+          "876 privileges, 38 roles",
+          "Includes Governance Owner, Governance Administrator, all four Data Marketplace roles, Customer 360 Manager and Data Steward, API Policy Manager, MDM Designer."
+        ],
+        [
+          "products[] on login",
+          "Integration Cloud (one entry only)",
+          "And yet CDGC, MDM, Marketplace and API Manager privileges are all present. Fresh proof that products[] is a licensing label, never the deployed feature set."
+        ],
+        [
+          "Connectors visible",
+          "342",
+          "More than double the 153 seen on Org A (a dm-us pod). Connector catalogs are pod-specific."
+        ],
+        [
+          "Design objects",
+          "0 of every type",
+          "An empty org — 1 auto-generated Project, no assets. So a 200-with-empty-list here proves the ROUTE exists; it says nothing about content."
+        ]
+      ],
+      "_migrated_from": "capref#24"
+    },
+    {
+      "type": "table",
+      "title": "Where Org A and Org B disagree",
+      "header": [
+        "Endpoint",
+        "Org A (dm-us pod)",
+        "Org B (dmp-us pod)",
+        "What to conclude"
+      ],
+      "rows": [
+        [
+          "GET /api/v2/license",
+          "200 JSON",
+          "404 not mounted",
+          "Sub-orgs do not expose the license resource. Read entitlement from privileges instead."
+        ],
+        [
+          "GET /api/v2/loginAudit",
+          "200 JSON",
+          "404 not mounted",
+          "Login audit is parent-org only. Use /api/v2/auditlog, which IS live on both."
+        ],
+        [
+          "GET /api/v2/dss, dtemplate, dmask, dreplicate, plan, fileListener",
+          "200 JSON",
+          "404 not mounted",
+          "These v2 task resources mount per pod and per licensed engine, NOT per org. The single biggest source of false 'not entitled' calls."
+        ],
+        [
+          "GET /public/core/v3/runtimeEnvironments",
+          "200 JSON",
+          "404 (also with ?limit=1)",
+          "Retested three ways. On dmp-us use the v2 form /api/v2/runtimeEnvironment, which returns 200 with all four REs."
+        ],
+        [
+          "GET /public/core/v3/agent, agentGroups, tags, licenses, orgs, permissions",
+          "200 JSON",
+          "404 not mounted",
+          "The v3 admin surface is thinner on dmp-us than on dm-us. Same product, same month."
+        ],
+        [
+          "data360/** (all CDGC + Marketplace)",
+          "200 JSON with real payloads",
+          "200, Content-Length: 0, no Content-Type",
+          "The anomaly below. Not a 404 and not a 401 — a route that answers and returns nothing."
+        ],
+        [
+          "Secure Agents",
+          "2 registered, 17 engines RUNNING",
+          "1 registered (on the application's own cloud VM, v76.17, active=True, READY) as of 2026-07-26",
+          "SUPERSEDED 2026-07-26: the agent WAS installed on the application's cloud VM and registered into Org B. It reports exactly ONE engine, OpsInsightsDataCollector (Org A runs 17, incl. Data_Integration_Server), and packages=0. So no-agent is no longer the blocker - a SECOND, independent blocker sits behind it: no DI engine, so nothing agent-bound can OPEN a session. Connection DEFINITIONS still create fine (see the tables below)."
+        ]
+      ],
+      "_migrated_from": "capref#25"
+    },
+    {
+      "type": "table",
+      "title": "What was ruled out, and how",
+      "header": [
+        "Hypothesis",
+        "Test performed",
+        "Result"
+      ],
+      "rows": [
+        [
+          "Wrong verb — v2 search is POST-shaped",
+          "POST data360/search/v2/query with {'query':'*','limit':1}",
+          "Still 200, still zero bytes."
+        ],
+        [
+          "Wrong host",
+          "Tried cdgc-api, idmc-api, <pod>-cdgc on dmp-us, plus cdgc-api.dm-us",
+          "idmc-api and cdgc-api on dmp-us: zero-byte 200. <pod>-cdgc: DNS failure. cdgc-api.dm-us: a clean 401 — proving the OTHER pod's route is real and merely rejects a foreign-org token."
+        ],
+        [
+          "Wrong header set",
+          "3-header (Bearer + IDS-SESSION-ID + X-INFA-ORG-ID) vs Bearer alone",
+          "Identical zero-byte 200 either way. A route that validated auth would differentiate."
+        ],
+        [
+          "Not entitled",
+          "Read effectivePrivileges: create.mcp.CatalogSourceConfiguration, create.PROFILE, execute.mcp.CatalogSourceConfiguration; roles Governance Owner + Governance Administrator",
+          "CDGC is licensed. Entitlement is NOT the explanation."
+        ],
+        [
+          "Path genuinely absent",
+          "GET data360/catalog/v1/catalogsources with Bearer only",
+          "404 — so SOME data360 paths 404 while others zero-byte-200. The plane is partially mounted, which is the tell."
+        ]
+      ],
+      "_migrated_from": "capref#26"
+    },
+    {
+      "type": "table",
+      "title": "Host-derivation rule — how both of these were found",
+      "header": [
+        "Host tried on dmp-us",
+        "Result",
+        "Reading"
+      ],
+      "rows": [
+        [
+          "<pod>-cai.dmp-us…",
+          "200 JSON",
+          "CAI runtime present and serving."
+        ],
+        [
+          "<pod>-dqprofile.dmp-us…",
+          "200 JSON",
+          "Profiling service present and serving."
+        ],
+        [
+          "<pod>-dqcloud-api.dmp-us…",
+          "404",
+          "CDQ dictionary API not mounted on this pod. The vendor's documented example uses a dm-us pod's -dqcloud-api host — pod-specific."
+        ],
+        [
+          "<pod>-mdm.dmp-us…",
+          "404 on both /entities and /businessEntities",
+          "MDM host resolves but the B360 API is not mounted. Contrast the next row."
+        ],
+        [
+          "mdm.dmp-us…",
+          "DNS failure",
+          "The unprefixed form does not exist. Always use <short>-."
+        ],
+        [
+          "<pod>-apigw.dmp-us…",
+          "503 Service Unavailable",
+          "Route exists, nothing behind it. Distinct from a 404 and worth re-probing later."
+        ],
+        [
+          "apigw-pod.dmp-us…",
+          "DNS failure",
+          "Not a real host pattern."
+        ],
+        [
+          "mftsaas on pod root",
+          "503 HTML",
+          "Wrong host family for Mass Ingestion."
+        ],
+        [
+          "<pod>.dmp-us…/saas/mftsaas/api/v1/",
+          "200 returning the identity-service SPA shell",
+          "The classic HTML-SPA false positive, on a NEW path. Confirms the base document's rule."
+        ]
+      ],
+      "_migrated_from": "capref#30"
+    },
+    {
+      "type": "table",
+      "title": "The verified request body",
+      "header": [
+        "Field",
+        "The trap",
+        "What actually works"
+      ],
+      "rows": [
+        [
+          "type",
+          "The connector name. \"PostgreSQL\" and the shortName \"PostgreSQLadapter\" both return 403 APP_10519 'The connection type is not valid.'",
+          "TOOLKIT_CCI — the generic CCI toolkit type for every modern connector. The specific connector is named in instanceName, not here."
+        ],
+        [
+          "instanceName",
+          "A GUID or a shortName.",
+          "The DISPLAY string exactly as Administrator shows it — PostgreSQL. Matches the earlier S3-v2 lesson in this document."
+        ],
+        [
+          "connParams.hostName",
+          "host",
+          "hostName. Camel-case, and not the short form."
+        ],
+        [
+          "connParams.database",
+          "Assuming databaseName is enough.",
+          "BOTH databaseName and database were present in the successful body. database was the last field the validator demanded."
+        ],
+        [
+          "connParams.authenticationType",
+          "Omitting it — it is not in most examples.",
+          "Mandatory. \"Standard\" is accepted."
+        ],
+        [
+          "runtimeEnvironmentId",
+          "Guessing.",
+          "Read it from GET /api/v2/runtimeEnvironment. On Org B the Hosted Agent (<reId>) is the only RE usable without a Secure Agent."
+        ],
+        [
+          "connParams.dbName  (MongoDB)",
+          "Reusing databaseName / database, which is what PostgreSQL wanted.",
+          "MongoDB demands dbName specifically. With hostName + port + dbName the create returns 200. LIVE 2026-07-26: a MongoDB connection was created this way (<connId>, instanceName=MongoDB)."
+        ],
+        [
+          "connParams.jdbcdriverclassname  (JDBCV2)",
+          "Assuming jdbcUrl alone is enough, or spelling it jdbcDriverClass.",
+          "All-lowercase jdbcdriverclassname is mandatory: com.clickhouse.jdbc.ClickHouseDriver."
+        ],
+        [
+          "connParams.connectionstring  (JDBCV2)",
+          "Assuming jdbcUrl is the connection field.",
+          "JDBCV2 demands connectionstring TOO (same JDBC URL). It stores BOTH; a GET afterwards shows connectionstring + jdbcUrl and NO hostName/port/database - that is correct for JDBCV2, not a half-written record. LIVE 2026-07-26: a JDBCV2 connection to ClickHouse was created this way (<connId>)."
+        ],
+        [
+          "instanceName for ClickHouse",
+          "There is no native ClickHouse connector in the 342-connector catalog.",
+          "Use instanceName=JDBCV2 (NOT JDBC_V2 or JDBC V2 - both return 403 'There is no connector with type='). The ClickHouse JDBC driver JAR must be present on the agent before the connection can actually open."
+        ]
+      ],
+      "_migrated_from": "capref#31"
+    },
+    {
+      "type": "table",
+      "title": "What this proves for connecting an external application's data stores to Org B",
+      "header": [
+        "Runbook step",
+        "Headless?",
+        "Evidence"
+      ],
+      "rows": [
+        [
+          "Retrieve the Secure Agent install token + download URL",
+          "YES - automated",
+          "LIVE 2026-07-25. GET /api/v2/agent/installerInfo/linux64 -> 200 with a 122-char org-scoped install token + linux64 download URL."
+        ],
+        [
+          "Install + register the Secure Agent on the application's cloud VM",
+          "DONE (needed a shell)",
+          "LIVE 2026-07-25/26. Installed as non-root user infa on the VM, installer checksum-verified (sha256), registered via consoleAgentManager.sh configureToken -> 'Login succeeded' -> getstatus READY. Agent <agentId> v76.17. Two blockers had to be cleared first, neither in the API: the cloud provider's firewall allowlist for SSH (:22) - the operator workstation egresses via a ROTATING corporate secure-web-gateway IP that changed mid-session - and an SSH key on the VM."
+        ],
+        [
+          "systemd autostart for the agent",
+          "DONE - and it needed a real fix",
+          "A naive unit FAILS: infaagent resolves paths relative to its own dir, so ExecStart alone gives 'cannot open ./agent_start.sh' and the agent silently never starts after reboot. Requires WorkingDirectory=/home/infa/infaagent/apps/agentcore + RemainAfterExit=yes. Verified through a full systemctl restart -> active -> READY."
+        ],
+        [
+          "Create the connection (all three application data stores)",
+          "YES - proven end to end",
+          "LIVE 2026-07-26, all POST /api/v2/connection -> 200, all bound to the same agent (<agentId>): a PostgreSQL connection (<private-ip>:5432/<db>), a MongoDB connection (<private-ip>:27017/<db>) and a JDBCV2 ClickHouse connection (jdbc:clickhouse://<private-ip>:8123/<db>), each with its own <connId>."
+        ],
+        [
+          "Test the connection",
+          "NO - blocked by the DI engine, NOT by the connector",
+          "LIVE 2026-07-26: GET /api/v2/connection/{id}/test -> 403 APP_105060 'Unable to resolve channel service. No running service found of type...' for ALL THREE. The definition is valid and persisted; there is no Data Integration runtime on the agent to open a DB session. This CORRECTS the older row that cited Org A's 2026-06-28 green tests - that was a different org with DI entitled and it does not transfer to Org B."
+        ],
+        [
+          "Run a catalog source / profile against it",
+          "PENDING - two independent blockers",
+          "Needs (a) a DI/CDGC engine on the agent and (b) the data360 zero-byte-200 anomaly resolved. Re-confirmed 2026-07-26: on Org B, /data360/search AND its deliberately-bogus sibling (/data360/search/api/v99/bogusZZZ) both return 200 with 0 bytes, as does /cdmp-marketplace/.../bogusZZZ -> gateway prefix routing, not a capability."
+        ]
+      ],
+      "_migrated_from": "capref#32"
+    }
+  ],
+  "notes": [
+    "The application's data plane is NOT on localhost. All three stores are Docker containers bound to the VM's PRIVATE IP (<private-ip>; postgres:16.13, clickhouse/clickhouse-server:25.3, mongo:7.0.31). Every localhost port is closed, so a connector built with hostName=localhost cannot work. Verified on-host 2026-07-26.",
+    "Data volume was production-scale (hundreds of millions of rows in the analytics store), so governance over it would not be vacuous.",
+    "The validator-iteration technique in the request-body table is the most reusable thing here: POST a partial body, read the ONE attribute named in 403 APP_105054, add it, repeat. It discovered dbName, jdbcdriverclassname and connectionstring - none of which appear in any local vendor PDF.",
+    "products[] on the Org B login still reads 'Integration Cloud' only, yet 876 privileges / 38 roles include Governance Owner. Reinforces the standing rule: products[] is a licensing label, never the deployed feature set. The DEPLOYED ENGINE LIST off the agent is the ground truth - and it is only readable once an agent exists, which is a new argument for installing one early."
+  ],
+  "open_questions": [
+    "Does the parent org (<parentOrgIdV3>) own Data Integration + CDGC entitlement to allocate down to Org B? UNRESOLVED from the API: both available credential sets are the same Org B-scoped user, /api/v2/org returns only Org B with subOrgs=[] and subOrgLimit=0, and every license path is absent (/v3/licenses 404, /api/v2/license 404, /api/v2/org/{id} 403 REPO_10404). POST /api/v2/agent/service -> 500 CMN_001, matching the Org A row, so there is NO REST plane for engine enablement. Needs a parent-org admin in Administrator > Sub-Organizations > Licenses.",
+    "Once DI is entitled: does the JDBCV2/ClickHouse connection need its driver JAR staged manually on the agent, and where? Not yet attempted.",
+    "Connection credentials that reuse the database containers' own credentials (the POSTGRES_USER / CLICKHOUSE_USER from the container environment) are POC-only: replace them with least-privilege read-only database users before going further."
+  ]
+}
