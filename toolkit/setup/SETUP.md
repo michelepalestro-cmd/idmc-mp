@@ -19,8 +19,8 @@ Paths below are relative to the plugin folder (the repository root). Windows: us
 ## 2. Clone and protect the repository
 
 ```
-git clone https://github.com/michelepalestro-cmd/idmc-mp.git
-cd idmc-mp
+git clone https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin.git
+cd idmc-mp-informatica-claude-plugin
 git config core.hooksPath toolkit/tools/git-hooks
 ```
 

@@ -3,6 +3,13 @@
 Releases of the `idmc-mp` plugin. The knowledge base's own history is in
 [knowledge/reference/kb-changelog.md](../knowledge/reference/kb-changelog.md).
 
+## 1.15.2 (2026-11-21): new repository name
+
+The repository is now `michelepalestro-cmd/idmc-mp-informatica-claude-plugin`, so people searching for an Informatica
+IDMC plugin for Claude can find it. The plugin name, the marketplace name and every `/idmc-mp:` command are unchanged.
+The old address `michelepalestro-cmd/idmc-mp` redirects to the new one, so existing installs keep updating and old
+links keep working.
+
 ## 1.15.1 (2026-11-20): full documentation audit
 
 Every document (about 170) was checked against the newest lessons and the code; stale claims were fixed and newer

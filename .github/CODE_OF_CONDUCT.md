@@ -6,5 +6,5 @@ In short: be respectful and constructive, assume good intent, welcome newcomers,
 Harassment, personal attacks and sharing other people's private information are not accepted.
 
 Report unacceptable behaviour privately to the maintainers through GitHub's
-[Report a vulnerability](https://github.com/michelepalestro-cmd/idmc-mp/security/advisories/new) form (it is private).
+[Report a vulnerability](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/security/advisories/new) form (it is private).
 Reports are handled confidentially.

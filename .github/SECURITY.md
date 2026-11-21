@@ -43,7 +43,7 @@ text for `psql` built from escaped values), the line carries a `# nosec` / `# no
 ## Reporting a vulnerability
 
 Please do not open a public issue for a security problem. Use GitHub's private
-[Report a vulnerability](https://github.com/michelepalestro-cmd/idmc-mp/security/advisories/new) form on this
+[Report a vulnerability](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/security/advisories/new) form on this
 repository. Include what you found, how to reproduce it, and what it could
 expose. You will get an answer as soon as possible.
 

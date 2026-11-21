@@ -380,7 +380,7 @@ def _():
 @test("US-01 install: one plugin, one marketplace, installs as idmc-mp@idmc-mp")
 def _():
     readme = read("README.md")
-    assert "/plugin marketplace add michelepalestro-cmd/idmc-mp" in readme
+    assert "/plugin marketplace add michelepalestro-cmd/idmc-mp-informatica-claude-plugin" in readme
     assert "/plugin install idmc-mp@idmc-mp" in readme
 
 

@@ -35,7 +35,7 @@ You need four things. Tick them off:
 Open Claude Code and type these two lines, one at a time, pressing Enter after each:
 
 ```
-/plugin marketplace add michelepalestro-cmd/idmc-mp
+/plugin marketplace add michelepalestro-cmd/idmc-mp-informatica-claude-plugin
 ```
 
 ```

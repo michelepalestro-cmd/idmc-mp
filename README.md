@@ -1,7 +1,7 @@
 # IDMC MP: the Informatica IDMC co-pilot for Claude Code
 
-[![tests](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.15.1-blue)](.github/CHANGELOG.md)
+[![tests](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/actions/workflows/tests.yml)
+[![version](https://img.shields.io/badge/version-1.15.2-blue)](.github/CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 IDMC MP is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
@@ -88,7 +88,7 @@ untested and confirms with one read-only call before relying on it.
 In Claude Code:
 
 ```
-/plugin marketplace add michelepalestro-cmd/idmc-mp
+/plugin marketplace add michelepalestro-cmd/idmc-mp-informatica-claude-plugin
 ```
 
 ```
@@ -111,7 +111,7 @@ toolkit/     Python: library, mapping generator, demo blueprints, setup, reposit
 
 - [Changelog](.github/CHANGELOG.md) · [Contributing](.github/CONTRIBUTING.md) · [Security](.github/SECURITY.md) ·
   [Code of conduct](.github/CODE_OF_CONDUCT.md)
-- Questions or problems: open an [issue](https://github.com/michelepalestro-cmd/idmc-mp/issues/new/choose).
+- Questions or problems: open an [issue](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/issues/new/choose).
 
 IDMC MP is an independent community project. It is not an official Informatica product, is not endorsed or supported
 by Informatica, and comes with no warranty. Informatica, IDMC, IICS, CLAIRE and related marks are trademarks of
