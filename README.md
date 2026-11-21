@@ -4,6 +4,33 @@
 [![version](https://img.shields.io/badge/version-2.0.0-blue)](.github/CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
+## Install
+
+In Claude Code, run these two commands one at a time:
+
+```
+/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin
+```
+
+```
+/plugin install informatica-idmc-headless@idmc-mp
+```
+
+Close Claude Code and open it again, then run:
+
+```
+/informatica-idmc-headless:connect
+```
+
+That's it: ask Claude for what you need in plain words. The full guide, including what to do when a login fails, is
+[Setup and login](knowledge/00-start-here/11-setup-and-login.md).
+
+**Already using `idmc-mp`?** Nothing to do. The old repository address redirects here, the marketplace keeps its
+name `idmc-mp`, and existing installs move to the new plugin name on their next update. Only the command prefix
+changes, from `/idmc-mp:` to `/informatica-idmc-headless:`.
+
+## About
+
 The Informatica IDMC Headless Plugin is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
 plain words; Claude builds, runs, checks and fixes the work in your IDMC org without clicking through the IDMC
 website. It works both ways IDMC can be reached: the **REST APIs** and **Informatica's managed MCP servers**, and it
@@ -82,25 +109,6 @@ error in the text, so Claude reads the text, not the status.
 
 The CLAIRE agent server also ran as a local MCP server inside Claude Code. For an untested server, Claude says it is
 untested and confirms with one read-only call before relying on it.
-
-## Install
-
-In Claude Code:
-
-```
-/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin
-```
-
-```
-/plugin install informatica-idmc-headless@idmc-mp
-```
-
-Close Claude Code and open it again, then run `/informatica-idmc-headless:connect`. The full guide, including what to do when a login fails, is
-[Setup and login](knowledge/00-start-here/11-setup-and-login.md).
-
-**Already using `idmc-mp`?** Nothing to do. The old repository address redirects here, the marketplace keeps its
-name `idmc-mp`, and existing installs move to the new plugin name on their next update. Only the command prefix
-changes, from `/idmc-mp:` to `/informatica-idmc-headless:`.
 
 ## Repository layout
 
