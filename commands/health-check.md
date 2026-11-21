@@ -2,7 +2,7 @@
 description: Read-only daily health check of your IDMC org: failed and 0-row runs, agents, connections, job-cap burn, projects
 ---
 
-Use the idmc-mp skill. On Windows, use `python` (or `py`) where these steps say `python3`. Read-only: no writes and no job runs.
+Use the informatica-idmc-headless skill. On Windows, use `python` (or `py`) where these steps say `python3`. Read-only: no writes and no job runs.
 
 1. Prove the org: `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`. If it fails, follow its message; never retry a login.
 2. Read with `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/lib/idmc_session.py" get <plane> <path>`:
@@ -24,6 +24,6 @@ Use the idmc-mp skill. On Windows, use `python` (or `py`) where these steps say 
    with the lesson id that explains it. Say that the monthly job limit itself cannot be read over the API and has to
    come from Informatica.
 
-**Run it every day:** ask Claude Code to schedule `/idmc-mp:health-check` (a scheduled task), or run the same reads from
+**Run it every day:** ask Claude Code to schedule `/informatica-idmc-headless:health-check` (a scheduled task), or run the same reads from
 cron on a machine that holds the login file. Alert only when the set of failing tasks changes (L-CDI-067). The full
 Day-2 runbook is `${CLAUDE_PLUGIN_ROOT}/knowledge/00-start-here/12-run-it-in-production.md`.

@@ -5,10 +5,10 @@ description: Use for Informatica IDMC connections to any database, warehouse, cl
 
 # IDMC co-pilot: connections
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<connector or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "connections"`),
   then `knowledge/03-connections/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -27,7 +27,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - Change a connection's settings (host, user, schema, key) without breaking the tasks that use it.
 
 ## How to work
-1. Prove the org; list runtime environments and existing connections read-only (`/idmc-mp:health-check`).
+1. Prove the org; list runtime environments and existing connections read-only (`/informatica-idmc-headless:health-check`).
 2. Check the runtime environment has the connector's service enabled (`toolkit/lib/idmc_runtime_selections.py`).
 3. Read the connector's metadata (`GET /api/v2/connector/metadata`: its `type` is the `instanceName`) and the notes for
    that connector (doc 02), then create the connection (doc 01). Secrets come from a 0600 file, never the chat.
@@ -54,9 +54,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   for another connector, add a template from doc 02.
 - `toolkit/lib/idmc_runtime_selections.py`: services and connectors of a runtime environment
 - `toolkit/lib/idmc_objects.py`: find existing connections and the assets that use them
-- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `conn_*` (list, get, test,
+- MCP tools, when `/informatica-idmc-headless:connect-mcp` has connected the org's servers (`mcp__plugin_informatica-idmc-headless_idmc__*`): `conn_*` (list, get, test,
   browse and preview; create and update only when the client allows writes); read a write back over REST
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

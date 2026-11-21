@@ -3,7 +3,7 @@
 The rules that keep a Claude session safe and fast with IDMC: logins, hosts, evidence, gated actions, parallel
 sessions, UI automation, workstation traps and secrets; applies to every session before its first IDMC call.
 
-**Start with:** `python3 toolkit/check_login.py` (one attempt, cached session, lockout guard; skill `idmc-mp`), then
+**Start with:** `python3 toolkit/check_login.py` (one attempt, cached session, lockout guard; skill `informatica-idmc-headless`), then
 [01 How Claude Reaches and Drives IDMC](01-how-claude-reaches-and-drives-idmc.md) and its §10 checklists.
 
 ## Rules that work

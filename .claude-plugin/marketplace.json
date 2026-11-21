@@ -1,21 +1,21 @@
 {
-  "name": "idmc-mp",
+  "name": "informatica-idmc-headless",
   "owner": {
     "name": "Michele Palestro"
   },
   "metadata": {
-    "description": "IDMC MP: the Informatica IDMC co-pilot for Claude Code",
-    "version": "1.15.2"
+    "description": "Informatica IDMC Headless Plugin: run Informatica IDMC / IICS from Claude Code without the UI",
+    "version": "2.0.0"
   },
   "plugins": [
     {
-      "name": "idmc-mp",
+      "name": "informatica-idmc-headless",
       "source": "./",
       "description": "The Informatica IDMC / IICS co-pilot for Claude: understand, deploy, optimize and run IDMC headless (Secure Agent, CDI, CDC, CAI, data quality, governance, MDM, MCP, IPU), with 2,300+ field lessons, one skill per area, slash commands, a Python toolkit with a login lockout guard, and a mapping generator.",
-      "version": "1.15.2",
+      "version": "2.0.0",
       "author": {
         "name": "Michele Palestro",
-        "url": "https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin"
+        "url": "https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin"
       },
       "license": "MIT",
       "category": "data",
@@ -33,10 +33,13 @@
         "mcp",
         "secure-agent",
         "data-governance",
-        "co-pilot"
+        "co-pilot",
+        "headless",
+        "claude-code-plugin",
+        "iics-automation"
       ],
-      "homepage": "https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin",
-      "repository": "https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin"
+      "homepage": "https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin",
+      "repository": "https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin"
     }
   ]
 }

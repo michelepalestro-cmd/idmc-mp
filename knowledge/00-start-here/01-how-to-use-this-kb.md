@@ -80,7 +80,7 @@ Open the first doc; read the second when the first sends you there. Scripts are 
 |---|---|---|---|
 | Build a new pipeline, any source to any target | [New Pipeline Milestones](08-new-pipeline-milestones-any-source-any-target.md) | [Mapping Fast Path](../04-mappings/00-mapping-fast-path-read-this-first.md) | `check_login.py`, `toolkit/mapgen/mapgen.py` |
 | Avoid the failures of a production deployment (backups, gates, host, many sessions) | [What Went Wrong](09-what-went-wrong-production-deployment-post-mortem.md) | the lesson each row cites | (none) |
-| Keep a deployment running after go-live (alerts, daily check, failed-job runbook, backups) | [Run It in Production](12-run-it-in-production.md) | [What Went Wrong](09-what-went-wrong-production-deployment-post-mortem.md) | `/idmc-mp:health-check`, `idmc_export_import.py` |
+| Keep a deployment running after go-live (alerts, daily check, failed-job runbook, backups) | [Run It in Production](12-run-it-in-production.md) | [What Went Wrong](09-what-went-wrong-production-deployment-post-mortem.md) | `/informatica-idmc-headless:health-check`, `idmc_export_import.py` |
 | Stand up or extend a deployment end to end | [End-to-End Playbook](07-end-to-end-playbook-deploy-and-operate-idmc-with-claude.md) | the doc each stage names | (per stage) |
 | Log in, pick the right host and header, avoid a lockout | [Login, Sessions & Tokens](../01-login-and-orgs/02-login-sessions-tokens.md) | [Pods, Hosts & Service Planes](../01-login-and-orgs/01-pods-hosts-service-planes.md) | `idmc_session.py whoami` |
 | Prove which org you are in before writing | [Identify the Org Before You Write](../01-login-and-orgs/03-identify-the-org-before-you-write.md) | [Users, Roles & Permissions](../01-login-and-orgs/04-users-roles-permissions.md) | `idmc_session.py whoami --expect-org` |
@@ -105,7 +105,7 @@ Open the first doc; read the second when the first sends you there. Scripts are 
 | Glossary, term links, classification, lineage | [Glossary, Links & Classification](../09-catalog-lineage/03-glossary-links-classification.md) | [Search, Lineage & Marketplace](../09-catalog-lineage/04-search-lineage-marketplace.md) | `idmc_cdgc.py` |
 | MDM records, search, models | [MDM SaaS - Runtime vs Design](../10-mdm/01-mdm-saas-runtime-vs-design.md) | [MDM Records](../10-mdm/02-mdm-records-ingest-search-export-cleanup.md), [Business 360 Modeling](../10-mdm/03-business-360-modeling-match-merge.md) | (none yet) |
 | Master a table (dedupe, match, survivorship, golden-record gates) for any kind of dataset | [Mastering a Table - Repeatable Playbook](../10-mdm/05-mastering-a-table-repeatable-playbook.md) | [Business 360 Modeling](../10-mdm/03-business-360-modeling-match-merge.md) (native MDM and the CDI-mapping pipeline), [DQ Assets](../08-data-quality/01-dq-assets-rule-specs-cleanse-dictionaries-verifiers.md) | (none) |
-| MCP servers, OAuth clients, agent-style MCP | [Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md) | [MCP Auth & OAuth Clients](../11-mcp-claire/02-mcp-auth-oauth-clients.md), [MCP vs REST](../11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md), [Ecosystem](../11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md) | `/idmc-mp:connect-mcp`, `idmc_mcp.py`, `idmc_mcp_bridge.py --check` |
+| MCP servers, OAuth clients, agent-style MCP | [Managed MCP Servers](../11-mcp-claire/01-managed-mcp-servers-catalog-access.md) | [MCP Auth & OAuth Clients](../11-mcp-claire/02-mcp-auth-oauth-clients.md), [MCP vs REST](../11-mcp-claire/05-mcp-vs-rest-when-to-use-which.md), [Ecosystem](../11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md) | `/informatica-idmc-headless:connect-mcp`, `idmc_mcp.py`, `idmc_mcp_bridge.py --check` |
 | A CLAIRE GPT demo or prompt set | [CLAIRE GPT - Prompting Rules & Patterns](../11-mcp-claire/03-claire-gpt-prompting-rules-patterns.md) | [Glossary, Links & Classification](../09-catalog-lineage/03-glossary-links-classification.md) section 10 | (UI harness) |
 | IPUs, metering, licences, job caps and job budgets | [IPU Model](../13-ipu-cost/01-ipu-model-mechanics.md) | [Entitlement, Licenses & Job Caps](../13-ipu-cost/03-entitlement-licenses-job-caps.md), [Metering & Consumption Exports](../13-ipu-cost/02-metering-consumption-exports.md) | `idmc_metering.py` |
 | Migrate an estate to another org | [Org-to-Org Migration Runbook](../12-deploy-migrate/04-org-to-org-migration-runbook.md) | [Export & Import](../12-deploy-migrate/01-export-import-v3-migration-api.md), [Cutover & Rollback](../12-deploy-migrate/05-cutover-rollback.md) | `idmc_export_import.py` |
@@ -223,7 +223,7 @@ material, never in the plugin.
 
 ## 9. How to update the KB
 
-- **Using the plugin:** save what you learn with `/idmc-mp:save-lesson`. It goes to `~/.idmc_toolkit/lessons-local.jsonl`
+- **Using the plugin:** save what you learn with `/informatica-idmc-headless:save-lesson`. It goes to `~/.idmc_toolkit/lessons-local.jsonl`
   on your computer, which the skills search next time; the plugin folder is replaced on every update, so never edit it.
 - **Contributing to the shared KB:** follow [CONTRIBUTING.md](../../.github/CONTRIBUTING.md): search first, write the lesson
   generically (placeholders, numbers without names, never a secret), keep overturned beliefs as superseded lessons, run

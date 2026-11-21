@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """idmc_mcp_bridge.py - Informatica's managed MCP servers as Claude Code tools, through one local stdio MCP server.
 
-The idmc-mp plugin starts this bridge on its own (plugin.json "mcpServers"). Until `/idmc-mp:connect-mcp` has written an
+The informatica-idmc-headless plugin starts this bridge on its own (plugin.json "mcpServers"). Until `/informatica-idmc-headless:connect-mcp` has written an
 OAuth client file, it offers a single status tool that says how to connect, and makes no network call.
 
 With the file in place it reads the server contexts listed in it, logs in with the OAuth client (client credentials),
@@ -58,7 +58,7 @@ READ_RE = re.compile(r"^(get|list|search|browse|preview|test|verify|describe|rea
                      r"^(data_explore|master_data_explore|orchestrate|orchestrate_master_data_analysis|data_profiling|"
                      r"data_quality_analysis|data_quality_rule_recommendation|new_conversation|working)$")
 STATUS_TOOL = "idmc_mcp_status"
-MAX_NAME = 38   # Claude Code adds "mcp__plugin_idmc-mp_idmc__" (26 characters); tool names may total 64
+MAX_NAME = 38   # Claude Code adds "mcp__plugin_informatica-idmc-headless_idmc__" (26 characters); tool names may total 64
 
 
 def log(msg):
@@ -90,7 +90,7 @@ def load_env(path):
     """(env dict, problem). Problem is a plain sentence for the status tool, or None."""
     path = os.path.expanduser(path)
     if not os.path.exists(path):
-        return None, ("No MCP client file yet. Run /idmc-mp:connect-mcp in Claude Code to create one "
+        return None, ("No MCP client file yet. Run /informatica-idmc-headless:connect-mcp in Claude Code to create one "
                       "(expected at %s)." % path)
     real = os.path.realpath(path)
     if real == PLUGIN_ROOT or real.startswith(PLUGIN_ROOT + os.sep):
@@ -105,7 +105,7 @@ def load_env(path):
                 env[k.strip()] = v.strip()
     need = [k for k in ("IDMC_CLIENT_ID", "IDMC_CLIENT_SECRET", "IDMC_TOKEN_URL", "MCP_BASE", "MCP_CONTEXTS") if not env.get(k)]
     if need:
-        return None, "The MCP client file is missing %s; run /idmc-mp:connect-mcp again." % ", ".join(need)
+        return None, "The MCP client file is missing %s; run /informatica-idmc-headless:connect-mcp again." % ", ".join(need)
     for k in ("IDMC_TOKEN_URL", "MCP_BASE"):
         if not safe_url(env[k]):
             return None, "%s in the MCP client file is not an https address." % k
@@ -141,7 +141,7 @@ class Token:
                 j = r.json({}) or {}
                 if not j.get("access_token"):
                     raise RuntimeError("OAuth token refused (HTTP %s). The client may be disabled or deleted, or the "
-                                       "password of the user who created it changed: run /idmc-mp:connect-mcp again." % r.status)
+                                       "password of the user who created it changed: run /informatica-idmc-headless:connect-mcp again." % r.status)
                 self.value, self.exp = j["access_token"], time.time() + float(j.get("expires_in", 3600))
             return self.value
 
@@ -172,7 +172,7 @@ class Remote:
     def _init(self):
         r = self._post({"jsonrpc": "2.0", "id": 1, "method": "initialize",
                         "params": {"protocolVersion": PROTOCOL, "capabilities": {},
-                                   "clientInfo": {"name": "idmc-mp-bridge", "version": VERSION}}})
+                                   "clientInfo": {"name": "informatica-idmc-headless-bridge", "version": VERSION}}})
         if not r.ok:
             raise RuntimeError("%s: initialize answered HTTP %s" % (self.ctx, r.status))
         self._post({"jsonrpc": "2.0", "method": "notifications/initialized"})
@@ -248,7 +248,7 @@ class Bridge:
     def list_tools(self):
         self.load()
         st = {"name": STATUS_TOOL, "description": "Shows whether Informatica's MCP servers are connected, which servers "
-              "and how many tools, and how to connect them (/idmc-mp:connect-mcp). Makes no change.",
+              "and how many tools, and how to connect them (/informatica-idmc-headless:connect-mcp). Makes no change.",
               "inputSchema": {"type": "object", "properties": {}}, "annotations": {"readOnlyHint": True}}
         return [st] + self.tools
 
@@ -291,7 +291,7 @@ def serve(bridge):
             if method == "initialize":
                 res = {"protocolVersion": params.get("protocolVersion") or PROTOCOL,
                        "capabilities": {"tools": {"listChanged": False}},
-                       "serverInfo": {"name": "idmc-mp", "version": VERSION},
+                       "serverInfo": {"name": "informatica-idmc-headless", "version": VERSION},
                        "instructions": "Informatica IDMC managed MCP servers for the org in the OAuth client file. "
                                        "Call idmc_mcp_status first if a tool is missing."}
             elif method == "ping":

@@ -1,4 +1,4 @@
-# Rules for any Claude session working with the IDMC MP plugin
+# Rules for any Claude session working with the Informatica IDMC Headless plugin
 
 Paths in inline code are relative to the plugin root. The plugin holds the knowledge base (topic folders `00`-`14` under
 `knowledge/`), the lessons (`knowledge/lessons/`), the skills and commands, and a Python toolkit (`toolkit/lib/`, a
@@ -53,12 +53,12 @@ that. The README's "Create any IDMC asset" table says where each asset type star
 8. Before any IDMC call, search the lessons first: `grep -i "<thing>" knowledge/lessons/lessons.jsonl` and the user's own
    `~/.idmc_toolkit/lessons-local.jsonl`
 
-This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, playbook in `knowledge/00-start-here/`): nothing else to install.
+This KB ships inside the `informatica-idmc-headless` Claude Code plugin (skills in `skills/`, playbook in `knowledge/00-start-here/`): nothing else to install.
 
 ## Non-negotiables
 - **The IDMC login lives in `~/.idmc_toolkit/IDMC_LOGIN.txt`** (`IDMC_USER`, `IDMC_PASS`, `IDMC_LOGIN_HOST`), outside
   the plugin; `IDMC_CREDS_FILE` or environment variables can point elsewhere. If the user cannot connect, run
-  `/idmc-mp:connect` and have them fill it in with `python3 toolkit/check_login.py --setup` in a terminal. Never ask
+  `/informatica-idmc-headless:connect` and have them fill it in with `python3 toolkit/check_login.py --setup` in a terminal. Never ask
   for a password in the chat, never print the file's values, and never write a credential, token, session id or key
   into the plugin, a transcript, a log or a command line. Print key names, never values.
 - **One login, one attempt.** A few rejected logins lock the account (`IDS_086`). The library serializes logins,
@@ -82,5 +82,5 @@ This KB ships inside the `idmc-mp` Claude Code plugin (skills in `skills/`, play
 
 ## When you learn something
 Save it as a generic lesson (no org ids, hosts, people or secrets) in the user's `~/.idmc_toolkit/lessons-local.jsonl`
-with `/idmc-mp:save-lesson`: the plugin folder is replaced on every update, so never write into it. To share a lesson
+with `/informatica-idmc-headless:save-lesson`: the plugin folder is replaced on every update, so never write into it. To share a lesson
 with everyone, follow `.github/CONTRIBUTING.md` (an issue or a pull request).

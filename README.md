@@ -1,10 +1,10 @@
-# IDMC MP: the Informatica IDMC co-pilot for Claude Code
+# Informatica IDMC Headless Plugin for Claude Code
 
-[![tests](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/actions/workflows/tests.yml)
-[![version](https://img.shields.io/badge/version-1.15.2-blue)](.github/CHANGELOG.md)
+[![tests](https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin/actions/workflows/tests.yml/badge.svg)](https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin/actions/workflows/tests.yml)
+[![version](https://img.shields.io/badge/version-2.0.0-blue)](.github/CHANGELOG.md)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
-IDMC MP is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
+The Informatica IDMC Headless Plugin is a Claude Code plugin for **Informatica IDMC** (Intelligent Data Management Cloud, formerly IICS). You ask in
 plain words; Claude builds, runs, checks and fixes the work in your IDMC org without clicking through the IDMC
 website. It works both ways IDMC can be reached: the **REST APIs** and **Informatica's managed MCP servers**, and it
 picks the right one per task ([MCP or API?](#informaticas-mcp-servers)).
@@ -15,11 +15,11 @@ known instead of rediscovering it.
 
 ## What it includes
 
-**Skills** load on their own when your request matches; **commands** are typed as `/idmc-mp:<name>`.
+**Skills** load on their own when your request matches; **commands** are typed as `/informatica-idmc-headless:<name>`.
 
 | Area | Skill | Commands | For example |
 |---|---|---|---|
-| Rules, login, routing, errors | `idmc-mp` | `connect`, `health-check`, `fix-error`, `save-lesson` | "why does this fail: `<error>`" |
+| Rules, login, routing, errors | `informatica-idmc-headless` | `connect`, `health-check`, `fix-error`, `save-lesson` | "why does this fail: `<error>`" |
 | Secure Agent and runtime environments | `idmc-secure-agent` | `tune-agent` | "install an agent on my VM and tune it" |
 | Connections to any system | `idmc-connections` | | "connect to our Snowflake account" |
 | Mappings, tasks, taskflows (CDI) | `idmc-cdi` | `new-pipeline`, `optimize` | "build a nightly pipeline from `<source>` to `<target>`" |
@@ -39,7 +39,7 @@ Behind the skills:
   [knowledge/00-start-here](knowledge/00-start-here/README.md).
 - **A Python toolkit** (standard library only): login with a lockout guard, org proof, a headless mapping generator, and
   rebuildable demo blueprints such as [customer mastering from a CSV](toolkit/demos/customer_master_csv/README.md).
-- **An MCP bridge** that turns your org's managed MCP servers into Claude's own tools after `/idmc-mp:connect-mcp`,
+- **An MCP bridge** that turns your org's managed MCP servers into Claude's own tools after `/informatica-idmc-headless:connect-mcp`,
   read-only unless you choose otherwise.
 - **Safety by default:** your login stays on your computer, every write is a dry run until you name the org it may
   change, and the plugin talks only to Informatica and the systems you connect.
@@ -50,7 +50,7 @@ The knowledge base covers **Informatica's managed MCP servers** (25 servers and 
 registry, including four CAI servers) plus the CLAIRE agent server: what each one can and cannot do, its tools, how to
 log in to it, and the traps found using it.
 
-**How to connect:** after `/idmc-mp:connect`, run **`/idmc-mp:connect-mcp`**. It lists the servers your org has
+**How to connect:** after `/informatica-idmc-headless:connect`, run **`/informatica-idmc-headless:connect-mcp`**. It lists the servers your org has
 (Informatica switches them on per org), creates a scoped OAuth client whose secret goes straight to a private file on
 your computer, and tests it. After a restart, every server's tools are Claude's own tools, through a small bridge the
 plugin starts by itself. It is **read-only** unless you choose otherwise, Claude Code still asks before each call, and
@@ -88,15 +88,18 @@ untested and confirms with one read-only call before relying on it.
 In Claude Code:
 
 ```
-/plugin marketplace add michelepalestro-cmd/idmc-mp-informatica-claude-plugin
+/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin
 ```
 
 ```
-/plugin install idmc-mp@idmc-mp
+/plugin install informatica-idmc-headless@informatica-idmc-headless
 ```
 
-Close Claude Code and open it again, then run `/idmc-mp:connect`. The full guide, including what to do when a login fails, is
+Close Claude Code and open it again, then run `/informatica-idmc-headless:connect`. The full guide, including what to do when a login fails, is
 [Setup and login](knowledge/00-start-here/11-setup-and-login.md).
+
+**Upgrading from `idmc-mp`?** The plugin was renamed in 2.0.0. Run `/plugin marketplace remove idmc-mp`, then the two
+commands above. The old repository address redirects here, and your login file and lessons are kept.
 
 ## Repository layout
 
@@ -111,9 +114,9 @@ toolkit/     Python: library, mapping generator, demo blueprints, setup, reposit
 
 - [Changelog](.github/CHANGELOG.md) · [Contributing](.github/CONTRIBUTING.md) · [Security](.github/SECURITY.md) ·
   [Code of conduct](.github/CODE_OF_CONDUCT.md)
-- Questions or problems: open an [issue](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/issues/new/choose).
+- Questions or problems: open an [issue](https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin/issues/new/choose).
 
-IDMC MP is an independent community project. It is not an official Informatica product, is not endorsed or supported
+Informatica IDMC Headless is an independent community project. It is not an official Informatica product, is not endorsed or supported
 by Informatica, and comes with no warranty. Informatica, IDMC, IICS, CLAIRE and related marks are trademarks of
 Informatica LLC; other product names are trademarks of their owners and appear only to describe interoperability. No
 Informatica documentation is redistributed here; references cite https://docs.informatica.com. Licensed under

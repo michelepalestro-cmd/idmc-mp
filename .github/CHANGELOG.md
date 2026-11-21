@@ -1,14 +1,21 @@
 # Changelog
 
-Releases of the `idmc-mp` plugin. The knowledge base's own history is in
+Releases of the `informatica-idmc-headless` plugin. The knowledge base's own history is in
 [knowledge/reference/kb-changelog.md](../knowledge/reference/kb-changelog.md).
 
-## 1.15.2 (2026-11-21): new repository name
+## 2.0.0 (2026-11-21): new name, Informatica IDMC Headless Plugin
 
-The repository is now `michelepalestro-cmd/idmc-mp-informatica-claude-plugin`, so people searching for an Informatica
-IDMC plugin for Claude can find it. The plugin name, the marketplace name and every `/idmc-mp:` command are unchanged.
-The old address `michelepalestro-cmd/idmc-mp` redirects to the new one, so existing installs keep updating and old
-links keep working.
+The plugin, its marketplace and its repository have new, clearer names:
+
+- Repository: `michelepalestro-cmd/informatica-idmc-headless-plugin` (was `michelepalestro-cmd/idmc-mp`). The old
+  address redirects to the new one for web links, `git clone`, `git pull` and `/plugin marketplace add`.
+- Plugin and marketplace: `informatica-idmc-headless` (was `idmc-mp`).
+- Commands: `/informatica-idmc-headless:<name>` (was `/idmc-mp:<name>`); the core skill is `informatica-idmc-headless`.
+
+**Upgrading from `idmc-mp`:** in Claude Code run `/plugin marketplace remove idmc-mp`, then
+`/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin` and
+`/plugin install informatica-idmc-headless@informatica-idmc-headless`. Your login file and saved lessons live outside
+the plugin and are not affected.
 
 ## 1.15.1 (2026-11-20): full documentation audit
 
@@ -21,7 +28,7 @@ lessons added where they belong.
   export, custom lineage, paging past 10,000) are in the guides, marked where they come from public code.
 - **MDM:** search filters, incremental extract, survivorship before loading, and the new mastering lessons cited in
   the playbook.
-- **MCP:** 23 servers everywhere the count is current; `/idmc-mp:connect-mcp` and the bridge in the auth, wiring and
+- **MCP:** 23 servers everywhere the count is current; `/informatica-idmc-headless:connect-mcp` and the bridge in the auth, wiring and
   how-Claude-reaches-IDMC guides; the vendor plugin's search traps.
 - **Secure Agent, connections, CDC, CAI:** the agent tuning form now goes in `configFormJson`; engine start and stop
   routes; replace-style connection updates and `Update-Mode: PARTIAL`; CDC job and metrics routes; CAI taskflow run
@@ -33,13 +40,13 @@ lessons added where they belong.
   tool prefixes. The endpoint dictionary's builder carries the newer evidence, so rebuilds keep it.
 - **Code:** `idmc_cai_publish.py` publishes Data Integration taskflows on the pod host in their own wave and leaves
   process objects out (L-CAI-164, L-CAI-165, reported); `idmc_mcp.py` finds the client file written by
-  `/idmc-mp:connect-mcp` without `--env`.
+  `/informatica-idmc-headless:connect-mcp` without `--env`.
 - **Lessons:** five supersede links corrected, L-CDI-194 superseded, and text refinements to L-AUTH-125, L-CONN-145,
   L-IPU-035, L-DQ-100 and L-MCP-148.
 
 ## 1.15.0 (2026-11-20): Informatica's MCP servers as Claude's own tools
 
-- **`/idmc-mp:connect-mcp`:** lists the org's managed MCP servers, creates a scoped OAuth client (secret straight to a
+- **`/informatica-idmc-headless:connect-mcp`:** lists the org's managed MCP servers, creates a scoped OAuth client (secret straight to a
   0600 file in `~/.idmc_toolkit/`), and tests it. After a restart every server's tools are Claude Code tools.
 - **The plugin's MCP bridge** (`toolkit/lib/idmc_mcp_bridge.py`, started by the plugin): read-only by default (tools
   that change the org appear only when the client allows writes, marked "WRITES to IDMC"), tokens renew by themselves,
@@ -71,10 +78,10 @@ production, data quality and MDM). Each scored OK; these changes fix what they t
 
 - **Run it in production:** new [runbook](../knowledge/00-start-here/12-run-it-in-production.md) (failed-job alerts, a
   daily check, "a job failed at 2am", agent upgrades, schedule owners, secrets rotation, backups), linked from the
-  router and the playbook. `/idmc-mp:health-check` now reads the last 24 hours of runs.
+  router and the playbook. `/informatica-idmc-headless:health-check` now reads the last 24 hours of runs.
 - **Safer promotion:** the export/import tool checks each connection and runtime in the target by name during the dry
   run, and exits non-zero unless an import ends SUCCESSFUL (a timeout prints the status command, never a second import).
-  `/idmc-mp:promote` guards the dry run with `--expect-org` and compares connection hosts after import.
+  `/informatica-idmc-headless:promote` guards the dry run with `--expect-org` and compares connection hosts after import.
 - **IPU:** new read-only `toolkit/lib/idmc_metering.py` for the metering export.
 - **Login:** clearer paused and locked messages, a path for trial users who are the only admin, and when to delete the
   pause file after an unlock.
@@ -162,7 +169,7 @@ production, data quality and MDM). Each scored OK; these changes fix what they t
   localhost; TLS on non-local connections; bound Snowflake parameters; no password on any command line.
 - **Content:** the identifiable case study removed; safe wording for the legacy agent form, VM backups (managed
   identity, no secret over run-command), the Shell Service and curl logins; a vendor ticket key and a private roadmap
-  note removed; `/idmc-mp:connect` never handles a pasted password.
+  note removed; `/informatica-idmc-headless:connect` never handles a pasted password.
 - **CI:** least-privilege permissions, actions pinned to commit SHAs, no persisted token, Python 3.10 and 3.12,
   Dependabot. `.gitignore` covers demo `config.json` / `state/` and the mapping generator's `profile.json`.
 - **Tidiness:** lesson counts are generated (`toolkit/tools/sync_lesson_counts.py`) and tested; stale docs rewritten;
@@ -190,7 +197,7 @@ production, data quality and MDM). Each scored OK; these changes fix what they t
 - **No wasted login attempts:** the login check now looks at your file on your computer first (empty values, example
   values, an address that is not IDMC) and only then makes its single attempt. A failed login is explained in plain
   words: wrong region, single sign-on user, locked account, paused login, network or certificate problem.
-- A short "CONNECTED" summary instead of raw JSON (`--json` for the full answer); `/idmc-mp:connect` asks users not to
+- A short "CONNECTED" summary instead of raw JSON (`--json` for the full answer); `/informatica-idmc-headless:connect` asks users not to
   paste passwords into the chat.
 - **New** [SECURITY.md](../.github/SECURITY.md); `toolkit/setup/SETUP.md` rewritten for git clones, demos and sharing; a test
   (US-02b) proves example or empty values never reach IDMC.
@@ -218,13 +225,13 @@ production, data quality and MDM). Each scored OK; these changes fix what they t
 - **New playbook:** [cleaning a large dataset with IDMC mappings](../knowledge/08-data-quality/05-cleaning-a-large-dataset-with-mappings.md):
   when mappings and when SQL, the duplicate-record match as ten native steps, the SQL-twin proof, safe runs, and field
   results from two test datasets (every shared record agreed, every survivor the same).
-- **New command** `/idmc-mp:clean-data` (twelve in all); the `idmc-data-quality` skill points to both.
+- **New command** `/informatica-idmc-headless:clean-data` (twelve in all); the `idmc-data-quality` skill points to both.
 - **Three lessons:** L-DQ-165 (the match-mapping pattern), L-DQ-166 (the Cleanse dictionary is where IDMC beats a plain
   key), L-DQ-167 (re-count every scope after a merge rule improves).
 
 ## 1.2.0 (2026-11-18): the IDMC co-pilot layout
 
-- **One skill per IDMC area**, next to the core `idmc-mp` skill: `idmc-secure-agent`, `idmc-cdi`, `idmc-cdc`,
+- **One skill per IDMC area**, next to the core `informatica-idmc-headless` skill: `idmc-secure-agent`, `idmc-cdi`, `idmc-cdc`,
   `idmc-cai`, `idmc-data-quality`, `idmc-governance`, `idmc-mdm`, `idmc-claire-mcp`, `idmc-deploy`, `idmc-ipu`. Each
   has the ground rules, a work order, the docs to read and the tools to use.
 - **Six new commands:** `tune-agent`, `optimize`, `promote`, `add-dq`, `catalog`, `ipu-report` (eleven in all).

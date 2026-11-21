@@ -5,10 +5,10 @@ description: Use for Informatica IDMC Cloud Data Integration: build mappings hea
 
 # IDMC co-pilot: Data Integration (CDI): mappings, tasks, taskflows, performance
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "cdi"`),
   then `knowledge/04-mappings/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -55,9 +55,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - `toolkit/mapgen/exemplar.py`: read the shape of an exported mapping that already uses a connector
 - `toolkit/lib/idmc_mttask.py`: mapping tasks: show, clone, set-query (change the custom query), run, log
 - `toolkit/lib/idmc_taskflow_schedule.py`: linear taskflows and schedules
-- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `jobs_*` (run, status, search
+- MCP tools, when `/informatica-idmc-headless:connect-mcp` has connected the org's servers (`mcp__plugin_informatica-idmc-headless_idmc__*`): `jobs_*` (run, status, search
   completed jobs of deployed tasks), `logs_*`, `trouble_*` for quick reads; build and deploy stay on the toolkit
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

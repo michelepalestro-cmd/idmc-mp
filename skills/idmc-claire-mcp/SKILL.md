@@ -1,14 +1,14 @@
 ---
 name: idmc-claire-mcp
-description: Use for Informatica IDMC CLAIRE GPT and managed MCP servers: turn the org's MCP servers into Claude Code tools (/idmc-mp:connect-mcp and the plugin's read-only-by-default MCP bridge), list and call the org's MCP servers, MCP OAuth clients, agent-style async orchestration and custom shims, CLAIRE prompting patterns, and choosing MCP vs REST. Also for connecting Claude or other AI agents to Informatica, and Informatica's own Claude plugin.
+description: Use for Informatica IDMC CLAIRE GPT and managed MCP servers: turn the org's MCP servers into Claude Code tools (/informatica-idmc-headless:connect-mcp and the plugin's read-only-by-default MCP bridge), list and call the org's MCP servers, MCP OAuth clients, agent-style async orchestration and custom shims, CLAIRE prompting patterns, and choosing MCP vs REST. Also for connecting Claude or other AI agents to Informatica, and Informatica's own Claude plugin.
 ---
 
 # IDMC co-pilot: CLAIRE and MCP servers
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "claire-mcp"`),
   then `knowledge/11-mcp-claire/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -28,9 +28,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - Use CLAIRE GPT well.
 
 ## How to work
-0. To give Claude the org's servers as its own tools, run `/idmc-mp:connect-mcp`: a scoped OAuth client in
+0. To give Claude the org's servers as its own tools, run `/informatica-idmc-headless:connect-mcp`: a scoped OAuth client in
    `~/.idmc_toolkit/mcp_client.env`, read by the plugin's bridge (`toolkit/lib/idmc_mcp_bridge.py`, read-only unless
-   the client allows writes). The tools are `mcp__plugin_idmc-mp_idmc__<server>_<tool>`; `idmc_mcp_status` says what
+   the client allows writes). The tools are `mcp__plugin_informatica-idmc-headless_idmc__<server>_<tool>`; `idmc_mcp_status` says what
    is connected. Without it, use `toolkit/lib/idmc_mcp.py` directly.
 1. For the vendor's current catalog, read the public registry (no login, doc 01 §1a); then list the org's MCP registry
    and auth (docs 01-02) with `toolkit/lib/idmc_mcp.py`.
@@ -52,7 +52,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 | Vendor Claude plugin, MCP registries, community CLIs and MCP servers | `knowledge/11-mcp-claire/07-ecosystem-plugins-registries-community-tools.md` |
 | Someone else's public code for a route or pattern | `knowledge/reference/community-code-index.md` |
 | MCP servers, actions and calls | `knowledge/11-mcp-claire/README.md` |
-| Connect the servers as Claude Code tools, step by step | `commands/connect-mcp.md` (`/idmc-mp:connect-mcp`) |
+| Connect the servers as Claude Code tools, step by step | `commands/connect-mcp.md` (`/informatica-idmc-headless:connect-mcp`) |
 
 ## Tools (`--help` on each)
 - `toolkit/lib/idmc_mcp.py`: managed MCP servers: `servers`, `clients`, `client-create` (`--env-out`, default
@@ -61,4 +61,4 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

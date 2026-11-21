@@ -365,9 +365,9 @@ vendor servers and hand any MCP client the one URL (recipe L-MCP-082). Three thi
 
 ## 7. Wiring MCP servers into Claude Code
 
-- **The plugin's own bridge** (the shim of §6.1, built in): `/idmc-mp:connect-mcp` creates a scoped OAuth client
+- **The plugin's own bridge** (the shim of §6.1, built in): `/informatica-idmc-headless:connect-mcp` creates a scoped OAuth client
   and the plugin starts `toolkit/lib/idmc_mcp_bridge.py`, which offers the org's managed servers as
-  `mcp__plugin_idmc-mp_idmc__<server>_<tool>` tools, read-only by default; no `claude mcp add` is needed
+  `mcp__plugin_informatica-idmc-headless_idmc__<server>_<tool>` tools, read-only by default; no `claude mcp add` is needed
   ([02](02-mcp-auth-oauth-clients.md) §3.4).
 - **A local stdio shim** (proven):
 

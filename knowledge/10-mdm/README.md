@@ -6,7 +6,7 @@ table, load or search MDM records, or tune match and merge.
 
 **Start with:** the `idmc-mdm` skill; read with `toolkit/lib/idmc_session.py` (its command line only reads; MDM writes are hand-built, see the skill's Tools); open
 [01 MDM SaaS: Runtime vs Design](01-mdm-saas-runtime-vs-design.md) first (for a warehouse table with no MDM SaaS model,
-[05 Mastering a table](05-mastering-a-table-repeatable-playbook.md), and `/idmc-mp:clean-data` for a duplicate clean-up).
+[05 Mastering a table](05-mastering-a-table-repeatable-playbook.md), and `/informatica-idmc-headless:clean-data` for a duplicate clean-up).
 No MDM or DQ licence and a customer file? [Customer master from a CSV](../../toolkit/demos/customer_master_csv/README.md)
 cleans, deduplicates and assigns customer ids with plain CDI mappings.
 

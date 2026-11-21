@@ -15,7 +15,7 @@ same task look like both ways? What do they cost and how fast are they?
   Lineage is REST only today: the MCP `get_asset_lineage` backend answers "Unknown tool" (L-MCP-153); REST walks it
   hop by hop from the asset read (L-CDGC-181).
 - In this plugin both are available at once: the REST API through the toolkit, and the org's managed servers as
-  Claude Code tools after `/idmc-mp:connect-mcp` (§0).
+  Claude Code tools after `/informatica-idmc-headless:connect-mcp` (§0).
 - Never a user session in a daemon: use REST with a service login or an MCP gateway that holds an OAuth client
   (L-MCP-031).
 - Budget the backing service, not the MCP line (L-MCP-026).
@@ -45,8 +45,8 @@ read in two; L-MCP-151)
 
 | Side | How Claude reaches it | Scope |
 |---|---|---|
-| **REST API** | the toolkit (`toolkit/lib/*.py`, `toolkit/mapgen/`), logged in with the user's own login file (`/idmc-mp:connect`); `idmc_session.py get` reads any REST path, the write scripts send through the dry-run gate (`--execute --expect-org`) | every REST route the user's login is allowed to call, in the one org it logs in to; routes per service in the [endpoint dictionary](../reference/idmc-api-mcp-reference/claude-idmc-how-to/idmc-endpoint-dictionary.md) |
-| **Managed MCP servers as tools** | `/idmc-mp:connect-mcp` creates a scoped OAuth client (`~/.idmc_toolkit/mcp_client.env`); the plugin's bridge (`toolkit/lib/idmc_mcp_bridge.py`) offers each server's tools as `mcp__plugin_idmc-mp_idmc__<server>_<tool>`; `idmc_mcp_status` shows what is connected | the servers the org has switched on and the client was created for; **read-only** unless the client allows writes |
+| **REST API** | the toolkit (`toolkit/lib/*.py`, `toolkit/mapgen/`), logged in with the user's own login file (`/informatica-idmc-headless:connect`); `idmc_session.py get` reads any REST path, the write scripts send through the dry-run gate (`--execute --expect-org`) | every REST route the user's login is allowed to call, in the one org it logs in to; routes per service in the [endpoint dictionary](../reference/idmc-api-mcp-reference/claude-idmc-how-to/idmc-endpoint-dictionary.md) |
+| **Managed MCP servers as tools** | `/informatica-idmc-headless:connect-mcp` creates a scoped OAuth client (`~/.idmc_toolkit/mcp_client.env`); the plugin's bridge (`toolkit/lib/idmc_mcp_bridge.py`) offers each server's tools as `mcp__plugin_informatica-idmc-headless_idmc__<server>_<tool>`; `idmc_mcp_status` shows what is connected | the servers the org has switched on and the client was created for; **read-only** unless the client allows writes |
 | **Managed MCP servers by script** | `toolkit/lib/idmc_mcp.py tools / call` (session or OAuth) | the same servers, without the setup step |
 
 Short server names in the tool names: `jobs` (jobmanagement), `conn` (connectionmanagement), `agent`

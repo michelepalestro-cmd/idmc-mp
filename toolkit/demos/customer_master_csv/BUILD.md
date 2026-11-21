@@ -5,7 +5,7 @@ Writes are dry runs until `--execute --expect-org <orgIdV3>`. Paths are relative
 instead of `python3`.
 
 **You need:** an IDMC org and a native IDMC user (see the root README), a Linux x86-64 machine for the Secure Agent
-(4 vCPU and 16 GB is comfortable; macOS cannot run an agent), and the plugin connected: `/idmc-mp:connect` prints your
+(4 vCPU and 16 GB is comfortable; macOS cannot run an agent), and the plugin connected: `/informatica-idmc-headless:connect` prints your
 org id. Write that id down as `<orgIdV3>`.
 
 ## 1. Install and register the Secure Agent (target: 15-25 min)
@@ -22,7 +22,7 @@ Ask Claude: *"install a Secure Agent on this Linux machine and register it to my
 4. Enable only **Data Integration** on the runtime environment (`toolkit/lib/idmc_runtime_selections.py`): selecting
    every service downloaded about 18 GB in about 8 minutes and overloaded a 4-vCPU host (L-AGENT-041).
 
-**Proof:** `/idmc-mp:health-check` shows the agent and its Data Integration engine RUNNING with `subState` 0. Engines
+**Proof:** `/informatica-idmc-headless:health-check` shows the agent and its Data Integration engine RUNNING with `subState` 0. Engines
 can take 6-10 minutes after a start (L-AGENT-125).
 
 ## 2. A flat-file connection and the input file (target: 3-5 min)
@@ -91,5 +91,5 @@ expression or the twin, re-deploy, re-run.
 | 5. Compared with the twin | 1 min | | |
 | **Total, first time** | **about 20-40 min** | | |
 
-Share what you measured (and anything that went wrong) with `/idmc-mp:save-lesson`, and send it upstream with the
+Share what you measured (and anything that went wrong) with `/informatica-idmc-headless:save-lesson`, and send it upstream with the
 "Share a lesson" issue form.

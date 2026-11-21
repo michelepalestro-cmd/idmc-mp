@@ -1,4 +1,4 @@
-# Contributing to IDMC MP
+# Contributing to Informatica IDMC Headless
 
 Thank you for helping. The quickest way to contribute is to **share a lesson**: something IDMC did, with the evidence.
 Open an issue with the "Share a lesson" form, or a pull request if you are comfortable with git. Please read
@@ -13,14 +13,14 @@ e-mails, tracker keys, and never a password, token, key or session id. Use place
 
 ## Where things go
 
-This repo is one Claude Code plugin, `idmc-mp`. Keep it that way: `.claude-plugin/marketplace.json` lists exactly one
+This repo is one Claude Code plugin, `informatica-idmc-headless`. Keep it that way: `.claude-plugin/marketplace.json` lists exactly one
 plugin, whose source is the repo root.
 
 | You are adding... | Put it in | Rule |
 |---|---|---|
 | A lesson (something IDMC did, with evidence) | `knowledge/lessons/lessons.jsonl` (one JSON line, the source of truth) and the job folder's `knowledge/<job>/lessons*.md` | generic; see "A lesson" below |
 | An explanation, a procedure, a pattern | the job folder in `knowledge/` (`01-login-and-orgs` ... `14-working-with-claude`), or `knowledge/reference/` for lookup material | cite the lesson ids it rests on |
-| A compact rule Claude must always apply | `knowledge/00-start-here/` or the core skill `skills/idmc-mp/SKILL.md` | short; link to the long doc |
+| A compact rule Claude must always apply | `knowledge/00-start-here/` or the core skill `skills/informatica-idmc-headless/SKILL.md` | short; link to the long doc |
 | A workflow for one IDMC area | that area's `skills/idmc-*/SKILL.md` | "How to work", "Read", "Tools" sections |
 | A slash command | `commands/<name>.md` | names the skill(s) to use; paths start with `${CLAUDE_PLUGIN_ROOT}/` |
 | Python | `toolkit/lib/` (library), `toolkit/mapgen/` (generator), `toolkit/demos/<name>/` (a blueprint), `toolkit/tools/` (repo tools) | standard library only; `--help` must work without a login; writes are dry runs until `--execute --expect-org <orgIdV3>` |

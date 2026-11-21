@@ -4,7 +4,7 @@ Creating, testing, updating, rebinding and deleting IDMC connections over the v2
 or run fails; it applies to every source or target the user names, and after migrations (imported connections arrive
 without secrets).
 
-**Start with:** `/idmc-mp:health-check` (lists connections and their runtimes), `/idmc-mp:fix-error` when a test or
+**Start with:** `/informatica-idmc-headless:health-check` (lists connections and their runtimes), `/informatica-idmc-headless:fix-error` when a test or
 run fails, and `python3 toolkit/lib/idmc_session.py get v2 /api/v2/connection` for reads.
 Open first: [Connections: create, test, update, delete](01-connections-create-test-update-delete.md).
 
@@ -19,7 +19,7 @@ All on `<serverUrl>` (`https://<pod>.<domain>.informaticacloud.com/saas`) with `
 | Clone | GET a working one, change `name` (+ host/db), drop `id`, POST, test | L-CONN-004 |
 | Clone into another org | Drop `agentId`, `agentGroupId`, `orgId` from `connParams`, set the target runtime, re-supply secrets | L-CONN-122 |
 | Test (free, 0 IPU) | `GET /api/v2/connection/test/<connId>`, or MCP `connectionmanagement.test_connection_by_id` | L-CONN-014 |
-| Browse objects and preview data through MCP | `connectionmanagement` (18 tools since the October 2026 release, browse, metadata and preview included); as Claude Code tools through `/idmc-mp:connect-mcp` (read-only by default) | L-MCP-132 |
+| Browse objects and preview data through MCP | `connectionmanagement` (18 tools since the October 2026 release, browse, metadata and preview included); as Claude Code tools through `/informatica-idmc-headless:connect-mcp` (read-only by default) | L-MCP-132 |
 | Update | GET, drop `createTime`/`updateTime`/`createdBy`/`updatedBy`, re-supply every secret, `POST /api/v2/connection/<connId>` (full body: unsent optional fields reset), GET, test | L-CONN-006, L-CONN-007, L-CONN-145 (reported) |
 | Partial update | Same POST with header `Update-Mode: PARTIAL` (reported, code-read) | L-CONN-142 (reported) |
 | Rebind to another runtime | Set `runtimeEnvironmentId` **and** `connParams.agentGroupId`, re-supply secrets, POST, test | L-CONN-132 |
@@ -49,7 +49,7 @@ All on `<serverUrl>` (`https://<pod>.<domain>.informaticacloud.com/saas`) with `
 
 ## Fastest safe path
 
-1. Prove the org (`/idmc-mp:connect`) and name the runtime of the task that will use the connection. **Proof:**
+1. Prove the org (`/informatica-idmc-headless:connect`) and name the runtime of the task that will use the connection. **Proof:**
    `runtimeEnvironmentId` read live; every connector of a mapping must sit on that one agent (L-CONN-022).
 2. Check the gates in order: host, engine, adapter, driver. **Proof:** engine RUNNING in `agentEngines[]`, connector
    `enabled` in the runtime's selections (L-AGENT-034, L-CONN-019).

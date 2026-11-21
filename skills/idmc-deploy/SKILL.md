@@ -5,10 +5,10 @@ description: Use to deploy or promote Informatica IDMC assets between orgs or en
 
 # IDMC co-pilot: Deploy, promote and migrate (CI/CD, org to org, cleanup)
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "migration"`, `"domain": "org-cleanup"`),
   then `knowledge/12-deploy-migrate/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -54,9 +54,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   runtime EXISTS or MISSING in the target; it exits 1 unless the job ends SUCCESSFUL)
 - `toolkit/lib/idmc_package_edit.py`: edit a package offline and keep it importable
 - `toolkit/lib/idmc_frs_delete.py`: dependency-checked, leaf-first deletes
-- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `promo_*` (export and
+- MCP tools, when `/informatica-idmc-headless:connect-mcp` has connected the org's servers (`mcp__plugin_informatica-idmc-headless_idmc__*`): `promo_*` (export and
   import status and logs; start an export or import only when the client allows writes, then read it back over REST)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

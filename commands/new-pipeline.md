@@ -3,7 +3,7 @@ description: Plan, build, run and prove an IDMC pipeline on the systems you name
 argument-hint: "<source> to <target> [details]"
 ---
 
-Use the idmc-mp and idmc-cdi skills. The user wants a pipeline: $ARGUMENTS
+Use the informatica-idmc-headless and idmc-cdi skills. The user wants a pipeline: $ARGUMENTS
 
 1. Build with the systems the user named. Never switch them to another source, target or cloud. If a system is
    missing, ask once.

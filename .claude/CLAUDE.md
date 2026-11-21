@@ -1,6 +1,6 @@
 # Working on this repository
 
-This is the source of the `idmc-mp` Claude Code plugin. When you change it:
+This is the source of the `informatica-idmc-headless` Claude Code plugin. When you change it:
 
 - Follow [CONTRIBUTING.md](../.github/CONTRIBUTING.md) (where things go, the lesson format, keeping everything generic) and
   [knowledge/RULES.md](../knowledge/RULES.md) (the rules for any session that touches IDMC).

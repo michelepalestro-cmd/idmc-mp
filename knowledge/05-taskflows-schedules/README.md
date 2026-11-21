@@ -5,8 +5,8 @@ bind, unbind, end, delete, cut over between orgs) without the UI.
 
 **Start with:** `toolkit/lib/idmc_taskflow_schedule.py` (`upsert`, `run`, `schedule-create`, `bind`, `task-bind`,
 `audit`, `snapshot`, `restore`) and open [01 Taskflows & Schedules](01-taskflows-schedules.md) first. It is the
-orchestration milestone of `/idmc-mp:new-pipeline` ([command](../../commands/new-pipeline.md)); for parallel speed-ups
-see `/idmc-mp:optimize` ([command](../../commands/optimize.md)).
+orchestration milestone of `/informatica-idmc-headless:new-pipeline` ([command](../../commands/new-pipeline.md)); for parallel speed-ups
+see `/informatica-idmc-headless:optimize` ([command](../../commands/optimize.md)).
 
 > Every write of the tool is a dry run until `--execute --expect-org <orgIdV3>`. Every task run and every taskflow
 > run is a job: ask before running or scheduling (L-CDI-131).

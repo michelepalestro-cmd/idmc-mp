@@ -9,7 +9,7 @@
 - It tries at most one login per run, checks your file on your computer before it tries, and pauses itself after a
   rejected login, so it cannot lock your account by retrying.
 - Sessions are cached in `~/.idmc_session/` (readable only by you) and expire as IDMC sessions do.
-- If you run `/idmc-mp:connect-mcp`, the MCP OAuth client's secret is written straight to
+- If you run `/informatica-idmc-headless:connect-mcp`, the MCP OAuth client's secret is written straight to
   `~/.idmc_toolkit/mcp_client.env` (mode 600) and never printed. The plugin's MCP bridge reads it, offers read-only
   tools unless you chose read and write, and Claude Code still asks before each tool call.
 - Commands that change your org are dry runs until you add `--execute --expect-org <org id>`, and they refuse to run
@@ -43,7 +43,7 @@ text for `psql` built from escaped values), the line carries a `# nosec` / `# no
 ## Reporting a vulnerability
 
 Please do not open a public issue for a security problem. Use GitHub's private
-[Report a vulnerability](https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/security/advisories/new) form on this
+[Report a vulnerability](https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin/security/advisories/new) form on this
 repository. Include what you found, how to reproduce it, and what it could
 expose. You will get an answer as soon as possible.
 

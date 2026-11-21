@@ -41,7 +41,7 @@ home (L-ENV-074, L-AGENT-107).
 
 ## 2. The daily health check
 
-Run `/idmc-mp:health-check` every morning. Ask Claude Code to schedule it, or run the same reads from cron on a machine
+Run `/informatica-idmc-headless:health-check` every morning. Ask Claude Code to schedule it, or run the same reads from cron on a machine
 that holds the login file. It reports:
 
 | Check | How | Lesson |
@@ -51,7 +51,7 @@ that holds the login file. It reports:
 | What is running now (stuck jobs) | `GET /api/v2/activity/activityMonitor` | L-CDI-062 |
 | Agents and services up | `GET /api/v2/agent`, then `agentEngines[]` per agent | 02 Secure Agent cheat sheet |
 | Job-cap burn | jobs today (1 per task run plus 1 per taskflow run) against your monthly cap; profiling and catalog runs are counted elsewhere | L-IPU-041, L-IPU-055 |
-| IPU trend | `/idmc-mp:ipu-report` weekly (`toolkit/lib/idmc_metering.py`) | L-IPU-021 |
+| IPU trend | `/informatica-idmc-headless:ipu-report` weekly (`toolkit/lib/idmc_metering.py`) | L-IPU-021 |
 | Who changed what (optional) | `GET /public/core/v3/securityLog` for logins and admin changes | L-AUTH-135 |
 
 ## 3. A job failed at 2am: the runbook
@@ -73,13 +73,13 @@ that holds the login file. It reports:
    | WARNING with 0 rows | a failure | treat as FAILED (L-CDI-060) |
 
 4. **Search the lessons** for the exact error code or text: `knowledge/lessons/error-index.md`, then
-   `grep -i "<error text>" knowledge/lessons/lessons.jsonl`, or run `/idmc-mp:fix-error`.
+   `grep -i "<error text>" knowledge/lessons/lessons.jsonl`, or run `/informatica-idmc-headless:fix-error`.
 5. **Hosted Agent outage:** follow L-ENV-100: confirm (APP_105060 on every hosted connection, L-AGENT-117), list the
    tasks on the hosted runtime, save each full task body to an undo file, rebind the tasks and the connections they
    use to a Secure Agent, re-run, and undo when the hosted runtime is back.
 6. **Re-run only once the cause is fixed**, and check the rows: a run that "succeeded" with 0 rows has not delivered
    anything.
-7. **Write it down:** what failed, why, what fixed it. If it was new, save it with `/idmc-mp:save-lesson`.
+7. **Write it down:** what failed, why, what fixed it. If it was new, save it with `/informatica-idmc-headless:save-lesson`.
 
 ## 4. Agent upgrades
 
@@ -125,4 +125,4 @@ There is no scheduled backup inside IDMC. Make your own:
    secrets (L-MIG-018).
 3. A package does not carry secrets, schedules, tags, catalog content or published CAI processes (L-MIG-017): keep a
    short written list of those, so a restore can rebuild them.
-4. Test a restore into a sandbox org once, the same way as a promotion (`/idmc-mp:promote`).
+4. Test a restore into a sandbox org once, the same way as a promotion (`/informatica-idmc-headless:promote`).

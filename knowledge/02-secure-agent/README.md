@@ -3,7 +3,7 @@
 Installing, registering, supervising, sizing and tuning a Secure Agent, and choosing the services and connectors its
 runtime environment runs; it applies whenever work must reach a private network or an agent is slow, down or missing.
 
-**Start with:** `/idmc-mp:health-check` (read-only inventory of runtimes, agents and engines), `/idmc-mp:tune-agent`
+**Start with:** `/informatica-idmc-headless:health-check` (read-only inventory of runtimes, agents and engines), `/informatica-idmc-headless:tune-agent`
 for sizing, and `toolkit/lib/idmc_runtime_selections.py` (`show` / `set` / `restore`) for services and connectors.
 Open first: [Secure Agent: install, run and tune](01-secure-agent-install-run-tune.md).
 
@@ -43,9 +43,9 @@ Open first: [Secure Agent: install, run and tune](01-secure-agent-install-run-tu
 
 ## Fastest safe path
 
-1. Prove the org (`/idmc-mp:connect`, see [Login, orgs and access](../01-login-and-orgs/README.md)). **Proof:** org id
+1. Prove the org (`/informatica-idmc-headless:connect`, see [Login, orgs and access](../01-login-and-orgs/README.md)). **Proof:** org id
    printed; mint the install token in that org (L-AGENT-001).
-2. Preflight (`/idmc-mp:health-check`). **Proof:** agents and engines listed; `[]` = install one (L-AGENT-032).
+2. Preflight (`/informatica-idmc-headless:health-check`). **Proof:** agents and engines listed; `[]` = install one (L-AGENT-032).
 3. Egress from the future host. **Proof:** login GET 405, domain root 301; timeout/TLS = fix firewall first (L-AGENT-003).
 4. Size before selecting: sum every `-Xmx`, >= 16 GB RAM with DI on, ~20 GB free disk, swap (L-AGENT-052, L-AGENT-109).
 5. Token, install, `infaagent startup`, `configureToken`. **Proof:** `getstatus` READY, `isConfigured` true,

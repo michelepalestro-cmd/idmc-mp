@@ -1,5 +1,5 @@
 blank_issues_enabled: true
 contact_links:
   - name: Report a security problem (private)
-    url: https://github.com/michelepalestro-cmd/idmc-mp-informatica-claude-plugin/security/advisories/new
+    url: https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin/security/advisories/new
     about: Please report vulnerabilities privately, not in a public issue.

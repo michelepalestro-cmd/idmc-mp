@@ -257,9 +257,9 @@ Keep those checks in a kept, GET-only-by-default harness rather than in fresh on
   In September 2026 one org exposed 19 managed servers and about 140 tools, which falsified walls that had been
   declared from the two servers wired into a session (L-METHOD-011). The October 2026 release lists 23 shared servers
   in the public registry (no login needed), but only the org registry says what your org exposes (L-MCP-132).
-- **Inside Claude Code**: `/idmc-mp:connect-mcp` creates a scoped OAuth client for the org's servers, and the plugin's
+- **Inside Claude Code**: `/informatica-idmc-headless:connect-mcp` creates a scoped OAuth client for the org's servers, and the plugin's
   bridge (`toolkit/lib/idmc_mcp_bridge.py`, started by the plugin) offers their tools as Claude Code tools
-  (`mcp__plugin_idmc-mp_idmc__*`). It is read-only unless the client was created with writes allowed, and
+  (`mcp__plugin_informatica-idmc-headless_idmc__*`). It is read-only unless the client was created with writes allowed, and
   `idmc_mcp_bridge.py --check` lists what it would offer.
 - **What MCP is not.** It is a calling convention: it never replaces a Secure Agent, never reaches a private database
   the agent cannot, and its backing calls still bill IPUs. Read a server's tool list before assuming it can write.

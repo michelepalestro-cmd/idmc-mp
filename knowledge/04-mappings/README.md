@@ -3,10 +3,10 @@
 Build, deploy, run and prove an IDMC Data Integration mapping and its mapping task without the designer, on the source
 and target the user named; for any new mapping, a rebuild, or a change to a live mapping or task.
 
-**Start with:** `/idmc-mp:new-pipeline <source> to <target>` ([command](../../commands/new-pipeline.md)) and the
+**Start with:** `/informatica-idmc-headless:new-pipeline <source> to <target>` ([command](../../commands/new-pipeline.md)) and the
 generator `toolkit/mapgen/mapgen.py` ([README](../../toolkit/mapgen/README.md)). Open
 [00 Mapping Fast Path](00-mapping-fast-path-read-this-first.md) first: it holds the ten commands, the per-connector
-settings and the costly errors. A slow or costly pipeline: `/idmc-mp:optimize` ([command](../../commands/optimize.md)).
+settings and the costly errors. A slow or costly pipeline: `/informatica-idmc-headless:optimize` ([command](../../commands/optimize.md)).
 
 > The generator's writes (`import`, `task`, `run`, `deploy`) are dry runs until `--execute --expect-org <orgIdV3>`.
 > `run` starts a job that counts against the job budget and IPUs: ask the user first.

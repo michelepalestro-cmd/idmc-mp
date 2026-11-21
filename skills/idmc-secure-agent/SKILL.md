@@ -5,10 +5,10 @@ description: Use for Informatica IDMC Secure Agent and runtime environment work:
 
 # IDMC co-pilot: Secure Agent and runtime environments
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "agent"`),
   then `knowledge/02-secure-agent/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -28,7 +28,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - Turn on only the services and connectors the pipelines need.
 
 ## How to work
-1. Prove the org; list runtime environments and agents read-only (`/idmc-mp:health-check` does this).
+1. Prove the org; list runtime environments and agents read-only (`/informatica-idmc-headless:health-check` does this).
 2. Install/register: installer URL and org-scoped token from the v2 route (save it with `idmc_session.py get ... --save-to`,
    since printing hides it), then the host steps in doc 01 section 3.
 3. Run as a service (doc 01 section 4); check the post-boot checklist after any resize or reboot.
@@ -53,9 +53,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   (`--save-to <file>` keeps a secret such as the install token out of the output)
 - `toolkit/lib/idmc_runtime_selections.py`: services and connectors of a runtime environment
 - `toolkit/lib/idmc_probe.py`: route discovery that cannot fool itself (bogus-twin check)
-- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `agent_*` (agents,
+- MCP tools, when `/informatica-idmc-headless:connect-mcp` has connected the org's servers (`mcp__plugin_informatica-idmc-headless_idmc__*`): `agent_*` (agents,
   runtime environments; selection changes only when the client allows writes), `trouble_*` (agent health)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

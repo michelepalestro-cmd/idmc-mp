@@ -219,7 +219,7 @@ the agent; run, monitor and stop; asset export and import; glossary and classifi
   in older examples, and `https://mcp.<domain>.informaticacloud.com/mcp-servers/public/<context>` in current registries
   (L-MCP-029). In the older form the prefix is `a2e-prod` by default (`a2e-preview-c360` on the preview domain) and the
   pod part is the first label of the login `serverUrl` (L-MCP-138).
-- **In Claude Code** `/idmc-mp:connect-mcp` creates a scoped OAuth client and the plugin's bridge offers the chosen
+- **In Claude Code** `/informatica-idmc-headless:connect-mcp` creates a scoped OAuth client and the plugin's bridge offers the chosen
   servers' tools, read-only by default ([02](02-mcp-auth-oauth-clients.md) §3.4).
 - **Auth**, in detail in [02](02-mcp-auth-oauth-clients.md):
 
