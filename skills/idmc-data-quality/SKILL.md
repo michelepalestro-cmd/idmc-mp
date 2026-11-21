@@ -5,10 +5,10 @@ description: Use for Informatica IDMC Data Quality and profiling: profile a tabl
 
 # IDMC co-pilot: Data quality and profiling (CDQ)
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "dq-profiling"`),
   then `knowledge/08-data-quality/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -25,7 +25,7 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 - Profile a table and propose DQ rules for it.
 - Put the rules into the pipeline and score the data.
 - Publish a DQ scorecard people can read.
-- Clean a big table: standardize, find duplicates, pick survivors (`/idmc-mp:clean-data`).
+- Clean a big table: standardize, find duplicates, pick survivors (`/informatica-idmc-headless:clean-data`).
 
 ## How to work
 1. Profile (doc 02 says what is headless) and read the results.
@@ -46,9 +46,9 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 ## Tools (`--help` on each)
 - `toolkit/mapgen/mapgen.py`: rule specs run inside generated mappings
 - `toolkit/lib/idmc_objects.py`: read-only census of DQ assets
-- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `dqagent_*` (CLAIRE DQ
+- MCP tools, when `/informatica-idmc-headless:connect-mcp` has connected the org's servers (`mcp__plugin_informatica-idmc-headless_idmc__*`): `dqagent_*` (CLAIRE DQ
   agent), `addr_verify_address` (one address per call), `dqscore_*` (catalog DQ scores)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

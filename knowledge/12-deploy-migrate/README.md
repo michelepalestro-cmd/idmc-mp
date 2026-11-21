@@ -4,7 +4,7 @@ Moving IDMC design objects between projects, environments or orgs (export, edit,
 rolling back, and deleting headless; applies to any promotion, org-to-org move, clone of an object with no create verb,
 or cleanup.
 
-**Start with:** `/idmc-mp:promote` (skill `idmc-deploy`) and
+**Start with:** `/informatica-idmc-headless:promote` (skill `idmc-deploy`) and
 [01 Export & Import](01-export-import-v3-migration-api.md); for a whole org move, the
 [04 Org-to-Org Runbook](04-org-to-org-migration-runbook.md). Prove the org first (`toolkit/check_login.py`).
 

@@ -5,10 +5,10 @@ description: Use for Informatica IDMC Cloud Application Integration: author, pub
 
 # IDMC co-pilot: Application Integration (CAI): processes, connectors, events
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "cai"`),
   then `knowledge/07-app-integration/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -49,4 +49,4 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

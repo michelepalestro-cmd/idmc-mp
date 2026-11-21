@@ -212,7 +212,7 @@ template to the package so it is there next time."*
 7. **Enrich the package, so the learning persists:** add the connector's row to §2 of this page (object path, native
    types, full-reload setting, must-know), save a placeholder-only example spec in `toolkit/mapgen/examples/connectors/`
    (`m_ex_<source>_to_<target>.json`; never the exemplar zip or your org's ids), save a dated lesson with
-   `/idmc-mp:save-lesson` (it goes to `~/.idmc_toolkit/lessons-local.jsonl`), and note any generator change it would need (for example a connector-kind entry) for the next
+   `/informatica-idmc-headless:save-lesson` (it goes to `~/.idmc_toolkit/lessons-local.jsonl`), and note any generator change it would need (for example a connector-kind entry) for the next
    maintainer to probe before shipping.
 
 ### 7.1 Other gaps
@@ -232,6 +232,6 @@ Then, for anything else, the workaround ladder in [New Pipeline Milestones](../0
    advanced taskflow (chain linear taskflows, or publish once in the UI), changing an existing mapping's connector type
    (regenerate the mapping on the new connection), CDI parameter sets ([02](02-how-claude-builds-mappings-headless.md) §8).
 
-When you learn something new, save it with `/idmc-mp:save-lesson` (your machine's `~/.idmc_toolkit/lessons-local.jsonl`;
+When you learn something new, save it with `/informatica-idmc-headless:save-lesson` (your machine's `~/.idmc_toolkit/lessons-local.jsonl`;
 never edit the installed plugin folder, it is replaced on every update). To share it, and a row for this page, open an
 issue or pull request on the plugin's GitHub repo ([CONTRIBUTING](../../.github/CONTRIBUTING.md)).

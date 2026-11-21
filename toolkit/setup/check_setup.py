@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""check_setup.py - offline readiness check for the idmc-mp plugin on a new PC (makes no network call).
+"""check_setup.py - offline readiness check for the informatica-idmc-headless plugin on a new PC (makes no network call).
 
     python3 toolkit/setup/check_setup.py                 # core checks + the IDMC login (IDMC_LOGIN.txt)
     python3 toolkit/setup/check_setup.py --demo <name>   # also the keys one blueprint needs (from setup/.env.example)
@@ -109,9 +109,9 @@ def main():
     print(f"{OK if not bad else BAD} core library compiles" + ("" if not bad else ": " + "; ".join(bad)))
     fails += bool(bad)
 
-    sk = Path(__file__).resolve().parents[2] / "skills" / "idmc-mp" / "SKILL.md"   # toolkit/setup/ -> the plugin root
-    print(f"{OK if sk.is_file() else WARN} Claude skill idmc-mp " +
-          ("present (this folder)" if sk.is_file() else "skills/idmc-mp/SKILL.md not found: use the whole plugin folder"))
+    sk = Path(__file__).resolve().parents[2] / "skills" / "informatica-idmc-headless" / "SKILL.md"   # toolkit/setup/ -> the plugin root
+    print(f"{OK if sk.is_file() else WARN} Claude skill informatica-idmc-headless " +
+          ("present (this folder)" if sk.is_file() else "skills/informatica-idmc-headless/SKILL.md not found: use the whole plugin folder"))
 
     if shutil.which("docker"):
         r = subprocess.run(["docker", "compose", "version"], capture_output=True, text=True)

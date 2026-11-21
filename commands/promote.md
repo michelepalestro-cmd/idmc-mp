@@ -3,7 +3,7 @@ description: Promote IDMC assets between orgs or environments (dev -> test -> pr
 argument-hint: "<project or assets> from <source org> to <target org>"
 ---
 
-Use the idmc-mp and idmc-deploy skills. On Windows, use `python` (or `py`) where these steps say `python3`.
+Use the informatica-idmc-headless and idmc-deploy skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Promote: $ARGUMENTS
 
 1. Prove BOTH orgs (one login file per org, `IDMC_CREDS_FILE`); write down each org id. Never retry a failed login.

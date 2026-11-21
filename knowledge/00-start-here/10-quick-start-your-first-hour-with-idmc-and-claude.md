@@ -22,9 +22,9 @@ Claude, and the lessons that trip up almost every new user. Everything deeper is
 
 ## 2. Connect and prove the org (10 minutes)
 
-1. Type `/idmc-mp:connect` (or ask **"connect to my IDMC org"**). The first time, it creates your login file in
+1. Type `/informatica-idmc-headless:connect` (or ask **"connect to my IDMC org"**). The first time, it creates your login file in
    `~/.idmc_toolkit/` and shows a `--setup` command: run that in a terminal window and answer three questions (the IDMC
-   address from your browser, your user name, your password, which stays hidden). Then type `/idmc-mp:connect` again.
+   address from your browser, your user name, your password, which stays hidden). Then type `/informatica-idmc-headless:connect` again.
    It checks the file on your computer first and makes one login attempt at most; the
    [Setup and login](11-setup-and-login.md#if-the-login-doesnt-work) explains every login message in plain words.
 2. Ask: **"prove which org we are in"**. Claude runs the three-call preflight (login, `GET /api/v2/org`,
@@ -51,7 +51,7 @@ recommendations.
 | Data quality | "profile `<table>`, suggest DQ rules, and add them to the pipeline" | [knowledge/08-data-quality](../08-data-quality) |
 | Catalog and lineage | "scan `<source>` into the catalog and show lineage from source to report" | [knowledge/09-catalog-lineage](../09-catalog-lineage) |
 | Golden records | "match and merge `<entity>` across `<sources>` and show me the golden records" | [knowledge/10-mdm](../10-mdm) |
-| Use IDMC from Claude over MCP | `/idmc-mp:connect-mcp`, or "connect Claude to IDMC's MCP servers" (read-only tools by default) | [knowledge/11-mcp-claire](../11-mcp-claire) |
+| Use IDMC from Claude over MCP | `/informatica-idmc-headless:connect-mcp`, or "connect Claude to IDMC's MCP servers" (read-only tools by default) | [knowledge/11-mcp-claire](../11-mcp-claire) |
 | Move assets between orgs | "export project `<name>` and import it into my other org" | [knowledge/12-deploy-migrate](../12-deploy-migrate) |
 | Know the cost | "how many IPUs did we use this month, and by what" | [knowledge/13-ipu-cost](../13-ipu-cost) |
 | Fix an error | paste the error: "why does this fail: `<message>`" | [Error Triage](04-error-triage.md), `knowledge/lessons/` |

@@ -24,7 +24,7 @@ user wants an agent, Claude or a chat to read, run or change IDMC through MCP, o
 | Lineage read, fuzzy customer match | `get_asset_details` (`id`, `scheme`); `searchcustomer.search_master_record` | L-MCP-004, L-MCP-007 |
 | CLAIRE GPT questions headless | `datamanagementorchestrator.orchestrate`, `dataexplorationagent.data_explore` (needs `name`, `external_id`): same answers as the UI in 28-80 s | L-MCP-111, L-MCP-119 |
 | File profiling and cleansing | `dataqualityagent` (`request_upload_url` + skill; retry a 409 PUT with a fresh URL) | L-MCP-049, L-MCP-112 |
-| Wire into Claude Code | `/idmc-mp:connect-mcp`: a scoped OAuth client in `~/.idmc_toolkit/mcp_client.env`, served by the plugin's bridge (`toolkit/lib/idmc_mcp_bridge.py`, read-only by default) as `mcp__plugin_idmc-mp_idmc__*` tools; for your own shim, `claude mcp add <name> -s user -- <python> -u <shim.py>` | L-MCP-041 |
+| Wire into Claude Code | `/informatica-idmc-headless:connect-mcp`: a scoped OAuth client in `~/.idmc_toolkit/mcp_client.env`, served by the plugin's bridge (`toolkit/lib/idmc_mcp_bridge.py`, read-only by default) as `mcp__plugin_informatica-idmc-headless_idmc__*` tools; for your own shim, `claude mcp add <name> -s user -- <python> -u <shim.py>` | L-MCP-041 |
 
 ## What doesn't work, and the workaround
 

@@ -1,11 +1,11 @@
 ---
-name: idmc-mp
-description: Use when working with Informatica IDMC / IICS without its UI, or planning, deploying, optimizing or troubleshooting IDMC - REST or MCP calls to CDI, CAI, CDQ, CDGC, MDM, DBMI/CDC, Secure Agents, runtime environments, connections, mappings, taskflows, profiling, data quality rules, catalog, IPU metering - or when an IDMC call returns 401, 403, 404, 405, 500, APP_10519, APP_105060, a zero-byte 200, or readyToRun false. Also the starting point for anything Informatica, Informatica Cloud or IICS: setting it up, logging in (/idmc-mp:connect), connecting the org's MCP servers as tools (/idmc-mp:connect-mcp), or any error.
+name: informatica-idmc-headless
+description: Use when working with Informatica IDMC / IICS without its UI, or planning, deploying, optimizing or troubleshooting IDMC - REST or MCP calls to CDI, CAI, CDQ, CDGC, MDM, DBMI/CDC, Secure Agents, runtime environments, connections, mappings, taskflows, profiling, data quality rules, catalog, IPU metering - or when an IDMC call returns 401, 403, 404, 405, 500, APP_10519, APP_105060, a zero-byte 200, or readyToRun false. Also the starting point for anything Informatica, Informatica Cloud or IICS: setting it up, logging in (/informatica-idmc-headless:connect), connecting the org's MCP servers as tools (/informatica-idmc-headless:connect-mcp), or any error.
 ---
 
-# IDMC MP: the IDMC co-pilot for Claude
+# Informatica IDMC Headless: the IDMC co-pilot for Claude
 
-This is the core skill of the **idmc-mp** plugin: the rules, the login, and where to go. Paths are relative to the
+This is the core skill of the **informatica-idmc-headless** plugin: the rules, the login, and where to go. Paths are relative to the
 plugin root, `${CLAUDE_PLUGIN_ROOT}` (two folders above this skill's folder).
 **Python command:** use `python3` on macOS and Linux (macOS has no `python`), and `python` or `py` on Windows.
 The library needs only the standard library (Python 3.10+).
@@ -45,7 +45,7 @@ fake (probe a bogus twin); 404 = wrong path, not unlicensed; entitlement comes f
 call; MCP never replaces the Secure Agent.
 
 ## Connect (once per person)
-Run `/idmc-mp:connect` (it runs `toolkit/check_login.py`). The first time, it creates `~/.idmc_toolkit/IDMC_LOGIN.txt`
+Run `/informatica-idmc-headless:connect` (it runs `toolkit/check_login.py`). The first time, it creates `~/.idmc_toolkit/IDMC_LOGIN.txt`
 outside the plugin and prints a `--setup` command: the user runs that in a terminal and answers three questions (the
 IDMC address from the browser, the user name, the password, hidden). It checks the values offline and makes **one**
 login attempt: never retry a failed login, wrong logins lock the account. If `IDMC_CREDS_FILE` is set or the file is
@@ -54,8 +54,8 @@ password in the chat**; if one is pasted, tell the user to change it and enter t
 login help: `knowledge/00-start-here/11-setup-and-login.md`.
 
 ## MCP tools and the REST API: use both, per task
-Two ways into the same org, with the same limits. If `mcp__plugin_idmc-mp_idmc__*` tools are loaded (the org's managed
-MCP servers, set up once with `/idmc-mp:connect-mcp`; `idmc_mcp_status` shows what is connected), prefer them for:
+Two ways into the same org, with the same limits. If `mcp__plugin_informatica-idmc-headless_idmc__*` tools are loaded (the org's managed
+MCP servers, set up once with `/informatica-idmc-headless:connect-mcp`; `idmc_mcp_status` shows what is connected), prefer them for:
 plain-language questions (`claire_*`, `explore_*`), fuzzy customer match (`cust_*`), lineage and catalog search
 (`catsearch_*`, `catfind_*`), one-off address checks (`addr_*`), and quick reads of jobs, logs, connections and agents.
 Use the toolkit's REST scripts for: building mappings, deploying CDC, publishing CAI, profiling, dictionaries, bulk or
@@ -81,7 +81,7 @@ calls the same servers). Full table: `knowledge/11-mcp-claire/05-mcp-vs-rest-whe
 | Promote dev to prod, org-to-org migration, cleanup | `idmc-deploy` | `knowledge/12-deploy-migrate/` |
 | IPU, metering, job caps, cost | `idmc-ipu` | `knowledge/13-ipu-cost/` |
 | Login, orgs, pods, sessions, users and roles | this one | `knowledge/01-login-and-orgs/` |
-| Something failed | this one | `/idmc-mp:fix-error`, `knowledge/00-start-here/04-error-triage.md` |
+| Something failed | this one | `/informatica-idmc-headless:fix-error`, `knowledge/00-start-here/04-error-triage.md` |
 | Any single asset type | this one | `knowledge/00-start-here/README.md` (the router), then that job's cheat sheet |
 | Endpoints and verbs per service; documented caps | this one | `knowledge/reference/idmc-api-mcp-reference/claude-idmc-how-to/idmc-endpoint-dictionary.md`, `knowledge/reference/` |
 | Python helpers (session, lockout guard, CDGC, jobs) | this one | `toolkit/lib/README.md` |
@@ -96,7 +96,7 @@ one connection test), say which parts are field evidence, and point to https://d
 ## When you learn something
 This plugin's folder is replaced on every update, so never write into it. Append the new lesson (same shape as
 `knowledge/lessons/lessons.jsonl`, generic: no org ids, hosts, people or secrets) to `~/.idmc_toolkit/lessons-local.jsonl`
-(`/idmc-mp:save-lesson`), and grep that file too in Law 1. Keep the user's own ids in their blueprint `config.json`
+(`/informatica-idmc-headless:save-lesson`), and grep that file too in Law 1. Keep the user's own ids in their blueprint `config.json`
 (outside the plugin), never in a lesson. To share a lesson with everyone, open an issue or pull request on the
 plugin's GitHub repo (`.github/CONTRIBUTING.md`).
 

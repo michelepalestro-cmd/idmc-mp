@@ -192,7 +192,7 @@ def explain_failure(text):
         helps.append(BUSY)
     if not helps:
         helps.append("The login did not work. Read the message above, check your login file, and run this once more.\n"
-                     "  Stuck? In Claude Code run /idmc-mp:fix-error and paste the message (never your password).")
+                     "  Stuck? In Claude Code run /informatica-idmc-headless:fix-error and paste the message (never your password).")
     for h in helps:
         say("\nWHAT THIS MEANS\n  " + h)
 
@@ -209,7 +209,7 @@ def summarize(w):
     for k in ("warning", "mismatch"):
         if w.get(k):
             say(f"  NOTE     : {w[k]}")
-    say("\nNext, in Claude Code: /idmc-mp:health-check")
+    say("\nNext, in Claude Code: /informatica-idmc-headless:health-check")
 
 
 def main():

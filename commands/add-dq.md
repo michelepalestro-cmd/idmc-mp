@@ -3,7 +3,7 @@ description: Profile a table, propose data quality rules, and put them into the 
 argument-hint: "<connection> <table> [columns or rules]"
 ---
 
-Use the idmc-mp and idmc-data-quality skills. On Windows, use `python` (or `py`) where these steps say `python3`.
+Use the informatica-idmc-headless and idmc-data-quality skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Table: $ARGUMENTS
 
 1. Prove the org (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`).

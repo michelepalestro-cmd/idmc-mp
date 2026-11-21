@@ -3,7 +3,7 @@ description: Save something you learned about IDMC as a reusable lesson on your 
 argument-hint: "<what you learned>"
 ---
 
-Use the idmc-mp skill. On Windows, use `python` (or `py`) where these steps say `python3`. Save this as a lesson: $ARGUMENTS
+Use the informatica-idmc-headless skill. On Windows, use `python` (or `py`) where these steps say `python3`. Save this as a lesson: $ARGUMENTS
 
 1. Check it is new: grep `${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl` and `~/.idmc_toolkit/lessons-local.jsonl`.
    If it repeats a lesson, say which one and stop. If it adds to one, note `Refines <id>`.

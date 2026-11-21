@@ -1,7 +1,7 @@
 # Setup for advanced users: git clones, demos and sharing
 
 Most people only need the 3 steps in the [README](../../knowledge/00-start-here/11-setup-and-login.md#setup-in-3-steps-about-10-minutes): install the
-plugin, run `/idmc-mp:connect`, done. This page is for when you work from a **git clone**, build a **demo blueprint**,
+plugin, run `/informatica-idmc-headless:connect`, done. This page is for when you work from a **git clone**, build a **demo blueprint**,
 or want to **share** your copy.
 
 Paths below are relative to the plugin folder (the repository root). Windows: use `py` where it says `python3`.
@@ -19,8 +19,8 @@ Paths below are relative to the plugin folder (the repository root). Windows: us
 ## 2. Clone and protect the repository
 
 ```
-git clone https://github.com/michelepalestro-cmd/idmc-mp.git
-cd idmc-mp
+git clone https://github.com/michelepalestro-cmd/informatica-idmc-headless-plugin.git
+cd informatica-idmc-headless-plugin
 git config core.hooksPath toolkit/tools/git-hooks
 ```
 

@@ -18,7 +18,7 @@ password rotated; an MCP call returns 401 or `IDS_085`.
   consumer when that password rotates (L-MCP-020, L-MCP-021).
 - A valid credential on the wrong domain or pod answers 400 `IDS_085`; each managed server holds its own session, so a
   401 on one says nothing about the others (L-MCP-025).
-- In Claude Code, `/idmc-mp:connect-mcp` creates a scoped client-credentials client (dry run, then `--execute
+- In Claude Code, `/informatica-idmc-headless:connect-mcp` creates a scoped client-credentials client (dry run, then `--execute
   --expect-org`), writes it to `~/.idmc_toolkit/mcp_client.env` (0600), and the plugin's bridge
   (`toolkit/lib/idmc_mcp_bridge.py`) uses that file to offer the servers' tools, read-only by default (§3.4).
 - Since the October 2026 release the two OAuth servers are named "Informatica OAuth Server (Client Credentials Grant)"
@@ -165,7 +165,7 @@ MCP_BASE=https://mcp.<domain>.informaticacloud.com/mcp-servers/public/
 - Keep client secrets in a secret manager or a 0600 env file on the consuming host, one item per role or consumer
   (L-MCP-048).
 
-### 3.4 The plugin does this for you: `/idmc-mp:connect-mcp`
+### 3.4 The plugin does this for you: `/informatica-idmc-headless:connect-mcp`
 
 The plugin's command runs §3.1 to §3.3 and §5 with the toolkit, so nobody hand-writes the calls:
 
@@ -177,7 +177,7 @@ The plugin's command runs §3.1 to §3.3 and §5 with the toolkit, so nobody han
    `clients` lists clients and `client-delete <clientId> --execute --expect-org <orgIdV3>` removes an old one.
 3. The plugin starts the bridge `toolkit/lib/idmc_mcp_bridge.py` as its MCP server (`plugin.json` `mcpServers`). It
    reads that file, takes a client-credentials token (Basic auth, `grant_type=client_credentials`) and offers each
-   server's tools as `mcp__plugin_idmc-mp_idmc__<server>_<tool>`. Read-only by default: only reading tools are offered
+   server's tools as `mcp__plugin_informatica-idmc-headless_idmc__<server>_<tool>`. Read-only by default: only reading tools are offered
    unless the file holds `IDMC_MCP_ALLOW_WRITES=1`. Without the file it offers one status tool and makes no call.
 4. `python3 toolkit/lib/idmc_mcp_bridge.py --check` lists the servers and tools before a restart of Claude Code.
 
@@ -264,7 +264,7 @@ Gateway (data exploration runs through it, [03](03-claire-gpt-prompting-rules-pa
 create the client. The OAuth 2.1 server for human-in-the-loop clients is documented in the vendor MCP guide (L-MCP-119).
 
 **In Claude Code** the vendor plugin's source ships its two server URLs empty, so it does nothing until you add your
-pod's URLs and a credential yourself (L-MCP-135); `/idmc-mp:connect-mcp` (§3.4) covers every server the org lists.
+pod's URLs and a credential yourself (L-MCP-135); `/informatica-idmc-headless:connect-mcp` (§3.4) covers every server the org lists.
 Agent platforms built on Microsoft's MCP catalog get five Informatica servers with client-credentials manifests
 (L-MCP-136).
 

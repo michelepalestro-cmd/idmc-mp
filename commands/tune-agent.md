@@ -3,7 +3,7 @@ description: Review a Secure Agent's health and sizing, then recommend (and on y
 argument-hint: "[agent or runtime environment name]"
 ---
 
-Use the idmc-mp and idmc-secure-agent skills. On Windows, use `python` (or `py`) where these steps say `python3`.
+Use the informatica-idmc-headless and idmc-secure-agent skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Target: $ARGUMENTS (if empty, every runtime environment in the org).
 
 1. Prove the org: `python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`. Never retry a failed login.

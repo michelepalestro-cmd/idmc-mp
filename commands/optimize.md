@@ -3,7 +3,7 @@ description: Find why an IDMC pipeline is slow or costly and propose measured fi
 argument-hint: "<taskflow, task or project name>"
 ---
 
-Use the idmc-mp, idmc-cdi and idmc-ipu skills. On Windows, use `python` (or `py`) where these steps say `python3`.
+Use the informatica-idmc-headless, idmc-cdi and idmc-ipu skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Pipeline: $ARGUMENTS
 
 1. Prove the org (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`), then read the pipeline's objects and its

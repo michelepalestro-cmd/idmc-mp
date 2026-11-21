@@ -3,7 +3,7 @@ description: Report IPU consumption and job usage for a period, by service and p
 argument-hint: "[period, e.g. this month]"
 ---
 
-Use the idmc-mp and idmc-ipu skills. On Windows, use `python` (or `py`) where these steps say `python3`. Read-only.
+Use the informatica-idmc-headless and idmc-ipu skills. On Windows, use `python` (or `py`) where these steps say `python3`. Read-only.
 Period: $ARGUMENTS (default: the current month).
 
 1. Prove the org (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/check_login.py"`).
@@ -20,4 +20,4 @@ Period: $ARGUMENTS (default: the current month).
    For a spike, compare day by day and by project (`PROJECT_FOLDER` export), then find the tasks whose run count or
    duration jumped in the activity log (L-IPU-061, L-IPU-064).
 4. Report: IPU by service and by project or task, the trend, jobs against the cap, and the three largest savings with
-   how to get them (see `/idmc-mp:optimize`). Never present entitlement from `products[]`.
+   how to get them (see `/informatica-idmc-headless:optimize`). Never present entitlement from `products[]`.

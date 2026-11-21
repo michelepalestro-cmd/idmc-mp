@@ -35,11 +35,11 @@ You need four things. Tick them off:
 Open Claude Code and type these two lines, one at a time, pressing Enter after each:
 
 ```
-/plugin marketplace add michelepalestro-cmd/idmc-mp
+/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin
 ```
 
 ```
-/plugin install idmc-mp@idmc-mp
+/plugin install informatica-idmc-headless@idmc-mp
 ```
 
 Then close Claude Code and open it again.
@@ -49,7 +49,7 @@ Then close Claude Code and open it again.
 In Claude Code, type:
 
 ```
-/idmc-mp:connect
+/informatica-idmc-headless:connect
 ```
 
 Claude creates your private login file and shows you a command that ends in `--setup`. Now pick **one** way to fill
@@ -82,7 +82,7 @@ No quotes, and no spaces around the `=` sign.
 
 ### Step 3: Check that it works
 
-In Claude Code, type `/idmc-mp:connect` again. When it works you see:
+In Claude Code, type `/informatica-idmc-headless:connect` again. When it works you see:
 
 ```
 CONNECTED to IDMC
@@ -92,7 +92,7 @@ CONNECTED to IDMC
   User     : <your user>
 ```
 
-That's it. Try `/idmc-mp:health-check` next: it looks around your org and changes nothing.
+That's it. Try `/informatica-idmc-headless:health-check` next: it looks around your org and changes nothing.
 
 ## If the login doesn't work
 
@@ -102,16 +102,16 @@ empty or example value.
 
 | What you see | What it means | What to do |
 |---|---|---|
-| `Your login is not ready yet` | A line in your file is empty or still has the example in it. Nothing was sent to IDMC. | Fill in the line it names, then run `/idmc-mp:connect` again. |
+| `Your login is not ready yet` | A line in your file is empty or still has the example in it. Nothing was sent to IDMC. | Fill in the line it names, then run `/informatica-idmc-headless:connect` again. |
 | `user name or password is wrong` (`IDS_085` or `UI_10000`) | Most often the **address is for the wrong region**, not a wrong password. | Sign in in your browser and paste that exact address into `IDMC_LOGIN_HOST`. Check the user name is exactly what you type on the sign-in page (it may not be your e-mail). |
 | Same, and you sign in with an SSO button | SSO users have no IDMC password. | Ask your IDMC admin for a native IDMC user with a password. On a trial you are the admin: Administrator > Users, add a native user with a password. |
 | `account is LOCKED` (`IDS_086`) | Too many wrong logins. | Don't try again. Ask an IDMC admin to unlock you (Administrator > Users > your user > Unlock), or use "Forgot your password?" on the sign-in page. If you are the only admin (a trial), use "Forgot your password?" or open a case with Informatica support. |
-| `Logins are paused` (`login BLOCKED`) | The plugin paused itself after a rejected login, to protect your account. No login was sent. | Sign in in the browser to prove the password works. Fix the file: changing the user, the password or the address lifts the pause by itself. If nothing needed to change (for example an admin unlocked you and the password is the same), delete the `.block.json` file the message names, then run `/idmc-mp:connect` once. |
+| `Logins are paused` (`login BLOCKED`) | The plugin paused itself after a rejected login, to protect your account. No login was sent. | Sign in in the browser to prove the password works. Fix the file: changing the user, the password or the address lifts the pause by itself. If nothing needed to change (for example an admin unlocked you and the password is the same), delete the `.block.json` file the message names, then run `/informatica-idmc-headless:connect` once. |
 | `could not reach IDMC` | Internet, VPN or proxy problem. Not your password. | Check your connection or VPN, then try again. |
 | `CERTIFICATE_VERIFY_FAILED` | A company network is inspecting secure traffic. | Ask IT for the company certificate file and set `SSL_CERT_FILE` to it. |
 | The password must be changed, or it expired | IDMC wants a new password first. | Sign in once in the browser, set the new password, then put it in your file. |
 
-Still stuck? In Claude Code, type `/idmc-mp:fix-error` and paste the message (never your password).
+Still stuck? In Claude Code, type `/informatica-idmc-headless:fix-error` and paste the message (never your password).
 
 ## Safety
 
@@ -126,8 +126,8 @@ Still stuck? In Claude Code, type `/idmc-mp:fix-error` and paste the message (ne
 
 - **Get updates automatically (recommended):** in Claude Code type `/plugin`, open **Marketplaces**, pick **idmc-mp**
   and turn on auto-update.
-- **Update by hand:** `/plugin marketplace update idmc-mp`, then `/plugin update idmc-mp@idmc-mp`.
-- **Remove:** `/plugin uninstall idmc-mp@idmc-mp`.
+- **Update by hand:** `/plugin marketplace update idmc-mp`, then `/plugin update informatica-idmc-headless@idmc-mp`.
+- **Remove:** `/plugin uninstall informatica-idmc-headless@idmc-mp`.
 
 Updates never touch your login or your own lessons: they live in `~/.idmc_toolkit/`, outside the plugin.
 

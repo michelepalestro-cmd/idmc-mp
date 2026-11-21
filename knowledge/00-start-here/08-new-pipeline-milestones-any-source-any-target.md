@@ -323,7 +323,7 @@ pass flag ([DQ Assets](../08-data-quality/01-dq-assets-rule-specs-cleanse-dictio
    in (L-CDGC-157, L-CDGC-229, L-CDGC-232;
    [Catalog Sources](../09-catalog-lineage/02-catalog-sources-create-scan-update-purge.md)).
 2. Write a short runbook: what runs, when, on which runtime, how to re-run, how to roll back.
-3. Save every new fact you proved as a generic lesson with `/idmc-mp:save-lesson`, especially for a connector the KB did
+3. Save every new fact you proved as a generic lesson with `/informatica-idmc-headless:save-lesson`, especially for a connector the KB did
    not cover.
 
 **Done when:** lineage shows the pipeline, the runbook exists, and the lessons are written.

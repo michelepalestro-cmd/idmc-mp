@@ -3,7 +3,7 @@
 Reading, estimating and lowering IPU consumption, answering "is X licensed?", and staying under the monthly job cap;
 applies to any cost report, sizing, licence question, cadence plan or "exceeded your monthly limit" failure.
 
-**Start with:** `/idmc-mp:ipu-report [period]` (skill `idmc-ipu`, read-only) and
+**Start with:** `/informatica-idmc-headless:ipu-report [period]` (skill `idmc-ipu`, read-only) and
 [02 Metering & Consumption Exports](02-metering-consumption-exports.md); for licences and caps,
 [03 Entitlement, Licences & Job Caps](03-entitlement-licenses-job-caps.md). Prove the org first (`toolkit/check_login.py`).
 

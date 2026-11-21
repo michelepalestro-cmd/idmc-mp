@@ -81,7 +81,7 @@ def load_config():
     cfg, f = L.login_values(), os.environ.get("IDMC_CREDS_FILE")
     if f and Path(f).expanduser().resolve() != L.login_file():
         if _inside_kb(f):
-            H.die("IDMC_CREDS_FILE points inside the idmc-mp plugin; keep credentials outside it")
+            H.die("IDMC_CREDS_FILE points inside the informatica-idmc-headless plugin; keep credentials outside it")
         cfg.update(L.read_kv(f))
     for k in L.KEYS:
         if os.environ.get(k):
@@ -145,7 +145,7 @@ class Session:
         self.host = self.cfg["IDMC_LOGIN_HOST"]
         d = Path(os.environ.get("IDMC_CACHE_DIR") or (Path.home() / ".idmc_session")).expanduser()
         if _inside_kb(d):
-            H.die("IDMC_CACHE_DIR points inside the idmc-mp plugin; session caches hold live session ids")
+            H.die("IDMC_CACHE_DIR points inside the informatica-idmc-headless plugin; session caches hold live session ids")
         d.mkdir(mode=0o700, parents=True, exist_ok=True)
         self.prof = os.environ.get("IDMC_PROFILE") or hashlib.sha256(
             f"{self.cfg['IDMC_USER']}|{self.host}".encode()).hexdigest()[:10]

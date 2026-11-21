@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""secret_scan.py - run before you share or commit the idmc-mp plugin: fails on anything that looks like a
+"""secret_scan.py - run before you share or commit the informatica-idmc-headless plugin: fails on anything that looks like a
 credential, an org-specific id you added, or a local path.
 
     python3 toolkit/tools/secret_scan.py                  # scans the repository root

@@ -4,7 +4,7 @@ Logging in to IDMC headless, picking the right host and header for every call, p
 any write, and managing users, roles and entitlement reads; it applies at the start of every session and before any
 "not licensed" verdict.
 
-**Start with:** `/idmc-mp:connect` (runs `toolkit/check_login.py` once), then `python3 toolkit/lib/idmc_session.py whoami`
+**Start with:** `/informatica-idmc-headless:connect` (runs `toolkit/check_login.py` once), then `python3 toolkit/lib/idmc_session.py whoami`
 and `hosts`. Open first: [Login, Sessions & Tokens](02-login-sessions-tokens.md).
 
 ## What works (headless)
@@ -46,7 +46,7 @@ and `hosts`. Open first: [Login, Sessions & Tokens](02-login-sessions-tokens.md)
 
 ## Fastest safe path
 
-1. Run `/idmc-mp:connect`. First run creates `~/.idmc_toolkit/IDMC_LOGIN.txt`; the user fills native user, password and
+1. Run `/informatica-idmc-headless:connect`. First run creates `~/.idmc_toolkit/IDMC_LOGIN.txt`; the user fills native user, password and
    login host (in a terminal with `--setup`, never in chat). **Proof:** CONNECTED summary with org name, org id, pod, user.
 2. If the login fails, stop: no second attempt until the user fixes the cause (L-AUTH-038). **Proof:** the message names
    the cause (`IDS_085` wrong creds/host, `IDS_086` locked).

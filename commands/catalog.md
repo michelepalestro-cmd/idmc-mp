@@ -3,7 +3,7 @@ description: Scan a source into the catalog (CDGC), link glossary terms, and sho
 argument-hint: "<source system or connection> [glossary or report]"
 ---
 
-Use the idmc-mp and idmc-governance skills. On Windows, use `python` (or `py`) where these steps say `python3`.
+Use the informatica-idmc-headless and idmc-governance skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Source: $ARGUMENTS
 
 1. Prove the org, then check CDGC access (`python3 "${CLAUDE_PLUGIN_ROOT}/toolkit/lib/idmc_cdgc.py" --help`; auth in

@@ -346,7 +346,7 @@ string-replace of a pod literal broke when the org moved to another pod.
   - `--allow-writes` sets `IDMC_MCP_ALLOW_WRITES=1`, so the bridge also offers the tools that change the org; without
     it the bridge is read-only;
   - `--access-timeout` (default 1440) and `--desc` are optional.
-  `/idmc-mp:connect-mcp` walks a user through it.
+  `/informatica-idmc-headless:connect-mcp` walks a user through it.
 - `tools` and `call` speak JSON-RPC over streamable HTTP: `initialize` (protocol `2025-06-18`), then keep
   `Mcp-Session-Id`, then `notifications/initialized`, then `tools/list` or `tools/call`. SSE `data:` lines are
   parsed and nested envelopes unwrapped.
@@ -357,9 +357,9 @@ string-replace of a pod literal broke when the org moved to another pod.
 ### `idmc_mcp_bridge.py`: the org's MCP servers as Claude Code tools
 
 - The plugin starts it on its own (`.claude-plugin/plugin.json` `mcpServers.idmc`), as a local stdio MCP server.
-  Claude Code names its tools `mcp__plugin_idmc-mp_idmc__<tool>`.
+  Claude Code names its tools `mcp__plugin_informatica-idmc-headless_idmc__<tool>`.
 - Until a client file exists it offers one tool, `idmc_mcp_status`, which says how to connect
-  (`/idmc-mp:connect-mcp`), and makes no network call.
+  (`/informatica-idmc-headless:connect-mcp`), and makes no network call.
 - With the file (`--env PATH`, else `IDMC_MCP_ENV_FILE`, else `~/.idmc_toolkit/mcp_client.env`; it must be 0600 and
   outside the plugin) it gets a client-credentials token, opens each server in `MCP_CONTEXTS` and offers its tools as
   `<server>_<tool>` with a short server alias (for example `jobs_`, `conn_`, `addr_`, `claire_`), forwarding calls

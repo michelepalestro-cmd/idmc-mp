@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""run_tests.py - offline tests for the idmc-mp plugin: structure, links, lessons, code, and every user story.
+"""run_tests.py - offline tests for the informatica-idmc-headless plugin: structure, links, lessons, code, and every user story.
 
     python3 toolkit/tests/run_tests.py            # all tests; exit 1 on any failure
     python3 toolkit/tests/run_tests.py -k US-06   # only tests whose name contains the text
@@ -21,7 +21,7 @@ PY = sys.executable
 sys.dont_write_bytecode = True                 # the in-process tests import toolkit modules: leave no __pycache__
 ENV = dict(os.environ, PYTHONDONTWRITEBYTECODE="1")
 TESTS = []
-SKILLS = ["idmc-mp", "idmc-secure-agent", "idmc-connections", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
+SKILLS = ["informatica-idmc-headless", "idmc-secure-agent", "idmc-connections", "idmc-cdi", "idmc-cdc", "idmc-cai", "idmc-data-quality",
           "idmc-governance", "idmc-mdm", "idmc-claire-mcp", "idmc-deploy", "idmc-ipu"]
 COMMANDS = ["connect", "health-check", "new-pipeline", "fix-error", "save-lesson", "tune-agent", "optimize",
             "promote", "add-dq", "catalog", "ipu-report", "clean-data", "connect-mcp"]
@@ -116,7 +116,10 @@ def _():
     pl = json.loads(read(".claude-plugin", "plugin.json"))
     assert len(mk["plugins"]) == 1, "marketplace lists %d plugins" % len(mk["plugins"])
     entry = mk["plugins"][0]
-    assert entry["name"] == pl["name"] == mk["name"] == "idmc-mp", "names differ"
+    assert entry["name"] == pl["name"] == "informatica-idmc-headless", "names differ"
+    # the marketplace keeps its original name so old install commands and links keep working
+    assert mk["name"] == "idmc-mp", "marketplace name changed"
+    assert mk.get("renames") == {"idmc-mp": "informatica-idmc-headless"}, "renames map missing"
     assert entry["source"] == "./", "plugin source is not the repo root"
     assert entry["version"] == pl["version"] == mk["metadata"]["version"], "versions differ"
     others = [d for d, _, fs in os.walk(ROOT) if "plugin.json" in fs and ".git" not in d]
@@ -127,13 +130,13 @@ def _():
 def _():
     have = sorted(d for d in os.listdir(p("skills")) if os.path.isdir(p("skills", d)))
     assert have == sorted(SKILLS), "skills on disk %s != expected %s" % (have, SKILLS)
-    router = read("skills", "idmc-mp", "SKILL.md")
+    router = read("skills", "informatica-idmc-headless", "SKILL.md")
     for s in SKILLS:
         fm = frontmatter(read("skills", s, "SKILL.md"))
         assert fm.get("name") == s, "%s: name is %r" % (s, fm.get("name"))
         d = fm.get("description", "")
         assert d.startswith("Use ") and 60 < len(d) <= 1024, "%s: description must start with 'Use' and be 60-1024 chars" % s
-        if s != "idmc-mp":
+        if s != "informatica-idmc-headless":
             assert "`%s`" % s in router, "router does not route to %s" % s
 
 
@@ -377,11 +380,11 @@ def _():
 
 
 # ---------------------------------------------------------------- user stories (offline half)
-@test("US-01 install: one plugin, one marketplace, installs as idmc-mp@idmc-mp")
+@test("US-01 install: one plugin, one marketplace, installs as informatica-idmc-headless@idmc-mp")
 def _():
     readme = read("README.md")
-    assert "/plugin marketplace add michelepalestro-cmd/idmc-mp" in readme
-    assert "/plugin install idmc-mp@idmc-mp" in readme
+    assert "/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin" in readme
+    assert "/plugin install informatica-idmc-headless@idmc-mp" in readme
 
 
 @test("US-02 connect: first run creates the login file in HOME (mode 600), never in the plugin, no login attempt")
@@ -517,9 +520,9 @@ def _():
     srv = man["mcpServers"]["idmc"]
     assert srv["args"] == ["${CLAUDE_PLUGIN_ROOT}/toolkit/lib/idmc_mcp_bridge.py"], srv
     out, log = _bridge(os.path.join(tempfile.mkdtemp(), "none.env"), INIT + [_call(3, "idmc_mcp_status")])
-    assert out[1]["result"]["serverInfo"]["name"] == "idmc-mp", out[1]
+    assert out[1]["result"]["serverInfo"]["name"] == "informatica-idmc-headless", out[1]
     assert [t["name"] for t in out[2]["result"]["tools"]] == ["idmc_mcp_status"], out[2]
-    assert "/idmc-mp:connect-mcp" in out[3]["result"]["content"][0]["text"], out[3]
+    assert "/informatica-idmc-headless:connect-mcp" in out[3]["result"]["content"][0]["text"], out[3]
 
 
 @test("MCP bridge: read-only by default, forwards calls, renews an expired token, never prints the secret")

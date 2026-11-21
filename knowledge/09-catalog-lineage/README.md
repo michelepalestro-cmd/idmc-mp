@@ -3,7 +3,7 @@
 Register and scan sources into Cloud Data Governance and Catalog, load a glossary, link terms and classifications to
 assets, and produce or read lineage: use this whenever a user asks to catalog, govern, search or trace data in IDMC.
 
-**Start with:** `/idmc-mp:catalog <source or connection>`; check auth with `toolkit/lib/idmc_cdgc.py jwt-check` (it also
+**Start with:** `/informatica-idmc-headless:catalog <source or connection>`; check auth with `toolkit/lib/idmc_cdgc.py jwt-check` (it also
 has `sources`, `source-get`, `source-create`, `source-update`, `scan`, `job`, `search`, `glossary-create`, `link`); open
 [01 CDGC APIs & Auth](01-cdgc-apis-auth.md) first.
 

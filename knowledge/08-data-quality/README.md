@@ -3,7 +3,7 @@
 Profile a table, author DQ rule specifications, run and score them, and clean or deduplicate data with IDMC Cloud Data
 Quality (CDQ): use this whenever a user asks for profiling, DQ rules, scores, scorecards or a clean-up.
 
-**Start with:** `/idmc-mp:add-dq <connection> <table>` (profile, rules, scores) or `/idmc-mp:clean-data` (standardize,
+**Start with:** `/informatica-idmc-headless:add-dq <connection> <table>` (profile, rules, scores) or `/informatica-idmc-headless:clean-data` (standardize,
 match, survivors); census the org's DQ assets with `toolkit/lib/idmc_objects.py`; open
 [02 Profiling: what is headless](02-profiling-what-is-headless.md) first.
 

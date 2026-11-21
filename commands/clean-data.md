@@ -3,7 +3,7 @@ description: Clean a large table with IDMC mappings (standardize, match duplicat
 argument-hint: "<connection> <table> [region or slice] [what to clean: duplicates, rules]"
 ---
 
-Use the idmc-mp, idmc-data-quality and idmc-cdi skills. On Windows, use `python` (or `py`) where these steps say `python3`.
+Use the informatica-idmc-headless, idmc-data-quality and idmc-cdi skills. On Windows, use `python` (or `py`) where these steps say `python3`.
 Clean: $ARGUMENTS
 
 Follow `${CLAUDE_PLUGIN_ROOT}/knowledge/08-data-quality/05-cleaning-a-large-dataset-with-mappings.md`.
@@ -25,7 +25,7 @@ Follow `${CLAUDE_PLUGIN_ROOT}/knowledge/08-data-quality/05-cleaning-a-large-data
    what IDMC found extra and why.
 6. Report: candidates, agreement, extra finds with examples, run time, job used. Apply nothing to the real tables
    without the user's yes on the merge list; keep old ids as aliases of the survivor.
-7. Save what the run taught you with `/idmc-mp:save-lesson`.
+7. Save what the run taught you with `/informatica-idmc-headless:save-lesson`.
 
 Want one golden record per customer with a lasting customer id (mastering), not only a clean-up? Use the idmc-mdm skill
 and `${CLAUDE_PLUGIN_ROOT}/knowledge/10-mdm/README.md` (native MDM SaaS, or a warehouse stand-in when MDM is not

@@ -5,10 +5,10 @@ description: Use for Informatica IDMC MDM SaaS / Business 360: model business en
 
 # IDMC co-pilot: Master data management (MDM SaaS, Business 360)
 
-Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
+Part of the **informatica-idmc-headless** plugin (the IDMC co-pilot). Paths are relative to the plugin root, `${CLAUDE_PLUGIN_ROOT}`
 (two folders above this skill's folder). Use `python3` (on Windows `python` or `py`).
 
-## Ground rules (from the core `idmc-mp` skill; they always apply)
+## Ground rules (from the core `informatica-idmc-headless` skill; they always apply)
 - **Lessons first.** Before any call or design choice, search the lessons:
   `grep -i "<thing or error>" "${CLAUDE_PLUGIN_ROOT}/knowledge/lessons/lessons.jsonl"` (this area: `"domain": "mdm"`),
   then `knowledge/10-mdm/lessons.md` and the user's own `~/.idmc_toolkit/lessons-local.jsonl`.
@@ -47,10 +47,10 @@ Part of the **idmc-mp** plugin (the IDMC co-pilot). Paths are relative to the pl
   DELETE) are hand-built in Python with the headers `knowledge/10-mdm/02-mdm-records-ingest-search-export-cleanup.md`
   lists (Bearer JWT from `Session().jwt()`, IDS-SESSION-ID, X-INFA-ORG-ID). Gate every write like the other tools: a
   dry run that prints the call first, then `--execute` only after `--expect-org` matches (`idmc_http.WriteGate`).
-- MCP tools, when `/idmc-mp:connect-mcp` has connected the org's servers (`mcp__plugin_idmc-mp_idmc__*`): `cust_*` (fuzzy customer
+- MCP tools, when `/informatica-idmc-headless:connect-mcp` has connected the org's servers (`mcp__plugin_informatica-idmc-headless_idmc__*`): `cust_*` (fuzzy customer
   search, golden record, related records; needs MDM)
 - No MDM licence: `toolkit/demos/customer_master_csv/` (clean, deduplicate, customer ids with plain CDI mappings)
 
 ## When you learn something
 Append a generic lesson (no org ids, hosts, people or secrets; same shape as `knowledge/lessons/lessons.jsonl`) to
-`~/.idmc_toolkit/lessons-local.jsonl`, or run `/idmc-mp:save-lesson`. Never write inside the plugin folder.
+`~/.idmc_toolkit/lessons-local.jsonl`, or run `/informatica-idmc-headless:save-lesson`. Never write inside the plugin folder.

@@ -52,7 +52,7 @@ few errors are records whose name or ZIP is damaged badly enough to sit in the w
 ## Run it in your org
 
 Follow [BUILD.md](BUILD.md). You need an IDMC org, a Linux (or Windows) machine for the Secure Agent, and the plugin
-connected (`/idmc-mp:connect`). Expect about 20-40 minutes the first time, most of it the agent install.
+connected (`/informatica-idmc-headless:connect`). Expect about 20-40 minutes the first time, most of it the agent install.
 
 ## Limits, on purpose
 
