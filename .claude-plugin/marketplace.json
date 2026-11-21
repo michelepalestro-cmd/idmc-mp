@@ -1,5 +1,8 @@
 {
-  "name": "informatica-idmc-headless",
+  "name": "idmc-mp",
+  "renames": {
+    "idmc-mp": "informatica-idmc-headless"
+  },
   "owner": {
     "name": "Michele Palestro"
   },

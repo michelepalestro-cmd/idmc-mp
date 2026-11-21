@@ -116,7 +116,10 @@ def _():
     pl = json.loads(read(".claude-plugin", "plugin.json"))
     assert len(mk["plugins"]) == 1, "marketplace lists %d plugins" % len(mk["plugins"])
     entry = mk["plugins"][0]
-    assert entry["name"] == pl["name"] == mk["name"] == "informatica-idmc-headless", "names differ"
+    assert entry["name"] == pl["name"] == "informatica-idmc-headless", "names differ"
+    # the marketplace keeps its original name so old install commands and links keep working
+    assert mk["name"] == "idmc-mp", "marketplace name changed"
+    assert mk.get("renames") == {"idmc-mp": "informatica-idmc-headless"}, "renames map missing"
     assert entry["source"] == "./", "plugin source is not the repo root"
     assert entry["version"] == pl["version"] == mk["metadata"]["version"], "versions differ"
     others = [d for d, _, fs in os.walk(ROOT) if "plugin.json" in fs and ".git" not in d]
@@ -377,11 +380,11 @@ def _():
 
 
 # ---------------------------------------------------------------- user stories (offline half)
-@test("US-01 install: one plugin, one marketplace, installs as informatica-idmc-headless@informatica-idmc-headless")
+@test("US-01 install: one plugin, one marketplace, installs as informatica-idmc-headless@idmc-mp")
 def _():
     readme = read("README.md")
     assert "/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin" in readme
-    assert "/plugin install informatica-idmc-headless@informatica-idmc-headless" in readme
+    assert "/plugin install informatica-idmc-headless@idmc-mp" in readme
 
 
 @test("US-02 connect: first run creates the login file in HOME (mode 600), never in the plugin, no login attempt")

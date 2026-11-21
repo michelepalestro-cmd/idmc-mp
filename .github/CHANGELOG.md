@@ -5,17 +5,15 @@ Releases of the `informatica-idmc-headless` plugin. The knowledge base's own his
 
 ## 2.0.0 (2026-11-21): new name, Informatica IDMC Headless Plugin
 
-The plugin, its marketplace and its repository have new, clearer names:
+The plugin and its repository have new, clearer names:
 
 - Repository: `michelepalestro-cmd/informatica-idmc-headless-plugin` (was `michelepalestro-cmd/idmc-mp`). The old
   address redirects to the new one for web links, `git clone`, `git pull` and `/plugin marketplace add`.
-- Plugin and marketplace: `informatica-idmc-headless` (was `idmc-mp`).
+- Plugin: `informatica-idmc-headless` (was `idmc-mp`). A `renames` entry in `marketplace.json` moves existing installs
+  to the new name on their next update.
+- Marketplace: still `idmc-mp`, so `/plugin marketplace add michelepalestro-cmd/idmc-mp` and existing marketplace
+  registrations keep working. New installs use `/plugin install informatica-idmc-headless@idmc-mp`.
 - Commands: `/informatica-idmc-headless:<name>` (was `/idmc-mp:<name>`); the core skill is `informatica-idmc-headless`.
-
-**Upgrading from `idmc-mp`:** in Claude Code run `/plugin marketplace remove idmc-mp`, then
-`/plugin marketplace add michelepalestro-cmd/informatica-idmc-headless-plugin` and
-`/plugin install informatica-idmc-headless@informatica-idmc-headless`. Your login file and saved lessons live outside
-the plugin and are not affected.
 
 ## 1.15.1 (2026-11-20): full documentation audit
 

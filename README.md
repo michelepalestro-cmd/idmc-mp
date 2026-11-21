@@ -92,14 +92,15 @@ In Claude Code:
 ```
 
 ```
-/plugin install informatica-idmc-headless@informatica-idmc-headless
+/plugin install informatica-idmc-headless@idmc-mp
 ```
 
 Close Claude Code and open it again, then run `/informatica-idmc-headless:connect`. The full guide, including what to do when a login fails, is
 [Setup and login](knowledge/00-start-here/11-setup-and-login.md).
 
-**Upgrading from `idmc-mp`?** The plugin was renamed in 2.0.0. Run `/plugin marketplace remove idmc-mp`, then the two
-commands above. The old repository address redirects here, and your login file and lessons are kept.
+**Already using `idmc-mp`?** Nothing to do. The old repository address redirects here, the marketplace keeps its
+name `idmc-mp`, and existing installs move to the new plugin name on their next update. Only the command prefix
+changes, from `/idmc-mp:` to `/informatica-idmc-headless:`.
 
 ## Repository layout
 

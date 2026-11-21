@@ -39,7 +39,7 @@ Open Claude Code and type these two lines, one at a time, pressing Enter after e
 ```
 
 ```
-/plugin install informatica-idmc-headless@informatica-idmc-headless
+/plugin install informatica-idmc-headless@idmc-mp
 ```
 
 Then close Claude Code and open it again.
@@ -124,10 +124,10 @@ Still stuck? In Claude Code, type `/informatica-idmc-headless:fix-error` and pas
 
 ## Update or remove
 
-- **Get updates automatically (recommended):** in Claude Code type `/plugin`, open **Marketplaces**, pick **informatica-idmc-headless**
+- **Get updates automatically (recommended):** in Claude Code type `/plugin`, open **Marketplaces**, pick **idmc-mp**
   and turn on auto-update.
-- **Update by hand:** `/plugin marketplace update informatica-idmc-headless`, then `/plugin update informatica-idmc-headless@informatica-idmc-headless`.
-- **Remove:** `/plugin uninstall informatica-idmc-headless@informatica-idmc-headless`.
+- **Update by hand:** `/plugin marketplace update idmc-mp`, then `/plugin update informatica-idmc-headless@idmc-mp`.
+- **Remove:** `/plugin uninstall informatica-idmc-headless@idmc-mp`.
 
 Updates never touch your login or your own lessons: they live in `~/.idmc_toolkit/`, outside the plugin.
 

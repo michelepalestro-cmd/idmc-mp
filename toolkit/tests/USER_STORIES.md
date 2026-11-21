@@ -11,7 +11,7 @@ Record each live run in the table at the bottom (date, org type, result, notes).
 
 | Id | As a... | I want to... | So that... | Entry point |
 |---|---|---|---|---|
-| US-01 | new user | install the plugin from the repo in two commands | I get exactly one plugin, nothing else | `/plugin marketplace add`, `/plugin install informatica-idmc-headless@informatica-idmc-headless` |
+| US-01 | new user | install the plugin from the repo in two commands | I get exactly one plugin, nothing else | `/plugin marketplace add`, `/plugin install informatica-idmc-headless@idmc-mp` |
 | US-02 | new user | connect Claude to my IDMC org once | every later session knows my org, and my login stays outside the plugin | `/informatica-idmc-headless:connect` |
 | US-03 | admin | a read-only health check of my org | I know what runs, what is unhealthy and why | `/informatica-idmc-headless:health-check` |
 | US-04 | developer | paste an IDMC error and get the cause and fix | I stop losing hours to known errors | `/informatica-idmc-headless:fix-error <error>` |
@@ -28,7 +28,7 @@ Record each live run in the table at the bottom (date, org type, result, notes).
 | US-15 | budget owner | an IPU and job usage report with the biggest savings | I control spend | `/informatica-idmc-headless:ipu-report` |
 | US-16 | architect | Claude connected to our managed MCP servers, and told when to use MCP vs REST | we use CLAIRE and MCP where they fit | `/informatica-idmc-headless:connect-mcp`, skill `idmc-claire-mcp` |
 | US-17 | presales / learner | a demo blueprint rebuilt end to end | I can show the pattern on real systems | `toolkit/demos/*/BUILD.md` |
-| US-18 | any user | updates that never touch my login or my lessons | updating is always safe | `/plugin update informatica-idmc-headless@informatica-idmc-headless` |
+| US-18 | any user | updates that never touch my login or my lessons | updating is always safe | `/plugin update informatica-idmc-headless@idmc-mp` |
 | US-19 | data steward | duplicates and bad values in a large table cleaned with IDMC mappings, proven before anything changes | the data gets cleaner without slowing every rebuild | `/informatica-idmc-headless:clean-data` |
 | US-20 | new user | a messy customer CSV cleaned, de-duplicated and given customer ids by IDMC on my own Secure Agent, timed from zero | I see real value in under an hour without a DQ or MDM licence | `toolkit/demos/customer_master_csv/` (`check.py`, `BUILD.md`) |
 
@@ -37,7 +37,7 @@ Record each live run in the table at the bottom (date, org type, result, notes).
 Run in a new Claude Code session after installing the plugin. "Pass" means every line holds.
 
 **US-01 install**
-- `/plugin` shows one marketplace `informatica-idmc-headless` with one plugin `informatica-idmc-headless`, and its version matches `plugin.json`.
+- `/plugin` shows one marketplace `idmc-mp` with one plugin `informatica-idmc-headless`, and its version matches `plugin.json`.
 - Typing `/informatica-idmc-headless:` lists the thirteen commands; asking "what IDMC skills do you have?" names the twelve skills.
 - `/mcp` lists the plugin's `idmc` server (the MCP bridge); before `/informatica-idmc-headless:connect-mcp` it offers only `idmc_mcp_status`.
 
